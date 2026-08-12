@@ -51,7 +51,7 @@ pnpm package:windows
 - 剪切板历史只保存在本机，不上传云端。
 - 数据默认位于 **%APPDATA%/ClipNest/history.json**。
 - 最多保存 100 条历史、总大小约 25 MB；固定项不会被自动清理。
-- 图片会以本地 PNG 文件保存在 **%APPDATA%/ClipNest/images**。
+- 图片内容会以本地 Data URL 形式写入 **%APPDATA%/ClipNest/history.json**，不会上传云端。
 
 ## 说明
 
