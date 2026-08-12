@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#111832" />
+    <meta
+      name="description"
+      content="ClipNest：面向 Windows 的 Paste 风格剪切板历史工具，支持文本、链接和图片。"
+    />
+    <title>ClipNest · Windows 剪切板历史</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="#top" aria-label="ClipNest 首页">
+          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span>ClipNest</span>
+        </a>
+        <nav class="nav-links" aria-label="页面导航">
+          <a href="#features">功能</a>
+          <a href="#how-it-works">使用方式</a>
+          <a href="#design">设计</a>
+          <a href="https://github.com/liu-60/clipnest-windows" rel="noreferrer">GitHub</a>
+        </nav>
+        <a class="nav-button" href="https://github.com/liu-60/clipnest-windows/releases/latest/download/ClipNest-1.0.0-windows.zip">
+          下载 Windows 版
+        </a>
+      </header>
+
+      <main id="top">
+        <section class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow"><span class="eyebrow-dot"></span> WINDOWS CLIPBOARD HISTORY</p>
+            <h1>让复制过的内容，<em>随时可见。</em></h1>
+            <p class="hero-text">
+              ClipNest 把你复制过的文本、链接和图片整理成一条清晰的时间线。
+              按下一个快捷键，找到它，再粘贴回正在工作的地方。
+            </p>
+            <div class="hero-actions">
+              <a class="primary-button" href="https://github.com/liu-60/clipnest-windows/releases/latest/download/ClipNest-1.0.0-windows.zip">
+                下载 ClipNest <span>→</span>
+              </a>
+              <a class="secondary-button" href="https://github.com/liu-60/clipnest-windows" rel="noreferrer">
+                查看源码
+              </a>
+            </div>
+            <div class="hero-note">
+              <span class="status-dot"></span>
+              Windows x64 · 免安装 ZIP · 本地保存
+            </div>
+          </div>
+
+          <div class="hero-stage" aria-label="ClipNest 界面预览">
+            <div class="stage-glow"></div>
+            <div class="window-frame">
+              <div class="window-bar">
+                <div class="window-dots"><i></i><i></i><i></i></div>
+                <span class="window-title">ClipNest</span>
+                <span class="window-command">Ctrl + Shift + V</span>
+              </div>
+              <div class="window-toolbar">
+                <span class="search-icon">⌕</span>
+                <span>搜索剪切板历史</span>
+                <div class="toolbar-pills"><b>全部</b><span>文本</span><span>图片</span></div>
+              </div>
+              <img
+                class="preview-image"
+                src="./assets/clipnest-history-reference.svg"
+                alt="Paste 风格的剪切板历史卡片界面"
+              />
+              <div class="preview-caption">
+                <span class="caption-kicker">PASTE-STYLE WORKSPACE</span>
+                <span class="caption-title">按时间倒排 · 一键激活 · Ctrl + V 粘贴</span>
+              </div>
+            </div>
+            <div class="shortcut-card">
+              <span class="shortcut-key">⌘</span>
+              <span>打开历史面板</span>
+              <strong>Ctrl ⇧ V</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="signal-row" aria-label="产品特性概览">
+          <div><strong>100</strong><span>条历史容量</span></div>
+          <div><strong>3</strong><span>种内容类型</span></div>
+          <div><strong>0</strong><span>云端上传</span></div>
+          <div class="signal-copy">复制不再消失，<br />只是在等你再次需要。</div>
+        </section>
+
+        <section class="section-block" id="features">
+          <div class="section-heading">
+            <p class="eyebrow">SMALL TOOL, BIG RELIEF</p>
+            <h2>把剪切板变成<br /><span>你的第二记忆。</span></h2>
+          </div>
+          <div class="feature-grid">
+            <article class="feature-card feature-blue">
+              <div class="feature-top"><span class="feature-index">01</span><span class="feature-type">TEXT</span></div>
+              <h3>文字，清楚可读</h3>
+              <p>长文、代码、临时笔记都保留原始内容，卡片直接预览，不必反复切换窗口。</p>
+              <div class="feature-lines"><i></i><i></i><i></i><i></i></div>
+            </article>
+            <article class="feature-card feature-coral">
+              <div class="feature-top"><span class="feature-index">02</span><span class="feature-type">IMAGE</span></div>
+              <h3>图片，一眼找到</h3>
+              <p>复制过的截图和图片保留缩略图，在视觉卡片流里快速定位，然后原格式粘贴。</p>
+              <div class="feature-photo"><span></span><span></span><span></span></div>
+            </article>
+            <article class="feature-card feature-mint">
+              <div class="feature-top"><span class="feature-index">03</span><span class="feature-type">LOCAL</span></div>
+              <h3>本地，更安心</h3>
+              <p>历史只留在你的 Windows 设备上。常驻托盘，不打断工作，也不需要注册账号。</p>
+              <div class="feature-lock">⌁</div>
+            </article>
+          </div>
+        </section>
+
+        <section class="workflow-section" id="how-it-works">
+          <div class="workflow-copy">
+            <p class="eyebrow">ONE SHORTCUT AWAY</p>
+            <h2>复制，打开，<br /><span>继续工作。</span></h2>
+            <p>不需要记住内容复制在哪里，也不需要在多个窗口之间来回找。</p>
+          </div>
+          <div class="steps">
+            <div class="step"><span>1</span><div><strong>连续复制</strong><small>在任意应用中按 Ctrl + C</small></div></div>
+            <div class="step"><span>2</span><div><strong>打开面板</strong><small>按 Ctrl + Shift + V 呼出历史</small></div></div>
+            <div class="step"><span>3</span><div><strong>激活并粘贴</strong><small>点击卡片，再按 Ctrl + V</small></div></div>
+          </div>
+        </section>
+
+        <section class="design-section" id="design">
+          <div class="design-copy">
+            <p class="eyebrow">DESIGNED FOR FLOW</p>
+            <h2>像 Paste 一样轻，<br /><span>为 Windows 而生。</span></h2>
+            <p>浅灰工作台、横向卡片流、蓝色选择描边和清晰的类型色，让历史内容既有秩序又有温度。</p>
+            <a class="text-link" href="https://github.com/liu-60/clipnest-windows#界面设计" rel="noreferrer">在 README 查看设计说明 <span>↗</span></a>
+          </div>
+          <div class="design-visual">
+            <div class="design-label">DESIGN REFERENCE</div>
+            <img src="./assets/clipnest-promo-reference.svg" alt="ClipNest 的 Paste 风格视觉参考" />
+            <div class="design-sticker">⌘<br /><small>PASTE<br />BETTER</small></div>
+          </div>
+        </section>
+
+        <section class="download-section">
+          <div>
+            <p class="eyebrow">READY WHEN YOU ARE</p>
+            <h2>把下一次粘贴，<br /><span>变得更从容。</span></h2>
+          </div>
+          <div class="download-action">
+            <a class="primary-button light-button" href="https://github.com/liu-60/clipnest-windows/releases/latest/download/ClipNest-1.0.0-windows.zip">
+              下载 Windows 版 <span>↓</span>
+            </a>
+            <p>v1.0.0 · Windows x64 · ZIP 免安装</p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span>ClipNest</span></a>
+        <span>键盘优先 · 本地优先</span>
+        <span>MIT License</span>
+      </footer>
+    </div>
+  </body>
+</html>
