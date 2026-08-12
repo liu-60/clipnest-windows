@@ -2,7 +2,7 @@
 
 > 一款面向 Windows 的键盘优先剪切板历史工具，交互参考 macOS Paste。
 
-[下载 Windows 版](https://github.com/liu-60/clipnest-windows/releases/latest/download/ClipNest-1.0.0-windows.zip) · [软件介绍与下载主页](https://liu-60.github.io/clipnest-windows/)
+[下载 Windows 版](https://github.com/liu-60/clipnest-windows/releases/latest/download/ClipNest-1.0.1-windows.zip) · [软件介绍与下载主页](https://liu-60.github.io/clipnest-windows/)
 
 ## 界面设计
 
