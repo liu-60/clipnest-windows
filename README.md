@@ -8,9 +8,9 @@
 
 ClipNest 采用 Paste 风格的浅灰工作台、顶部搜索和横向卡片流：文本、链接、图片按时间倒排显示，当前选择用蓝色描边突出。
 
-![ClipNest 剪切板历史界面设计](docs/assets/clipnest-history-reference.jpg)
+![ClipNest 剪切板历史界面设计](docs/assets/clipnest-history-reference.svg)
 
-![Paste 风格视觉参考](docs/assets/clipnest-promo-reference.jpg)
+![Paste 风格视觉参考](docs/assets/clipnest-promo-reference.svg)
 
 ## 普通用户操作
 
