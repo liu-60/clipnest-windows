@@ -279,13 +279,12 @@ kbd {
 .view-count { color: #999a9f; font-size: 9px; white-space: nowrap; }
 
 .paste-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(205px, 1fr));
-  align-content: start;
-  gap: 14px;
+  position: relative;
+  display: block;
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
   padding: 0 25px 21px;
   scrollbar-color: #c6c7ca transparent;
   scrollbar-width: thin;
@@ -293,18 +292,18 @@ kbd {
 
 .virtual-grid {
   display: block;
-  position: relative;
 }
 
 .virtual-grid-spacer {
   position: relative;
-  width: 100%;
+  min-width: 100%;
 }
 
 .virtual-card {
   position: absolute;
   top: 0;
   left: 0;
+  width: 205px;
   height: 260px;
 }
 
@@ -440,11 +439,16 @@ kbd {
 .selected-bar { position: absolute; right: 0; bottom: 0; left: 0; height: 3px; background: #3d82e8; }
 
 .grid-hint {
-  grid-column: 1 / -1;
-  padding: 3px 0 1px;
+  position: absolute;
+  right: 25px;
+  bottom: 3px;
+  z-index: 2;
+  padding: 3px 6px 1px;
   color: #a6a7ab;
   font-size: 9px;
+  pointer-events: none;
   text-align: center;
+  background: rgba(229, 229, 229, .84);
 }
 
 .grid-hint span { margin: 0 4px; color: #c0c1c4; }
@@ -548,7 +552,7 @@ kbd {
   .brand-subtitle, .key-hint, .utility-chip { display: none; }
   .search-box { width: min(270px, 38vw); }
   .view-toolbar { padding: 0 16px; }
-  .paste-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); padding-right: 16px; padding-left: 16px; }
+  .paste-grid { padding-right: 16px; padding-left: 16px; }
   .settings-scroll { padding-right: 18px; padding-left: 18px; }
   .settings-row-copy span { max-width: 48vw; }
 }
@@ -559,5 +563,5 @@ kbd {
   .search-box { width: min(250px, 52vw); }
   .filter-pills { max-width: 100%; overflow-x: auto; }
   .view-actions .listening-pill { display: none; }
-  .paste-grid { grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 10px; }
+  .paste-grid { padding-right: 16px; padding-left: 16px; }
 }

@@ -34,8 +34,7 @@ const MAX_MAX_HISTORY_ITEMS = 2_000;
 const MAX_HISTORY_BYTES = 25_000_000;
 const POLL_INTERVAL_MS = 450;
 const MAX_STORED_IMAGE_BYTES = 5_000_000;
-const PANEL_WIDTH = 1200;
-const PANEL_HEIGHT = 560;
+const PANEL_HEIGHT = 400;
 const HISTORY_FILE_NAME = "history.json";
 const STARTUP_ARGUMENT = "--hidden";
 const APP_DISPLAY_NAME = "ClipNest";
@@ -64,12 +63,32 @@ let appSettings: AppSettings = {
 let startupEnabled = false;
 let pollTimer: NodeJS.Timeout | null = null;
 let blurTimer: NodeJS.Timeout | null = null;
+let panelAnimationTimer: NodeJS.Timeout | null = null;
 
 const appIconSvg = `
   <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
-    <rect width="256" height="256" rx="58" fill="#4f56d8"/>
-    <path d="M78 53h58c45 0 70 22 70 59s-25 59-70 59h-22v32H78V53Zm36 31v56h21c23 0 35-10 35-28s-12-28-35-28h-21Z" fill="#fff"/>
+    <rect width="256" height="256" rx="58" fill="#f8fafd"/>
+    <rect x="10" y="10" width="236" height="236" rx="50" fill="none" stroke="#dbe3ef" stroke-width="8"/>
+    <path d="M78 50h68c42 0 68 22 68 58 0 37-26 58-68 58h-30v40H78V50Zm38 34v48h28c20 0 32-8 32-24 0-16-12-24-32-24h-28Z" fill="#347cf3"/>
+    <circle cx="188" cy="199" r="10" fill="#347cf3"/>
   </svg>`;
+
+function createAppIcon(size?: number) {
+  const iconPath = [
+    join(process.resourcesPath, "app.asar.unpacked", "build", "icon.png"),
+    join(app.getAppPath(), "build", "icon.png"),
+    join(__dirname, "../../build/icon.png"),
+  ].find((candidate) => existsSync(candidate));
+
+  let icon = iconPath ? nativeImage.createFromPath(iconPath) : nativeImage.createEmpty();
+  if (icon.isEmpty()) {
+    icon = nativeImage.createFromDataURL(
+      `data:image/svg+xml;base64,${Buffer.from(appIconSvg).toString("base64")}`,
+    );
+  }
+
+  return size ? icon.resize({ width: size, height: size }) : icon;
+}
 
 function fingerprint(type: ClipboardType, content: string): string {
   return createHash("sha256").update(`${type}:${content}`).digest("hex");
@@ -510,37 +529,68 @@ function pollClipboard(): void {
   }
 }
 
-function positionPanel(): void {
-  if (!mainWindow) return;
-
+function panelBoundsForCurrentDisplay(): Electron.Rectangle {
   const cursor = screen.getCursorScreenPoint();
   const display = screen.getDisplayNearestPoint(cursor);
   const area = display.workArea;
-  const bounds = mainWindow.getBounds();
-  const margin = 14;
-  const x = Math.min(
-    Math.max(area.x + margin, cursor.x - Math.round(bounds.width / 2)),
-    area.x + area.width - bounds.width - margin,
-  );
-  const below = cursor.y + 18;
-  const y = below + bounds.height <= area.y + area.height - margin
-    ? below
-    : Math.max(area.y + margin, cursor.y - bounds.height - 18);
+  const height = Math.min(PANEL_HEIGHT, area.height);
+  return {
+    x: area.x,
+    y: area.y + area.height - height,
+    width: area.width,
+    height,
+  };
+}
 
-  mainWindow.setPosition(Math.round(x), Math.round(y), false);
+function positionPanel(): Electron.Rectangle | null {
+  if (!mainWindow) return null;
+  const bounds = panelBoundsForCurrentDisplay();
+  mainWindow.setBounds(bounds, false);
+  return bounds;
 }
 
 function hidePanel(): void {
   if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (panelAnimationTimer) {
+    clearInterval(panelAnimationTimer);
+    panelAnimationTimer = null;
+  }
   mainWindow.hide();
 }
 
 function showPanel(): void {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   if (blurTimer) clearTimeout(blurTimer);
-  positionPanel();
+  const targetBounds = panelBoundsForCurrentDisplay();
+  const shouldAnimate = !mainWindow.isVisible();
+  if (panelAnimationTimer) clearInterval(panelAnimationTimer);
+
+  if (shouldAnimate) {
+    const startY = targetBounds.y + Math.min(28, targetBounds.height);
+    mainWindow.setBounds({ ...targetBounds, y: startY }, false);
+  } else {
+    mainWindow.setBounds(targetBounds, false);
+  }
   mainWindow.showInactive();
   mainWindow.focus();
+
+  if (shouldAnimate) {
+    const startedAt = Date.now();
+    panelAnimationTimer = setInterval(() => {
+      if (!mainWindow || mainWindow.isDestroyed()) return;
+      const progress = Math.min(1, (Date.now() - startedAt) / 150);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      mainWindow.setBounds({
+        ...targetBounds,
+        y: Math.round(targetBounds.y + (targetBounds.height > 0 ? 28 * (1 - eased) : 0)),
+      }, false);
+      if (progress >= 1) {
+        clearInterval(panelAnimationTimer!);
+        panelAnimationTimer = null;
+        mainWindow.setBounds(targetBounds, false);
+      }
+    }, 16);
+  }
   mainWindow.webContents.send("panel:shown");
 }
 
@@ -552,18 +602,16 @@ function showSettings(): void {
 
 function createMainWindow(): void {
   const preloadPath = join(__dirname, "../preload/preload.js");
-  const windowIcon = nativeImage.createFromDataURL(
-    `data:image/svg+xml;base64,${Buffer.from(appIconSvg).toString("base64")}`,
-  );
+  const windowIcon = createAppIcon();
+  const initialDisplay = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
   mainWindow = new BrowserWindow({
-    width: PANEL_WIDTH,
+    width: initialDisplay.workArea.width,
     height: PANEL_HEIGHT,
     icon: windowIcon,
     minWidth: 960,
-    minHeight: 430,
     show: false,
     frame: false,
-    resizable: true,
+    resizable: false,
     movable: true,
     skipTaskbar: true,
     alwaysOnTop: true,
@@ -620,9 +668,7 @@ function clearUnpinnedHistory(): void {
 }
 
 function createTray(): void {
-  const icon = nativeImage.createFromDataURL(
-    `data:image/svg+xml;base64,${Buffer.from(appIconSvg).toString("base64")}`,
-  ).resize({ width: 18, height: 18 });
+  const icon = createAppIcon(18);
   tray = new Tray(icon);
   tray.setToolTip("ClipNest 剪切板");
   tray.setContextMenu(buildTrayMenu());

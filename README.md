@@ -2,7 +2,7 @@
 
 > 一款面向 Windows 的键盘优先剪切板历史工具，交互参考 macOS Paste。
 
-[下载 Windows 版](https://github.com/liu-60/clipnest-windows/releases/latest/download/ClipNest-1.1.0-windows.zip) · [软件介绍与下载主页](https://liu-60.github.io/clipnest-windows/)
+[下载 Windows 版](https://github.com/liu-60/clipnest-windows/releases/latest/download/ClipNest-1.1.1-windows.zip) · [软件介绍与下载主页](https://liu-60.github.io/clipnest-windows/)
 
 ## 界面设计
 
@@ -11,6 +11,14 @@ ClipNest 采用 Paste 风格的浅灰工作台、顶部搜索和横向卡片流�
 ![ClipNest 剪切板历史界面设计](docs/assets/clipnest-history-reference.svg)
 
 ![Paste 风格视觉参考](docs/assets/clipnest-promo-reference.svg)
+
+ClipNest 的历史面板默认以底部抽屉打开，宽度占满当前屏幕；卡片保持单行横向平铺，不叠放。窗口、托盘与安装包统一使用简洁的蓝色 **P.** 图标。
+
+## 实机运行截图
+
+![ClipNest Windows 实际运行截图（剪切内容已模糊）](docs/assets/clipnest-demo-blurred.png)
+
+> 截图来自 Windows x64 目录包的实际运行窗口。为保护截图中的剪切板隐私，图片、链接等剪切内容已做模糊处理；窗口尺寸、底部抽屉、单行卡片与系统状态均保留。
 
 ## 普通用户操作
 
@@ -34,7 +42,7 @@ ClipNest 采用 Paste 风格的浅灰工作台、顶部搜索和横向卡片流�
 
 点击面板右上角设置按钮，或从系统托盘右键菜单进入 **设置**，可以配置 Windows **开机自启**、历史保存位置和最大保存数量。标记为 **常用** 的剪切内容会显示标签，不会被自动清理，也不能直接删除；取消常用后才可以删除。
 
-开机启动时 ClipNest 会保持后台运行，不会自动弹出面板；按 **Ctrl + Shift + V** 即可呼出。软件托盘和窗口使用简洁的 **P** 图标。
+开机启动时 ClipNest 会保持后台运行，不会自动弹出面板；按 **Ctrl + Shift + V** 即可呼出。软件托盘和窗口使用简洁的蓝色 **P.** 图标。
 
 ## 本地开发与打包
 

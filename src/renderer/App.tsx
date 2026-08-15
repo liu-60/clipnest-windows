@@ -17,7 +17,6 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -91,37 +90,21 @@ interface VirtualHistoryGridProps {
 }
 
 const GRID_GAP = 14;
-const GRID_ROW_HEIGHT = 274;
-const GRID_CARD_MIN_WIDTH = 205;
+const GRID_CARD_WIDTH = 205;
+const GRID_CARD_HEIGHT = 260;
+const GRID_ITEM_SIZE = GRID_CARD_WIDTH + GRID_GAP;
 
 const VirtualHistoryGrid = forwardRef<VirtualHistoryGridHandle, VirtualHistoryGridProps>(
   function VirtualHistoryGrid({ items, selectedId, onSelect, onCopy, onDelete, onPin }, ref) {
     const scrollRef = useRef<HTMLElement | null>(null);
-    const [columns, setColumns] = useState(1);
     const virtualizer = useVirtualizer({
       count: items.length,
       getScrollElement: () => scrollRef.current,
-      estimateSize: () => GRID_ROW_HEIGHT,
+      estimateSize: () => GRID_ITEM_SIZE,
       overscan: 4,
-      lanes: columns,
+      horizontal: true,
+      getItemKey: (index) => items[index]?.id ?? index,
     });
-
-    useLayoutEffect(() => {
-      const element = scrollRef.current;
-      if (!element) return;
-
-      const updateColumns = () => {
-        const nextColumns = Math.max(
-          1,
-          Math.floor((element.clientWidth + GRID_GAP) / (GRID_CARD_MIN_WIDTH + GRID_GAP)),
-        );
-        setColumns(nextColumns);
-      };
-      updateColumns();
-      const observer = new ResizeObserver(updateColumns);
-      observer.observe(element);
-      return () => observer.disconnect();
-    }, []);
 
     useImperativeHandle(ref, () => ({
       scrollToIndex: (index: number) => virtualizer.scrollToIndex(index, { align: "auto" }),
@@ -134,8 +117,6 @@ const VirtualHistoryGrid = forwardRef<VirtualHistoryGridHandle, VirtualHistoryGr
     }, [items, selectedId, virtualizer]);
 
     const virtualItems = virtualizer.getVirtualItems();
-    const columnWidth = `calc((100% - ${GRID_GAP * (columns - 1)}px) / ${columns})`;
-
     return (
       <section
         className="paste-grid virtual-grid"
@@ -143,18 +124,21 @@ const VirtualHistoryGrid = forwardRef<VirtualHistoryGridHandle, VirtualHistoryGr
         aria-label="剪切板历史"
         ref={scrollRef}
       >
-        <div className="virtual-grid-spacer" style={{ height: virtualizer.getTotalSize() }}>
+        <div
+          className="virtual-grid-spacer"
+          style={{ width: virtualizer.getTotalSize(), height: GRID_CARD_HEIGHT }}
+        >
           {virtualItems.map((virtualItem) => {
             const item = items[virtualItem.index];
             if (!item) return null;
-            const lane = virtualItem.lane ?? virtualItem.index % columns;
             return (
               <div
                 className="virtual-card"
                 key={item.id}
                 style={{
-                  width: columnWidth,
-                  transform: `translate(${`calc(${(lane * 100) / columns}% + ${(lane * GRID_GAP) / columns}px)`}, ${virtualItem.start}px)`,
+                  width: GRID_CARD_WIDTH,
+                  height: GRID_CARD_HEIGHT,
+                  transform: `translateX(${virtualItem.start}px)`,
                 }}
               >
                 <HistoryCard
@@ -274,14 +258,14 @@ function App() {
         return;
       }
 
-      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      if (["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"].includes(event.key)) {
         event.preventDefault();
         if (!filteredItems.length) return;
         const currentIndex = Math.max(
           0,
           filteredItems.findIndex((item) => item.id === selectedItem?.id),
         );
-        const offset = event.key === "ArrowDown" ? 1 : -1;
+        const offset = event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1;
         const nextIndex = (currentIndex + offset + filteredItems.length) % filteredItems.length;
         setSelectedId(filteredItems[nextIndex].id);
         virtualGridRef.current?.scrollToIndex(nextIndex);

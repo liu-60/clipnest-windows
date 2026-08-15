@@ -716,6 +716,52 @@ h2 {
   letter-spacing: 0.12em;
 }
 
+.runtime-section {
+  padding: 0 0 136px;
+}
+
+.runtime-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(260px, 0.7fr);
+  gap: 80px;
+  align-items: end;
+}
+
+.runtime-heading .eyebrow {
+  margin-bottom: 17px;
+}
+
+.runtime-heading > p {
+  max-width: 390px;
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.85;
+}
+
+.runtime-shot-frame {
+  margin: 42px 0 0;
+  padding: 13px;
+  border: 1px solid rgba(142, 163, 255, 0.3);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 24px 65px rgba(4, 8, 29, 0.28);
+}
+
+.runtime-shot {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.runtime-shot-frame figcaption {
+  padding: 11px 4px 0;
+  color: #8f97b2;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
 .download-section {
   display: flex;
   align-items: center;
@@ -786,6 +832,11 @@ h2 {
   .design-section {
     grid-template-columns: 1fr;
     gap: 55px;
+  }
+
+  .runtime-heading {
+    grid-template-columns: 1fr;
+    gap: 25px;
   }
 
   .hero {
@@ -902,6 +953,15 @@ h2 {
   .workflow-section,
   .design-section {
     gap: 43px;
+  }
+
+  .runtime-section {
+    padding-bottom: 90px;
+  }
+
+  .runtime-shot-frame {
+    margin-top: 30px;
+    padding: 8px;
   }
 
   .download-section {
