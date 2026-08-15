@@ -1,6 +1,6 @@
 {
   "name": "clipnest",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A fast, keyboard-first clipboard history for Windows.",
   "main": "dist-electron/main/main.js",
   "author": "ClipNest",
@@ -45,6 +45,7 @@
       "dist-electron/**/*",
       "package.json"
     ],
+    "electronDist": "node_modules/electron/dist",
     "win": {
       "target": [
         {
