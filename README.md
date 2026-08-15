@@ -2,7 +2,7 @@
 
 > 一款面向 Windows 的键盘优先剪切板历史工具，交互参考 macOS Paste。
 
-[下载 Windows 版](https://github.com/liu-60/clipnest-windows/releases/latest/download/ClipNest-1.0.2-windows.zip) · [软件介绍与下载主页](https://liu-60.github.io/clipnest-windows/)
+[下载 Windows 版](https://github.com/liu-60/clipnest-windows/releases/latest/download/ClipNest-1.1.0-windows.zip) · [软件介绍与下载主页](https://liu-60.github.io/clipnest-windows/)
 
 ## 界面设计
 
@@ -30,9 +30,11 @@ ClipNest 采用 Paste 风格的浅灰工作台、顶部搜索和横向卡片流�
 | 激活当前内容 | **Enter** |
 | 关闭面板 | **Esc** |
 
-面板中还支持搜索、文本/链接/图片筛选、固定、删除以及清除未固定历史。
+面板中还支持搜索、文本/链接/图片筛选、常用标签、删除以及清除非收藏历史。列表使用虚拟滚动，历史数量较多时仍保持流畅。
 
-在系统托盘右键菜单中可以随时切换 **开机自启**。开机启动时 ClipNest 会保持后台运行，不会自动弹出面板；按 **Ctrl + Shift + V** 即可呼出。
+点击面板右上角设置按钮，或从系统托盘右键菜单进入 **设置**，可以配置 Windows **开机自启**、历史保存位置和最大保存数量。标记为 **常用** 的剪切内容会显示标签，不会被自动清理，也不能直接删除；取消常用后才可以删除。
+
+开机启动时 ClipNest 会保持后台运行，不会自动弹出面板；按 **Ctrl + Shift + V** 即可呼出。软件托盘和窗口使用简洁的 **P** 图标。
 
 ## 本地开发与打包
 
@@ -51,10 +53,10 @@ pnpm package:windows
 ## 数据与隐私
 
 - 剪切板历史只保存在本机，不上传云端。
-- 数据默认位于 **%APPDATA%/ClipNest/history.json**。
-- 最多保存 100 条历史、总大小约 25 MB；固定项不会被自动清理。
-- 图片内容会以本地 Data URL 形式写入 **%APPDATA%/ClipNest/history.json**，不会上传云端。
-- 开机自启偏好保存在 **%APPDATA%/ClipNest/settings.json**，可从系统托盘右键菜单切换。
+- 数据默认位于 **%APPDATA%/ClipNest/history.json**，也可以在设置页切换到其他文件夹。
+- 默认最多保存 100 条历史，可在设置页调整为 20–2000 条；总大小约 25 MB，常用项不会被自动清理。
+- 图片内容会以本地 Data URL 形式写入当前保存位置的 **history.json**，不会上传云端。
+- 开机自启、保存位置和数量偏好保存在 **%APPDATA%/ClipNest/settings.json**。
 
 ## 说明
 

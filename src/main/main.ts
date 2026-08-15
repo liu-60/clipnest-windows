@@ -2,6 +2,7 @@ import {
   app,
   BrowserWindow,
   clipboard,
+  dialog,
   globalShortcut,
   ipcMain,
   Menu,
@@ -18,21 +19,32 @@ import {
   unlinkSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, join } from "node:path";
-import type { ClipboardItem, ClipboardType } from "../shared/types";
+import { dirname, join, resolve } from "node:path";
+import type {
+  ClipboardItem,
+  ClipboardType,
+  ClipnestSettings,
+  ClipnestSettingsPatch,
+} from "../shared/types";
+import type { OpenDialogOptions } from "electron";
 
-const MAX_HISTORY_ITEMS = 100;
+const DEFAULT_MAX_HISTORY_ITEMS = 100;
+const MIN_MAX_HISTORY_ITEMS = 20;
+const MAX_MAX_HISTORY_ITEMS = 2_000;
 const MAX_HISTORY_BYTES = 25_000_000;
 const POLL_INTERVAL_MS = 450;
 const MAX_STORED_IMAGE_BYTES = 5_000_000;
 const PANEL_WIDTH = 1200;
-const PANEL_HEIGHT = 380;
+const PANEL_HEIGHT = 560;
+const HISTORY_FILE_NAME = "history.json";
 const STARTUP_ARGUMENT = "--hidden";
 const APP_DISPLAY_NAME = "ClipNest";
 
 interface AppSettings {
   startupConfigured: boolean;
   startupEnabled: boolean;
+  storageDirectory: string;
+  maxHistoryItems: number;
 }
 
 let mainWindow: BrowserWindow | null = null;
@@ -40,23 +52,23 @@ let tray: Tray | null = null;
 let isQuitting = false;
 let history: ClipboardItem[] = [];
 let lastClipboardSignature = "";
+let storeDirectory = "";
 let storePath = "";
 let settingsPath = "";
 let appSettings: AppSettings = {
   startupConfigured: false,
   startupEnabled: true,
+  storageDirectory: "",
+  maxHistoryItems: DEFAULT_MAX_HISTORY_ITEMS,
 };
 let startupEnabled = false;
 let pollTimer: NodeJS.Timeout | null = null;
 let blurTimer: NodeJS.Timeout | null = null;
 
-const traySvg = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-    <rect x="3" y="4" width="26" height="24" rx="7" fill="#5B5BD6"/>
-    <rect x="9" y="1" width="14" height="7" rx="3.5" fill="#8E8EE8"/>
-    <rect x="9" y="11" width="14" height="2.5" rx="1.25" fill="#fff" opacity=".95"/>
-    <rect x="9" y="16" width="10" height="2.5" rx="1.25" fill="#fff" opacity=".8"/>
-    <rect x="9" y="21" width="13" height="2.5" rx="1.25" fill="#fff" opacity=".6"/>
+const appIconSvg = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+    <rect width="256" height="256" rx="58" fill="#4f56d8"/>
+    <path d="M78 53h58c45 0 70 22 70 59s-25 59-70 59h-22v32H78V53Zm36 31v56h21c23 0 35-10 35-28s-12-28-35-28h-21Z" fill="#fff"/>
   </svg>`;
 
 function fingerprint(type: ClipboardType, content: string): string {
@@ -74,26 +86,47 @@ function startupLoginItemOptions(): { path: string; args: string[] } {
   };
 }
 
+function defaultStorageDirectory(): string {
+  return join(app.getPath("appData"), "ClipNest");
+}
+
+function clampMaxHistoryItems(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_MAX_HISTORY_ITEMS;
+  return Math.min(MAX_MAX_HISTORY_ITEMS, Math.max(MIN_MAX_HISTORY_ITEMS, Math.round(value)));
+}
+
 function loadAppSettings(): void {
-  settingsPath = join(app.getPath("appData"), "ClipNest", "settings.json");
+  const defaultDirectory = defaultStorageDirectory();
+  settingsPath = join(defaultDirectory, "settings.json");
   appSettings = {
     startupConfigured: false,
     startupEnabled: true,
+    storageDirectory: defaultDirectory,
+    maxHistoryItems: DEFAULT_MAX_HISTORY_ITEMS,
   };
 
-  if (!existsSync(settingsPath)) return;
-
-  try {
-    const parsed = JSON.parse(readFileSync(settingsPath, "utf8")) as Partial<AppSettings>;
-    if (typeof parsed.startupConfigured === "boolean") {
-      appSettings.startupConfigured = parsed.startupConfigured;
+  if (existsSync(settingsPath)) {
+    try {
+      const parsed = JSON.parse(readFileSync(settingsPath, "utf8")) as Partial<AppSettings>;
+      if (typeof parsed.startupConfigured === "boolean") {
+        appSettings.startupConfigured = parsed.startupConfigured;
+      }
+      if (typeof parsed.startupEnabled === "boolean") {
+        appSettings.startupEnabled = parsed.startupEnabled;
+      }
+      if (typeof parsed.storageDirectory === "string" && parsed.storageDirectory.trim()) {
+        appSettings.storageDirectory = resolve(parsed.storageDirectory);
+      }
+      if (typeof parsed.maxHistoryItems === "number") {
+        appSettings.maxHistoryItems = clampMaxHistoryItems(parsed.maxHistoryItems);
+      }
+    } catch (error) {
+      console.warn("ClipNest: unable to read app settings", error);
     }
-    if (typeof parsed.startupEnabled === "boolean") {
-      appSettings.startupEnabled = parsed.startupEnabled;
-    }
-  } catch (error) {
-    console.warn("ClipNest: unable to read app settings", error);
   }
+
+  storeDirectory = resolve(appSettings.storageDirectory);
+  storePath = join(storeDirectory, HISTORY_FILE_NAME);
 }
 
 function saveAppSettings(): void {
@@ -105,6 +138,20 @@ function saveAppSettings(): void {
   } catch (error) {
     console.warn("ClipNest: unable to persist app settings", error);
   }
+}
+
+function getAppSettingsSnapshot(): ClipnestSettings {
+  return {
+    startupSupported: isStartupSupported(),
+    startupEnabled: isStartupSupported() ? startupEnabled : false,
+    storageDirectory: storeDirectory,
+    maxHistoryItems: appSettings.maxHistoryItems,
+  };
+}
+
+function sendSettings(): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.webContents.send("settings:updated", getAppSettingsSnapshot());
 }
 
 function getStartupEnabled(): boolean {
@@ -122,6 +169,7 @@ function setStartupEnabled(enabled: boolean): void {
   if (!isStartupSupported()) {
     startupEnabled = false;
     refreshTrayMenu();
+    sendSettings();
     return;
   }
 
@@ -134,6 +182,7 @@ function setStartupEnabled(enabled: boolean): void {
     });
     startupEnabled = enabled;
     appSettings = {
+      ...appSettings,
       startupConfigured: true,
       startupEnabled: enabled,
     };
@@ -147,12 +196,14 @@ function setStartupEnabled(enabled: boolean): void {
   }
 
   refreshTrayMenu();
+  sendSettings();
 }
 
 function configureStartup(): void {
   loadAppSettings();
   if (!isStartupSupported()) {
     startupEnabled = false;
+    sendSettings();
     return;
   }
 
@@ -180,30 +231,44 @@ function isClipboardItem(value: unknown): value is ClipboardItem {
     typeof item.preview === "string" &&
     typeof item.createdAt === "number" &&
     typeof item.pinned === "boolean" &&
-    typeof item.byteSize === "number"
+    typeof item.byteSize === "number" &&
+    (item.tags === undefined || Array.isArray(item.tags))
   );
 }
 
-function loadHistory(): void {
-  if (!storePath) return;
-
-  for (const candidate of [storePath, `${storePath}.bak`]) {
+function readHistoryFromPath(path: string): ClipboardItem[] {
+  for (const candidate of [path, `${path}.bak`]) {
     if (!existsSync(candidate)) continue;
     try {
       const parsed = JSON.parse(readFileSync(candidate, "utf8")) as unknown;
       if (!Array.isArray(parsed)) continue;
-      history = parsed
+      return parsed
         .filter(isClipboardItem)
-        .sort((left, right) => right.createdAt - left.createdAt)
-        .slice(0, MAX_HISTORY_ITEMS);
-      trimHistory();
-      return;
+        .sort((left, right) => right.createdAt - left.createdAt);
     } catch {
       // Try the backup before falling back to an empty history.
     }
   }
 
-  history = [];
+  return [];
+}
+
+function loadHistory(): void {
+  if (!storePath) return;
+  history = readHistoryFromPath(storePath);
+  trimHistory();
+}
+
+function mergeHistories(primary: ClipboardItem[], secondary: ClipboardItem[]): ClipboardItem[] {
+  const seen = new Set<string>();
+  return [...primary, ...secondary]
+    .filter((item) => {
+      const key = `${item.type}:${item.content}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((left, right) => right.createdAt - left.createdAt);
 }
 
 function saveHistory(): void {
@@ -240,7 +305,7 @@ function trimHistory(): void {
   const ordered = [...history].sort((left, right) => right.createdAt - left.createdAt);
   const pinned = ordered.filter((item) => item.pinned);
   const unpinned = ordered.filter((item) => !item.pinned);
-  const unpinnedLimit = Math.max(0, MAX_HISTORY_ITEMS - pinned.length);
+  const unpinnedLimit = Math.max(0, appSettings.maxHistoryItems - pinned.length);
   history = [...pinned, ...unpinned.slice(0, unpinnedLimit)].sort(
     (left, right) => right.createdAt - left.createdAt,
   );
@@ -255,6 +320,83 @@ function trimHistory(): void {
     totalBytes -= history[oldestUnpinnedIndex].byteSize;
     history.splice(oldestUnpinnedIndex, 1);
   }
+}
+
+function setMaxHistoryItems(value: number): void {
+  const nextValue = clampMaxHistoryItems(value);
+  if (appSettings.maxHistoryItems === nextValue) return;
+
+  appSettings = { ...appSettings, maxHistoryItems: nextValue };
+  trimHistory();
+  saveAppSettings();
+  saveHistory();
+  sendHistory();
+  sendSettings();
+}
+
+function setStorageDirectory(directory: string): void {
+  const nextDirectory = resolve(directory);
+  mkdirSync(nextDirectory, { recursive: true });
+  const nextPath = join(nextDirectory, HISTORY_FILE_NAME);
+  const previousPath = storePath;
+  const samePath = previousPath && resolve(previousPath).toLowerCase() === nextPath.toLowerCase();
+
+  if (samePath) return;
+
+  const targetAlreadyExists = existsSync(nextPath);
+  if (targetAlreadyExists) {
+    history = mergeHistories(history, readHistoryFromPath(nextPath));
+  }
+
+  storeDirectory = nextDirectory;
+  storePath = nextPath;
+  appSettings = { ...appSettings, storageDirectory: nextDirectory };
+  trimHistory();
+  saveHistory();
+  saveAppSettings();
+
+  // Only remove the old active file after the new location has been written.
+  // If the destination already had data, keep the old copy as a safety net.
+  if (!targetAlreadyExists && previousPath && existsSync(nextPath) && existsSync(previousPath)) {
+    try {
+      unlinkSync(previousPath);
+    } catch (error) {
+      console.warn("ClipNest: unable to remove old history location", error);
+    }
+  }
+
+  sendHistory();
+  sendSettings();
+}
+
+function updateAppSettings(patch: unknown): ClipnestSettings {
+  if (!patch || typeof patch !== "object") return getAppSettingsSnapshot();
+  const nextPatch = patch as ClipnestSettingsPatch;
+
+  if (typeof nextPatch.startupEnabled === "boolean") {
+    setStartupEnabled(nextPatch.startupEnabled);
+  }
+  if (typeof nextPatch.maxHistoryItems === "number") {
+    setMaxHistoryItems(nextPatch.maxHistoryItems);
+  }
+
+  return getAppSettingsSnapshot();
+}
+
+async function chooseStorageDirectory(): Promise<ClipnestSettings | null> {
+  const options: OpenDialogOptions = {
+    title: "选择剪切板历史保存位置",
+    buttonLabel: "使用此文件夹",
+    properties: ["openDirectory", "createDirectory"],
+  };
+  const window = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+  const result = window
+    ? await dialog.showOpenDialog(window, options)
+    : await dialog.showOpenDialog(options);
+  if (result.canceled || !result.filePaths[0]) return null;
+
+  setStorageDirectory(result.filePaths[0]);
+  return getAppSettingsSnapshot();
 }
 
 function addHistoryItem(item: ClipboardItem): void {
@@ -311,6 +453,7 @@ function readClipboardImage(): { item: ClipboardItem; signature: string } | null
       preview: `图片 ${size.width} × ${size.height}`,
       createdAt: Date.now(),
       pinned: false,
+      tags: [],
       byteSize: bytes.byteLength,
       width: size.width,
       height: size.height,
@@ -344,6 +487,7 @@ function readClipboardItem(): { item: ClipboardItem; signature: string } | null 
         preview: previewText(text),
         createdAt: Date.now(),
         pinned: false,
+        tags: [],
         byteSize: Buffer.byteLength(text, "utf8"),
       },
     };
@@ -400,13 +544,23 @@ function showPanel(): void {
   mainWindow.webContents.send("panel:shown");
 }
 
+function showSettings(): void {
+  showPanel();
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.webContents.send("navigation:settings");
+}
+
 function createMainWindow(): void {
   const preloadPath = join(__dirname, "../preload/preload.js");
+  const windowIcon = nativeImage.createFromDataURL(
+    `data:image/svg+xml;base64,${Buffer.from(appIconSvg).toString("base64")}`,
+  );
   mainWindow = new BrowserWindow({
     width: PANEL_WIDTH,
     height: PANEL_HEIGHT,
+    icon: windowIcon,
     minWidth: 960,
-    minHeight: 330,
+    minHeight: 430,
     show: false,
     frame: false,
     resizable: true,
@@ -450,7 +604,10 @@ function createMainWindow(): void {
     void mainWindow.loadFile(join(__dirname, "../../dist/index.html"));
   }
 
-  mainWindow.webContents.on("did-finish-load", sendHistory);
+  mainWindow.webContents.on("did-finish-load", () => {
+    sendHistory();
+    sendSettings();
+  });
   mainWindow.once("ready-to-show", () => {
     if (process.argv.includes("--show")) setTimeout(showPanel, 80);
   });
@@ -464,8 +621,8 @@ function clearUnpinnedHistory(): void {
 
 function createTray(): void {
   const icon = nativeImage.createFromDataURL(
-    `data:image/svg+xml;base64,${Buffer.from(traySvg).toString("base64")}`,
-  );
+    `data:image/svg+xml;base64,${Buffer.from(appIconSvg).toString("base64")}`,
+  ).resize({ width: 18, height: 18 });
   tray = new Tray(icon);
   tray.setToolTip("ClipNest 剪切板");
   tray.setContextMenu(buildTrayMenu());
@@ -475,6 +632,7 @@ function createTray(): void {
 function buildTrayMenu(): Menu {
   return Menu.buildFromTemplate([
       { label: "打开 ClipNest", click: showPanel },
+      { label: "设置", click: showSettings },
       {
         label: "开机自启",
         type: "checkbox",
@@ -482,7 +640,7 @@ function buildTrayMenu(): Menu {
         enabled: isStartupSupported(),
         click: () => setStartupEnabled(!startupEnabled),
       },
-      { label: "清除未固定历史", click: clearUnpinnedHistory },
+      { label: "清除非收藏历史", click: clearUnpinnedHistory },
       { type: "separator" },
       { label: "退出 ClipNest", click: () => { isQuitting = true; app.quit(); } },
   ]);
@@ -495,6 +653,9 @@ function refreshTrayMenu(): void {
 
 function registerIpc(): void {
   ipcMain.handle("history:get", () => history);
+  ipcMain.handle("settings:get", () => getAppSettingsSnapshot());
+  ipcMain.handle("settings:update", (_event, patch: unknown) => updateAppSettings(patch));
+  ipcMain.handle("settings:storage:choose", chooseStorageDirectory);
   ipcMain.handle("history:copy", (_event, id: string) => {
     const item = history.find((candidate) => candidate.id === id);
     if (!item) return;
@@ -512,13 +673,21 @@ function registerIpc(): void {
     hidePanel();
   });
   ipcMain.handle("history:delete", (_event, id: string) => {
-    history = history.filter((item) => item.id !== id);
+    const item = history.find((candidate) => candidate.id === id);
+    if (!item || item.pinned) return;
+    history = history.filter((candidate) => candidate.id !== id);
     saveHistory();
     sendHistory();
   });
   ipcMain.handle("history:pin", (_event, id: string) => {
     history = history.map((item) =>
-      item.id === id ? { ...item, pinned: !item.pinned } : item,
+      item.id === id
+        ? {
+            ...item,
+            pinned: !item.pinned,
+            tags: !item.pinned ? ["常用"] : [],
+          }
+        : item,
     );
     saveHistory();
     sendHistory();
@@ -539,9 +708,8 @@ if (!gotLock) {
     app.setAppUserModelId("com.clipnest.app");
     // Keep the data location stable even when the app is launched from a
     // portable folder or the executable is rebuilt with a different name.
-    storePath = join(app.getPath("appData"), "ClipNest", "history.json");
-    loadHistory();
     configureStartup();
+    loadHistory();
     createMainWindow();
     createTray();
     registerIpc();
