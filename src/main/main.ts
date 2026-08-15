@@ -27,6 +27,13 @@ const POLL_INTERVAL_MS = 450;
 const MAX_STORED_IMAGE_BYTES = 5_000_000;
 const PANEL_WIDTH = 1200;
 const PANEL_HEIGHT = 380;
+const STARTUP_ARGUMENT = "--hidden";
+const APP_DISPLAY_NAME = "ClipNest";
+
+interface AppSettings {
+  startupConfigured: boolean;
+  startupEnabled: boolean;
+}
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -34,6 +41,12 @@ let isQuitting = false;
 let history: ClipboardItem[] = [];
 let lastClipboardSignature = "";
 let storePath = "";
+let settingsPath = "";
+let appSettings: AppSettings = {
+  startupConfigured: false,
+  startupEnabled: true,
+};
+let startupEnabled = false;
 let pollTimer: NodeJS.Timeout | null = null;
 let blurTimer: NodeJS.Timeout | null = null;
 
@@ -48,6 +61,105 @@ const traySvg = `
 
 function fingerprint(type: ClipboardType, content: string): string {
   return createHash("sha256").update(`${type}:${content}`).digest("hex");
+}
+
+function isStartupSupported(): boolean {
+  return process.platform === "win32" && app.isPackaged;
+}
+
+function startupLoginItemOptions(): { path: string; args: string[] } {
+  return {
+    path: process.execPath,
+    args: [STARTUP_ARGUMENT],
+  };
+}
+
+function loadAppSettings(): void {
+  settingsPath = join(app.getPath("appData"), "ClipNest", "settings.json");
+  appSettings = {
+    startupConfigured: false,
+    startupEnabled: true,
+  };
+
+  if (!existsSync(settingsPath)) return;
+
+  try {
+    const parsed = JSON.parse(readFileSync(settingsPath, "utf8")) as Partial<AppSettings>;
+    if (typeof parsed.startupConfigured === "boolean") {
+      appSettings.startupConfigured = parsed.startupConfigured;
+    }
+    if (typeof parsed.startupEnabled === "boolean") {
+      appSettings.startupEnabled = parsed.startupEnabled;
+    }
+  } catch (error) {
+    console.warn("ClipNest: unable to read app settings", error);
+  }
+}
+
+function saveAppSettings(): void {
+  if (!settingsPath) return;
+
+  try {
+    mkdirSync(dirname(settingsPath), { recursive: true });
+    writeFileSync(settingsPath, JSON.stringify(appSettings, null, 2), "utf8");
+  } catch (error) {
+    console.warn("ClipNest: unable to persist app settings", error);
+  }
+}
+
+function getStartupEnabled(): boolean {
+  if (!isStartupSupported()) return false;
+
+  try {
+    return app.getLoginItemSettings(startupLoginItemOptions()).openAtLogin;
+  } catch (error) {
+    console.warn("ClipNest: unable to read Windows startup setting", error);
+    return false;
+  }
+}
+
+function setStartupEnabled(enabled: boolean): void {
+  if (!isStartupSupported()) {
+    startupEnabled = false;
+    refreshTrayMenu();
+    return;
+  }
+
+  try {
+    app.setLoginItemSettings({
+      ...startupLoginItemOptions(),
+      openAtLogin: enabled,
+      enabled,
+      name: APP_DISPLAY_NAME,
+    });
+    startupEnabled = enabled;
+    appSettings = {
+      startupConfigured: true,
+      startupEnabled: enabled,
+    };
+    saveAppSettings();
+
+    if (getStartupEnabled() !== enabled) {
+      console.warn(`ClipNest: Windows startup setting did not apply (requested=${enabled})`);
+    }
+  } catch (error) {
+    console.warn("ClipNest: unable to update Windows startup setting", error);
+  }
+
+  refreshTrayMenu();
+}
+
+function configureStartup(): void {
+  loadAppSettings();
+  if (!isStartupSupported()) {
+    startupEnabled = false;
+    return;
+  }
+
+  const preferredState = appSettings.startupConfigured
+    ? appSettings.startupEnabled
+    : true;
+  setStartupEnabled(preferredState);
 }
 
 function isLink(text: string): boolean {
@@ -356,15 +468,29 @@ function createTray(): void {
   );
   tray = new Tray(icon);
   tray.setToolTip("ClipNest 剪切板");
-  tray.setContextMenu(
-    Menu.buildFromTemplate([
+  tray.setContextMenu(buildTrayMenu());
+  tray.on("double-click", showPanel);
+}
+
+function buildTrayMenu(): Menu {
+  return Menu.buildFromTemplate([
       { label: "打开 ClipNest", click: showPanel },
+      {
+        label: "开机自启",
+        type: "checkbox",
+        checked: startupEnabled,
+        enabled: isStartupSupported(),
+        click: () => setStartupEnabled(!startupEnabled),
+      },
       { label: "清除未固定历史", click: clearUnpinnedHistory },
       { type: "separator" },
       { label: "退出 ClipNest", click: () => { isQuitting = true; app.quit(); } },
-    ]),
-  );
-  tray.on("double-click", showPanel);
+  ]);
+}
+
+function refreshTrayMenu(): void {
+  if (!tray || tray.isDestroyed()) return;
+  tray.setContextMenu(buildTrayMenu());
 }
 
 function registerIpc(): void {
@@ -405,7 +531,9 @@ const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
 } else {
-  app.on("second-instance", showPanel);
+  app.on("second-instance", (_event, commandLine) => {
+    if (!commandLine.includes(STARTUP_ARGUMENT)) showPanel();
+  });
 
   void app.whenReady().then(() => {
     app.setAppUserModelId("com.clipnest.app");
@@ -413,6 +541,7 @@ if (!gotLock) {
     // portable folder or the executable is rebuilt with a different name.
     storePath = join(app.getPath("appData"), "ClipNest", "history.json");
     loadHistory();
+    configureStartup();
     createMainWindow();
     createTray();
     registerIpc();
