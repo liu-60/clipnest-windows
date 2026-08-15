@@ -710,6 +710,7 @@ if (!gotLock) {
     // portable folder or the executable is rebuilt with a different name.
     configureStartup();
     loadHistory();
+    configureStartup();
     createMainWindow();
     createTray();
     registerIpc();
