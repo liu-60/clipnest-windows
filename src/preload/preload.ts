@@ -4,6 +4,7 @@ import type {
   ClipnestApi,
   ClipnestSettings,
   ClipnestSettingsPatch,
+  UpdateInfo,
 } from "../shared/types";
 
 const api: ClipnestApi = {
@@ -16,6 +17,11 @@ const api: ClipnestApi = {
   getSettings: () => ipcRenderer.invoke("settings:get"),
   updateSettings: (patch: ClipnestSettingsPatch) => ipcRenderer.invoke("settings:update", patch),
   chooseStorageDirectory: () => ipcRenderer.invoke("settings:storage:choose"),
+  syncCloud: () => ipcRenderer.invoke("cloud:sync"),
+  getUpdateInfo: () => ipcRenderer.invoke("updates:get"),
+  checkForUpdates: () => ipcRenderer.invoke("updates:check"),
+  downloadUpdate: () => ipcRenderer.invoke("updates:download"),
+  installUpdate: () => ipcRenderer.invoke("updates:install"),
   onHistoryUpdated: (callback: (items: ClipboardItem[]) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, items: ClipboardItem[]) => callback(items);
     ipcRenderer.on("history:updated", listener);
@@ -25,6 +31,11 @@ const api: ClipnestApi = {
     const listener = (_event: Electron.IpcRendererEvent, settings: ClipnestSettings) => callback(settings);
     ipcRenderer.on("settings:updated", listener);
     return () => ipcRenderer.removeListener("settings:updated", listener);
+  },
+  onUpdateState: (callback: (update: UpdateInfo) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, update: UpdateInfo) => callback(update);
+    ipcRenderer.on("updates:state", listener);
+    return () => ipcRenderer.removeListener("updates:state", listener);
   },
   onPanelShown: (callback: () => void) => {
     const listener = () => callback();

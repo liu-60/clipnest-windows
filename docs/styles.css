@@ -479,7 +479,7 @@ h2 {
 
 .feature-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 15px;
 }
 
@@ -496,6 +496,7 @@ h2 {
 .feature-blue { background: linear-gradient(150deg, rgba(77, 102, 212, 0.68), rgba(33, 43, 86, 0.82)); }
 .feature-coral { background: linear-gradient(150deg, rgba(180, 80, 84, 0.72), rgba(64, 35, 67, 0.82)); }
 .feature-mint { background: linear-gradient(150deg, rgba(45, 126, 123, 0.68), rgba(27, 55, 82, 0.82)); }
+.feature-cloud { background: linear-gradient(150deg, rgba(45, 91, 150, 0.72), rgba(22, 37, 73, 0.86)); }
 
 .feature-top {
   display: flex;
@@ -584,6 +585,28 @@ h2 {
   transform: rotate(-18deg);
 }
 
+.feature-cloud-mark {
+  position: absolute;
+  right: 25px;
+  bottom: 27px;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 67px;
+}
+
+.feature-cloud-mark span {
+  display: block;
+  width: 15px;
+  border-radius: 6px 6px 2px 2px;
+  background: linear-gradient(180deg, #9fc3ff, #4778df);
+  box-shadow: 0 8px 22px rgba(71, 120, 223, 0.32);
+}
+
+.feature-cloud-mark span:nth-child(1) { height: 34px; opacity: 0.58; }
+.feature-cloud-mark span:nth-child(2) { height: 58px; }
+.feature-cloud-mark span:nth-child(3) { height: 44px; opacity: 0.78; }
+
 .workflow-section {
   display: grid;
   grid-template-columns: 0.9fr 1.1fr;
@@ -591,6 +614,102 @@ h2 {
   align-items: center;
   padding: 104px 0;
   border-top: 1px solid var(--line);
+}
+
+.cloud-section {
+  display: grid;
+  grid-template-columns: 0.78fr 1.22fr;
+  gap: 88px;
+  align-items: center;
+  padding: 104px 0;
+  border-top: 1px solid var(--line);
+}
+
+.cloud-copy > p:not(.eyebrow) {
+  max-width: 390px;
+  margin: 24px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+.cloud-panel {
+  padding: 28px;
+  border: 1px solid rgba(142, 163, 255, 0.28);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(92, 119, 224, 0.18), rgba(255, 255, 255, 0.04));
+  box-shadow: 0 22px 52px rgba(4, 8, 29, 0.2);
+}
+
+.cloud-flow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.cloud-flow > div {
+  min-height: 96px;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(11, 16, 37, 0.42);
+}
+
+.cloud-flow strong,
+.cloud-flow small {
+  display: block;
+}
+
+.cloud-flow strong {
+  color: #eef2ff;
+  font-size: 13px;
+}
+
+.cloud-flow small {
+  margin-top: 11px;
+  color: #8f9bc0;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.cloud-flow > span {
+  color: var(--blue-bright);
+  font-size: 20px;
+}
+
+.cloud-flow .cloud-flow-accent {
+  border-color: rgba(145, 169, 255, 0.52);
+  background: rgba(107, 140, 255, 0.18);
+}
+
+.cloud-points {
+  display: grid;
+  gap: 0;
+  margin-top: 23px;
+  border-top: 1px solid var(--line);
+}
+
+.cloud-points > div {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 12px;
+  align-items: center;
+  min-height: 54px;
+  border-bottom: 1px solid var(--line);
+}
+
+.cloud-points span {
+  color: var(--blue-bright);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.cloud-points p {
+  margin: 0;
+  color: #c3cbe3;
+  font-size: 11px;
 }
 
 .workflow-copy > p:last-child,
@@ -829,9 +948,14 @@ h2 {
 @media (max-width: 920px) {
   .hero,
   .workflow-section,
-  .design-section {
+  .design-section,
+  .cloud-section {
     grid-template-columns: 1fr;
     gap: 55px;
+  }
+
+  .feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .runtime-heading {
@@ -851,7 +975,8 @@ h2 {
   }
 
   .workflow-section,
-  .design-section {
+  .design-section,
+  .cloud-section {
     padding-top: 84px;
     padding-bottom: 84px;
   }
@@ -951,8 +1076,22 @@ h2 {
   }
 
   .workflow-section,
-  .design-section {
+  .design-section,
+  .cloud-section {
     gap: 43px;
+  }
+
+  .cloud-panel {
+    padding: 18px;
+  }
+
+  .cloud-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .cloud-flow > span {
+    justify-self: center;
+    transform: rotate(90deg);
   }
 
   .runtime-section {

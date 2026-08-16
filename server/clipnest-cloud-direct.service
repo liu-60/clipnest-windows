@@ -1,0 +1,26 @@
+[Unit]
+Description=ClipNest encrypted cloud snapshot service (direct HTTP)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=clipnest
+Group=clipnest
+WorkingDirectory=/opt/clipnest-cloud
+Environment=NODE_ENV=production
+Environment=PORT=19132
+Environment=HOST=0.0.0.0
+Environment=DATA_DIR=/var/lib/clipnest-cloud/data
+Environment=PROJECTS_FILE=/var/lib/clipnest-cloud/projects.json
+ExecStart=/usr/bin/node /opt/clipnest-cloud/server.mjs
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/clipnest-cloud
+
+[Install]
+WantedBy=multi-user.target

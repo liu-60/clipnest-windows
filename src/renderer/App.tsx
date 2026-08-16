@@ -22,7 +22,7 @@ import {
   useState,
 } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import type { ClipboardItem, ClipboardType, ClipnestSettings } from "../shared/types";
+import type { ClipboardItem, ClipboardType, ClipnestSettings, UpdateInfo } from "../shared/types";
 import SettingsPage from "./SettingsPage";
 
 type Filter = "all" | "favorite" | ClipboardType;
@@ -118,44 +118,46 @@ const VirtualHistoryGrid = forwardRef<VirtualHistoryGridHandle, VirtualHistoryGr
 
     const virtualItems = virtualizer.getVirtualItems();
     return (
-      <section
-        className="paste-grid virtual-grid"
-        role="listbox"
-        aria-label="剪切板历史"
-        ref={scrollRef}
-      >
-        <div
-          className="virtual-grid-spacer"
-          style={{ width: virtualizer.getTotalSize(), height: GRID_CARD_HEIGHT }}
+      <div className="grid-shell">
+        <section
+          className="paste-grid virtual-grid"
+          role="listbox"
+          aria-label="剪切板历史"
+          ref={scrollRef}
         >
-          {virtualItems.map((virtualItem) => {
-            const item = items[virtualItem.index];
-            if (!item) return null;
-            return (
-              <div
-                className="virtual-card"
-                key={item.id}
-                style={{
-                  width: GRID_CARD_WIDTH,
-                  height: GRID_CARD_HEIGHT,
-                  transform: `translateX(${virtualItem.start}px)`,
-                }}
-              >
-                <HistoryCard
-                  item={item}
-                  index={virtualItem.index}
-                  selected={item.id === selectedId}
-                  onSelect={() => onSelect(item.id)}
-                  onCopy={() => onCopy(item)}
-                  onDelete={() => onDelete(item)}
-                  onPin={() => onPin(item)}
-                />
-              </div>
-            );
-          })}
-        </div>
+          <div
+            className="virtual-grid-spacer"
+            style={{ width: virtualizer.getTotalSize(), height: GRID_CARD_HEIGHT }}
+          >
+            {virtualItems.map((virtualItem) => {
+              const item = items[virtualItem.index];
+              if (!item) return null;
+              return (
+                <div
+                  className="virtual-card"
+                  key={item.id}
+                  style={{
+                    width: GRID_CARD_WIDTH,
+                    height: GRID_CARD_HEIGHT,
+                    transform: `translateX(${virtualItem.start}px)`,
+                  }}
+                >
+                  <HistoryCard
+                    item={item}
+                    index={virtualItem.index}
+                    selected={item.id === selectedId}
+                    onSelect={() => onSelect(item.id)}
+                    onCopy={() => onCopy(item)}
+                    onDelete={() => onDelete(item)}
+                    onPin={() => onPin(item)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </section>
         <div className="grid-hint"><kbd>↑</kbd><kbd>↓</kbd> 选择 <span>·</span> <kbd>↵</kbd> 复制</div>
-      </section>
+      </div>
     );
   },
 );
@@ -163,6 +165,7 @@ const VirtualHistoryGrid = forwardRef<VirtualHistoryGridHandle, VirtualHistoryGr
 function App() {
   const [items, setItems] = useState<ClipboardItem[]>([]);
   const [settings, setSettings] = useState<ClipnestSettings | null>(null);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("history");
   const [activeFilter, setActiveFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
@@ -178,7 +181,8 @@ function App() {
       const matchesFilter =
         activeFilter === "all" ||
         (activeFilter === "favorite" ? item.pinned : item.type === activeFilter);
-      const searchableText = `${item.content} ${item.preview} ${(item.tags ?? []).join(" ")}`.toLowerCase();
+      const searchableContent = item.type === "image" ? item.preview : item.content;
+      const searchableText = `${searchableContent} ${(item.tags ?? []).join(" ")}`.toLowerCase();
       return matchesFilter && (!normalizedQuery || searchableText.includes(normalizedQuery));
     });
   }, [activeFilter, items, query]);
@@ -204,18 +208,25 @@ function App() {
   );
 
   useEffect(() => {
-    void Promise.all([window.clipnest.getHistory(), window.clipnest.getSettings()]).then(
-      ([nextItems, nextSettings]) => {
+    void Promise.all([
+      window.clipnest.getHistory(),
+      window.clipnest.getSettings(),
+      window.clipnest.getUpdateInfo(),
+    ]).then(
+      ([nextItems, nextSettings, nextUpdateInfo]) => {
         setItems(nextItems);
         setSettings(nextSettings);
+        setUpdateInfo(nextUpdateInfo);
       },
     );
     const removeHistoryListener = window.clipnest.onHistoryUpdated((nextItems) => setItems(nextItems));
     const removeSettingsListener = window.clipnest.onSettingsUpdated((nextSettings) => setSettings(nextSettings));
+    const removeUpdateListener = window.clipnest.onUpdateState((nextUpdateInfo) => setUpdateInfo(nextUpdateInfo));
     const removeNavigateListener = window.clipnest.onNavigateSettings(() => setViewMode("settings"));
     return () => {
       removeHistoryListener();
       removeSettingsListener();
+      removeUpdateListener();
       removeNavigateListener();
     };
   }, []);
@@ -257,6 +268,8 @@ function App() {
         searchRef.current?.focus();
         return;
       }
+
+      if (isInput) return;
 
       if (["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"].includes(event.key)) {
         event.preventDefault();
@@ -316,6 +329,7 @@ function App() {
       {viewMode === "settings" ? (
         <SettingsPage
           settings={settings}
+          updateInfo={updateInfo}
           onBack={() => setViewMode("history")}
           onSettingsChange={setSettings}
           onNotice={showNotice}

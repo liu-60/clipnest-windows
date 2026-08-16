@@ -1,0 +1,5 @@
+# 正式公网部署：使用域名，不要把 IP 直接当作 HTTPS 证书地址。
+cloud.example.com {
+    reverse_proxy /healthz 127.0.0.1:19132
+    reverse_proxy /v1/* 127.0.0.1:19132
+}

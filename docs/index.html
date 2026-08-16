@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#111832" />
     <meta
       name="description"
-      content="ClipNest：面向 Windows 的 Paste 风格剪切板历史工具，支持设置页、常用内容保护与虚拟滚动。"
+      content="ClipNest：面向 Windows 的 Paste 风格剪切板历史工具，支持配置页、常用内容保护、虚拟滚动、可选加密云端同步和一键升级。"
     />
     <title>ClipNest · Windows 剪切板历史</title>
     <link rel="stylesheet" href="./styles.css" />
@@ -22,12 +22,13 @@
         </a>
         <nav class="nav-links" aria-label="页面导航">
           <a href="#features">功能</a>
+          <a href="#cloud">云端</a>
           <a href="#how-it-works">使用方式</a>
           <a href="#design">设计</a>
           <a href="#runtime">实机截图</a>
           <a href="https://github.com/liu-60/clipnest-windows" rel="noreferrer">GitHub</a>
         </nav>
-        <a class="nav-button" href="https://github.com/liu-60/clipnest-windows/releases/latest/download/ClipNest-1.1.1-windows.zip">
+        <a class="nav-button" href="https://github.com/liu-60/clipnest-windows/releases/latest/download/ClipNest-1.1.3-windows.zip">
           下载 Windows 版
         </a>
       </header>
@@ -39,10 +40,10 @@
             <h1>让复制过的内容，<em>随时可见。</em></h1>
             <p class="hero-text">
               ClipNest 把你复制过的文本、链接和图片整理成一条清晰的时间线。
-              按下一个快捷键，找到它，再粘贴回正在工作的地方；常用内容还能被保护下来。
+              按下一个快捷键，找到它，再粘贴回正在工作的地方；常用内容还能被保护下来。需要时，在配置页接入自己的云端服务并检查版本更新。
             </p>
             <div class="hero-actions">
-              <a class="primary-button" href="https://github.com/liu-60/clipnest-windows/releases/latest/download/ClipNest-1.1.1-windows.zip">
+              <a class="primary-button" href="https://github.com/liu-60/clipnest-windows/releases/latest/download/ClipNest-1.1.3-windows.zip">
                 下载 ClipNest <span>→</span>
               </a>
               <a class="secondary-button" href="https://github.com/liu-60/clipnest-windows" rel="noreferrer">
@@ -51,7 +52,7 @@
             </div>
             <div class="hero-note">
               <span class="status-dot"></span>
-              Windows x64 · 免安装 ZIP · 本地保存
+              Windows x64 · 免安装 ZIP · 本地优先 · 可选云端
             </div>
           </div>
 
@@ -89,7 +90,7 @@
         <section class="signal-row" aria-label="产品特性概览">
           <div><strong>100</strong><span>条历史容量</span></div>
           <div><strong>3</strong><span>种内容类型</span></div>
-          <div><strong>0</strong><span>云端上传</span></div>
+          <div><strong>0</strong><span>默认云端上传</span></div>
           <div class="signal-copy">复制不再消失，<br />只是在等你再次需要。</div>
         </section>
 
@@ -114,8 +115,14 @@
             <article class="feature-card feature-mint">
               <div class="feature-top"><span class="feature-index">03</span><span class="feature-type">SETTINGS</span></div>
               <h3>配置，随心保存</h3>
-              <p>在设置页调整 Windows 开机自启、历史保存位置和最大保存数量；标记为常用的剪切内容跳过自动清理，长列表使用虚拟滚动保持流畅。</p>
+              <p>在配置页调整 Windows 开机自启、历史保存位置、最大保存数量和版本升级；标记为常用的剪切内容跳过自动清理，长列表使用虚拟滚动保持流畅。</p>
               <div class="feature-lock">⌁</div>
+            </article>
+            <article class="feature-card feature-cloud">
+              <div class="feature-top"><span class="feature-index">04</span><span class="feature-type">CLOUD</span></div>
+              <h3>同步，保持掌控</h3>
+              <p>历史先在本地使用 AES-256-GCM 加密，再按项目令牌同步；服务端只保存密文，不同项目目录彼此隔离。</p>
+              <div class="feature-cloud-mark"><span></span><span></span><span></span></div>
             </article>
           </div>
         </section>
@@ -147,6 +154,29 @@
           </div>
         </section>
 
+        <section class="cloud-section" id="cloud">
+          <div class="cloud-copy">
+            <p class="eyebrow">OPTIONAL CLOUD STORAGE</p>
+            <h2>跨设备同步，<br /><span>密文先出门。</span></h2>
+            <p>云端不是默认开启的。你可以在配置页填写自己的服务地址、项目标识和令牌；ClipNest 先在本地加密，再上传快照。</p>
+            <a class="text-link" href="https://github.com/liu-60/clipnest-windows/blob/main/docs/cloud-storage.md" rel="noreferrer">查看云端配置文档 <span>↗</span></a>
+          </div>
+          <div class="cloud-panel">
+            <div class="cloud-flow" aria-label="云端同步流程">
+              <div><strong>本地历史</strong><small>Windows 安全存储令牌</small></div>
+              <span>→</span>
+              <div class="cloud-flow-accent"><strong>AES-256-GCM</strong><small>客户端加密快照</small></div>
+              <span>→</span>
+              <div><strong>项目目录</strong><small>密文与项目隔离</small></div>
+            </div>
+            <div class="cloud-points">
+              <div><span>01</span><p>默认关闭，历史可以始终只留在本机。</p></div>
+              <div><span>02</span><p>令牌只用于项目鉴权，服务端保存哈希。</p></div>
+              <div><span>03</span><p>配置页可立即同步，也能检查 Release 更新并一键升级。</p></div>
+            </div>
+          </div>
+        </section>
+
         <section class="runtime-section" id="runtime">
           <div class="runtime-heading">
             <div>
@@ -167,17 +197,17 @@
             <h2>把下一次粘贴，<br /><span>变得更从容。</span></h2>
           </div>
           <div class="download-action">
-            <a class="primary-button light-button" href="https://github.com/liu-60/clipnest-windows/releases/latest/download/ClipNest-1.1.1-windows.zip">
+            <a class="primary-button light-button" href="https://github.com/liu-60/clipnest-windows/releases/latest/download/ClipNest-1.1.3-windows.zip">
               下载 Windows 版 <span>↓</span>
             </a>
-            <p>v1.1.1 · Windows x64 · ZIP 免安装 · 设置页 · 常用保护 · 虚拟滚动</p>
+            <p>v1.1.3 · Windows x64 · ZIP 免安装 · 配置页 · 云端加密 · 一键升级</p>
           </div>
         </section>
       </main>
 
       <footer class="footer">
         <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span>ClipNest</span></a>
-        <span>键盘优先 · 本地优先</span>
+        <span>键盘优先 · 本地优先 · 可选云端</span>
         <span>MIT License</span>
       </footer>
     </div>

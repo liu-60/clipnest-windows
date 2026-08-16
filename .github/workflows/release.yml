@@ -32,12 +32,23 @@ jobs:
       - name: Build portable Windows app
         run: pnpm package:windows
 
+      - name: Read package version
+        id: package
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          "version=$version" >> $env:GITHUB_OUTPUT
+
       - name: Create ZIP package
         shell: pwsh
-        run: Compress-Archive -Path release\win-unpacked\* -DestinationPath ClipNest-1.1.1-windows.zip -CompressionLevel Optimal
+        run: Compress-Archive -Path release\win-unpacked\* -DestinationPath "ClipNest-${{ steps.package.outputs.version }}-windows.zip" -CompressionLevel Optimal
 
-      - name: Upload ZIP to the release
+      - name: Upload installer, metadata and ZIP to the release
         uses: softprops/action-gh-release@v2
         with:
-          files: ClipNest-1.1.1-windows.zip
+          files: |
+            ClipNest-${{ steps.package.outputs.version }}-windows.zip
+            release/*.exe
+            release/*.yml
+            release/*.blockmap
           fail_on_unmatched_files: true
