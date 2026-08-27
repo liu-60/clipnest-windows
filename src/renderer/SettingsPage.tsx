@@ -40,6 +40,7 @@ export default function SettingsPage({
   const [cloudEndpoint, setCloudEndpoint] = useState("");
   const [cloudProjectId, setCloudProjectId] = useState("");
   const [cloudToken, setCloudToken] = useState("");
+  const [cloudWebPassword, setCloudWebPassword] = useState("");
 
   useEffect(() => {
     if (!settings) return;
@@ -47,7 +48,8 @@ export default function SettingsPage({
     setCloudEndpoint(settings.cloudEndpoint);
     setCloudProjectId(settings.cloudProjectId);
     setCloudToken("");
-  }, [settings?.cloudEndpoint, settings?.cloudProjectId, settings?.maxHistoryItems]);
+    setCloudWebPassword("");
+  }, [settings?.cloudEndpoint, settings?.cloudProjectId, settings?.maxHistoryItems, settings?.cloudWebConfigured]);
 
   if (!settings) {
     return (
@@ -99,6 +101,7 @@ export default function SettingsPage({
       cloudProjectId: cloudProjectId.trim(),
     };
     if (cloudToken.trim()) patch.cloudAccessToken = cloudToken.trim();
+    if (cloudWebPassword.trim()) patch.cloudWebPassword = cloudWebPassword;
 
     try {
       let nextSettings = await window.clipnest.updateSettings(patch);
@@ -312,6 +315,11 @@ export default function SettingsPage({
               <span>项目令牌</span>
               <input type="password" value={cloudToken} onChange={(event) => setCloudToken(event.target.value)} placeholder={settings.cloudConfigured ? "已配置，留空保持" : "粘贴项目令牌"} autoComplete="off" />
             </label>
+            <label className="settings-field">
+              <span>网页登录密码</span>
+              <input type="password" value={cloudWebPassword} onChange={(event) => setCloudWebPassword(event.target.value)} placeholder={settings.cloudWebConfigured ? "已配置，留空保持" : "与云端站点登录密码一致"} autoComplete="new-password" />
+            </label>
+            <div className="cloud-web-note">配置后，云端同步会额外上传一份由此密码加密的网页快照；服务器只能保存密文，网页登录后在浏览器内解密。</div>
             <div className="cloud-actions">
               <button className="settings-action" onClick={() => void saveCloud()}><Save size={13} /> 保存并同步</button>
               <button className="settings-action compact" onClick={() => void syncCloudNow()}><RefreshCw size={13} /> 立即同步</button>

@@ -6,6 +6,7 @@ import {
   Image as ImageIcon,
   Layers3,
   Link2,
+  Pencil,
   Plus,
   Search,
   Settings2,
@@ -20,6 +21,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type WheelEvent as ReactWheelEvent,
 } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { ClipboardItem, ClipboardType, ClipnestSettings, UpdateInfo } from "../shared/types";
@@ -78,6 +80,7 @@ function TypeIcon({ type, size = 16 }: { type: ClipboardType; size?: number }) {
 
 export interface VirtualHistoryGridHandle {
   scrollToIndex: (index: number) => void;
+  scrollToStart: () => void;
 }
 
 interface VirtualHistoryGridProps {
@@ -87,6 +90,7 @@ interface VirtualHistoryGridProps {
   onCopy: (item: ClipboardItem) => void;
   onDelete: (item: ClipboardItem) => void;
   onPin: (item: ClipboardItem) => void;
+  onEdit: (item: ClipboardItem, content: string) => void;
 }
 
 const GRID_GAP = 14;
@@ -95,7 +99,7 @@ const GRID_CARD_HEIGHT = 260;
 const GRID_ITEM_SIZE = GRID_CARD_WIDTH + GRID_GAP;
 
 const VirtualHistoryGrid = forwardRef<VirtualHistoryGridHandle, VirtualHistoryGridProps>(
-  function VirtualHistoryGrid({ items, selectedId, onSelect, onCopy, onDelete, onPin }, ref) {
+  function VirtualHistoryGrid({ items, selectedId, onSelect, onCopy, onDelete, onPin, onEdit }, ref) {
     const scrollRef = useRef<HTMLElement | null>(null);
     const virtualizer = useVirtualizer({
       count: items.length,
@@ -108,13 +112,18 @@ const VirtualHistoryGrid = forwardRef<VirtualHistoryGridHandle, VirtualHistoryGr
 
     useImperativeHandle(ref, () => ({
       scrollToIndex: (index: number) => virtualizer.scrollToIndex(index, { align: "auto" }),
+      scrollToStart: () => virtualizer.scrollToOffset(0),
     }), [virtualizer]);
 
-    useEffect(() => {
-      if (!selectedId) return;
-      const index = items.findIndex((item) => item.id === selectedId);
-      if (index >= 0) virtualizer.scrollToIndex(index, { align: "auto" });
-    }, [items, selectedId, virtualizer]);
+    const handleWheel = (event: ReactWheelEvent<HTMLElement>) => {
+      const element = event.currentTarget;
+      if (element.scrollWidth <= element.clientWidth) return;
+      const rawDelta = Math.abs(event.deltaX) > 0 ? event.deltaX : event.deltaY;
+      if (!rawDelta) return;
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? element.clientWidth : 1;
+      event.preventDefault();
+      element.scrollLeft += rawDelta * unit;
+    };
 
     const virtualItems = virtualizer.getVirtualItems();
     return (
@@ -124,6 +133,7 @@ const VirtualHistoryGrid = forwardRef<VirtualHistoryGridHandle, VirtualHistoryGr
           role="listbox"
           aria-label="剪切板历史"
           ref={scrollRef}
+          onWheel={handleWheel}
         >
           <div
             className="virtual-grid-spacer"
@@ -150,6 +160,7 @@ const VirtualHistoryGrid = forwardRef<VirtualHistoryGridHandle, VirtualHistoryGr
                     onCopy={() => onCopy(item)}
                     onDelete={() => onDelete(item)}
                     onPin={() => onPin(item)}
+                    onEdit={(content) => onEdit(item, content)}
                   />
                 </div>
               );
@@ -207,6 +218,15 @@ function App() {
     [showNotice],
   );
 
+  const editItem = useCallback(async (item: ClipboardItem, content: string) => {
+    try {
+      await window.clipnest.editItem(item.id, content);
+      showNotice("常用内容已更新");
+    } catch (error) {
+      showNotice(error instanceof Error ? error.message : "常用内容更新失败");
+    }
+  }, [showNotice]);
+
   useEffect(() => {
     void Promise.all([
       window.clipnest.getHistory(),
@@ -242,10 +262,17 @@ function App() {
   useEffect(() => {
     const cleanup = window.clipnest.onPanelShown(() => {
       if (viewMode !== "history") return;
-      window.requestAnimationFrame(() => searchRef.current?.focus());
+      window.requestAnimationFrame(() => {
+        virtualGridRef.current?.scrollToStart();
+        searchRef.current?.focus();
+      });
     });
     return cleanup;
   }, [viewMode]);
+
+  useEffect(() => {
+    virtualGridRef.current?.scrollToStart();
+  }, [activeFilter, query]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -454,6 +481,7 @@ function App() {
                 onCopy={(item) => void copyItem(item)}
                 onDelete={handleDelete}
                 onPin={(item) => void window.clipnest.togglePinItem(item.id)}
+                onEdit={(item, content) => void editItem(item, content)}
               />
             )}
           </main>
@@ -484,6 +512,7 @@ function HistoryCard({
   onCopy,
   onDelete,
   onPin,
+  onEdit,
 }: {
   item: ClipboardItem;
   index: number;
@@ -492,17 +521,32 @@ function HistoryCard({
   onCopy: () => void;
   onDelete: () => void;
   onPin: () => void;
+  onEdit: (content: string) => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(item.content);
+
+  useEffect(() => {
+    if (!editing) setDraft(item.content);
+  }, [editing, item.content]);
+
+  const saveDraft = () => {
+    if (item.type === "image" || !draft.trim()) return;
+    onEdit(draft);
+    setEditing(false);
+  };
+
   return (
     <article
-      className={`history-card type-${item.type} ${selected ? "selected" : ""} ${item.pinned ? "is-favorite" : ""}`}
+      className={`history-card type-${item.type} ${selected ? "selected" : ""} ${item.pinned ? "is-favorite" : ""} ${editing ? "is-editing" : ""}`}
       role="option"
       aria-selected={selected}
       onClick={() => {
+        if (editing) return;
         onSelect();
         onCopy();
       }}
-      onDoubleClick={onCopy}
+      onDoubleClick={() => { if (!editing) onCopy(); }}
     >
       <div className={`paste-card-header type-${item.type}`}>
         <div className="card-header-copy">
@@ -515,7 +559,29 @@ function HistoryCard({
         </div>
       </div>
       <div className="card-content">
-        {item.type === "image" ? (
+        {editing ? (
+          <div className="card-editor" onClick={(event) => event.stopPropagation()}>
+            <textarea
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  setEditing(false);
+                } else if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+                  event.preventDefault();
+                  saveDraft();
+                }
+              }}
+              autoFocus
+              aria-label="编辑常用内容"
+            />
+            <div className="card-editor-actions">
+              <button type="button" onClick={() => setEditing(false)}>取消</button>
+              <button type="button" className="primary" onClick={saveDraft}>保存</button>
+            </div>
+          </div>
+        ) : item.type === "image" ? (
           <div className="image-card-preview">
             <img src={item.content} alt={item.preview} loading="lazy" />
           </div>
@@ -535,6 +601,17 @@ function HistoryCard({
         <span>{item.pinned ? "自动保护" : `#${String(index + 1).padStart(2, "0")}`}</span>
       </div>
       <div className="card-actions no-drag">
+        {item.pinned && item.type !== "image" && (
+          <button
+            onClick={(event) => {
+              event.stopPropagation();
+              setEditing(true);
+            }}
+            aria-label="编辑常用内容"
+          >
+            <Pencil size={13} />
+          </button>
+        )}
         <button onClick={(event) => { event.stopPropagation(); onPin(); }} className={item.pinned ? "is-pinned" : ""} aria-label={item.pinned ? "取消常用" : "标记为常用"}>
           <Heart size={14} fill={item.pinned ? "currentColor" : "none"} />
         </button>

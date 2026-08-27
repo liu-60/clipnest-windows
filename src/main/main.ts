@@ -12,10 +12,12 @@ import {
   Tray,
 } from "electron";
 import { autoUpdater } from "electron-updater";
+import { spawn, spawnSync } from "node:child_process";
 import {
   createCipheriv,
   createDecipheriv,
   createHash,
+  pbkdf2Sync,
   randomBytes,
   randomUUID,
 } from "node:crypto";
@@ -42,6 +44,7 @@ const DEFAULT_MAX_HISTORY_ITEMS = 100;
 const MIN_MAX_HISTORY_ITEMS = 20;
 const MAX_MAX_HISTORY_ITEMS = 2_000;
 const MAX_HISTORY_BYTES = 25_000_000;
+const MAX_EDITABLE_TEXT_BYTES = 2_000_000;
 const POLL_INTERVAL_MS = 450;
 const MAX_STORED_IMAGE_BYTES = 5_000_000;
 const PANEL_HEIGHT = 400;
@@ -53,6 +56,7 @@ const APP_DISPLAY_NAME = "ClipNest";
 const DEFAULT_CLOUD_ENDPOINT = "https://cloud.example.com";
 const DEFAULT_CLOUD_PROJECT_ID = "clipnest-windows";
 const CLOUD_REQUEST_TIMEOUT_MS = 12_000;
+const WEB_SNAPSHOT_KDF_ITERATIONS = 120_000;
 const UPDATE_REQUEST_TIMEOUT_MS = 12_000;
 const CLOUD_PROJECT_ID_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/;
 const GITHUB_RELEASE_API = "https://api.github.com/repos/liu-60/clipnest-windows/releases/latest";
@@ -67,6 +71,7 @@ interface AppSettings {
   cloudEndpoint: string;
   cloudProjectId: string;
   cloudAccessToken: string;
+  cloudWebPassword: string;
   cloudEncryptionKey: string;
   cloudLastSyncAt: number | null;
   cloudTombstones: Record<string, number>;
@@ -89,6 +94,7 @@ let appSettings: AppSettings = {
   cloudEndpoint: DEFAULT_CLOUD_ENDPOINT,
   cloudProjectId: DEFAULT_CLOUD_PROJECT_ID,
   cloudAccessToken: "",
+  cloudWebPassword: "",
   cloudEncryptionKey: "",
   cloudLastSyncAt: null,
   cloudTombstones: {},
@@ -97,6 +103,7 @@ let startupEnabled = false;
 let pollTimer: NodeJS.Timeout | null = null;
 let blurTimer: NodeJS.Timeout | null = null;
 let panelAnimationTimer: NodeJS.Timeout | null = null;
+let previousWindowHandle: string | null = null;
 let cloudSyncTimer: NodeJS.Timeout | null = null;
 let cloudSyncPromise: Promise<ClipnestSettings> | null = null;
 let cloudSyncQueued = false;
@@ -146,6 +153,17 @@ interface EncryptedCloudSnapshot {
   ciphertext: string;
 }
 
+interface EncryptedWebSnapshot {
+  version: 1;
+  algorithm: "aes-256-gcm";
+  kdf: "pbkdf2-sha256";
+  iterations: number;
+  salt: string;
+  iv: string;
+  authTag: string;
+  ciphertext: string;
+}
+
 interface CloudSnapshot {
   version: 2;
   items: ClipboardItem[];
@@ -189,7 +207,13 @@ function setCloudSyncState(state: CloudSyncState, error: string | null = null): 
 function normalizeCloudEndpoint(value: string): string | null {
   try {
     const url = new URL(value.trim());
-    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    const isLocalHttp = url.protocol === "http:" && (
+      url.hostname === "localhost" ||
+      url.hostname === "127.0.0.1" ||
+      url.hostname === "::1" ||
+      url.hostname === "[::1]"
+    );
+    if (url.protocol !== "https:" && !isLocalHttp) return null;
     return url.toString().replace(/\/$/, "");
   } catch {
     return null;
@@ -240,6 +264,7 @@ function loadAppSettings(): void {
     cloudEndpoint: DEFAULT_CLOUD_ENDPOINT,
     cloudProjectId: DEFAULT_CLOUD_PROJECT_ID,
     cloudAccessToken: "",
+    cloudWebPassword: "",
     cloudEncryptionKey: "",
     cloudLastSyncAt: null,
     cloudTombstones: {},
@@ -249,6 +274,7 @@ function loadAppSettings(): void {
     try {
       const parsed = JSON.parse(readFileSync(settingsPath, "utf8")) as Partial<AppSettings> & {
         cloudAccessTokenEncrypted?: string;
+        cloudWebPasswordEncrypted?: string;
       };
       if (typeof parsed.startupConfigured === "boolean") {
         appSettings.startupConfigured = parsed.startupConfigured;
@@ -282,6 +308,16 @@ function loadAppSettings(): void {
       } else if (typeof parsed.cloudAccessToken === "string") {
         appSettings.cloudAccessToken = parsed.cloudAccessToken.trim();
       }
+      if (typeof parsed.cloudWebPasswordEncrypted === "string" && safeStorage.isEncryptionAvailable()) {
+        try {
+          appSettings.cloudWebPassword = safeStorage
+            .decryptString(Buffer.from(parsed.cloudWebPasswordEncrypted, "base64"));
+        } catch (error) {
+          console.warn("ClipNest: unable to decrypt cloud web password", error);
+        }
+      } else if (typeof parsed.cloudWebPassword === "string") {
+        appSettings.cloudWebPassword = parsed.cloudWebPassword;
+      }
       if (typeof parsed.cloudEncryptionKey === "string") {
         appSettings.cloudEncryptionKey = parsed.cloudEncryptionKey;
       }
@@ -309,8 +345,8 @@ function saveAppSettings(): void {
 
   try {
     mkdirSync(dirname(settingsPath), { recursive: true });
-    const { cloudAccessToken, ...settingsWithoutToken } = appSettings;
-    const persistedSettings: Record<string, unknown> = { ...settingsWithoutToken };
+    const { cloudAccessToken, cloudWebPassword, ...settingsWithoutSecrets } = appSettings;
+    const persistedSettings: Record<string, unknown> = { ...settingsWithoutSecrets };
     if (cloudAccessToken) {
       if (safeStorage.isEncryptionAvailable()) {
         persistedSettings.cloudAccessTokenEncrypted = safeStorage
@@ -318,6 +354,15 @@ function saveAppSettings(): void {
           .toString("base64");
       } else {
         console.warn("ClipNest: cloud project token was not persisted because safeStorage is unavailable");
+      }
+    }
+    if (cloudWebPassword) {
+      if (safeStorage.isEncryptionAvailable()) {
+        persistedSettings.cloudWebPasswordEncrypted = safeStorage
+          .encryptString(cloudWebPassword)
+          .toString("base64");
+      } else {
+        console.warn("ClipNest: cloud web password was not persisted because safeStorage is unavailable");
       }
     }
     writeFileSync(settingsPath, JSON.stringify(persistedSettings, null, 2), "utf8");
@@ -336,6 +381,7 @@ function getAppSettingsSnapshot(): ClipnestSettings {
     cloudEndpoint: appSettings.cloudEndpoint,
     cloudProjectId: appSettings.cloudProjectId,
     cloudConfigured: isCloudConfigured(),
+    cloudWebConfigured: Boolean(appSettings.cloudWebPassword),
     cloudSyncState: cloudSyncState,
     cloudLastSyncAt: appSettings.cloudLastSyncAt,
     cloudError: cloudSyncError,
@@ -599,6 +645,36 @@ function encryptCloudSnapshot(snapshot: CloudSnapshot): EncryptedCloudSnapshot {
   };
 }
 
+function encryptWebSnapshot(items: ClipboardItem[]): EncryptedWebSnapshot {
+  if (!appSettings.cloudWebPassword) {
+    throw new Error("尚未配置网页登录密码");
+  }
+  const salt = randomBytes(16);
+  const iv = randomBytes(12);
+  const key = pbkdf2Sync(
+    appSettings.cloudWebPassword,
+    salt,
+    WEB_SNAPSHOT_KDF_ITERATIONS,
+    32,
+    "sha256",
+  );
+  const cipher = createCipheriv("aes-256-gcm", key, iv);
+  const ciphertext = Buffer.concat([
+    cipher.update(JSON.stringify({ version: 1, updatedAt: Date.now(), items }), "utf8"),
+    cipher.final(),
+  ]);
+  return {
+    version: 1,
+    algorithm: "aes-256-gcm",
+    kdf: "pbkdf2-sha256",
+    iterations: WEB_SNAPSHOT_KDF_ITERATIONS,
+    salt: salt.toString("base64url"),
+    iv: iv.toString("base64url"),
+    authTag: cipher.getAuthTag().toString("base64url"),
+    ciphertext: ciphertext.toString("base64url"),
+  };
+}
+
 function decryptCloudSnapshot(value: unknown): CloudSnapshot {
   if (!value || typeof value !== "object") throw new Error("云端返回的数据格式无效");
   const snapshot = value as Partial<EncryptedCloudSnapshot>;
@@ -698,6 +774,22 @@ async function requestCloud(path: string, init: RequestInit = {}): Promise<Respo
   }
 }
 
+async function uploadWebSnapshot(): Promise<void> {
+  if (!appSettings.cloudWebPassword) return;
+  const basePath = `/v1/projects/${encodeURIComponent(appSettings.cloudProjectId)}/web-snapshot`;
+  const response = await requestCloud(basePath, {
+    method: "PUT",
+    body: JSON.stringify({
+      version: 1,
+      updatedAt: Date.now(),
+      payload: encryptWebSnapshot(history),
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`网页快照写入失败（HTTP ${response.status}）`);
+  }
+}
+
 async function fetchWithTimeout(
   input: string,
   init: RequestInit,
@@ -765,6 +857,8 @@ async function syncCloudHistory(): Promise<ClipnestSettings> {
       if (!uploadResponse.ok) {
         throw new Error(`云端写入失败（HTTP ${uploadResponse.status}）`);
       }
+
+      await uploadWebSnapshot();
 
       appSettings = { ...appSettings, cloudLastSyncAt: Date.now() };
       saveAppSettings();
@@ -907,6 +1001,10 @@ function updateAppSettings(patch: unknown): ClipnestSettings {
     appSettings = { ...appSettings, cloudAccessToken: nextPatch.cloudAccessToken.trim() };
     cloudSettingsChanged = true;
   }
+  if (typeof nextPatch.cloudWebPassword === "string" && nextPatch.cloudWebPassword.trim()) {
+    appSettings = { ...appSettings, cloudWebPassword: nextPatch.cloudWebPassword };
+    cloudSettingsChanged = true;
+  }
   if (typeof nextPatch.cloudEnabled === "boolean") {
     appSettings = { ...appSettings, cloudEnabled: nextPatch.cloudEnabled };
     cloudSettingsChanged = true;
@@ -964,6 +1062,52 @@ function addHistoryItem(item: ClipboardItem): boolean {
   sendHistory();
   scheduleCloudSync();
   return persisted;
+}
+
+function editPinnedHistoryItem(id: string, nextContent: string): void {
+  const item = history.find((candidate) => candidate.id === id);
+  if (!item || !item.pinned || item.type === "image") {
+    throw new Error("只有常用文本或链接支持修改");
+  }
+  if (!nextContent || !nextContent.trim()) {
+    throw new Error("常用内容不能为空");
+  }
+  if (Buffer.byteLength(nextContent, "utf8") > MAX_EDITABLE_TEXT_BYTES) {
+    throw new Error("常用内容不能超过 2 MB");
+  }
+
+  const updatedAt = Date.now();
+  const nextType: ClipboardType = isLink(nextContent) ? "link" : "text";
+  const nextItem: ClipboardItem = {
+    ...item,
+    type: nextType,
+    content: nextContent,
+    preview: previewText(nextContent),
+    updatedAt,
+    byteSize: Buffer.byteLength(nextContent, "utf8"),
+    tags: [...new Set([...(item.tags ?? []), "常用"])],
+  };
+  const duplicate = history.find(
+    (candidate) => candidate.id !== id && candidate.type === nextType && candidate.content === nextContent,
+  );
+
+  updateCloudTombstones([item], updatedAt);
+  history = duplicate
+    ? [
+        {
+          ...duplicate,
+          ...nextItem,
+          id,
+          createdAt: Math.min(item.createdAt, duplicate.createdAt),
+          pinned: true,
+        },
+        ...history.filter((candidate) => candidate.id !== id && candidate.id !== duplicate.id),
+      ]
+    : [nextItem, ...history.filter((candidate) => candidate.id !== id)];
+  clearCloudTombstones([nextItem]);
+  saveHistory();
+  sendHistory();
+  scheduleCloudSync();
 }
 
 function readClipboardImage(): { item: ClipboardItem; signature: string } | null {
@@ -1088,11 +1232,241 @@ function hidePanel(): void {
   mainWindow.hide();
 }
 
+const WINDOWS_FOREGROUND_SCRIPT = `
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+
+public static class ClipNestForeground {
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetForegroundWindow();
+}
+'@
+[ClipNestForeground]::GetForegroundWindow().ToInt64()
+`;
+
+function capturePreviousWindowHandle(): string | null {
+  if (process.platform !== "win32") return null;
+  const encodedCommand = Buffer.from(WINDOWS_FOREGROUND_SCRIPT, "utf16le").toString("base64");
+  const result = spawnSync("powershell.exe", [
+    "-NoLogo",
+    "-NoProfile",
+    "-NonInteractive",
+    "-WindowStyle",
+    "Hidden",
+    "-EncodedCommand",
+    encodedCommand,
+  ], {
+    encoding: "utf8",
+    timeout: 5_000,
+    windowsHide: true,
+  });
+  const handle = String(result.stdout ?? "").trim();
+  return /^\d+$/.test(handle) && handle !== "0" ? handle : null;
+}
+
+function getMainWindowHandle(): string | null {
+  if (!mainWindow || mainWindow.isDestroyed()) return null;
+  const nativeHandle = mainWindow.getNativeWindowHandle();
+  if (!nativeHandle.length) return null;
+  return (nativeHandle.length >= 8
+    ? nativeHandle.readBigUInt64LE(0)
+    : BigInt(nativeHandle.readUInt32LE(0))).toString();
+}
+
+const WINDOWS_PASTE_SCRIPT = `
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+using System.Threading;
+
+public static class ClipNestKeyboard {
+    [StructLayout(LayoutKind.Sequential)]
+    private struct INPUT {
+        public uint type;
+        public INPUTUNION data;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    private struct INPUTUNION {
+        [FieldOffset(0)] public KEYBDINPUT keyboard;
+        [FieldOffset(0)] public MOUSEINPUT mouse;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MOUSEINPUT {
+        public int dx;
+        public int dy;
+        public uint mouseData;
+        public uint flags;
+        public uint time;
+        public IntPtr extraInfo;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct KEYBDINPUT {
+        public ushort virtualKey;
+        public ushort scanCode;
+        public uint flags;
+        public uint time;
+        public IntPtr extraInfo;
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern uint SendInput(uint inputCount, INPUT[] inputs, int inputSize);
+
+    [DllImport("user32.dll")]
+    private static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
+
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern bool SetActiveWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SetFocus(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    private static extern bool BringWindowToTop(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
+    [DllImport("kernel32.dll")]
+    private static extern uint GetCurrentThreadId();
+
+    [DllImport("user32.dll")]
+    private static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool attach);
+
+    [DllImport("user32.dll")]
+    private static extern void SwitchToThisWindow(IntPtr hWnd, bool altTab);
+
+    private static void RestoreWindow(IntPtr target) {
+        var currentThread = GetCurrentThreadId();
+        uint targetProcessId;
+        var targetThread = GetWindowThreadProcessId(target, out targetProcessId);
+        var foreground = GetForegroundWindow();
+        uint foregroundProcessId;
+        var foregroundThread = GetWindowThreadProcessId(foreground, out foregroundProcessId);
+        var attachedForeground = false;
+        var attachedTarget = false;
+        try {
+            if (foregroundThread != 0 && foregroundThread != currentThread) {
+                attachedForeground = AttachThreadInput(currentThread, foregroundThread, true);
+            }
+            if (targetThread != 0 && targetThread != currentThread && targetThread != foregroundThread) {
+                attachedTarget = AttachThreadInput(currentThread, targetThread, true);
+            }
+            ShowWindowAsync(target, 9);
+            BringWindowToTop(target);
+            SwitchToThisWindow(target, true);
+            SetActiveWindow(target);
+            SetForegroundWindow(target);
+            SetFocus(target);
+        } finally {
+            if (attachedTarget) AttachThreadInput(currentThread, targetThread, false);
+            if (attachedForeground) AttachThreadInput(currentThread, foregroundThread, false);
+        }
+    }
+
+    private static INPUT Key(ushort virtualKey, uint flags) {
+        return new INPUT {
+            type = 1,
+            data = new INPUTUNION {
+                keyboard = new KEYBDINPUT {
+                    virtualKey = virtualKey,
+                    scanCode = 0,
+                    flags = flags,
+                    time = 0,
+                    extraInfo = IntPtr.Zero
+                }
+            }
+        };
+    }
+
+    public static uint RestoreAndPaste(long targetHandle) {
+        var target = new IntPtr(targetHandle);
+        if (target != IntPtr.Zero) {
+            RestoreWindow(target);
+            Thread.Sleep(180);
+        }
+        const uint keyUp = 2;
+        var inputs = new[] {
+            Key(0x11, 0),
+            Key(0x56, 0),
+            Key(0x56, keyUp),
+            Key(0x11, keyUp)
+        };
+        return SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
+    }
+}
+'@
+$sent = [ClipNestKeyboard]::RestoreAndPaste([long]$env:CLIPNEST_TARGET_HWND)
+if ($sent -lt 4) { exit 1 }
+`;
+
+function simulatePaste(targetHandle: string | null): void {
+  if (process.platform !== "win32") return;
+  const encodedCommand = Buffer.from(WINDOWS_PASTE_SCRIPT, "utf16le").toString("base64");
+  try {
+    const child = spawn("powershell.exe", [
+      "-NoLogo",
+      "-NoProfile",
+      "-NonInteractive",
+      "-WindowStyle",
+      "Hidden",
+      "-EncodedCommand",
+      encodedCommand,
+    ], {
+      env: {
+        ...process.env,
+        CLIPNEST_TARGET_HWND: targetHandle && /^\d+$/.test(targetHandle) ? targetHandle : "0",
+      },
+      detached: false,
+      stdio: "ignore",
+      windowsHide: true,
+    });
+    child.once("error", (error) => {
+      console.warn("ClipNest: paste helper failed", error.message);
+    });
+    child.once("exit", (code, signal) => {
+      if (code !== 0) console.warn(`ClipNest: paste helper exited with ${code ?? "null"}/${signal ?? "null"}`);
+    });
+    child.unref();
+  } catch (error) {
+    console.warn("ClipNest: unable to start paste helper", error);
+  }
+}
+
+function pasteIntoPreviousWindow(): void {
+  const targetHandle = previousWindowHandle;
+  previousWindowHandle = null;
+  hidePanel();
+  // Let Windows restore the window that was active before ClipNest opened.
+  if (process.platform === "win32") {
+    setTimeout(() => {
+      // Re-read the foreground window after hiding the panel. This covers
+      // launchers and shells that temporarily steal focus while opening it.
+      const restoredHandle = capturePreviousWindowHandle();
+      const ownHandle = getMainWindowHandle();
+      const pasteTarget = restoredHandle && restoredHandle !== ownHandle
+        ? restoredHandle
+        : targetHandle;
+      simulatePaste(pasteTarget);
+    }, 100);
+  }
+}
+
 function showPanel(): void {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   if (blurTimer) clearTimeout(blurTimer);
   const targetBounds = panelBoundsForCurrentDisplay();
   const shouldAnimate = !mainWindow.isVisible();
+  if (shouldAnimate) previousWindowHandle = capturePreviousWindowHandle();
   if (panelAnimationTimer) clearInterval(panelAnimationTimer);
 
   if (shouldAnimate) {
@@ -1101,8 +1475,7 @@ function showPanel(): void {
   } else {
     mainWindow.setBounds(targetBounds, false);
   }
-  mainWindow.showInactive();
-  mainWindow.focus();
+  mainWindow.show();
 
   if (shouldAnimate) {
     const startedAt = Date.now();
@@ -1379,7 +1752,11 @@ function registerIpc(): void {
       clipboard.writeText(item.content);
       lastClipboardSignature = fingerprint(item.type, item.content);
     }
-    hidePanel();
+    pasteIntoPreviousWindow();
+  });
+  ipcMain.handle("history:edit", (_event, id: string, content: string) => {
+    if (typeof content !== "string") throw new Error("常用内容格式无效");
+    editPinnedHistoryItem(id, content);
   });
   ipcMain.handle("history:delete", (_event, id: string) => {
     const item = history.find((candidate) => candidate.id === id);

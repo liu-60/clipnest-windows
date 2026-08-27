@@ -23,6 +23,7 @@ export interface ClipnestSettings {
   cloudEndpoint: string;
   cloudProjectId: string;
   cloudConfigured: boolean;
+  cloudWebConfigured: boolean;
   cloudSyncState: CloudSyncState;
   cloudLastSyncAt: number | null;
   cloudError: string | null;
@@ -37,6 +38,7 @@ export type ClipnestSettingsPatch = Partial<
   >
 > & {
   cloudAccessToken?: string;
+  cloudWebPassword?: string;
 };
 
 export type UpdateState =
@@ -63,6 +65,7 @@ export interface UpdateInfo {
 export interface ClipnestApi {
   getHistory: () => Promise<ClipboardItem[]>;
   copyItem: (id: string) => Promise<void>;
+  editItem: (id: string, content: string) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   togglePinItem: (id: string) => Promise<void>;
   clearHistory: () => Promise<void>;

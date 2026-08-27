@@ -28,6 +28,17 @@ fi
 
 install -d -o clipnest -g clipnest -m 700 "${APP_DIR}" "${DATA_DIR}" "${DATA_DIR}/data"
 install -o clipnest -g clipnest -m 600 "${SCRIPT_DIR}/server.mjs" "${SCRIPT_DIR}/create-project.mjs" "${APP_DIR}/"
+install -d -o clipnest -g clipnest -m 755 "${APP_DIR}/web"
+install -o clipnest -g clipnest -m 644 "${SCRIPT_DIR}/web/index.html" "${SCRIPT_DIR}/web/app.js" "${SCRIPT_DIR}/web/styles.css" "${APP_DIR}/web/"
+
+if [[ -n "${WEB_PASSWORD:-}" ]]; then
+  install -d -o root -g root -m 700 /etc/clipnest-cloud
+  web_password_hash="$(node -e 'const crypto=require("crypto"); process.stdout.write(crypto.createHash("sha256").update(process.argv[1], "utf8").digest("hex"))' "${WEB_PASSWORD}")"
+  printf 'WEB_PASSWORD_HASH=%s\n' "${web_password_hash}" > /etc/clipnest-cloud/web.env
+  chown root:root /etc/clipnest-cloud/web.env
+  chmod 600 /etc/clipnest-cloud/web.env
+  unset web_password_hash
+fi
 
 if [[ "${PUBLIC_HTTP}" == "1" ]]; then
   install -o root -g root -m 644 "${SCRIPT_DIR}/clipnest-cloud-direct.service" \

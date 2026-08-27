@@ -13,6 +13,8 @@ Environment=PORT=19132
 Environment=HOST=0.0.0.0
 Environment=DATA_DIR=/var/lib/clipnest-cloud/data
 Environment=PROJECTS_FILE=/var/lib/clipnest-cloud/projects.json
+Environment=WEB_PROJECT_ID=clipnest-windows
+EnvironmentFile=-/etc/clipnest-cloud/web.env
 ExecStart=/usr/bin/node /opt/clipnest-cloud/server.mjs
 Restart=on-failure
 RestartSec=3

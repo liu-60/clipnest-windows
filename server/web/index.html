@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#eef4ff" />
+    <title>ClipNest 云端剪切板</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="site-shell">
+      <section id="login-view" class="login-view" aria-labelledby="login-title">
+        <div class="brand-mark" aria-hidden="true">P<span>.</span></div>
+        <p class="eyebrow">CLIPNEST CLOUD</p>
+        <h1 id="login-title">云端剪切板</h1>
+        <p class="login-copy">使用你在 ClipNest 配置页设置的网页登录密码访问同步内容。</p>
+        <form id="login-form" class="login-form">
+          <label>
+            <span>访问密码</span>
+            <input id="password" type="password" autocomplete="current-password" required autofocus />
+          </label>
+          <button type="submit" class="primary-button">进入剪切板</button>
+          <p id="login-error" class="form-error" role="alert"></p>
+        </form>
+      </section>
+
+      <section id="app-view" class="app-view" hidden>
+        <header class="site-header">
+          <div class="site-brand">
+            <div class="brand-mark small" aria-hidden="true">P<span>.</span></div>
+            <div><strong>ClipNest</strong><span>云端剪切板</span></div>
+          </div>
+          <div class="header-actions">
+            <span id="item-count" class="count-pill">0 条内容</span>
+            <button id="logout" class="ghost-button" type="button">退出</button>
+          </div>
+        </header>
+        <div class="toolbar">
+          <label class="search-control">
+            <span aria-hidden="true">⌕</span>
+            <input id="search" type="search" placeholder="搜索剪切板内容…" />
+          </label>
+          <span id="sync-time" class="sync-time">端到端加密快照</span>
+        </div>
+        <div id="status" class="status" role="status"></div>
+        <section id="cards" class="cards" aria-live="polite"></section>
+      </section>
+    </main>
+    <div id="toast" class="toast" role="status"></div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

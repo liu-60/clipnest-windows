@@ -10,6 +10,7 @@ import type {
 const api: ClipnestApi = {
   getHistory: () => ipcRenderer.invoke("history:get"),
   copyItem: (id: string) => ipcRenderer.invoke("history:copy", id),
+  editItem: (id: string, content: string) => ipcRenderer.invoke("history:edit", id, content),
   deleteItem: (id: string) => ipcRenderer.invoke("history:delete", id),
   togglePinItem: (id: string) => ipcRenderer.invoke("history:pin", id),
   clearHistory: () => ipcRenderer.invoke("history:clear"),
