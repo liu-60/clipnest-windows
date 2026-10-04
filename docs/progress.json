@@ -1,0 +1,468 @@
+{
+  "schemaVersion": 1,
+  "planVersion": 1,
+  "branch": "codex/v2-clipboard",
+  "baselineCommit": "91cafd765b9480e011647c9d8cd2976269f12aef",
+  "tasks": {
+    "T00": {
+      "status": "accepted",
+      "commit": null,
+      "evidence": [
+        "docs/evidence/T00/baseline.json",
+        "docs/evidence/T00/windows-helper-benchmark.json",
+        "docs/spec/verify-plan.cjs",
+        "docs/evidence/T00/verification.json"
+      ],
+      "openGates": []
+    },
+    "T01": {
+      "status": "in_progress",
+      "commit": null,
+      "evidence": [],
+      "openGates": []
+    },
+    "T02": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [],
+      "openGates": []
+    },
+    "T03": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [],
+      "openGates": []
+    },
+    "T04": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [],
+      "openGates": []
+    },
+    "T05": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [],
+      "openGates": []
+    },
+    "T06": {
+      "status": "in_progress",
+      "commit": null,
+      "evidence": [
+        "docs/evidence/T06/preflight.json",
+        "tests/tasks/T06/fixture-plan.json",
+        "docs/evidence/T06/t06-a1-verification.json",
+        "docs/evidence/T06/t06-a2-verification.json",
+        "docs/evidence/T06/t06-a3-verification.json",
+        "docs/evidence/T06/t06-a4-verification.json",
+        "docs/evidence/T06/t06-a5-verification.json",
+        "docs/evidence/T06/t06-a3-a4-review.json",
+        "docs/evidence/T06/t06-a5-review.json",
+        "docs/evidence/T06/mobile-server-dependency-research.json",
+        "docs/evidence/T06/desktop-web-dependency-research.json",
+        "docs/evidence/T06/tauri-windows-target-research.json",
+        "docs/evidence/T06/schema-tool-dependency-research.json",
+        "docs/evidence/T06/schema-tool-dependency-review.json",
+        "docs/evidence/T06/zod-ajv-license-audit.json",
+        "docs/evidence/T06/zod-ajv-license-review.json",
+        "docs/evidence/T06/quicktype-tarball-audit.json",
+        "docs/evidence/T06/quicktype-tarball-review.json",
+        "docs/evidence/T06/schema-fixture-plan-review.json",
+        "docs/evidence/T06/t06-a6-readiness.json"
+      ],
+      "openGates": [
+        "Mobile/server, desktop/web, Tauri Windows target, and schema-tool dependency research is recorded. Zod/Ajv candidate runtime-license closure is statically surveyed and independently reviewed, but no toolchain/package is selected; verify final pnpm resolution/notices and fast-uri >=3.1.8 when locking. Quicktype npm pages confirm v26.0.0 identity/license/direct-dependency counts and release CI explains the source tag's 24.0.0 manifest, but exact tarball integrity/files and recursive licenses remain unavailable: registry requests failed TLS and auto-review rejected the proposed unpkg route, so no alternate mirror was used. No new package candidates have been installed, selected, or frozen for T06 apps/contracts; complete license and platform-optional review before freezing third-party resolutions. The current Rust GNU target is unsupported by Tauri's Windows support policy; use a separate MSVC target for Tauri and validate it in the Windows PoC before app dependencies/configuration are locked.",
+        "The pnpm lockfile has only a structural empty packages/contracts importer change from lockfile-only workspace synchronization; package versions and resolution snapshots are unchanged, and the frozen install did not finish its supply-chain policy verification. Cargo.lock contains only local zero-dependency workspace crates; no third-party crates are frozen.",
+        "T06-a2 clipnest-contracts, T06-a3 clipnest-core, T06-a4 clipnest-platform-windows, and T06-a5 clipnest-platform-macos are zero-dependency crate entry skeletons; offline metadata/workspace build passed, but these slices report 0 unit/doc tests and no platform behavior. Buildable app entries, Tauri/Expo configuration, module registration, and truthful FEATURE_NOT_ENABLED results remain unimplemented. packages/domain is intentionally not scaffolded: its package name is not frozen, no independent TypeScript compiler is available in the workspace, and an empty entry adds no useful interface. Current GNU-only validation does not satisfy Tauri's MSVC Windows target requirement, and does not validate macOS.",
+        "T06-b canonical strict schemas, generated JSON Schema/Rust DTOs, Decimal >2^53 and strict/size fixtures, provenance, and license records remain unimplemented and NOT_RUN. Zod/quicktype/Ajv candidates are researched only; no toolchain/dialect/format plugin is selected, exact quicktype tarball metadata and transitive licenses are unaudited, and no generator has run.",
+        "T06-c root validation scripts, deterministic generated-drift checks, environment template, and CI checks remain unimplemented and NOT_RUN.",
+        "Full T06 acceptance and required independent adversarial review remain pending; independent reviews of a1/a2/a3/a4/a5 slices pass with limitations but do not accept the full T06 card."
+      ]
+    },
+    "T07": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T07/fixture-plan.json",
+        "docs/evidence/T07/fixture-plan-review.json"
+      ],
+      "openGates": [
+        "Fixture preparation only; production implementation waits for T06 accepted.",
+        "The local.totalBytes durable-byte formula and database/WAL/shared-reference charge components are not frozen in the current spec; budget and WAL charge checks remain NOT_RUN until this is specified and reviewed.",
+        "SQLCipher native linkage, OS vault behavior, crash/disk-full recovery, and actual backup/restore remain NOT_RUN."
+      ]
+    },
+    "T08": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T08/fixture-plan.json",
+        "docs/evidence/T08/fixture-plan-review.json"
+      ],
+      "openGates": [
+        "Fixture preparation only; production implementation and behavior tests wait for T07 accepted.",
+        "Do not inspect or hash the live user profile; any migration integrity check requires the user's explicit choice of an isolated copy.",
+        "Conflicting duplicate legacy IDs within one export have no frozen winner policy; a gated fixture is present but does not count as duplicate-ID acceptance coverage. Exact same-export replay is covered separately as an idempotency case.",
+        "User-requested import cancellation and partial-commit policy are not frozen; the synthetic cancel fixture remains OPEN_QUESTION and NOT_RUN without asserting a terminal state or row outcome.",
+        "Data URL media-type versus decoded-image-format behavior is not frozen; the synthetic mismatch fixture remains OPEN_QUESTION and NOT_RUN.",
+        "SQLCipher import, OS vault behavior, restart durability, and isolated-profile recovery remain NOT_RUN."
+      ]
+    },
+    "T09": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T09/fixture-plan.json",
+        "docs/evidence/T09/fixture-plan-review.json"
+      ],
+      "openGates": [
+        "Fixture preparation only; T09 production implementation and behavior tests wait for T07 accepted.",
+        "Delay-rendered read retry count/backoff and scheduling policy are not frozen; keep the behavior fixture NOT_RUN.",
+        "Distinct-sequence admission/drop behavior at a full capture queue is not frozen; do not assert which sequence survives.",
+        "The imageWorkerPeakBytes allocation categories and measurement method are not frozen; keep numeric peak acceptance NOT_RUN.",
+        "The local.totalBytes durable-byte formula is not frozen in T07; keep local budget boundary acceptance NOT_RUN.",
+        "Fake clipboard/permission adapters do not validate native Windows notification, clipboard, or OS permission behavior; platform validation remains NOT_RUN."
+      ]
+    },
+    "T10": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T10/fixture-plan.json",
+        "docs/evidence/T10/fixture-plan-review.json"
+      ],
+      "openGates": [
+        "Synthetic fixture preparation only; T07 and T09 are not accepted, so T10 production implementation and behavior testing remain gated.",
+        "T06 canonical strict schemas/DTO generation remain in progress; this fixture plan does not edit contracts/schema, generated files, or invent malformed-query/cursor error codes.",
+        "Date-range endpoint inclusivity and the response to a single summary larger than the whole page-byte cap are not frozen; fixtures avoid those cases until specified.",
+        "The exact query result/error/coverage mapping when local vault or query-store access is unavailable is not frozen; the synthetic permission fixture remains OPEN_QUESTION and NOT_RUN.",
+        "The 10,000-item first-page P95 target remains NOT_RUN and requires the fixed environment and sample/reporting rules in docs/spec/08-acceptance-matrix.md §4.",
+        "All query datasets in this plan are synthetic; no live profile has been read or hashed."
+      ]
+    },
+    "T11": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T11/fixture-plan.json",
+        "docs/evidence/T11/fixture-plan-static-check.json",
+        "docs/evidence/T11/fixture-plan-adversarial-review.json"
+      ],
+      "openGates": [
+        "Fixture preparation only. T05, T06, T07, and T10 are not accepted; T11 implementation, package/build work, and behavior tests remain gated.",
+        "All P01-P28 and all controlled Windows synthetic text/image, hidden-panel background capture/storage, tray, multi-monitor, permissions/copy-only, lifecycle, and performance cases remain NOT_RUN. This independent review is static plan review only; no desktop input, system clipboard access, live profile access, package/build, or performance measurement was performed.",
+        "OPEN_QUESTION: Tauri host capability manifest/MSVC target; tray/hotkey/window-close activation policy; monitor selection/topology and DPI coverage; Windows permission/reason-code mapping; image clipboard format and receiver; exact generated terminal enums/copy-only wording; T09 imageWorkerPeakBytes allocation categories/method; full-process memory/idle-CPU thresholds, exact physical-memory metric/attribution and sampling duration; Tauri gate stability sample/decision criteria.",
+        "T11 acceptance still requires controlled synthetic Windows text/image target evidence, tray/hide/show and multi-monitor behavior, focus/permission degradation, background clipboard capture and Rust repository work independent of panel visibility, full-process comparison, fixed-environment performance evidence, closure of T09 image-worker peak accounting, and independent adversarial review."
+      ]
+    },
+    "T12": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T12/fixture-plan.json",
+        "docs/evidence/T12/fixture-plan-static-check.json",
+        "docs/evidence/T12/fixture-plan-review.json"
+      ],
+      "openGates": [
+        "Fixture/interface planning only. T08, T10, and T11 are not accepted; production UI/domain work and renderer/E2E behavior testing remain gated.",
+        "U01-U12 and 18 supplementary synthetic cases remain NOT_RUN. This independent review is fixture-plan-only; no renderer, browser, real profile, account, service, clipboard, responsive layout, or accessibility behavior was exercised.",
+        "OPEN_QUESTION: canonical error/return/retry mappings and user-visible error-content redaction policy; T07 durable-byte and outbox accounting; conflict result/merge codes; narrow desktop panel breakpoint; automated contrast/screen-reader thresholds; renderer test-harness readiness.",
+        "T12 acceptance requires behavior evidence for keyboard/IME/selection, history/SavedItem identity and Collection relation isolation, editing/conflict/draft retention, capacity and permissions, loading/offline/locked/error states, responsive layouts, keyboard accessibility, the 08 §6 telemetry/crash canary exclusions, and a resolved user-visible error-copy policy."
+      ]
+    },
+    "T13": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T13/fixture-plan.json",
+        "docs/evidence/T13/fixture-plan-static-check.json",
+        "docs/evidence/T13/fixture-plan-independent-review.json"
+      ],
+      "openGates": [
+        "Fixture preparation only. T11 and T12 are not accepted, so T13 native implementation, build/sign/notarize/package work, and behavior testing remain gated.",
+        "All 31 planned synthetic or future controlled-Mac behavior cases, all five signing/notarization/update/rollback static checks, and the candidate-matched update/rollback smoke remain NOT_RUN. No Mac behavior, user profile, clipboard, permission/login-item setting, build, release credential, or Windows-derived Mac evidence was used.",
+        "OPEN_QUESTION: supported macOS versions/architectures and native/two-display test device availability; Accessibility allowed/denied/unknown detection, safe permission-state provisioning, and copy-only wording; changeCount coalescing, rendered-read retry/deadline, queue overflow and terminal enums; macOS cancellation deadline/interruption/recovery; target identity/revalidation and multi-display policy; menu-bar/startup/hotkey policy; signing/entitlement identity, notarization evidence, updater integrity, rollback schema window; T09 imageWorkerPeakBytes accounting method.",
+        "T13 acceptance requires native macOS controlled-device evidence for changeCount, target/minimized/two-display behavior, menu-bar/startup/hotkey conflict, Accessibility denial with copy/search fallback, cancellation/queue/cache/UI responsiveness, and candidate-matched signed/notarized update/rollback. A synthetic telemetry/crash canary must show no prohibited clipboard content. Windows behavior does not satisfy any macOS-specific gate."
+      ]
+    },
+    "T14": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T14/fixture-plan.json",
+        "docs/evidence/T14/fixture-plan-review.json"
+      ],
+      "openGates": [
+        "Fixture preparation only; production implementation waits for T06 accepted. T14-CAPACITY-02 sources capacity from limits.v1.json and 03 §11; its NOT_RUN initialization fixtures start with an existing personal workspace and pending device, then verify an over-limit package is not persisted, the workspace remains uninitialized, and the device is not activated.",
+        "Pair state mapping and pending-slot release after account-switch cancellation are not defined in the current spec and remain OPEN QUESTION.",
+        "Real OAuth provider, isolated PostgreSQL/RLS, cross-tenant acceptance, and independent adversarial review remain NOT_RUN."
+      ]
+    },
+    "T15": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T15/fixture-plan.json",
+        "docs/evidence/T15/fixture-plan-static-review.json"
+      ],
+      "openGates": [
+        "Fixture planning only; T15 remains not_started and implementation/behavior execution waits for both T06 and T14 accepted. Current dependency states are T06 in_progress and T14 not_started; their open gates remain tracked in their canonical task entries.",
+        "03 §4.1 crypto library versions are candidates not installed or compatibility-tested; dependency artifacts, licenses, toolchains and native/WASM/Hermes bindings remain open.",
+        "All 27 fixtures and the official C/Web WASM/Rust/iOS Hermes/Android Hermes known-answer and cross-platform gates remain NOT_RUN. This plan contains no key/nonce/ciphertext/tag vector and claims no crypto result.",
+        "Pairing and recovery persistence, challenge replay/expiry, account reset/replacement, device revocation, cancellation and permission outcomes remain NOT_RUN and require the T14 dependency gate.",
+        "Windows/macOS/iOS/Android OS vault behavior, Web lock, secret-canary log/crash review, and the required independent critical-task security review remain NOT_RUN; mocks or one platform cannot close them.",
+        "T15-REPLAY-01遵循03 §7.2：旧upperSeq快照及已在途的旧响应可低于记录的高水位；回滚断言仅检查高水位后发起的新当前态探测返回head=1。此边界仍是NOT_RUN。",
+        "03 §9将ApiErrorV1.details.limitBytes定义为可选；T15-ENVELOPE-03要求limitKey，有limitBytes时校验匹配。是否必须总是返回limitBytes仍为OPEN_QUESTION。",
+        "03 §5.3未定义无效签名尝试是否消耗challenge；T15-RECOVERY-CHALLENGE-02只断言相同错误签名重放仍失败，不推断失败后正确签名是否可重用，保持OPEN_QUESTION。"
+      ]
+    },
+    "T16": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T16/fixture-plan.json",
+        "docs/evidence/T16/fixture-plan-static-review.json"
+      ],
+      "openGates": [
+        "仅准备19项synthetic fixture；T16保持not_started，所有案例、命令和数据库/RLS/CAS验收均NOT_RUN。",
+        "依赖门：T14与T15均须accepted；传递依赖T06 canonical contracts/DTO及迁移测试基础也须accepted。当前T06为in_progress、T14/T15均not_started，禁止实现和行为执行。",
+        "六项规格未冻结问题：PushOperationV1精确序列化/hash；首条summary自身超页预算的行为；workspace rate算法/Retry-After表示；lease续期时长/等号过期语义；90日receipt/lease清理时点；所有SQL CHECK/FK/unique错误映射。fixture不得自行发明结果。"
+      ]
+    },
+    "T17": {
+      "status": "not_started",
+      "commit": null,
+    "evidence": [
+      "tests/tasks/T17/fixture-plan.json",
+      "docs/evidence/T17/fixture-plan-static-check.json",
+      "docs/evidence/T17/fixture-plan-independent-review.json"
+      ],
+      "openGates": [
+      "仅完成32项synthetic fixture计划、自检及独立计划复审PASS_WITH_LIMITATIONS；T17仍not_started，全部fixture、2条命令、7个验收gate均NOT_RUN。fixture与gate已建立86条双向映射。",
+        "依赖门：T07、T15、T16均未accepted；传递依赖T06当前in_progress、T14未accepted。禁止实现Rust outbox/sync行为、运行行为测试或连接假成功后端。",
+        "OPEN_QUESTION：canonical push DTO序列化/hash与wire_size；T07 SQLCipher事务/崩溃持久化与local.totalBytes/WAL/共享引用字节公式；ACKED中间行生命周期；终态receipt/错误到CONFLICT/BLOCKED/draft映射；冲突合并/用户确认；随机退避细节；T17 snapshot客户端与T19服务端contract/验收边界；在途push取消语义。",
+        "核心实现仍未开始：crates/core/src仅有lib.rs占位。SQLCipher本地原子性、精确字节重放、receipt后ACK/清队列、冲突与删除保护、epoch/租约恢复、游标/水位、snapshot catchup与原子namespace发布均NOT_RUN。",
+        "新增CURSOR_EXPIRED恢复fixture：afterSeq=80低于min_retained_seq=90，保持priorSeenHighWater=120及旧outbox，使用H=90 snapshot catch-up至120后才原子发布；本地错误状态映射仍由OQ-04保留为OPEN_QUESTION。",
+      "独立审查仅覆盖fixture计划，不是行为验收；未来critical实现仍需按T17任务卡完成关键审查及行为证据。"
+      ]
+    },
+    "T18": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T18/fixture-plan.json",
+        "docs/evidence/T18/fixture-plan-static-review.json"
+      ],
+      "openGates": [
+        "仅准备27项synthetic fixture；T18仍not_started，所有案例、命令以及数据库、S3、AWS provider和GC行为均NOT_RUN。",
+        "依赖门：T16 accepted后才开始实现或行为测试；T16还依赖T14/T15 accepted及T06传递基础。当前T06为in_progress，T14/T15/T16均not_started。",
+        "未决规格：T18任务卡写S09-S15，而当前03 §10上传/配额/GC场景为S13-S18，验收映射待对齐；所选provider/SDK条件PUT/COPY/不可变版本/精确版本删除能力须真实S3证明；pending upload上限的具体507 code/limitKey未定义。"
+      ]
+    },
+    "T19": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T19/fixture-plan.json",
+        "docs/evidence/T19/fixture-plan-static-review.json",
+        "docs/evidence/T19/independent-fixture-review.json"
+      ],
+      "openGates": [
+        "Fixture/interface planning only; T19 remains not_started. T16 and T18 are not accepted, so implementation, behavior tests, package/build work, and real database/object-store work remain gated; all 17 fixtures, 2 commands, and 5 gates are NOT_RUN.",
+        "Synthetic fixtures cover fixed-H paging, priorSeenHighWater=120 over reused snapshot H=90 before namespace swap, per-workspace snapshot uniqueness/reuse, pins/GC, lease/bootstrap, version/object/ID capacity, cancellation, cross-workspace isolation, ledger reconciliation, and S25 disaster recovery.",
+        "Frozen policy checks: liveEntities <= maxLiveEntitiesPerWorkspace and liveEntities + retiredIds <= maxRetiredIdsPerWorkspace; create requires one additional reserved retirement slot, while delete converts that slot without acquiring another. Full-budget create is blocked with export/explicit new-workspace migration; fences are never compacted.",
+        "F16 checks a reserve beyond the 200,000 object cap is rejected before provider API work and leaves usage counters unchanged. OPEN_QUESTION: exact snapshot-overlimit/timeout/duplicate-building-request results; fixed PostgreSQL measurement; worker cadence and unstated TTL clock start; exact create/capacity error details; cancellation mapping; T18 provider confirmation; durable deletion-evidence completeness; unaccepted T16/T18 interfaces.",
+        "G04 remains NOT_RUN for 1,000,000 retired-ID, 20 versions/entity, and 200,000 stored-object boundaries. G03 remains NOT_RUN for full pages + catchup + bootstrap within 1,800 s using monotonic timing. T29/T30 still own production-equivalent recovery rehearsal and account-delete UI.",
+        "Independent static fixture-plan review recorded as PASS_WITH_LIMITATIONS; this closes plan-review feedback only, not behavior, PostgreSQL/object-store, performance, or T16/T18 dependency gates."
+      ]
+    },
+    "T20": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T20/fixture-plan.json",
+        "docs/evidence/T20/fixture-plan-static-review.json"
+      ],
+      "openGates": [
+        "Fixture planning only; T20 remains not_started. T06 is in_progress and T15 is not_started, so implementation and behavior tests remain gated. All 19 planned cases, acceptance checks, and commands remain NOT_RUN. No source, test, build, browser, service, database, or user data operation was performed.",
+        "The plan declares docs/spec/01-product-and-ux.md §4/P11 and adds a synthetic ephemeral-cache case: persistence notice visible, eligible online use remains available, and no cross-refresh durability promise; this P11 case remains NOT_RUN. Adapter/storage failure and async scope/account/revision recheck cases remain planning-only. Static evidence checks structure/status/dependency metadata and presence of source labels only; it does not claim per-source coverage or independent final review.",
+        "OPEN_QUESTION: T07 durable-byte accounting and Web cache charge/eviction policy; T06 permission/storage/query error codes and retry/copy mapping; T10 coverage/cancellation presentation; anonymous export interaction/copy/schema. Capacity fixtures use injected counters and do not infer real byte charges.",
+        "Case 12 inspects only app-managed durable stores exercised by the isolated harness; browser/OS internals and the account cookie are outside that persistence assertion. 03 §5.4 forbids claiming JavaScript garbage collection as verifiable secure erasure.",
+        "T20 acceptance still requires T06 and T15 accepted, resolution of applicable open questions, Web storage/Worker behavior evidence, P11 ephemeral-cache behavior evidence, required platform coverage, and an independent high-risk final review."
+      ]
+    },
+    "T21": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T21/fixture-plan.json",
+        "docs/evidence/T21/fixture-plan-static-review.json"
+      ],
+      "openGates": [
+        "Planning only: 36 synthetic fixture cases, 15 acceptance checks, 7 required gates, and 3 listed commands remain NOT_RUN; no UI, sync, storage, browser, database, service, or cryptographic behavior was run.",
+        "T04 first-round findings are closed by the second independent static review: U07 direct post-lock read rejection/masking; U04 request-owned generation; P09 session-expiry draft retention; P11 private-mode cache notice with online use; initial loading/cancel/nonzero results; outbox SENDING→READY exact wire_bytes; ACK receipt/revision/seq transaction; draft/view/outbox/counter rollback; push 413 zero writes; fixed H=90/priorSeenHighWater=120; cancellation without blind old-outbox replay; S26 bigint max/overflow; WAIT_DEPENDENCY; frozen IDEMPOTENCY_MISMATCH and REVISION_CONFLICT fields.",
+        "Card dependencies T14/T17/T19/T20 and additional 03 §11 dependencies T15/T16/T18 are all currently not_started. The card/03 dependency-set mismatch remains OPEN_QUESTION; keep the union gated until reconciled and accepted.",
+        "Open questions remain: dependency-list-reconciliation; canonical-web-sync-dto-and-errors; cross-runtime-crypto-and-wire-serialization; snapshot-provider-and-platform-boundaries; web-e2e-and-permission-harness; capacity-and-cache-accounting; device-revocation-result-and-local-copy. UI/error mappings and browser/platform harness details remain unresolved where referenced.",
+        "The card validation commands (web unit, Web E2E, and web-sync integration) are recorded in the plan only and remain NOT_RUN. Required real DB/RLS/provider/browser/native/crypto evidence remains NOT_RUN.",
+        "T04 second-round independent static review passed after the listed planning fixes. This closes fixture-plan review feedback only; all behavior, platform, database, provider, browser and crypto gates remain NOT_RUN, and T21 remains not_started."
+      ]
+    },
+    "T22": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T22/fixture-plan.json",
+        "docs/evidence/T22/fixture-plan-static-review.json"
+      ],
+      "openGates": [
+        "仅做合成fixture/interface准备；T22保持not_started。20个fixtures、7项acceptance、5个gate和3条命令均NOT_RUN；未执行移动原生行为。",
+        "依赖门：T06=in_progress、T07=not_started，均未accepted；生产代码、依赖/锁文件、native build和repository行为继续受门控。",
+        "T07 local.totalBytes耐久字节公式及DB/WAL/SHM/temp/附件/共享引用核算未冻结；容量使用注入计数器，不声称实际字节边界。",
+        "SQLCipher真实链接、wrong-key、BLOB/WAL/temp canary、SecureStore及Android/iOS备份重装行为仍NOT_RUN，须在选定原生development build中分别验收；Expo Go不构成验收。",
+        "静态计划列有LOCAL_KEY_UNAVAILABLE、LOCAL_KEY_MISSING、LOCAL_DB_UNLOCK_FAILED和SQLCIPHER_UNAVAILABLE冻结类别；平台原始原因/用户文案、取消清理及迁移映射保持OPEN_QUESTION。",
+        "T04 completed a read-only static review after the final LOCAL_KEY_UNAVAILABLE assertion fix; this verifies fixture-plan coverage only, not SQLCipher/vault/native behavior."
+      ]
+    },
+    "T23": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T23/fixture-plan.json",
+        "docs/evidence/T23/fixture-plan-static-review.json"
+      ],
+      "openGates": [
+        "仅完成synthetic fixture/interface准备；T23保持not_started。36个fixtures、6个gate、3条命令全部NOT_RUN；没有运行测试、native build、Expo Go、真机、服务或crypto行为。",
+        "依赖门：T15与T22均not_started、未accepted；不实现crypto协议、不增加fallback、不接假成功后端，业务集成继续门控。",
+        "计划只断言32-byte Expo Crypto native CSPRNG元数据与T15模块调用边界，不生成真实key或伪造向量；SQLCipher/vault成功顺序、创建中断恢复、Android备份排除与分享容器保护均仍为NOT_RUN。",
+        "iOS gate T23-G02/G04 与 Android gate T23-G05/G06 分开记录，全部NOT_RUN；需各自在对应development build/设备验收，不能相互代替。",
+        "12项OPEN_QUESTION仍未解：share队列容量/ack/dedupe/取消、账号scope切换、local.totalBytes、平台权限与raw error、T15/T22接口、保护容器实现细节及T29本机数据恢复/导出边界。",
+        "T04完成独立critical fixture-plan静态复核，六项计划缺口已修；此复核不代表行为验收、平台支持或T15/T22依赖通过。"
+      ]
+    },
+    "T24": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T24/fixture-plan.json",
+        "docs/evidence/T24/fixture-plan-static-review.json"
+      ],
+      "openGates": [
+        "计划与独立critical静态复核已登记；T24仍not_started。37 fixtures、12 gates、2 commands全NOT_RUN，无行为或平台验收证据。",
+        "12项依赖均未accepted：T06=in_progress，其余T21/T23/T16/T18/T19/T14/T15/T17/T20/T22/T07=not_started；T24-OQ01更深递归依赖闭包仍OPEN_QUESTION。",
+        "13个OPEN_QUESTION保持未决，涉及共享引擎/存储事务、前后台调度、错误/权限映射、附件恢复、容量、取消对账、共享fixture与crypto vector归属。",
+        "T04独立只读critical plan review为PASS_WITH_LIMITATIONS，仅验证fixture/gate/OQ/依赖计划质量，不代表行为验收；G11/G12实体iOS/Android完整F37生命周期仍NOT_RUN。",
+        "未运行测试、构建、数据库/provider/crypto或真实设备验证。"
+      ]
+    },
+    "T25": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T25/fixture-plan.json",
+        "docs/evidence/T25/fixture-plan-static-review.json"
+      ],
+      "openGates": [
+        "仅完成cross-platform synthetic fixture/performance planning；T25保持not_started。83 fixtures、13 gates、3 commands、5 measurements全NOT_RUN；不代表G1/G2/G3/G4或S01-S27通过。",
+        "依赖门：T13/T19/T21/T24均not_started、未accepted；未执行PG/S3、Hermes、browser/device、crypto、integration或benchmark行为。全量多agent数据丢失/复活/错输入/越权/成本对抗仍NOT_RUN。",
+        "覆盖映射区分04 §8桌面04-P01–P28、01产品01-P01–P11与08 U01–U12；核心范围为S01–S23/S26、S24配额下降/存储故障子场景、T19 S25合成恢复核心及S27已实施本地部分。",
+        "明确延期：T25-D01 S24真实退款/provider权益→T26–T28；T25-D02 S25生产等价运维恢复→T29/T30；T25-D03 S27可移植导入/导出与T29恢复→T29/T30。不得据此宣称完整S01–S27或G4通过。",
+        "性能仅规划>=100次正常样本、失败/取消单列、p50/p95/max、1万条搜索、预算及全进程内存/idle CPU；跨进程未校准时钟不可直接相减。所有结果均NOT_RUN，实际门槛以冻结规格为准。",
+        "T04独立critical plan review为PASS_WITH_LIMITATIONS，指定断言缺口已闭合；该审查只验证计划质量，不替代行为执行、平台/数据库/provider evidence或任务最终对抗验收。"
+      ]
+    },
+    "T26": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T26/fixture-plan.json",
+        "docs/evidence/T26/fixture-plan-static-review.json"
+      ],
+      "openGates": [
+        "Fixture/interface planning only; T26 remains not_started. All 31 fixtures, 11 gates, 2 behavior commands and 12 OQs remain NOT_RUN; no production, database, provider, merchant, device, or staging behavior was run.",
+        "T14, T18, and T19 remain not_started and unaccepted; provider auth, gateway and API behavior, quota policy, external sandbox and real RLS isolation remain gated or OPEN_QUESTION.",
+        "The required independent critical plan review is PASS_WITH_LIMITATIONS and closes only the B09/G08 and B10/G01/G02 planning-link findings; it is not behavior acceptance or dependency acceptance."
+      ]
+    },
+    "T27": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T27/fixture-plan.json",
+        "docs/evidence/T27/fixture-plan-static-review.json"
+      ],
+      "openGates": [
+        "Fixture/interface planning only; T27 remains not_started. All 31 fixtures, 7 gates, 2 commands and 21 OQs remain NOT_RUN; no provider, database, sandbox, merchant, or behavior operation was run.",
+        "T26 remains not_started/unaccepted. Stripe test-mode execution and missed-webhook reconciliation remain NOT_RUN; full B11 store-entry and region-policy scope is deferred to T28/T31.",
+        "The required independent critical plan review is PASS_WITH_LIMITATIONS; it validates plan quality only and does not accept T27 behavior or dependencies."
+      ]
+    },
+    "T28": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T28/fixture-plan.json",
+        "docs/evidence/T28/fixture-plan-static-review.json"
+      ],
+      "openGates": [
+        "Fixture/interface planning only; T28 remains not_started. All 32 fixtures, 9 gates, and 2 commands remain NOT_RUN; no SDK, store sandbox, provider, device, or production behavior was run.",
+        "T23/T26 remain not_started and unaccepted, and T06 remains in_progress; implementation and behavior execution stay gated. Twelve OQs remain open.",
+        "Independent critical plan review is PASS_WITH_LIMITATIONS and closes plan-quality findings only; it is not behavior acceptance or dependency acceptance."
+      ]
+    },
+    "T29": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T29/fixture-plan.json",
+        "docs/evidence/T29/fixture-plan-static-check.json",
+        "docs/evidence/T29/fixture-plan-independent-review.json"
+      ],
+      "openGates": [
+        "Fixture/interface planning only; T29 remains not_started. All 50 fixtures, 12 gates, and 2 commands remain NOT_RUN; no export/import, recovery, database, S3, account deletion, or user data operation ran.",
+        "T08/T19/T25 and additional T07/T16/T18 prerequisites remain not_started/unaccepted; implementation and recovery execution stay gated. Nineteen OQs remain open, including backup retention period and interrupted-export cleanup/resume policy.",
+        "独立 critical plan review 为 PASS_WITH_LIMITATIONS；F12/F22 key-domain 分离、F50 导出崩溃恢复计划、F34/A09 retention 分离及 F25 sourceRefs 修订均复核通过。此为计划质量审查，不是行为验收或依赖接受。"
+      ]
+    },
+    "T30": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T30/fixture-plan.json",
+        "docs/evidence/T30/fixture-plan-static-review.json"
+      ],
+      "openGates": [
+        "Fixture/interface planning only; T30 remains not_started. All 36 fixtures, 16 gates, 3 commands, 5 measurement plans, and 18 acceptance criteria remain NOT_RUN; no build, signature, release, CI, IaC, or production operation was run.",
+        "T25/T27/T28/T29 remain not_started and unaccepted; implementation/release rollout remains gated. Twenty-four OQs and three deferred scenarios remain open, including S25/S27 boundaries owned by T29.",
+        "Independent critical plan review is PASS_WITH_LIMITATIONS and confirms planning coverage only; it does not accept release, signing, platform, operations, cost, or recovery behavior."
+      ]
+    },
+    "T31": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T31/fixture-plan.json",
+        "docs/evidence/T31/fixture-plan-static-check.json",
+        "docs/evidence/T31/fixture-plan-independent-review.json"
+      ],
+      "openGates": [
+        "Fixture/interface planning only; T31 remains not_started. All 34 fixtures, 13 gates and 2 commands remain NOT_RUN; no merchant, payment, platform, device, production or release behavior was run. Eighteen OQs remain open.",
+        "T25/T27/T28/T29/T30 remain not_started and unaccepted; T01/T06 are not accepted prerequisites. Merchant, market/region, domain, price, purchase channel and support/retention inputs remain UNKNOWN; behavior work is gated.",
+        "Independent critical plan review is PASS_WITH_LIMITATIONS. Revocation coverage only rejects new sync/download API requests; it does not promise immediate invalidation of a TTL-valid signed URL or remote erasure of downloaded/decrypted copies. This is plan-quality review, not behavior acceptance."
+      ]
+    },
+    "T32": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "tests/tasks/T32/fixture-plan.json",
+        "docs/evidence/T32/fixture-plan-static-check.json",
+        "docs/evidence/T32/fixture-plan-independent-review.json"
+      ],
+      "openGates": [
+        "Fixture/interface planning only; T32 remains not_started. All 28 fixtures, 12 gates, 1 command and 3 measurements remain NOT_RUN; 18 OQs remain open. No service, contract implementation, customer research, or team behavior ran.",
+        "T31 remains not_started/unaccepted. Team scope, roles, team key rotation and historical re-encryption, revocation/offline cache behavior, recovery authorities and cost/customer inputs remain OPEN_QUESTION; current Team feature stays off.",
+        "Independent critical plan review is PASS_WITH_LIMITATIONS and closes only the bidirectional traceability findings. It is not security behavior acceptance, dependency acceptance, or authorization to implement a Team service."
+      ]
+    }
+  }
+}
