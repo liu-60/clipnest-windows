@@ -56,6 +56,7 @@
       "artifact": "docs/evidence/T04/image-selection-provider-integration.json",
       "probe": "tests/tasks/T04/run-image-selection-electron.cjs",
       "scope": "Production selection orchestration and NativeContentProvider reach a real Electron utilityProcess decoder; helper, clipboard, panel, and input boundaries are fakes",
+      "realWorkerFailure": "PASS_WITH_LIMITATIONS: a corrupted PNG IDAT CRC reaches the real utilityProcess and blocks selection before helper registration; cancellation/timeout are not covered",
       "pairedRendererFakeRun": {
         "status": "PASS",
         "command": "pnpm test:unit -- keyboard-renderer.test.cjs main-image-preparation-failure.test.cjs",
@@ -263,7 +264,8 @@
       ],
       "evidence": [
         "tests/tasks/T04/keyboard-renderer.test.cjs: delayed IPC fake keeps the preparing status visible in the renderer",
-        "tests/tasks/T04/run-image-selection-electron.cjs: production selection/provider path reaches a real utilityProcess decode; Electron main event loop advances while selection awaits the gated response; retained image content and preview remain unchanged"
+        "tests/tasks/T04/run-image-selection-electron.cjs: production selection/provider path reaches a real utilityProcess decode; Electron main event loop advances while selection awaits the gated response; retained image content and preview remain unchanged",
+        "tests/tasks/T04/run-image-selection-electron.cjs: malformed PNG CRC is rejected by the real utilityProcess before helper registration, with clipboard, fallback, paste/input, and panel effects unchanged"
       ]
     },
     {

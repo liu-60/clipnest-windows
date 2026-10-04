@@ -74,6 +74,8 @@ if (!process.versions.electron) {
     }).outputText;
   }
 
+  let phase = "initialize";
+
   async function run() {
     assert.equal(BrowserWindow.getAllWindows().length, 0, "the integration probe must not create a BrowserWindow");
     const sourcePixels = Buffer.from([240, 40, 20, 128, 5, 100, 240, 255]);
@@ -87,6 +89,7 @@ if (!process.versions.electron) {
     const requests = [];
     const effects = { clipboardCommits: 0, pasteRequests: 0, fallbackWrites: 0, panelHides: 0 };
     const realWorkerDecodeFinished = deferred();
+    const realWorkerDecodeFailure = deferred();
     const releasePreparationResponse = deferred();
     let realWorkerDecodeCount = 0;
     let context;
@@ -114,7 +117,9 @@ if (!process.versions.electron) {
             try {
               decoded = await realWorker.decode(input, signal);
             } catch (error) {
-              realWorkerDecodeFinished.reject(error);
+              events.push("worker-decode-failed");
+              if (realWorkerDecodeCount === 1) realWorkerDecodeFinished.reject(error);
+              else realWorkerDecodeFailure.resolve(error);
               throw error;
             }
             events.push("worker-decode-finished");
@@ -239,6 +244,7 @@ if (!process.versions.electron) {
     const selection = context.copySelectedItem(7, true, item.id, [], GENERATION, "image-worker-integration")
       .then((result) => { selectionSettled = true; return plain(result); });
     try {
+      phase = "wait for first real worker decode";
       await realWorkerDecodeFinished.promise;
       assert.equal(selectionSettled, false, "selection remains pending while the real worker result is held at the test gate");
       assert.equal(realWorkerDecodeCount, 1, "a cache miss invokes exactly one real utility worker decode");
@@ -252,6 +258,7 @@ if (!process.versions.electron) {
       assert.equal(item.preview, originalPreview);
 
       releasePreparationResponse.resolve();
+      phase = "wait for first selection to finish";
       assert.deepEqual(await selection, { status: "input_submitted" });
       assert.equal(imagePreparationService.getCacheStats().entries, 1);
       assert.equal(imagePreparationService.getCacheStats().bytes, 8);
@@ -268,7 +275,52 @@ if (!process.versions.electron) {
       assert.ok(events.indexOf("helper-prepare") < events.indexOf("helper-commit_write"));
       assert.ok(events.indexOf("helper-commit_write") < events.indexOf("helper-paste"));
       assert.equal(BrowserWindow.getAllWindows().length, 0);
-      process.stdout.write("PASS: production image selection/provider path decoded through a real utilityProcess; helper, clipboard, panel, and input boundaries were faked\n");
+
+      const malformedPng = Buffer.from(pngBytes);
+      malformedPng[41] ^= 0xff; // Corrupt IDAT data while preserving the PNG header and dimensions.
+      const failedItem = {
+        id: "worker-integration-invalid-image",
+        type: "image",
+        content: `data:image/png;base64,${malformedPng.toString("base64")}`,
+        preview: "损坏图片原预览",
+      };
+      const failedItemContent = failedItem.content;
+      const failedItemPreview = failedItem.preview;
+      history.push(failedItem);
+      helperExited = false;
+      visible = true;
+      context.panelGeneration = GENERATION;
+      context.panelTarget = TARGET;
+      context.pendingPanelGeneration = null;
+      context.openingGuardUntil = 0;
+      const requestsBeforeFailure = requests.length;
+      const effectsBeforeFailure = { ...effects };
+      selectionSettled = false;
+      const failedSelection = context.copySelectedItem(7, true, failedItem.id, [], GENERATION, "image-worker-failure")
+        .then((result) => { selectionSettled = true; return plain(result); });
+
+      phase = "wait for real worker failure";
+      const failureReachedWorker = await Promise.race([
+        realWorkerDecodeFailure.promise.then(() => true),
+        new Promise((resolve) => setTimeout(() => resolve(false), 2_000)),
+      ]);
+      const earlyFailureResult = failureReachedWorker ? null : await failedSelection;
+      assert.equal(failureReachedWorker, true,
+        `malformed image must reach the real worker; decodeCount=${realWorkerDecodeCount}, settled=${selectionSettled}, result=${JSON.stringify(earlyFailureResult)}, events=${events.join(",")}`);
+      phase = "wait for fail-closed selection result";
+      assert.deepEqual(await failedSelection, { status: "blocked", reasonCode: "image_png_crc_invalid" });
+      assert.equal(realWorkerDecodeCount, 2, "the malformed image reaches the same real utility worker");
+      assert.equal(requests.length, requestsBeforeFailure, "worker failure occurs before helper registration");
+      assert.deepEqual(effects, effectsBeforeFailure, "worker failure causes no clipboard, paste, fallback, or panel side effects");
+      assert.equal(visible, true, "the failed selection leaves the panel visible");
+      assert.equal(failedItem.content, failedItemContent, "the malformed retained content is not replaced");
+      assert.equal(failedItem.preview, failedItemPreview, "the retained preview is not replaced");
+      assert.equal(history[1], failedItem);
+      assert.equal(imagePreparationService.getCacheStats().entries, 1, "failed decode creates no additional cache entry");
+      assert.equal(imagePreparationService.getCacheStats().bytes, 8);
+      assert.ok(events.includes("worker-decode-failed"));
+      assert.equal(selectionSettled, true);
+      process.stdout.write("PASS: production image selection/provider path covered real utilityProcess success and decode failure; helper, clipboard, panel, and input boundaries were faked\n");
     } finally {
       releasePreparationResponse.resolve();
       await selection.catch(() => undefined);
@@ -277,7 +329,7 @@ if (!process.versions.electron) {
   }
 
   const watchdog = setTimeout(() => {
-    process.stderr.write("image selection Electron integration timed out\n");
+    process.stderr.write(`image selection Electron integration timed out during ${phase}\n`);
     app.exit(1);
   }, 25_000);
   app.whenReady().then(run).then(() => {
