@@ -5,7 +5,7 @@
   "measurementType": "fresh_utility_process_per_uncached_5000000-pixel_synthetic_jpeg_decode",
   "executionStatus": "MEASURED",
   "source": {
-    "commit": "21a25b5fa6c04cafea6f15497e7ca1fb44ee05a0",
+    "commit": "f97618f3eb7b21e6caea62fbf3c0cedce743f72f",
     "branch": "codex/m0-latency",
     "workingTreeWasDirty": true
   },
@@ -55,21 +55,37 @@
     "runtime": "Electron utilityProcess",
     "recyclingPolicy": "one fresh process per uncached image larger than the 32 MiB decoded cache",
     "configuredPeakBytes": 268435456,
+    "jpegCapacityEstimate": {
+      "processReserveBytes": 117440512,
+      "coefficientBlockBytes": 512,
+      "quantizationTableBytes": 512,
+      "huffmanTableBytes": 4096,
+      "huffmanSymbolBytes": 2048,
+      "commentByteMultiplier": 2,
+      "metadataLimits": {
+        "quantizationTables": 64,
+        "huffmanTables": 64,
+        "huffmanSymbolsPerTable": 256,
+        "commentBytes": 1048576
+      },
+      "maximumMarkerSegments": 4096,
+      "includes": "encoded input copies, coefficient blocks, component lines, RGB intermediate, RGBA output, JPEG tables, Huffman trees, and decoded comments"
+    },
     "processes": [
       {
-        "pid": 21280,
-        "spawnMs": 26.51,
-        "peakWorkingSetBytes": 248053760,
-        "sampledPeakPrivateBytes": 221028352,
-        "workingSetAtStopBytes": 187068416,
-        "privateBytesAtStop": 159600640,
+        "pid": 64288,
+        "spawnMs": 50.64,
+        "peakWorkingSetBytes": 245542912,
+        "sampledPeakPrivateBytes": 209760256,
+        "workingSetAtStopBytes": 184561664,
+        "privateBytesAtStop": 154972160,
         "samplerSamples": 10
       }
     ],
-    "observedPeakWorkingSetBytes": 248053760,
-    "observedPeakWorkingSetMiB": 236.56,
-    "sampledPeakPrivateBytes": 221028352,
-    "sampledPeakPrivateMiB": 210.79,
+    "observedPeakWorkingSetBytes": 245542912,
+    "observedPeakWorkingSetMiB": 234.17,
+    "sampledPeakPrivateBytes": 209760256,
+    "sampledPeakPrivateMiB": 200.04,
     "sampleIntervalMs": 100,
     "totalSamplerSamples": 10,
     "withinConfiguredPeakWorkingSet": true
@@ -81,26 +97,26 @@
     "samples": [
       {
         "requestId": "t04-jpeg-2500x2000-1",
-        "durationMs": 916.81,
-        "workerStartupMs": 26.51,
+        "durationMs": 918.7,
+        "workerStartupMs": 50.64,
         "outcome": "success",
-        "workingSetBeforeBytes": 59445248,
-        "privateBytesBefore": 32751616,
-        "workingSetAfterBytes": 187068416,
-        "privateBytesAfter": 159600640,
+        "workingSetBeforeBytes": 57036800,
+        "privateBytesBefore": 29126656,
+        "workingSetAfterBytes": 184561664,
+        "privateBytesAfter": 154972160,
         "responsePayloadBytes": 20000000,
-        "peakWorkingSetBytes": 248053760,
-        "sampledPeakPrivateBytes": 221028352
+        "peakWorkingSetBytes": 245542912,
+        "sampledPeakPrivateBytes": 209760256
       }
     ],
-    "p50Ms": 916.81,
-    "p95Ms": 916.81,
-    "maxMs": 916.81,
+    "p50Ms": 918.7,
+    "p95Ms": 918.7,
+    "maxMs": 918.7,
     "capacityRejectP50Ms": null,
     "capacityRejectP95Ms": null,
-    "p50WorkerStartupMs": 26.51,
-    "p95WorkerStartupMs": 26.51,
-    "maxWorkerStartupMs": 26.51,
+    "p50WorkerStartupMs": 50.64,
+    "p95WorkerStartupMs": 50.64,
+    "maxWorkerStartupMs": 50.64,
     "timingScope": "fresh utility process ready, then request post through decompressed 64,000,000-byte RGBA response receipt",
     "diagnosticOnly": true,
     "doesNotSatisfyNormalTextOrWake100SampleAcceptance": true

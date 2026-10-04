@@ -79,9 +79,9 @@
       "sourceBytes": 20971520,
       "capacityRejectedSamples": 5,
       "successfulDecodes": 0,
-      "capacityRejectP95Ms": 168.48,
-      "maxPeakWorkingSetBytes": 107622400,
-      "maxPeakWorkingSetMiB": 102.64,
+      "capacityRejectP95Ms": 184.08,
+      "maxPeakWorkingSetBytes": 106479616,
+      "maxPeakWorkingSetMiB": 101.55,
       "budgetBytes": 268435456,
       "withinBudget": true,
       "preflightModel": {
@@ -124,7 +124,7 @@
       ],
       "limitations": [
         "16MP/20MiB samples are rejected before full decode; the maximum supported JPEG size has not been established",
-        "Existing 5MP 4:2:0 and 3MP 4:4:4 successful samples were recorded before the metadata-aware estimate and do not prove current-guard admission or a universal RSS ceiling",
+        "Current committed guard accepted one fresh-worker sample each at 4MP 4:2:0 (200.16 MiB), 5MP 4:2:0 (234.17 MiB), and 3MP 4:4:4 (221.63 MiB); these single samples do not prove a universal RSS ceiling",
         "the guard conservatively rejects a 4MP 4:4:4 input that decoded once at 246.85 MiB and a 6MP 4:2:0 input that decoded once at 242.73 MiB before the preflight was added",
         "the preflight estimate does not replace Windows measurements for progressive JPEG, EXIF/ICC, packaged full-app use, or a hard process RSS bound"
       ]
