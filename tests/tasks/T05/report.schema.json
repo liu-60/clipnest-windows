@@ -368,7 +368,16 @@
         "result": { "enum": ["PASS", "FAIL", "NOT_RUN", "BLOCKED"] },
         "assertions": {
           "type": "array",
-          "items": { "$ref": "#/$defs/checkResult" }
+          "items": {
+            "allOf": [
+              { "$ref": "#/$defs/checkResult" },
+              {
+                "properties": {
+                  "name": { "pattern": "^P(0[1-9]|1[0-9]|2[0-8])-A(0[1-9])$" }
+                }
+              }
+            ]
+          }
         },
         "evidence": {
           "type": "array",
@@ -401,10 +410,10 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["status", "observationMode", "targetSampleCount", "successfulSampleCount", "failureCount", "cancellationCount", "timeoutCount", "p50Ms", "p95Ms", "maxMs", "evidence", "samples"],
-      "description": "实际样本数以 samples.length 为准。PASS需至少100个成功样本且使用controlled_live；失败、取消和超时分别记录。status=NOT_RUN时各计数及样本数组为0、证据为空、统计量为null。唯一requestId、计数和分位数与原始样本的一致性仍需复核。",
+      "description": "实际样本数以 samples.length 为准。PASS需至少100个成功样本且使用controlled_live；失败、取消和超时分别记录。每个样本用valueMs记录该指标的原始值；p50/p95/max按成功样本以nearest-rank重算并保留3位小数。status=NOT_RUN时各计数及样本数组为0、证据为空、统计量为null。唯一requestId、计数和分位数的一致性由T05报告检查器复核。",
       "allOf": [
         {
-          "if": { "properties": { "status": { "enum": ["PASS", "FAIL"] } }, "required": ["status"] },
+          "if": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
           "then": {
             "properties": {
               "targetSampleCount": { "minimum": 100 },
@@ -431,6 +440,10 @@
               }
             }
           }
+        },
+        {
+          "if": { "properties": { "status": { "const": "FAIL" } }, "required": ["status"] },
+          "then": { "properties": { "samples": { "minItems": 1 } } }
         },
         {
           "if": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
@@ -461,11 +474,12 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["requestId", "outcome", "result", "stageMs"],
+            "required": ["requestId", "outcome", "result", "valueMs", "stageMs"],
             "properties": {
               "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
               "outcome": { "enum": ["success", "failure", "cancelled", "timeout"] },
               "result": { "type": "string", "minLength": 1, "maxLength": 64 },
+              "valueMs": { "type": "number", "minimum": 0 },
               "stageMs": {
                 "type": "object",
                 "additionalProperties": { "type": "number", "minimum": 0 }

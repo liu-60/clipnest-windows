@@ -1,0 +1,745 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "runId": "t05-not-run-example",
+  "status": "NOT_RUN",
+  "source": {
+    "commit": null,
+    "branch": "not-run-example",
+    "workingTreeWasDirty": false
+  },
+  "dependencyGate": {
+    "T03": "accepted",
+    "T04": "in_progress"
+  },
+  "environment": {
+    "platform": "NOT_RUN",
+    "osVersion": null,
+    "architecture": "other",
+    "buildMode": "debug",
+    "dataProfile": "isolated_synthetic",
+    "datasetSeed": "not-run-example",
+    "displayConfiguration": null,
+    "powerMode": null,
+    "networkCondition": null,
+    "cacheState": "not_applicable"
+  },
+  "cases": [
+    {
+      "id": "P01",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P01-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P01-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P02",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P02-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P02-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P03",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P03-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P03-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P04",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P04-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P05",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P05-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P05-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P06",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P06-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P06-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P07",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P07-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P07-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P07-A03",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P08",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P08-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P08-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P09",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P09-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P09-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P10",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P10-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P10-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P11",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P11-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P11-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P11-A03",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P12",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P12-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P12-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P13",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P13-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P14",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P14-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P14-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P15",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P15-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P16",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P16-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P16-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P16-A03",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P17",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P17-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P17-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P17-A03",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P18",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P18-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P18-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P19",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P19-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P19-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P19-A03",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P20",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P20-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P20-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P20-A03",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P21",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P21-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P21-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P21-A03",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P21-A04",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P21-A05",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P21-A06",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P22",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P22-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P22-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P23",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P23-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P23-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P23-A03",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P24",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P24-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P24-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P24-A03",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P25",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P25-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P25-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P25-A03",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P26",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P26-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P26-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P26-A03",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P27",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P27-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P27-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P27-A03",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "P28",
+      "mode": "fake",
+      "result": "NOT_RUN",
+      "assertions": [
+        {
+          "name": "P28-A01",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P28-A02",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P28-A03",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P28-A04",
+          "result": "NOT_RUN",
+          "evidence": []
+        },
+        {
+          "name": "P28-A05",
+          "result": "NOT_RUN",
+          "evidence": []
+        }
+      ],
+      "evidence": []
+    }
+  ],
+  "g0Runtime": {
+    "noInteractiveBlockingSpawnSync": {
+      "name": "noInteractiveBlockingSpawnSync",
+      "result": "NOT_RUN",
+      "evidence": []
+    },
+    "noHelperProcessPerInteraction": {
+      "name": "noHelperProcessPerInteraction",
+      "result": "NOT_RUN",
+      "evidence": []
+    }
+  },
+  "measurements": {
+    "normalText": {
+      "status": "NOT_RUN",
+      "observationMode": "not_run",
+      "targetSampleCount": 100,
+      "successfulSampleCount": 0,
+      "failureCount": 0,
+      "cancellationCount": 0,
+      "timeoutCount": 0,
+      "p50Ms": null,
+      "p95Ms": null,
+      "maxMs": null,
+      "evidence": [],
+      "samples": []
+    },
+    "wakeToActionable": {
+      "status": "NOT_RUN",
+      "observationMode": "not_run",
+      "targetSampleCount": 100,
+      "successfulSampleCount": 0,
+      "failureCount": 0,
+      "cancellationCount": 0,
+      "timeoutCount": 0,
+      "p50Ms": null,
+      "p95Ms": null,
+      "maxMs": null,
+      "evidence": [],
+      "samples": []
+    }
+  },
+  "packageAndRollback": {
+    "localPackage": {
+      "name": "localPackage",
+      "result": "NOT_RUN",
+      "evidence": []
+    },
+    "helperResource": {
+      "result": "NOT_RUN",
+      "expectedPath": null,
+      "actualPath": null,
+      "expectedVersion": null,
+      "actualVersion": null,
+      "expectedProtocol": null,
+      "actualProtocol": null,
+      "expectedSha256": null,
+      "actualSha256": null,
+      "identityMatched": false,
+      "signatureStatus": "not_checked",
+      "evidence": []
+    },
+    "lifecycle": {
+      "coldStart": {
+        "name": "coldStart",
+        "result": "NOT_RUN",
+        "evidence": []
+      },
+      "trayAvailability": {
+        "name": "trayAvailability",
+        "result": "NOT_RUN",
+        "evidence": []
+      },
+      "appRestart": {
+        "name": "appRestart",
+        "result": "NOT_RUN",
+        "evidence": []
+      },
+      "normalExit": {
+        "name": "normalExit",
+        "result": "NOT_RUN",
+        "evidence": []
+      },
+      "helperShutdown": {
+        "name": "helperShutdown",
+        "result": "NOT_RUN",
+        "evidence": []
+      }
+    },
+    "rollback": {
+      "result": "NOT_RUN",
+      "priorVersion": null,
+      "priorSha256": null,
+      "rollbackVersion": null,
+      "rollbackSha256": null,
+      "identityMatched": false,
+      "signatureStatus": "not_checked",
+      "helperBinaryOnly": {
+        "name": "helperBinaryOnly",
+        "result": "NOT_RUN",
+        "evidence": []
+      },
+      "evidence": []
+    },
+    "dataCompatibility": {
+      "oldJsonReadable": {
+        "name": "oldJsonReadable",
+        "result": "NOT_RUN",
+        "evidence": []
+      },
+      "appDataPreserved": {
+        "name": "appDataPreserved",
+        "result": "NOT_RUN",
+        "evidence": []
+      }
+    },
+    "autoPaste": {
+      "disabled": {
+        "name": "disabled",
+        "result": "NOT_RUN",
+        "evidence": []
+      },
+      "copyAvailable": {
+        "name": "copyAvailable",
+        "result": "NOT_RUN",
+        "evidence": []
+      }
+    },
+    "evidence": [],
+    "publication": "NOT_PUBLISHED"
+  },
+  "notRun": [
+    "P01-P28 behavior assertions have not been run.",
+    "Both G0 runtime observation gates remain NOT_RUN.",
+    "The 100-sample controlled-live measurements remain NOT_RUN.",
+    "Package, helper lifecycle, rollback, and data compatibility checks remain NOT_RUN."
+  ]
+}
