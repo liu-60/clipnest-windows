@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "task": "T04",
   "status": "partial_execution",
-  "executionStatus": "PARTIAL_WITH_REAL_DECODER_AND_LATEST_PACKAGED_ASAR_SMOKE",
+  "executionStatus": "PARTIAL_WITH_REAL_DECODER_ASAR_AND_MAIN_THREAD_DEADLINE_DIAGNOSTICS",
   "executionSummary": {
     "moduleLevelFakeFixtures": {
       "status": "PASS",
@@ -75,6 +75,15 @@
       "observedResponse": "decoded_compressed",
       "allPixelsExact": true,
       "installed": false
+    },
+    "mainThreadImageDeadlineDiagnostic": {
+      "status": "PASS_WITH_LIMITATIONS",
+      "artifact": "docs/evidence/T04/main-thread-image-deadline-diagnostic.json",
+      "probe": "tests/tasks/T04/run-image-main-thread-deadline-electron.cjs",
+      "dimensions": "3000x3000",
+      "productionTransformMs": 1951.13,
+      "deadlineMs": 500,
+      "result": "key_state_unavailable; zero simulated effects; no system clipboard/input"
     }
   },
   "sourceOfExpectedBehavior": "<spec-workspace>/docs/spec/tasks/T04.md; <spec-workspace>/docs/spec/01-product-and-ux.md §2; <spec-workspace>/docs/spec/04-desktop-performance.md §6, §8",
@@ -309,6 +318,23 @@
         "released keys permit clipboard commit, while a re-pressed key blocks input submission",
         "a key held at check-only commit blocks clipboard commit",
         "this isolated fake does not establish physical keyboard timing or the OS-level race after the final key sample"
+      ]
+    },
+    {
+      "id": "T04-I12",
+      "references": [
+        "04 §4",
+        "04 §6",
+        "04 §8"
+      ],
+      "setup": "Prepare a deterministic opaque 3000x3000 synthetic NativeImage before starting the original 500ms selection-key monitor; use a fake key adapter that reports released.",
+      "action": "In Electron main, run the production encodeClipboardImage PNG-to-JPEG fallback and the matching Base64/SHA-256 work synchronously. Let the real monitor timer resume after the original cutoff; if the production work returns early, use separately reported harness-only blocking to force an overdue timer callback.",
+      "assert": [
+        "The nativeImage PNG output exceeds 20 MiB and the production encoder invokes JPEG quality 82 within the 20 MiB cap.",
+        "Record fixture preparation separately from PNG, JPEG, Base64/SHA-256, and any harness-only event-loop stall time.",
+        "An overdue poll after both deadline clocks have expired returns key_state_unavailable without treating the pre-stall released sample as current.",
+        "The isolated fake records zero clipboard writes, input submissions, and panel hides; no OS clipboard, physical input, BrowserWindow, or content-provider P15 path is invoked.",
+        "This synthetic diagnostic does not establish physical key timing, OS clipboard/input behavior, or a process peak-memory bound."
       ]
     }
   ]

@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "check": "synthetic-electron-main-thread-image-transform-selection-deadline-diagnostic",
+  "result": "PASS_WITH_LIMITATIONS",
+  "verificationDate": "2026-10-05",
+  "branch": "codex/m0-latency",
+  "sourceCommit": "3d3ee51483dfcfdb15324e8a213c5e732611705a",
+  "workingTreeWasDirty": true,
+  "environment": {
+    "os": "Microsoft Windows 11 Enterprise 10.0.22631",
+    "architecture": "x64",
+    "node": "v24.16.0",
+    "pnpm": "11.19.0",
+    "electron": "40.10.2",
+    "processType": "browser (Electron main process)"
+  },
+  "command": "ELECTRON_OVERRIDE_DIST_PATH=<Electron 40.10.2 dist>; node tests/tasks/T04/run-image-main-thread-deadline-electron.cjs",
+  "fixture": {
+    "source": "Deterministic xorshift-generated opaque 3000x3000 BGRA bitmap passed to nativeImage.createFromBitmap; no file or user content.",
+    "bytes": 36000000,
+    "preparationMs": 69.15,
+    "preparedBeforeSelectionMonitor": true
+  },
+  "productionPath": {
+    "entry": "tests/tasks/T04/run-image-main-thread-deadline-electron.cjs",
+    "encoder": "src/main/clipboard/image-payload.ts encodeClipboardImage",
+    "sourceAdapter": "Delegates getSize, toPNG and toJPEG to the real Electron NativeImage; quality is asserted as 82.",
+    "base64": "encoded.bytes.toString(\"base64\")",
+    "hash": "SHA-256 over the same image:${base64} string used by main.ts fingerprinting.",
+    "measurements": {
+      "nativeImageToPngBytes": 27086453,
+      "nativeImageToPngMs": 1694.36,
+      "nativeImageToJpegBytes": 5971597,
+      "nativeImageToJpegMs": 233.28,
+      "finalMimeType": "image/jpeg",
+      "base64Characters": 7962132,
+      "base64AndSha256Ms": 23.25,
+      "combinedProductionTransformMs": 1951.13
+    }
+  },
+  "deadlineProbe": {
+    "selectionKeyReleaseWindowMs": 500,
+    "keyState": "Fake adapter returned released=true at the initial sample; physical keyboard was not read.",
+    "synchronousProductionTransformExceededDeadline": true,
+    "harnessOnlyEventLoopStallPaddingMs": 0.01,
+    "cutoffPollObservedMsAfterDeadline": 1455,
+    "keyStateReads": 1,
+    "result": "blocked/key_state_unavailable",
+    "simulatedSideEffects": {
+      "clipboardWrites": 0,
+      "inputSubmissions": 0,
+      "panelHides": 0
+    }
+  },
+  "processMemorySamples": {
+    "selectionStart": {
+      "rssBytes": 132435968,
+      "heapUsedBytes": 5127408,
+      "externalBytes": 38688904
+    },
+    "afterTransform": {
+      "rssBytes": 176328704,
+      "heapUsedBytes": 11711376,
+      "externalBytes": 43689735
+    },
+    "limitation": "Two process.memoryUsage snapshots only; these are not a continuous peak measurement or a worker memory-limit result."
+  },
+  "stdout": "{\"result\":\"PASS\",\"platform\":\"win32-x64\",\"electron\":\"40.10.2\",\"electronProcessType\":\"browser\",\"dimensions\":\"3000x3000\",\"syntheticBitmapBytes\":36000000,\"fixturePreparationMs\":69.15,\"productionPngBytes\":27086453,\"productionPngMs\":1694.36,\"productionJpegBytes\":5971597,\"productionJpegMs\":233.28,\"productionJpegQuality\":82,\"encodedMimeType\":\"image/jpeg\",\"encodedBytes\":5971597,\"base64Chars\":7962132,\"base64AndSha256Ms\":23.25,\"productionTransformMs\":1951.13,\"memoryAtSelectionStart\":{\"rssBytes\":132435968,\"heapUsedBytes\":5127408,\"externalBytes\":38688904},\"memoryAfterTransform\":{\"rssBytes\":176328704,\"heapUsedBytes\":11711376,\"externalBytes\":43689735},\"absoluteSelectionDeadlineMs\":500,\"harnessOnlyEventLoopStallPaddingMs\":0.01,\"cutoffObservedAfterDeadlineMs\":1455,\"keyStateReads\":1,\"decision\":{\"kind\":\"blocked\",\"reasonCode\":\"key_state_unavailable\"},\"simulatedEffects\":{\"clipboardWrites\":0,\"inputSubmissions\":0,\"panelHides\":0},\"clipboardContentRead\":false,\"clipboardWritten\":false,\"inputSent\":false,\"browserWindowCreated\":false}",
+  "sideEffectBoundary": {
+    "systemClipboardRead": false,
+    "systemClipboardWrite": false,
+    "physicalInput": false,
+    "BrowserWindowCreated": false,
+    "contentProviderP15Called": false
+  },
+  "limitations": [
+    "This exercises encodeClipboardImage and equivalent Base64/SHA-256 work in Electron main, not the complete readClipboardImage/selection/helper/UI route; it does not call clipboard.readImage or the native RGBA-to-BGRA/DIB content-provider path.",
+    "The key-state adapter is synthetic. A late main-process timer returns key_state_unavailable without reusing the stale released sample, but physical key timing, Windows clipboard/input behavior and OS races remain NOT_RUN.",
+    "One deterministic 9 MP synthetic bitmap is a diagnostic fixture, not a universal latency or memory bound; two memory snapshots do not establish peak RSS. T04 remains in_progress and T05 remains not_started."
+  ]
+}
