@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "DIAGNOSTIC_MEASUREMENT_WITH_LIMITATIONS",
+  "measurementType": "warm_16mp_synthetic_png_utility_process_decode",
+  "executionStatus": "MEASURED",
+  "source": {
+    "commit": "4b4ab0461628cf666f366e229fd22c1ad44814a4",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "osVersion": "Windows 11 Enterprise",
+    "electronVersion": "40.10.2",
+    "nodeVersion": "24.15.0",
+    "cpuModel": "Intel(R) Xeon(R) Platinum 8378C CPU @ 2.80GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 17178939392,
+    "displayOrForegroundAppUsed": false,
+    "systemClipboardReadOrWritten": false,
+    "inputSent": false
+  },
+  "fixture": {
+    "width": 4000,
+    "height": 4000,
+    "pixelCount": 16000000,
+    "content": "deterministic synthetic RGBA gradient/noise PNG; no user data",
+    "encodedBytes": 6769476,
+    "sha256": "ebc378bf79859c35a260f3d35d522ff67570e272ccbc8c2db3b7892df2fae9f3"
+  },
+  "worker": {
+    "pid": 53560,
+    "runtime": "Electron utilityProcess",
+    "warmedBy": "one 2x1 synthetic PNG decode",
+    "configuredPeakBytes": 268435456,
+    "warmBaselineWorkingSetBytes": 59916288,
+    "warmBaselinePrivateBytes": 62840832,
+    "observedPeakWorkingSetBytes": 324562944,
+    "observedPeakWorkingSetMiB": 309.53,
+    "sampledPeakPrivateBytes": 262991872,
+    "sampledPeakPrivateMiB": 250.81,
+    "workingSetAtStopBytes": 196546560,
+    "privateBytesAtStop": 198725632,
+    "sampleIntervalMs": 100,
+    "samplerSamples": 8,
+    "withinConfiguredPeakWorkingSet": false
+  },
+  "latency": {
+    "sampleCount": 1,
+    "samples": [
+      {
+        "requestId": "t04-16mp-1",
+        "durationMs": 496.27,
+        "outcome": "success",
+        "workingSetBeforeBytes": 59916288,
+        "privateBytesBefore": 62840832,
+        "workingSetAfterBytes": 196546560,
+        "privateBytesAfter": 198725632
+      }
+    ],
+    "p50Ms": 496.27,
+    "p95Ms": 496.27,
+    "maxMs": 496.27,
+    "timingScope": "warm utility-process request post through 64,000,000-byte RGBA response receipt",
+    "diagnosticOnly": true,
+    "doesNotSatisfyNormalTextOrWake100SampleAcceptance": true
+  },
+  "limitations": [
+    "Five synthetic warm-worker samples are diagnostic; they do not satisfy the T05 100-sample controlled desktop timing gates or measure end-user paste latency.",
+    "The input is a generated gradient/noise PNG below the 20 MiB encoded cap; other image content, JPEG, UI responsiveness and original clipboard conversion are not covered.",
+    "PeakWorkingSet64 is the OS-reported process peak; private bytes are sampled every 100 ms and around each decode, so shorter peaks can be missed. These observations do not prove a hard memory ceiling for every decode.",
+    "No clipboard, target window, physical input, installed package, helper, or rollback behavior was exercised. P15 and full T04 acceptance remain open."
+  ]
+}

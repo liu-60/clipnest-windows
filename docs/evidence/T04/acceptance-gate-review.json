@@ -3,7 +3,13 @@
   "task": "T04",
   "reviewType": "independent_read_only_acceptance_gate_audit",
   "reviewedDate": "2026-10-04",
-  "historicalSnapshotNote": "This audit predates the later explicitly authorized PNG/JPEG implementation, passing main orchestration VM fixture, real utility-process tests, v2/v3 ASAR probes and v3 local installation. Its original findings/decision are retained as history; current completed and remaining gates are recorded in docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json and docs/progress.json. T04 remains in_progress and T05 not_started.",
+  "historicalSnapshotNote": "This audit predates the later explicitly authorized PNG/JPEG implementation, passing main orchestration VM fixture, real utility-process tests, v2/v3 ASAR probes, v3 local installation and current selection-deadline/helper work. Its original findings/decision are retained as history; current completed and remaining gates are recorded in docs/evidence/T04/verification.json, docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json and docs/progress.json. T04 remains in_progress and T05 not_started.",
+  "subsequentUserDecision": {
+    "date": "2026-10-04",
+    "scope": "src/main/native/content-provider.ts",
+    "decision": "User chose not to add this file to the current T04 scope.",
+    "effect": "The P15 repeated image decode/Base64/hash path remains an open T04 gate; no change was made to the file."
+  },
   "reviewedArtifacts": [
     "docs/spec/tasks/T04.md",
     "../v2/docs/spec/04-desktop-performance.md",

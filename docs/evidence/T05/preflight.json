@@ -3,7 +3,7 @@
   "task": "T05",
   "result": "NOT_RUN",
   "scope": "Static preflight refresh only. No package:windows build, P01-P28 release acceptance, full release test, controlled desktop run, clipboard/input action, rollback check, or publication was performed.",
-  "commit": "91cafd765b9480e011647c9d8cd2976269f12aef",
+  "commit": "4b4ab04",
   "branch": "codex/m0-latency",
   "workingTreeWasDirty": true,
   "historicalSnapshotNote": "The original staticObservations describe the earlier preflight. Current user-authorized local v3 packaging/ASAR-module probes and installation file matching are PASS; this does not execute or accept the T05 release gate. See docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json.",
@@ -19,8 +19,8 @@
     },
     "t03AcceptanceBasis": "T03 remains accepted by user instruction; the production main-function VM fixture now passes 8 cases with the real selection monitor. Actual Electron IPC, final card-click target-visible input and complete controlled benchmark remain separate open gates.",
     "t04OpenGates": [
-      "Production PNG/JPEG, real utility-process cancellation/exit and v3 ASAR/module load are PASS; full real image/card-click acceptance remains incomplete.",
-      "P15/P16 hot-path responsiveness, 16 MP latency and measured 256 MiB worker peak memory remain incomplete."
+      "Production PNG/JPEG, real utility-process cancellation/exit, v3 ASAR/module load, and a five-sample synthetic 16 MP diagnostic are recorded. The diagnostic observed 161.23 MiB maximum PeakWorkingSet64 and 547.68 ms p95 for one generated PNG; it does not establish a general 256 MiB or latency guarantee, and the latest compressed-response changes have not been packaged.",
+      "P15 remains open by user scope decision. Main-process P15/P16 hot-path responsiveness, real image/card-click acceptance, all-content memory/performance coverage and latest-code package verification remain incomplete."
     ],
     "blockedActions": [
       "P01-P28 T05 release behavior acceptance"
@@ -30,7 +30,7 @@
   "staticObservations": [
     {
       "file": "docs/progress.json",
-      "lines": "54-75",
+      "lines": "52-110",
       "observation": "T03 is accepted by the user's explicit direction; P21 deadline drift is fixed and independently reviewed PASS, while the main-process IPC/controller fixture and real Win32 authorization, isolated clipboard/SendInput, and 100-run live benchmark remain open/NOT_RUN. T04 is in_progress with decoder and image memory/P15/P16 gates open. T05 is not_started and explicitly blocks package verification/release behavior acceptance until T04 is accepted."
     },
     {
@@ -39,9 +39,14 @@
       "observation": "The T05 card requires T03/T04 dependencies, separates P01-P28 plus controlled text measurements, Windows x64 helper packaging, and independent review/rollback, and prohibits claiming PASS for unmeasured platform/sandbox behavior. This refresh records static status only."
     },
     {
+      "file": "tests/tasks/T05/assertion-map.json",
+      "lines": "not_applicable",
+      "observation": "A static traceability map contains all 71 P01-P28 plan assertions verbatim in source order with unique IDs; every record is NOT_RUN and has no evidence reference. The map is preparation only and does not replace executing or reviewing any fixture."
+    },
+    {
       "file": "package.json",
       "lines": "20, 43-59, 61-75",
-      "observation": "The package:windows script builds NSIS and directory x64 artifacts with --publish never. The explicit packaged files are dist, dist-electron, build/icon.png, and package.json; asarUnpack includes only build/icon.png. No native helper resource, extraResources rule, helper hash, or protocol metadata is configured. The package has not been built, so packaged output contents remain unverified."
+      "observation": "The standard package:windows script builds NSIS and directory x64 artifacts with --publish never. Its explicit packaged files are dist, dist-electron, build/icon.png, and package.json; asarUnpack includes only build/icon.png. No native helper resource, extraResources rule, helper hash, or protocol metadata is configured. A separate local v3 builder configuration previously produced module/decoder probes and an 82-file installation match; the standard package output and the latest compressed-response source remain unverified."
     },
     {
       "file": "src/main/main.ts",
@@ -72,7 +77,7 @@
     "Rollback to the prior helper binary while preserving existing JSON data, and immediate autoPaste disable behavior."
   ],
   "notVerified": [
-    "T04 accepted behavior, complete P15/P16 hot-path acceptance, measured 16 MP latency and image worker memory budget.",
+    "T04 accepted behavior, complete P15/P16 hot-path acceptance, general 16 MP latency and image-worker memory guarantees; a five-sample single synthetic PNG diagnostic does not close these gates.",
     "Actual Electron IPC beyond the passing 8-case main orchestration VM fixture, final card-click target-visible Win32 input, and 100-run live benchmark.",
     "P01-P28 T05 release behavior acceptance and controlled 100-run benchmark.",
     "Complete release-level Windows x64 package/signature/protocol/startup/tray/restart/exit acceptance beyond passing local v3 module/decoder probes and installation file matching.",
@@ -82,6 +87,7 @@
   "artifacts": [
     "tests/tasks/T05/fixture-plan.json",
     "tests/tasks/T05/assertion-map.json",
-    "tests/tasks/T05/report.schema.json"
+    "tests/tasks/T05/report.schema.json",
+    "docs/evidence/T05/current-static-audit.json"
   ]
 }

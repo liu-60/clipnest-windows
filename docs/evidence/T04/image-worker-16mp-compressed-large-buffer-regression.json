@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "DIAGNOSTIC_MEASUREMENT_WITH_LIMITATIONS",
+  "measurementType": "fresh_utility_process_per_uncached_16mp_synthetic_png_decode",
+  "executionStatus": "MEASURED",
+  "source": {
+    "commit": "4b4ab0461628cf666f366e229fd22c1ad44814a4",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "osVersion": "Windows 11 Enterprise",
+    "electronVersion": "40.10.2",
+    "nodeVersion": "24.15.0",
+    "cpuModel": "Intel(R) Xeon(R) Platinum 8378C CPU @ 2.80GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 17178939392,
+    "displayOrForegroundAppUsed": false,
+    "systemClipboardReadOrWritten": false,
+    "inputSent": false
+  },
+  "fixture": {
+    "width": 4000,
+    "height": 4000,
+    "pixelCount": 16000000,
+    "content": "deterministic synthetic RGBA gradient/noise PNG; no user data",
+    "encodedBytes": 6769476,
+    "sha256": "ebc378bf79859c35a260f3d35d522ff67570e272ccbc8c2db3b7892df2fae9f3"
+  },
+  "worker": {
+    "runtime": "Electron utilityProcess",
+    "recyclingPolicy": "one fresh process per uncached image larger than the 32 MiB decoded cache",
+    "configuredPeakBytes": 268435456,
+    "processes": [
+      {
+        "pid": 55392,
+        "spawnMs": 90.2,
+        "peakWorkingSetBytes": 331001856,
+        "sampledPeakPrivateBytes": 237441024,
+        "workingSetAtStopBytes": 196206592,
+        "privateBytesAtStop": 166432768,
+        "samplerSamples": 7
+      },
+      {
+        "pid": 41280,
+        "spawnMs": 69.11,
+        "peakWorkingSetBytes": 335785984,
+        "sampledPeakPrivateBytes": 239071232,
+        "workingSetAtStopBytes": 200990720,
+        "privateBytesAtStop": 168067072,
+        "samplerSamples": 7
+      },
+      {
+        "pid": 52396,
+        "spawnMs": 112.02,
+        "peakWorkingSetBytes": 333283328,
+        "sampledPeakPrivateBytes": 237674496,
+        "workingSetAtStopBytes": 198488064,
+        "privateBytesAtStop": 166670336,
+        "samplerSamples": 8
+      },
+      {
+        "pid": 33348,
+        "spawnMs": 91.63,
+        "peakWorkingSetBytes": 333213696,
+        "sampledPeakPrivateBytes": 236441600,
+        "workingSetAtStopBytes": 198414336,
+        "privateBytesAtStop": 165433344,
+        "samplerSamples": 8
+      },
+      {
+        "pid": 53704,
+        "spawnMs": 63.39,
+        "peakWorkingSetBytes": 336076800,
+        "sampledPeakPrivateBytes": 239124480,
+        "workingSetAtStopBytes": 201281536,
+        "privateBytesAtStop": 168120320,
+        "samplerSamples": 7
+      }
+    ],
+    "observedPeakWorkingSetBytes": 336076800,
+    "observedPeakWorkingSetMiB": 320.51,
+    "sampledPeakPrivateBytes": 239124480,
+    "sampledPeakPrivateMiB": 228.05,
+    "sampleIntervalMs": 100,
+    "totalSamplerSamples": 37,
+    "withinConfiguredPeakWorkingSet": false
+  },
+  "latency": {
+    "sampleCount": 5,
+    "samples": [
+      {
+        "requestId": "t04-16mp-1",
+        "durationMs": 672.73,
+        "workerStartupMs": 90.2,
+        "outcome": "success",
+        "workingSetBeforeBytes": 59645952,
+        "privateBytesBefore": 30101504,
+        "workingSetAfterBytes": 196206592,
+        "privateBytesAfter": 166432768,
+        "responsePayloadBytes": 6865599,
+        "peakWorkingSetBytes": 331001856,
+        "sampledPeakPrivateBytes": 237441024
+      },
+      {
+        "requestId": "t04-16mp-2",
+        "durationMs": 687.12,
+        "workerStartupMs": 69.11,
+        "outcome": "success",
+        "workingSetBeforeBytes": 64729088,
+        "privateBytesBefore": 31801344,
+        "workingSetAfterBytes": 200990720,
+        "privateBytesAfter": 168067072,
+        "responsePayloadBytes": 6865599,
+        "peakWorkingSetBytes": 335785984,
+        "sampledPeakPrivateBytes": 239071232
+      },
+      {
+        "requestId": "t04-16mp-3",
+        "durationMs": 752.82,
+        "workerStartupMs": 112.02,
+        "outcome": "success",
+        "workingSetBeforeBytes": 62115840,
+        "privateBytesBefore": 30076928,
+        "workingSetAfterBytes": 198488064,
+        "privateBytesAfter": 166670336,
+        "responsePayloadBytes": 6865599,
+        "peakWorkingSetBytes": 333283328,
+        "sampledPeakPrivateBytes": 237674496
+      },
+      {
+        "requestId": "t04-16mp-4",
+        "durationMs": 715.58,
+        "workerStartupMs": 91.63,
+        "outcome": "success",
+        "workingSetBeforeBytes": 62173184,
+        "privateBytesBefore": 29110272,
+        "workingSetAfterBytes": 198414336,
+        "privateBytesAfter": 165433344,
+        "responsePayloadBytes": 6865599,
+        "peakWorkingSetBytes": 333213696,
+        "sampledPeakPrivateBytes": 236441600
+      },
+      {
+        "requestId": "t04-16mp-5",
+        "durationMs": 614.28,
+        "workerStartupMs": 63.39,
+        "outcome": "success",
+        "workingSetBeforeBytes": 64880640,
+        "privateBytesBefore": 31789056,
+        "workingSetAfterBytes": 201281536,
+        "privateBytesAfter": 168120320,
+        "responsePayloadBytes": 6865599,
+        "peakWorkingSetBytes": 336076800,
+        "sampledPeakPrivateBytes": 239124480
+      }
+    ],
+    "p50Ms": 687.12,
+    "p95Ms": 752.82,
+    "maxMs": 752.82,
+    "p50WorkerStartupMs": 90.2,
+    "p95WorkerStartupMs": 112.02,
+    "maxWorkerStartupMs": 112.02,
+    "timingScope": "fresh utility process ready, then request post through decompressed 64,000,000-byte RGBA response receipt",
+    "diagnosticOnly": true,
+    "doesNotSatisfyNormalTextOrWake100SampleAcceptance": true
+  },
+  "limitations": [
+    "Fresh-process synthetic 16MP samples are diagnostic; they do not satisfy the T05 100-sample controlled desktop timing gates or measure end-user paste latency.",
+    "The input is a generated gradient/noise PNG below the 20 MiB encoded cap; other image content, JPEG, UI responsiveness and original clipboard conversion are not covered.",
+    "PeakWorkingSet64 is the OS-reported peak for each fresh process; private bytes are sampled every 100 ms and around each decode, so shorter private-memory peaks can be missed. These observations do not prove a hard ceiling for every decode.",
+    "No clipboard, target window, physical input, installed package, helper, or rollback behavior was exercised. P15 and full T04 acceptance remain open."
+  ]
+}

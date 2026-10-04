@@ -3,7 +3,7 @@
   "task": "T04",
   "result": "PARTIAL",
   "status": "in_progress",
-  "verificationDate": "2026-10-04",
+  "verificationDate": "2026-10-05",
   "baselineCommit": "91cafd765b9480e011647c9d8cd2976269f12aef",
   "branch": "codex/m0-latency",
   "workingTreeWasDirty": true,
@@ -94,6 +94,21 @@
       "command": "pnpm test:native",
       "status": "PASS",
       "result": "All 56 Rust unit and isolated fake-platform integration tests passed (31 unit, 16 control integration, 9 protocol integration). The zero-budget check-only path verifies immediate key checks without a fresh 500ms wait, clipboard gating, and recheck before input. This does not exercise a physical keyboard, OS clipboard/input, or the full Electron/helper path."
+    },
+    {
+      "command": "pnpm test:unit",
+      "status": "PASS",
+      "result": "The latest main TypeScript build passed and all 114 unit tests passed, including exact PNG filter restoration, bounded compressed-response inflation, active-inflate cancellation, malformed decoded-response rejection, large-image worker retirement, selection-deadline fixtures and the existing orchestration/render tests."
+    },
+    {
+      "command": "ELECTRON_OVERRIDE_DIST_PATH=<Electron 40.10.2 dist>; node tests/tasks/T04/run-image-worker-electron.cjs",
+      "status": "PASS",
+      "result": "Real Windows x64 Electron utilityProcess smoke passed PNG/JPEG decode, 3000×3000 synthetic PNG through compressed IPC and main-process inflate, CRC rejection, cancellation and retirement. No BrowserWindow, system clipboard or input was used."
+    },
+    {
+      "command": "node tests/tasks/T04/measure-image-worker-16mp.cjs (5 fresh utility processes; 100 ms Windows sampler)",
+      "status": "MEASURED_WITH_LIMITATIONS",
+      "result": "Five synthetic 4000×4000 PNG decodes: request-to-decompressed-RGBA p50 524.91 ms, p95/max 547.68 ms; process startup p95 110.48 ms; maximum process PeakWorkingSet64 169066496 bytes (161.23 MiB) versus 256 MiB budget; sampled private peak 119549952 bytes (114.01 MiB). This is diagnostic for one generated PNG only, not a hard cap across all supported images or end-user paste latency."
     }
   ],
   "implementedAndCovered": [
@@ -104,14 +119,17 @@
     "Clipboard image capture applies the specified 16 MP and 20 MiB cap to the app's encoded payload after clipboard.readImage(); over-budget PNG may use same-dimension JPEG. The capture path does not downsample; JPEG fallback is lossy, so byte/pixel-identical original fidelity is not claimed or measured. Five fake-source tests cover the 20 MiB boundary, fallback, and rejection behavior.",
     "Panel presentation fixtures exercise the production helper used by renderPanel: one final setBounds call, reduced-motion suppression, rich-animation gating, and fail-closed system-settings errors. These use a recording fake rather than an Electron window.",
     "When preparation finishes after a released 500ms cutoff, selectionBudgetMs=0 enters native check-only mode. It performs immediate key-state checks without opening a fresh wait window; control fakes verify clipboard gating and rejection of a key re-press before input.",
-    "Production utility-process PNG/JPEG decoding is implemented with pinned pngjs 7.0.0/jpeg-js 0.4.4 and tested with real Electron cancellation/exit. The v2 ASAR decoder probe independently confirms packaged worker and decoder resolution; performance and final desktop acceptance remain open."
+    "Production utility-process PNG/JPEG decoding is implemented with pinned pngjs 7.0.0/jpeg-js 0.4.4 and tested with real Electron cancellation/exit. The v2 ASAR decoder probe independently confirms packaged worker and decoder resolution; performance and final desktop acceptance remain open.",
+    "Images larger than the 32 MiB decoded cache retire their utility worker; the next preparation waits for worker disposal before creating a replacement, covered by a worker-factory regression.",
+    "Uncached decoded responses above 32 MiB use bounded-chunk lossless deflate IPC; the main process restores exact RGBA into a preallocated dimension-derived buffer with 1 MiB inflate chunks. Cancellation destroys the active inflater, and protocol fixtures reject excess decompression, mismatched dimensions, and short/long pixel responses.",
+    "Fresh utility-process 16 MP synthetic PNG diagnostic: five samples stayed below 256 MiB PeakWorkingSet64 with maximum 161.23 MiB and decoder/transport/restore p95 547.68 ms; the full OS peak metric and sampled private bytes are recorded per process."
   ],
   "notVerified": [
     "Complete large-image, progressive JPEG, EXIF/orientation/ICC/color and exact-source fidelity acceptance remains incomplete; the installed production PNG/JPEG path has real utility-process and v2 ASAR smoke evidence.",
-    "The 256 MiB image-worker peak RSS/working-set limit has not been measured; configured input/pixel/cache limits are not a hard process-memory cap.",
-    "P15 image selection still repeats Base64 decoding and hashing in src/main/native/content-provider.ts; that file is outside the T04 allowlist and scope expansion is awaiting the user.",
+    "A five-sample Windows x64 16 MP synthetic RGBA PNG diagnostic using fresh workers and compressed IPC recorded maximum PeakWorkingSet64 161.23 MiB and p95 547.68 ms; it does not prove a hard 256 MiB ceiling for other PNG/JPEG content, inputs near 20 MiB, or every runtime condition. Larger-content, JPEG, package and end-user paste behavior remain unmeasured.",
+    "P15 image selection still repeats Base64 decoding and hashing in src/main/native/content-provider.ts. The file is outside the T04 allowlist; the user chose not to expand the current scope, so this P15 gate remains open.",
     "Main-process clipboard image toPNG/toJPEG, Base64/hash work and RGBA-to-BGRA/DIB pixel-loop responsiveness were not measured. Fake scheduling does not reproduce these synchronous operations stalling the main event loop across the 500ms key deadline; real deadline timing under that load remains NOT_RUN. Actual Electron window integration was not run; virtual-list scroll and panel presentation fixtures use simulated state/recording fakes.",
-    "The earlier fixture-only runs did not use a desktop. Later decoder smokes run real Electron utility processes and v2/v3 ASAR loading without system clipboard/input; final v3 installation file matching is complete. Complete final-helper card-click target-visible paste remains unfinished.",
+    "The new compressed-response protocol was validated with a real Electron utilityProcess using a 9 MP synthetic PNG and with a five-sample 16 MP synthetic PNG measurement. Full packaged execution of this latest code, actual Electron window/clipboard/panel integration, final-helper target-visible paste and T05 100-run controlled benchmark remain unfinished.",
     "The 3000ms deadline, deadline-bounded retirement and selection-start key monitor have fake coverage, and real utility-process cancellation/exit has passed. Full deadline behavior under actual main-process encoding/clipboard load and complete clipboard/panel effects remain unverified.",
     "When preparation completes after a released 500ms cutoff, main sends selectionBudgetMs=0. The helper accepts zero as check-only, samples keys immediately, checks again before clipboard commit, and performs no fresh wait; Rust fake tests cover the contract. The physical-keyboard timing and full Electron/helper route remain NOT_RUN, and no fake rules out a key transition after the final state sample but before an OS operation.",
     "Static main-process review shows pre-registration cutoff cancellation aborts preparation and never restarts the helper; registered cancellation failure latches the clipboard fence and retains the job unless helper exit is confirmed. The integrated cutoff-to-utility-worker/helper cancellation path is NOT_RUN; a kill-requested utility process or unconfirmed helper may still be exiting after the selection returns, while the worker retirement latch or helper job/fence prevents reuse and side effects.",
@@ -190,13 +208,20 @@
   },
   "checkpointEvidence": "docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json",
   "historicalReviewNote": "interimReview and fixturePlanReview retain their original inspection snapshots; current decoder/fixture status is recorded in checks and checkpointEvidence.",
+  "latestIndependentCodeReview": {
+    "result": "PASS_WITH_LIMITATIONS",
+    "reviewedDate": "2026-10-05",
+    "artifact": "docs/evidence/T04/final-stream-review.json",
+    "scope": "Read-only review of compressed image-worker protocol, cancellation, regression coverage and consistency of current evidence.",
+    "effect": "Confirms the reviewed implementation/evidence are internally consistent; it does not close P15, desktop/platform, general memory or full T04 acceptance gates."
+  },
   "openGates": [
-    "Measure 16 MP Windows decode latency and the 256 MiB image-worker peak RSS/working-set target; configured limits and memory estimates are not a hard process-memory cap.",
-    "Complete real Electron image/clipboard/panel acceptance and final-helper card-click target-visible paste; passing utility-process, v3 ASAR/module smokes and installation file matching do not close these UI gates.",
-    "Validate the preparation/key deadlines under actual main-process image/clipboard load; delayed-scheduler and retirement fixtures do not reproduce this load.",
-    "The selection monitor runs concurrently from selection start and latches a key held at the 500ms cutoff. For a released cutoff followed by late preparation, zero-budget helper check-only mode prevents a fresh 500ms wait; 56 Rust fake tests pass. Physical-keyboard timing, a key transition between the final sample and EmptyClipboard/SendInput, and complete Electron/helper clipboard/paste effects remain NOT_RUN.",
-    "Decide whether src/main/native/content-provider.ts may be included in T04 to remove repeat Base64/hash and main-thread pixel-conversion work.",
-    "Independent final static review passed with limitations; physical-keyboard timing, final-sample-to-EmptyClipboard/SendInput races, full Electron/helper clipboard/paste acceptance, and complete performance acceptance remain open."
+    "Five fresh Electron utilityProcess samples of one deterministic 16 MP synthetic RGBA PNG recorded request-to-compressed-transfer-and-async-restore p50 524.91 ms, p95/max 547.68 ms and maximum PeakWorkingSet64 169066496 bytes (161.23 MiB), below 256 MiB. This is diagnostic evidence for that fixture only; it does not establish a hard ceiling for other PNG/JPEG payloads, inputs near 20 MiB, or packaged full-app behavior.",
+    "Real Electron utilityProcess now covers PNG/JPEG, 9 MP synthetic large-image compressed IPC and async inflation, CRC rejection, cancellation and retirement. Full Electron window, clipboard, panel, final-helper card-click and target-visible paste acceptance remain NOT_RUN.",
+    "Validate the 3000 ms preparation and 500 ms key deadlines under actual main-process image conversion/clipboard load; the fake scheduler and worker smokes do not reproduce synchronous toPNG/toJPEG/Base64/hash/RGBA-to-BGRA/DIB load.",
+    "The helper zero-budget check-only path has 56 Rust fake tests and no new 500 ms wait. Physical-key timing, final-sample-to-EmptyClipboard/SendInput races, and the complete Electron/helper clipboard/paste path remain NOT_RUN.",
+    "P15 remains open: src/main/native/content-provider.ts repeats Base64 decode/hash and main-thread pixel conversion. User chose not to add this file to current T04 scope.",
+    "Independent final static review passed with limitations; it does not close P15, actual keyboard timing, full Electron/helper clipboard/paste acceptance, packaged verification of the latest compressed IPC changes, or full T04 acceptance."
   ],
   "artifacts": [
     "tests/tasks/T04/fixture-plan.json",
@@ -216,6 +241,11 @@
     "docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json",
     "docs/evidence/T04/dependency-subcard.json",
     "docs/evidence/T04/decoder-options.json",
-    "docs/evidence/T04/decoder-alternatives-recheck.json"
+    "docs/evidence/T04/decoder-alternatives-recheck.json",
+    "docs/evidence/T04/final-stream-review.json",
+    "src/main/clipboard/image-worker.ts",
+    "src/main/clipboard/image-preparation.ts",
+    "tests/tasks/T04/measure-image-worker-16mp.cjs",
+    "docs/evidence/T04/image-worker-16mp-fresh-worker-5-sample-measurement.json"
   ]
 }

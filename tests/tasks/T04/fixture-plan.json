@@ -26,19 +26,44 @@
     },
     "productionDecoderFixtures": {
       "status": "PASS",
-      "passed": 9,
+      "passed": 12,
       "artifact": "tests/tasks/T04/clipboard-image-decoder.test.cjs"
     },
-    "realUtilityProcessDecodeAndRetirement": "PASS; tests/tasks/T04/run-image-worker-electron.cjs",
+    "realUtilityProcessDecodeAndRetirement": "PASS; tests/tasks/T04/run-image-worker-electron.cjs covers PNG/JPEG, a 3000×3000 synthetic compressed-response IPC roundtrip, CRC rejection, cancellation and retirement through Electron utilityProcess.",
     "v2AsarDecoderLoad": "PASS; release/windows-flat-20261004/image-worker.stdout.log, package 1.1.4-local.20261004.2",
     "finalV3AsarDecoderAndInstallation": "PASS; latest logs report 1.1.4-local.20261004.3 and installation manifest matches 82 files. Earlier v2 logs were replaced by v3; see checkpointEvidence.",
-    "latestFullUnitSuite": { "status": "PASS", "passed": 107, "failed": 0, "command": "pnpm test:unit" },
+    "latestFullUnitSuite": {
+      "status": "PASS",
+      "passed": 114,
+      "failed": 0,
+      "command": "pnpm test:unit"
+    },
     "checkpointEvidence": "docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json",
     "requiredNotRun": [
-      "Real Electron window clipboard/panel integration",
-      "256 MiB image-worker peak RSS/working-set measurement",
-      "16 MP Windows decode latency and final-helper target-visible card-click acceptance"
-    ]
+      "Real Electron window clipboard/panel integration and final-helper target-visible card-click acceptance",
+      "A 256 MiB process-memory guarantee across all supported image content, JPEG and source-size boundaries; current five-sample synthetic RGBA measurement is diagnostic only",
+      "T05 100-sample controlled text/wake measurements and final package acceptance"
+    ],
+    "workerPeakMemoryMeasurement": {
+      "status": "MEASURED_WITH_LIMITATIONS",
+      "artifact": "docs/evidence/T04/image-worker-16mp-fresh-worker-5-sample-measurement.json",
+      "samples": 5,
+      "freshWorkerPerSample": true,
+      "pixelDimensions": "4000x4000",
+      "p50Ms": 524.91,
+      "p95Ms": 547.68,
+      "p95WorkerStartupMs": 110.48,
+      "maxPeakWorkingSetBytes": 169066496,
+      "maxPeakWorkingSetMiB": 161.23,
+      "budgetBytes": 268435456,
+      "sampledPeakPrivateBytes": 119549952,
+      "sampledPeakPrivateMiB": 114.01,
+      "limitations": [
+        "single deterministic synthetic RGBA PNG content",
+        "does not establish a hard process-memory ceiling across JPEG, other PNGs, 20 MiB sources or packaged full-app use",
+        "not end-user paste latency"
+      ]
+    }
   },
   "sourceOfExpectedBehavior": "<spec-workspace>/docs/spec/tasks/T04.md; <spec-workspace>/docs/spec/01-product-and-ux.md §2; <spec-workspace>/docs/spec/04-desktop-performance.md §6, §8",
   "executionGate": "T03 is accepted. The current user explicitly authorized the Windows repair/self-test/local package/install checkpoint, including production decoder integration. Full T04/T05 acceptance still requires the remaining behavior and performance evidence.",

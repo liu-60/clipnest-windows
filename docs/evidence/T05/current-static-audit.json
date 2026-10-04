@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "reviewType": "independent_read_only_static_preflight_audit",
+  "reviewedDate": "2026-10-05",
+  "result": "PASS_WITH_LIMITATIONS",
+  "executionStatus": "NOT_RUN",
+  "reviewedArtifacts": [
+    "docs/spec/tasks/T05.md",
+    "tests/tasks/T05/fixture-plan.json",
+    "tests/tasks/T05/assertion-map.json",
+    "tests/tasks/T05/report.schema.json",
+    "docs/evidence/T05/preflight.json",
+    "docs/evidence/T05/report-schema-review.json",
+    "docs/progress.json"
+  ],
+  "staticChecks": {
+    "caseCount": 28,
+    "assertionIds": 71,
+    "assertionMapExactMatches": 71,
+    "assertionMapOrderMatches": true,
+    "assertionIdsUnique": true,
+    "allMappedAssertions": "NOT_RUN",
+    "evidenceReferences": 0,
+    "g0ObservationGates": "PLANNED_NOT_RUN",
+    "dependencyGate": {
+      "T03": "accepted",
+      "T04": "in_progress",
+      "T05": "not_started",
+      "T05ReleaseAcceptance": "BLOCKED_UNTIL_T04_ACCEPTED"
+    }
+  },
+  "observations": [
+    "T04 now has a five-sample, one-content synthetic 16 MP PNG diagnostic. The latest measured utility-process PeakWorkingSet64 maximum is 169066496 bytes (161.23 MiB) and request-to-RGBA p95 is 547.68 ms; this does not establish a general memory or latency guarantee.",
+    "The existing report-schema review is a historical snapshot and did not include assertion-map.json. This audit independently compared all 71 mapped assertions with the current fixture plan; it did not run a Draft 2020-12 schema validator.",
+    "The standard package:windows artifact, latest compressed-response package contents, controlled desktop measurements, helper lifecycle/rollback, and real target-visible paste remain unverified."
+  ],
+  "notRun": [
+    "Draft 2020-12 schema validation",
+    "P01-P28 behavior/release acceptance",
+    "100-sample controlled text and wake measurements",
+    "package/signature/protocol/startup/tray/restart/rollback verification",
+    "real user clipboard, target app, or physical input"
+  ],
+  "limitations": [
+    "The assertion-map comparison is static traceability evidence and does not execute any acceptance assertion.",
+    "Schema validation cannot prove assertion-to-evidence content, unique request IDs, or independently recomputed sample statistics.",
+    "T05 remains not_started because its T04 dependency has not been accepted."
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "reviewType": "independent_read_only_code_and_evidence_review",
+  "reviewedDate": "2026-10-05",
+  "result": "PASS_WITH_LIMITATIONS",
+  "reviewedArtifacts": [
+    "src/main/clipboard/image-worker.ts",
+    "src/main/clipboard/image-preparation.ts",
+    "tests/tasks/T04/clipboard-image-decoder.test.cjs",
+    "tests/tasks/T04/clipboard-image-preparation.test.cjs",
+    "tests/tasks/T04/run-image-worker-electron.cjs",
+    "tests/tasks/T04/measure-image-worker-16mp.cjs",
+    "docs/evidence/T04/verification.json",
+    "tests/tasks/T04/fixture-plan.json",
+    "docs/progress.json"
+  ],
+  "reviewFindings": [
+    "Utility worker input is bounded and validated before process dispatch; raw decoded responses require matching dimensions and exact RGBA byte length.",
+    "Compressed responses validate dimensions, declared output length and compressed payload bound. The main process restores into an exact-size buffer using 1 MiB inflate chunks, rejects excess/short output, and destroys an active inflater on cancellation.",
+    "Fake regressions cover cancellation after inflate starts, late events after cancellation, mismatched raw dimensions and short/long raw pixel buffers.",
+    "The five-sample measurement is scoped to one deterministic synthetic 16 MP PNG and reports utility-process PeakWorkingSet64; it does not establish an all-input or full-app memory guarantee."
+  ],
+  "latestVerification": {
+    "fullUnitSuite": "PASS 114/114",
+    "realElectronUtilityProcessSmoke": "PASS; PNG/JPEG, 9 MP compressed response, CRC rejection, cancellation and retirement",
+    "freshWorker16MpDiagnostic": {
+      "status": "MEASURED_WITH_LIMITATIONS",
+      "samples": 5,
+      "p50Ms": 524.91,
+      "p95Ms": 547.68,
+      "maxPeakWorkingSetBytes": 169066496,
+      "maxPeakWorkingSetMiB": 161.23
+    }
+  },
+  "openGates": [
+    "P15 remains open because the user chose not to add src/main/native/content-provider.ts to the T04 scope.",
+    "The measurement covers one synthetic PNG and five fresh utility processes; JPEG, other PNG content, inputs near 20 MiB, packaged latest-code execution, main-process synchronous image work and end-user paste latency remain unverified.",
+    "Actual Electron window/clipboard/panel integration, physical keyboard timing, final-sample-to-OS-call races, and target-visible helper paste remain NOT_RUN.",
+    "T04 remains in_progress; T05 remains not_started until T04 acceptance."
+  ],
+  "reviewLimitations": [
+    "This was a static code/evidence review; it did not run a schema validator, package or install the application, or perform desktop input/clipboard actions.",
+    "Review did not close any behavior or platform acceptance gate listed above."
+  ]
+}
