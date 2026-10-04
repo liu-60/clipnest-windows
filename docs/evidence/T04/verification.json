@@ -119,6 +119,11 @@
       "command": "ELECTRON_OVERRIDE_DIST_PATH=<Electron 40.10.2 dist>; node tests/tasks/T04/run-image-main-thread-deadline-electron.cjs",
       "status": "PASS_WITH_LIMITATIONS",
       "result": "In Electron 40.10.2 main/browser process, a deterministic synthetic 3000x3000 bitmap exercised production NativeImage toPNG (27,086,453 bytes, 1694.36 ms), toJPEG quality 82 (5,971,597 bytes, 233.28 ms), then Base64/SHA-256 (23.25 ms). The 1951.13 ms synchronous transform exceeded the original 500 ms deadline; after the overdue poll resumed 1455 ms late it returned key_state_unavailable without a fresh key read or simulated clipboard/input/panel effects. No system clipboard, BrowserWindow or physical input was used. See docs/evidence/T04/main-thread-image-deadline-diagnostic.json."
+    },
+    {
+      "command": "pnpm test:unit -- main-image-preparation-failure.test.cjs main-paste-orchestration.test.cjs host-authorization.test.cjs (based on HEAD 414e9a3)",
+      "status": "PASS",
+      "result": "pnpm build:main (tsc -p tsconfig.main.json) passed; 20 tests passed across the new T04 production-orchestration VM fake and existing main-paste/host-authorization fixtures. For P17/T04-I04, image_worker_capacity_exceeded returned blocked with zero Electron fallback writes, helper registration/commit_write/paste, and panel hides; the retained image stayed unchanged. Images also fail closed with those side effects at zero when the helper or clipboard-sequence baseline is unavailable, before snapshot/decode. A non-image snapshot failure and unavailable-helper/baseline cases still use the existing copy-only fallback. A fake authorization_denied after a successful helper clipboard commit still returned copied_only without paste/input or panel hiding. The test used fake clipboard, window, authorization, and helper boundaries; it did not access OS clipboard, physical input, or a real window."
     }
   ],
   "implementedAndCovered": [
@@ -134,7 +139,8 @@
     "Uncached decoded responses above 32 MiB use bounded-chunk lossless deflate IPC; the main process restores exact RGBA into a preallocated dimension-derived buffer with 1 MiB inflate chunks. Cancellation destroys the active inflater, and protocol fixtures reject excess decompression, mismatched dimensions, and short/long pixel responses.",
     "Fresh utility-process 16 MP synthetic PNG diagnostic: five samples stayed below 256 MiB PeakWorkingSet64 with maximum 161.23 MiB and decoder/transport/restore p95 547.68 ms; the full OS peak metric and sampled private bytes are recorded per process.",
     "Latest compressed image-worker code also passes an isolated Windows x64 directory-package ASAR smoke: the ASAR-loaded worker emits decoded_compressed and the main process restores the complete 3000x3000 RGBA buffer byte-for-byte. This does not verify installation or UI/clipboard/input behavior.",
-    "An isolated Electron main-process diagnostic exercised the production NativeImage PNG-to-JPEG fallback and matching Base64/SHA-256 operation on a deterministic synthetic 9 MP bitmap. When that synchronous work delayed the original 500 ms monitor past its cutoff, the overdue poll failed closed with key_state_unavailable, made no fresh stale-key assumption, and produced zero simulated side effects; the diagnostic does not invoke the OS clipboard/input or content-provider P15 path."
+    "An isolated Electron main-process diagnostic exercised the production NativeImage PNG-to-JPEG fallback and matching Base64/SHA-256 operation on a deterministic synthetic 9 MP bitmap. When that synchronous work delayed the original 500 ms monitor past its cutoff, the overdue poll failed closed with key_state_unavailable, made no fresh stale-key assumption, and produced zero simulated side effects; the diagnostic does not invoke the OS clipboard/input or content-provider P15 path.",
+    "The production copySelectedItem image path now fails closed before Electron clipboard fallback if image snapshot/preparation fails, the helper is unavailable, or the clipboard-sequence baseline cannot be sampled before helper clipboard commit. The P17/T04-I04 production VM fake maps image_worker_capacity_exceeded to zero Electron fallback writes, helper registration/commit_write/paste, and panel hides, while retaining the original image; helper-unavailable and baseline-unavailable image paths have the same zero-effect checks. Non-image copy-only fallback and post-commit authorization_denied degradation remain covered."
   ],
   "notVerified": [
     "Complete large-image, progressive JPEG, EXIF/orientation/ICC/color and exact-source fidelity acceptance remains incomplete; the installed production PNG/JPEG path has real utility-process and v2 ASAR smoke evidence.",
@@ -146,7 +152,8 @@
     "When preparation completes after a released 500ms cutoff, main sends selectionBudgetMs=0. The helper accepts zero as check-only, samples keys immediately, checks again before clipboard commit, and performs no fresh wait; Rust fake tests cover the contract. The physical-keyboard timing and full Electron/helper route remain NOT_RUN, and no fake rules out a key transition after the final state sample but before an OS operation.",
     "Static main-process review shows pre-registration cutoff cancellation aborts preparation and never restarts the helper; registered cancellation failure latches the clipboard fence and retains the job unless helper exit is confirmed. The integrated cutoff-to-utility-worker/helper cancellation path is NOT_RUN; a kill-requested utility process or unconfirmed helper may still be exiting after the selection returns, while the worker retirement latch or helper job/fence prevents reuse and side effects.",
     "The main-process orchestration VM fixture is PASS (8 tests); actual Electron IPC, complete final-helper target-visible input and T05 100-run controlled benchmark remain unaccepted.",
-    "The integrated cutoff-to-utility-worker/helper cancellation path remains NOT_RUN. Static review indicates pre-registration cancellation avoids helper restart, and unconfirmed registered cancellation keeps the clipboard fence/job fail-closed; real Electron worker retirement/helper exit and clipboard/panel/input effects remain unverified."
+    "The integrated cutoff-to-utility-worker/helper cancellation path remains NOT_RUN. Static review indicates pre-registration cancellation avoids helper restart, and unconfirmed registered cancellation keeps the clipboard fence/job fail-closed; real Electron worker retirement/helper exit and clipboard/panel/input effects remain unverified.",
+    "The new image-preparation failure behavior is covered by a production-function VM fake only. Electron main-process integration, real worker failure through NativeContentProvider, and actual clipboard/panel effects remain NOT_RUN."
   ],
   "interimReview": {
     "result": "PASS_WITH_LIMITATIONS",
@@ -262,6 +269,7 @@
     "docs/evidence/T04/packaged-asar-worker-smoke.json",
     "tests/tasks/T04/packaged-asar-worker-smoke.cjs",
     "docs/evidence/T04/main-thread-image-deadline-diagnostic.json",
-    "tests/tasks/T04/run-image-main-thread-deadline-electron.cjs"
+    "tests/tasks/T04/run-image-main-thread-deadline-electron.cjs",
+    "tests/tasks/T04/main-image-preparation-failure.test.cjs"
   ]
 }

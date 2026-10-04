@@ -44,6 +44,13 @@
       "failed": 0,
       "command": "pnpm test:unit -- clipboard-image-decoder.test.cjs"
     },
+    "latestMainImagePreparationFailureRun": {
+      "status": "PASS",
+      "passed": 20,
+      "failed": 0,
+      "command": "pnpm test:unit -- main-image-preparation-failure.test.cjs main-paste-orchestration.test.cjs host-authorization.test.cjs",
+      "scope": "Production copySelectedItem VM fake plus existing orchestration/authorization fakes; covers image worker capacity error, unavailable helper and clipboard baseline fail-closed paths plus preserved text/auth-degradation behavior; no real window, OS clipboard, keyboard, or input"
+    },
     "checkpointEvidence": "docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json",
     "requiredNotRun": [
       "Real Electron window clipboard/panel integration and final-helper target-visible card-click acceptance",
@@ -253,7 +260,12 @@
       "assert": [
         "fake fixtures cover the configured single-worker, 32MiB decoded-cache, and 20MiB/16MP per-image boundaries; 256MiB peak-worker RSS must be measured separately and is not established by fake limits",
         "P07/P08 cancellation, P14 permission degradation, and P17 capacity failures are explicit",
-        "failed work does not overwrite clipboard or discard the retained original"
+        "failed work does not overwrite clipboard or discard the retained original",
+        "production copySelectedItem VM fake: image_worker_capacity_exceeded returns blocked with Electron fallback, helper commit_write/paste, and panel hide all at zero; the original image remains in history"
+      ],
+      "evidence": [
+        "tests/tasks/T04/main-image-preparation-failure.test.cjs: image preparation capacity failure leaves clipboard and panel untouched",
+        "tests/tasks/T04/main-image-preparation-failure.test.cjs: helper unavailable and clipboard sequence baseline unavailable image cases also fail closed before snapshot/fallback"
       ]
     },
     {

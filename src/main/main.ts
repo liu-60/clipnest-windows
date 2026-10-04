@@ -2152,6 +2152,13 @@ async function copySelectedItem(
     !bridge ||
     selectionDeadlineTickMs === null
   ) {
+    if (item.type === "image") {
+      finishSelectionMetrics(requestId, "failed");
+      return {
+        status: "blocked",
+        reasonCode: bridge && selectionDeadlineTickMs === null ? "selection_clock_unavailable" : "native_helper_unavailable",
+      };
+    }
     try {
       writeItemToElectronClipboard(item);
       metrics.mark(requestId, "clipboard_written");
@@ -2169,6 +2176,10 @@ async function copySelectedItem(
   }
 
   if (baselineClipboardSequence === null) {
+    if (item.type === "image") {
+      finishSelectionMetrics(requestId, "failed");
+      return { status: "blocked", reasonCode: "clipboard_sequence_unavailable" };
+    }
     try {
       // This is still the user's direct copy action; automation is disabled when
       // Windows cannot provide a sequence baseline for a conditional native write.
@@ -2397,6 +2408,13 @@ async function copySelectedItem(
       // Keep the panel and clipboard untouched when the bounded image preparation expires.
       finishSelectionMetrics(requestId, "failed");
       return { status: "blocked", reasonCode };
+    }
+    if (item.type === "image") {
+      // An image snapshot is decoded and bounded before the helper can commit.
+      // If that preparation fails, copying through Electron would bypass the
+      // failed worker path and replace the user's current clipboard contents.
+      finishSelectionMetrics(requestId, "failed");
+      return { status: reasonCode === "paste_cancelled" ? "cancelled" : "blocked", reasonCode };
     }
     const currentItem = history.find((candidate) => candidate.id === item.id);
     const selectedContentStillCurrent =
