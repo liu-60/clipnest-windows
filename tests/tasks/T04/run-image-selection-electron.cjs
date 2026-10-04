@@ -122,12 +122,13 @@ if (!process.versions.electron) {
     const releasedCutoffWorkerExited = deferred();
     const releaseCutoffWorkerResponse = deferred();
     const heldWorkerResponses = new Map([
-      [3, { name: "cancel", captured: cancellationResponseCaptured, rejected: cancellationDecodeRejected, exited: cancellationWorkerExited }],
-      [4, { name: "timeout", captured: timeoutResponseCaptured, rejected: timeoutDecodeRejected, exited: timeoutWorkerExited }],
+      [3, { name: "timeout", captured: timeoutResponseCaptured, rejected: timeoutDecodeRejected, exited: timeoutWorkerExited }],
+      [4, { name: "cancel", captured: cancellationResponseCaptured, rejected: cancellationDecodeRejected, exited: cancellationWorkerExited }],
       [5, { name: "held-cutoff", captured: heldCutoffResponseCaptured, rejected: heldCutoffDecodeRejected, exited: heldCutoffWorkerExited }],
       [6, { name: "released-cutoff", captured: releasedCutoffResponseCaptured, rejected: releasedCutoffDecodeRejected, exited: releasedCutoffWorkerExited, release: releaseCutoffWorkerResponse }],
     ]);
     let realWorkerDecodeCount = 0;
+    let realWorkerFactoryCount = 0;
     let context;
     let visible = true;
     let keyStateReleased = true;
@@ -153,6 +154,8 @@ if (!process.versions.electron) {
 
     const imagePreparationService = new ImagePreparationService({
       workerFactory: () => {
+        const workerInstance = ++realWorkerFactoryCount;
+        events.push(`worker-factory-${workerInstance}`);
         const realWorker = createUtilityProcessImageWorker();
         return {
           async decode(input, signal) {
@@ -161,11 +164,13 @@ if (!process.versions.electron) {
             const heldResponse = heldWorkerResponses.get(decodeIndex);
             const originalOnMessage = heldResponse ? realWorker.onMessage : null;
             if (heldResponse) {
+              heldResponse.workerInstance = workerInstance;
               assert.equal(typeof originalOnMessage, "function", "the integration gate wraps the real worker response handler");
               realWorker.onMessage = (raw) => {
                 if (raw && raw.requestId === input.jobId) {
                   events.push(`worker-response-held-${heldResponse.name}`);
-                  heldResponse.captured.resolve({ requestId: raw.requestId, type: raw.type });
+                  heldResponse.responseObservedAtMs = performance.now();
+                  heldResponse.captured.resolve({ requestId: raw.requestId, type: raw.type, observedAtMs: heldResponse.responseObservedAtMs });
                   if (heldResponse.release) {
                     heldResponse.release.promise.then(() => {
                       events.push(`worker-response-released-${heldResponse.name}`);
@@ -182,8 +187,10 @@ if (!process.versions.electron) {
               const child = realWorker.child;
               assert.ok(child, "a real Electron utilityProcess must exist before the held response is observed");
               heldResponse.child = child;
+              heldResponse.utilityProcessPid = child.pid;
               child.once("exit", () => {
                 events.push(`worker-process-exit-${heldResponse.name}`);
+                heldResponse.exitObservedAtMs = performance.now();
                 heldResponse.exited.resolve();
               });
             }
@@ -194,7 +201,10 @@ if (!process.versions.electron) {
               events.push("worker-decode-failed", `worker-decode-failed-${heldResponse?.name ?? decodeIndex}`);
               if (decodeIndex === 1) realWorkerDecodeFinished.reject(error);
               else if (decodeIndex === 2) realWorkerDecodeFailure.resolve(error);
-              else heldResponse?.rejected.resolve(error);
+              else if (heldResponse) {
+                heldResponse.rejectionObservedAtMs = performance.now();
+                heldResponse.rejected.resolve(error);
+              }
               throw error;
             } finally {
               if (originalOnMessage) realWorker.onMessage = originalOnMessage;
@@ -262,6 +272,15 @@ if (!process.versions.electron) {
     };
 
     const startIntegratedSelectionMonitor = (input) => {
+      const diagnostic = {
+        selectionStartedAtMs: input.selectionDeadlineAt - SELECTION_KEY_RELEASE_WINDOW_MS,
+        selectionDeadlineAt: input.selectionDeadlineAt,
+        selectionDeadlineTickMs: input.selectionDeadlineTickMs,
+        deadlineAt: input.selectionDeadlineAt,
+        deadlineTickMs: input.selectionDeadlineTickMs,
+        keySamples: [],
+      };
+      selectionMonitorDiagnostics.push(diagnostic);
       if (monitorMode === "pending") {
         return {
           cutoff: new Promise(() => {}),
@@ -271,12 +290,6 @@ if (!process.versions.electron) {
       }
       // Use the production default setTimeout scheduler and the same monotonic
       // performance clock that copySelectedItem captured at selection start.
-      const diagnostic = {
-        deadlineAt: input.selectionDeadlineAt,
-        deadlineTickMs: input.selectionDeadlineTickMs,
-        keySamples: [],
-      };
-      selectionMonitorDiagnostics.push(diagnostic);
       const monitor = startSelectionKeyReleaseMonitor({
         ...input,
         keysReleased: () => {
@@ -424,6 +437,123 @@ if (!process.versions.electron) {
       assert.ok(events.includes("worker-decode-failed"));
       assert.equal(selectionSettled, true);
 
+      keyStateReleased = true;
+      // This production 3000ms absolute timeout runs before cancellation retires
+      // the already-warm worker. The pending monitor isolates this deadline from
+      // the separately measured 500ms key-release cutoff.
+      assert.equal(IMAGE_LIMITS.contentPrepareTimeoutMs, 3_000,
+        "the image timeout probe must use the production 3000ms deadline without an override");
+      monitorMode = "pending";
+      const timeoutPixels = Buffer.from([90, 10, 230, 255, 5, 210, 70, 255]);
+      const timeoutPng = PNG.sync.write({ width: 2, height: 1, data: timeoutPixels });
+      const timeoutItem = {
+        id: "worker-integration-timeout-image",
+        type: "image",
+        content: `data:image/png;base64,${timeoutPng.toString("base64")}`,
+        preview: "超时时保留的图片预览",
+      };
+      const timeoutContent = timeoutItem.content;
+      const timeoutPreview = timeoutItem.preview;
+      history.push(timeoutItem);
+      helperExited = false;
+      visible = true;
+      context.panelGeneration = GENERATION;
+      context.panelTarget = TARGET;
+      context.pendingPanelGeneration = null;
+      context.openingGuardUntil = 0;
+      const requestsBeforeTimeout = requests.length;
+      const effectsBeforeTimeout = { ...effects };
+      selectionSettled = false;
+      const timedOutSelection = context.copySelectedItem(7, true, timeoutItem.id, [], GENERATION, "image-worker-timeout")
+        .then((result) => { selectionSettled = true; return plain(result); });
+      const timeoutDiagnostic = selectionMonitorDiagnostics.at(-1);
+      assert.ok(timeoutDiagnostic, "the production selection start timestamp is captured from its key deadline");
+      const timeoutSelectionStartedAtMs = timeoutDiagnostic.selectionStartedAtMs;
+      const timeoutAbsoluteDeadlineAtMs = timeoutSelectionStartedAtMs + IMAGE_LIMITS.contentPrepareTimeoutMs;
+      assert.equal(timeoutDiagnostic.selectionDeadlineAt - timeoutSelectionStartedAtMs, SELECTION_KEY_RELEASE_WINDOW_MS,
+        "selection start is derived from the production monitor deadline created in copySelectedItem");
+
+      phase = "wait for real worker response held for preparation timeout";
+      const timeoutReply = await waitWithin(
+        timeoutResponseCaptured.promise,
+        5_000,
+        "the real utilityProcess must reply before the preparation timeout expires",
+      );
+      assert.equal(timeoutReply.requestId, "image-3");
+      assert.equal(timeoutReply.type, "decoded", "timeout gates a successful response emitted by the real decoder");
+      assert.equal(selectionSettled, false, "the production selection remains pending with a real worker response gated");
+      const timeoutWorker = heldWorkerResponses.get(3);
+      assert.equal(timeoutWorker.workerInstance, 1, "timeout uses the utility worker warmed by the successful and malformed-image scenarios");
+      assert.equal(realWorkerFactoryCount, 1, "no cold worker was created for the timeout scenario");
+      assert.ok(Number.isSafeInteger(timeoutWorker.utilityProcessPid) && timeoutWorker.utilityProcessPid > 0,
+        "timeout gate records the real warm utilityProcess PID");
+      assert.ok(timeoutReply.observedAtMs < timeoutAbsoluteDeadlineAtMs,
+        "the real decoder emitted its successful response before the selection's absolute 3000ms deadline");
+      phase = "wait for production image preparation timeout";
+      const timeoutResult = await waitWithin(timedOutSelection, 7_000, "the production selection timeout must settle");
+      const timeoutSelectionSettledAtMs = performance.now();
+      const timeoutSelectionElapsedMs = timeoutSelectionSettledAtMs - timeoutSelectionStartedAtMs;
+      assert.deepEqual(timeoutResult, {
+        status: "blocked",
+        reasonCode: "image_prepare_timeout",
+      });
+      assert.ok(timeoutSelectionElapsedMs >= IMAGE_LIMITS.contentPrepareTimeoutMs - 100,
+        `selection timeout must wait for its production absolute deadline; elapsed=${timeoutSelectionElapsedMs.toFixed(2)}ms`);
+      assert.ok(timeoutSelectionElapsedMs < 6_000,
+        `selection timeout must remain near the production 3000ms deadline; elapsed=${timeoutSelectionElapsedMs.toFixed(2)}ms`);
+      assert.ok(timeoutSelectionSettledAtMs - timeoutReply.observedAtMs >= 2_500,
+        "the already-decoded real response remains gated for the production timeout interval");
+      const timeoutError = await waitWithin(
+        timeoutDecodeRejected.promise,
+        2_000,
+        "the real worker request must reject after the service deadline expires",
+      );
+      assert.equal(timeoutError.message, "image_prepare_timeout");
+      await waitWithin(timeoutWorkerExited.promise, 5_000, "the timed-out real utilityProcess must be retired and exit");
+      assert.ok(timeoutWorker.rejectionObservedAtMs >= timeoutAbsoluteDeadlineAtMs - 100,
+        "the real worker request is aborted only when the production absolute deadline expires");
+      assert.ok(timeoutWorker.exitObservedAtMs >= timeoutSelectionStartedAtMs + IMAGE_LIMITS.contentPrepareTimeoutMs - 100,
+        "the real utilityProcess exit follows expiration of the production preparation deadline");
+      assert.equal(requests.length, requestsBeforeTimeout, "timeout before snapshot completion never registers content with the helper");
+      assert.deepEqual(effects, effectsBeforeTimeout, "preparation timeout has no clipboard, paste, fallback, or panel effects");
+      assert.equal(visible, true, "timed-out selection leaves the panel visible");
+      assert.equal(timeoutItem.content, timeoutContent);
+      assert.equal(timeoutItem.preview, timeoutPreview);
+      assert.equal(history[2], timeoutItem);
+      assert.equal(imagePreparationService.getCacheStats().entries, 1, "timed-out decode creates no cache entry");
+      assert.equal(imagePreparationService.getCacheStats().bytes, 8);
+      assert.ok(events.includes("worker-response-held-timeout"));
+      assert.ok(events.includes("worker-process-exit-timeout"));
+      assert.ok(!events.includes("worker-response-released-timeout"), "the harness gate never delivers the decoded response after timeout");
+      assert.equal(BrowserWindow.getAllWindows().length, 0);
+      assert.equal(selectionSettled, true);
+      monitorEvidence.productionImagePreparationTimeout = {
+        configuredDeadlineMs: IMAGE_LIMITS.contentPrepareTimeoutMs,
+        deadlineAnchor: "copySelectedItem selectionStartedAt; timestamp derived from the production selectionDeadlineAt minus its 500ms key-release window",
+        selectionStartedAtMs: Math.round(timeoutSelectionStartedAtMs * 100) / 100,
+        absoluteDeadlineAtMs: Math.round(timeoutAbsoluteDeadlineAtMs * 100) / 100,
+        workerFactoryCount: realWorkerFactoryCount,
+        workerInstance: timeoutWorker.workerInstance,
+        realUtilityProcessPid: timeoutWorker.utilityProcessPid,
+        decodedResponseType: timeoutReply.type,
+        decodedResponseElapsedMs: Math.round((timeoutReply.observedAtMs - timeoutSelectionStartedAtMs) * 100) / 100,
+        selectionSettledElapsedMs: Math.round(timeoutSelectionElapsedMs * 100) / 100,
+        responseGateHeldMs: Math.round((timeoutSelectionSettledAtMs - timeoutReply.observedAtMs) * 100) / 100,
+        workerAbortElapsedMs: Math.round((timeoutWorker.rejectionObservedAtMs - timeoutSelectionStartedAtMs) * 100) / 100,
+        workerExitElapsedMs: Math.round((timeoutWorker.exitObservedAtMs - timeoutSelectionStartedAtMs) * 100) / 100,
+        selectionResult: timeoutResult,
+        workerDecodeRejection: timeoutError.message,
+        realUtilityProcessExitObserved: true,
+        helperRequestsAdded: requests.length - requestsBeforeTimeout,
+        clipboardPasteFallbackAndPanelEffectsAdded: Object.fromEntries(
+          Object.keys(effects).map((key) => [key, effects[key] - effectsBeforeTimeout[key]]),
+        ),
+        retainedOriginalAndPreviewUnchanged: timeoutItem.content === timeoutContent && timeoutItem.preview === timeoutPreview,
+        decodedCacheEntriesAfterScenario: imagePreparationService.getCacheStats().entries,
+        responseReleasedAfterTimeout: events.includes("worker-response-released-timeout"),
+        monitorIsolation: "test-only pending cutoff stub; production 500ms key monitor is measured in separate scenarios",
+      };
+      monitorMode = "production";
       keyStateReleased = false;
       const cancellationPixels = Buffer.from([20, 80, 160, 255, 170, 60, 30, 128]);
       const cancellationPng = PNG.sync.write({ width: 2, height: 1, data: cancellationPixels });
@@ -448,7 +578,7 @@ if (!process.versions.electron) {
         5_000,
         "the real utilityProcess must reply before the cancellation gate is released",
       );
-      assert.equal(cancellationReply.requestId, "image-3");
+      assert.equal(cancellationReply.requestId, "image-4");
       assert.equal(cancellationReply.type, "decoded", "cancellation gates a successful response emitted by the real decoder");
       assert.equal(selectionSettled, false, "the production selection remains pending while its real worker response is gated");
       const cancellationMonitor = selectionMonitors.at(-1);
@@ -480,7 +610,7 @@ if (!process.versions.electron) {
       assert.equal(visible, true, "cancelled selection leaves the panel visible");
       assert.equal(cancellationItem.content, cancellationContent);
       assert.equal(cancellationItem.preview, cancellationPreview);
-      assert.equal(history[2], cancellationItem);
+      assert.equal(history[3], cancellationItem);
       assert.equal(imagePreparationService.getCacheStats().entries, 1, "cancelled decode creates no cache entry");
       assert.equal(imagePreparationService.getCacheStats().bytes, 8);
       assert.ok(events.includes("worker-response-held-cancel"));
@@ -492,71 +622,6 @@ if (!process.versions.electron) {
       assert.equal(context.nativePasteJob, null, "quiescent pre-registration cancellation retires the selection job");
       assert.equal(BrowserWindow.getAllWindows().length, 0);
 
-      keyStateReleased = true;
-      // Cancellation retired the previous process, so leave room for a cold
-      // utilityProcess startup before the test-only deadline begins to win.
-      context.IMAGE_LIMITS = Object.freeze({ ...IMAGE_LIMITS, contentPrepareTimeoutMs: 8_000 });
-      // Keep the existing 8000ms image-service timeout scenario isolated from
-      // the 500ms monitor; the production default timer is exercised below by
-      // the dedicated held/released cutoff integrations.
-      monitorMode = "pending";
-      const timeoutPixels = Buffer.from([90, 10, 230, 255, 5, 210, 70, 255]);
-      const timeoutPng = PNG.sync.write({ width: 2, height: 1, data: timeoutPixels });
-      const timeoutItem = {
-        id: "worker-integration-timeout-image",
-        type: "image",
-        content: `data:image/png;base64,${timeoutPng.toString("base64")}`,
-        preview: "超时时保留的图片预览",
-      };
-      const timeoutContent = timeoutItem.content;
-      const timeoutPreview = timeoutItem.preview;
-      history.push(timeoutItem);
-      helperExited = false;
-      visible = true;
-      context.panelGeneration = GENERATION;
-      context.panelTarget = TARGET;
-      context.pendingPanelGeneration = null;
-      context.openingGuardUntil = 0;
-      const requestsBeforeTimeout = requests.length;
-      const effectsBeforeTimeout = { ...effects };
-      selectionSettled = false;
-      const timedOutSelection = context.copySelectedItem(7, true, timeoutItem.id, [], GENERATION, "image-worker-timeout")
-        .then((result) => { selectionSettled = true; return plain(result); });
-
-      phase = "wait for real worker response held for preparation timeout";
-      const timeoutReply = await waitWithin(
-        timeoutResponseCaptured.promise,
-        5_000,
-        "the real utilityProcess must reply before the preparation timeout expires",
-      );
-      assert.equal(timeoutReply.requestId, "image-4");
-      assert.equal(timeoutReply.type, "decoded", "timeout gates a successful response emitted by the real decoder");
-      assert.equal(selectionSettled, false, "the production selection remains pending with a real worker response gated");
-      phase = "wait for production image preparation timeout";
-      assert.deepEqual(await waitWithin(timedOutSelection, 12_000, "the production selection timeout must settle"), {
-        status: "blocked",
-        reasonCode: "image_prepare_timeout",
-      });
-      const timeoutError = await waitWithin(
-        timeoutDecodeRejected.promise,
-        2_000,
-        "the real worker request must reject after the service deadline expires",
-      );
-      assert.equal(timeoutError.message, "image_prepare_timeout");
-      await waitWithin(timeoutWorkerExited.promise, 5_000, "the timed-out real utilityProcess must be retired and exit");
-      assert.equal(requests.length, requestsBeforeTimeout, "timeout before snapshot completion never registers content with the helper");
-      assert.deepEqual(effects, effectsBeforeTimeout, "preparation timeout has no clipboard, paste, fallback, or panel effects");
-      assert.equal(visible, true, "timed-out selection leaves the panel visible");
-      assert.equal(timeoutItem.content, timeoutContent);
-      assert.equal(timeoutItem.preview, timeoutPreview);
-      assert.equal(history[3], timeoutItem);
-      assert.equal(imagePreparationService.getCacheStats().entries, 1, "timed-out decode creates no cache entry");
-      assert.equal(imagePreparationService.getCacheStats().bytes, 8);
-      assert.ok(events.includes("worker-response-held-timeout"));
-      assert.ok(events.includes("worker-process-exit-timeout"));
-      assert.equal(BrowserWindow.getAllWindows().length, 0);
-      assert.equal(selectionSettled, true);
-      monitorMode = "production";
 
       const heldCutoffPixels = Buffer.from([30, 130, 210, 255, 220, 70, 10, 255]);
       const heldCutoffPng = PNG.sync.write({ width: 2, height: 1, data: heldCutoffPixels });

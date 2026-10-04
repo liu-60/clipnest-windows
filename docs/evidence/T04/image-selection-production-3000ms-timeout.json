@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "fixture": "T04-I05",
+  "status": "PASS_WITH_LIMITATIONS",
+  "environment": {
+    "os": "Windows",
+    "architecture": "x64",
+    "node": "v24.16.0",
+    "pnpm": "11.19.0",
+    "electron": "40.10.2"
+  },
+  "source": {
+    "commit": "2b231e62347093c201451964e21b210f1cf44be6",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "probeSha256": "1c19c6ec9620dd884f617db82089729745caf9bb43be0facccb194f33850d11c1",
+    "selectionMonitorSourceSha256": "7690d171581efde6641da0d7ed162b12d068b59e9180b234356534dea83a8d9e",
+    "productionPreparationDeadlineSourceChanged": false,
+    "selectionMonitorSourceChangedBeforeProbe": true
+  },
+  "verification": {
+    "mainBuild": {
+      "status": "PASS",
+      "command": "pnpm test:unit -- selection-key-deadline.test.cjs",
+      "detail": "The package script ran tsc -p tsconfig.main.json before the selected test file."
+    },
+    "selectionKeyDeadlineUnitTests": {
+      "status": "PASS",
+      "passed": 14,
+      "failed": 0,
+      "command": "pnpm test:unit -- selection-key-deadline.test.cjs"
+    },
+    "probeSyntax": {
+      "status": "PASS",
+      "command": "node --check tests/tasks/T04/run-image-selection-electron.cjs"
+    },
+    "probeDiffWhitespace": {
+      "status": "PASS",
+      "command": "git diff --check -- tests/tasks/T04/run-image-selection-electron.cjs"
+    }
+  },
+  "probe": {
+    "path": "tests/tasks/T04/run-image-selection-electron.cjs",
+    "command": "$env:ELECTRON_OVERRIDE_DIST_PATH=(Resolve-Path -LiteralPath 'node_modules/.pnpm/electron@40.10.2/node_modules/electron/dist').Path; node tests/tasks/T04/run-image-selection-electron.cjs",
+    "status": "PASS_WITH_LIMITATIONS",
+    "processType": "browser",
+    "utilityProcessDecodeCount": 6,
+    "productionImagePreparationTimeout": {
+      "status": "PASS",
+      "configuredDeadlineMs": 3000,
+      "deadlineAnchor": "copySelectedItem selectionStartedAt; the probe derives that timestamp from the production selectionDeadlineAt minus its 500ms key-release window",
+      "deadlineOverridden": false,
+      "workerWarmup": {
+        "successfulDecodeAndMalformedDecodePrecededTimeout": true,
+        "workerFactoryCountAtTimeout": 1,
+        "workerInstance": 1,
+        "realUtilityProcessPidObserved": true
+      },
+      "realWorkerResponse": {
+        "type": "decoded",
+        "emittedBeforeAbsoluteDeadline": true,
+        "elapsedFromSelectionStartMs": 1.62,
+        "harnessGateReleasedAfterTimeout": false,
+        "heldDurationMs": 3012.31
+      },
+      "selection": {
+        "result": { "status": "blocked", "reasonCode": "image_prepare_timeout" },
+        "elapsedFromSelectionStartMs": 3013.93,
+        "workerDecodeRejection": "image_prepare_timeout",
+        "workerAbortElapsedFromSelectionStartMs": 3003.23,
+        "realUtilityProcessExitObserved": true,
+        "workerExitElapsedFromSelectionStartMs": 3015.59
+      },
+      "sideEffects": {
+        "helperRequestsAdded": 0,
+        "clipboardCommits": 0,
+        "pasteRequests": 0,
+        "fallbackWrites": 0,
+        "panelHides": 0,
+        "retainedOriginalAndPreviewUnchanged": true,
+        "decodedCacheEntriesAfterScenario": 1
+      },
+      "monitorIsolation": "The deadline scenario uses a test-only pending selection monitor so the independent 500ms cutoff cannot cancel it first."
+    },
+    "realSelectionKeyMonitorScenarios": {
+      "heldCutoff": {
+        "status": "FAIL_CLOSED",
+        "timerLateMs": 13.84,
+        "lastPreCutoffSampleAgeMs": 1.8,
+        "decision": { "kind": "blocked", "reasonCode": "key_state_unavailable" }
+      },
+      "releasedCutoff": {
+        "status": "FAIL_CLOSED",
+        "timerLateMs": 0.03,
+        "lastPreCutoffSampleAgeMs": 17.29,
+        "decision": { "kind": "blocked", "reasonCode": "key_state_unavailable" },
+        "continued": false
+      }
+    },
+    "boundary": {
+      "production": [
+        "copySelectedItem orchestration extracted from src/main/main.ts",
+        "NativeContentProvider",
+        "ImagePreparationService with the production absolute deadline and abort path",
+        "real Electron utilityProcess decoder response and child-process exit"
+      ],
+      "faked": [
+        "selection monitor for the isolated 3000ms timeout scenario",
+        "native helper protocol",
+        "system clipboard boundary",
+        "panel visibility and hide boundary",
+        "physical keyboard/input and target-visible paste"
+      ],
+      "browserWindowCreated": false,
+      "systemClipboardReadOrWritten": false,
+      "physicalInputSent": false
+    }
+  },
+  "limitations": [
+    "The timeout case proves service abort and real utilityProcess retirement after a successful decoded message was intercepted; it does not interrupt decoder CPU work because decoding and message emission already completed.",
+    "The isolated timeout case uses a pending fake selection monitor. Separate production-scheduler monitor probes use a fake key-state source and fail closed here: the held callback was 13.84ms late, and the released case's last pre-cutoff sample was 17.29ms old.",
+    "The cutoff callback now samples once and can block when it still observes a held key. A 499ms re-press followed by release before a delayed 501ms callback, and brief transitions between samples, may still escape observation; P1/I10 remains open.",
+    "No BrowserWindow, OS clipboard, physical keyboard/input, actual panel side effect, helper process, or target-visible paste was used."
+  ]
+}
