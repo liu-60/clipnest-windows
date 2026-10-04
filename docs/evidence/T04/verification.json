@@ -139,10 +139,15 @@
       "command": "pnpm test:unit -- keyboard-renderer.test.cjs main-image-preparation-failure.test.cjs",
       "status": "PASS",
       "result": "Main build passed and 12 tests passed, 0 failed. The renderer fixture verifies the preparing status remains visible with delayed fake IPC; the paired production-function VM fakes cover fail-closed image preparation. No real window, OS clipboard, or input was used."
+    },
+    {
+      "command": "pnpm test:unit -- keyboard-renderer.test.cjs",
+      "status": "PASS",
+      "result": "Main TypeScript build passed and all 7 renderer fake tests passed. The T04-U01 regression reproduced the wake bug (wake-6 remained selected after the panel scrolled to the start); after resetting selection on every panel:shown event, wake-1 is selected and visible at offset 0 for both new and reused generations. No real window or physical keyboard was used."
     }
   ],
   "implementedAndCovered": [
-    "Keyboard/search fixtures cover single execution, IME/repeat/busy guards, stale-generation acknowledgements, delayed image-preparation status, query-change selection reset, simulated virtual-list scrolling that keeps the new first result visible, and empty-query body-read avoidance.",
+    "Keyboard/search fixtures cover single execution, IME/repeat/busy guards, stale-generation acknowledgements, delayed image-preparation status, query-change and every-panel-wake selection reset including reused generations, simulated virtual-list scrolling that keeps the selected first result visible, and empty-query body-read avoidance.",
     "Clipboard sequence fixtures cover stable-sequence short-circuiting, unstable/failed reads, helper/app writes, persistence retry, and duplicate notifications.",
     "Image-preparation fixtures cover decoded LRU bounds, oversized cache bypass, single active worker, cancellation, stale-item rejection, fail-closed missing decoder, and PNG/JPEG header/size validation.",
     "The 3000ms content-preparation deadline is anchored to selection and runs independently from the 500ms key-release monitor, which starts at selection. Six selection fakes cover release before 500ms with preparation completing at 2500ms, held at 500ms followed by a 700ms release, released-at-start then re-pressed at 400ms through the cutoff, delayed scheduler wake after both deadlines, waiting for a pre-cutoff release, and cancellation cleanup; held-at-cutoff and missed-cutoff cases have zero clipboard, input, and panel-hide effects. A never-resolving worker-retirement fake verifies each request ends at its own absolute deadline and no replacement starts.",

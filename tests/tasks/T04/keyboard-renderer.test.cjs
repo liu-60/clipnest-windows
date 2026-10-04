@@ -519,6 +519,53 @@ test("a changed query resets selection to its first result even when the old sel
   assert.equal(firstCard.props.selected, true, "the first visible result carries selected state");
 });
 
+test("panel wake resets selection to the first visible result for new and reused generations", async () => {
+  const results = Array.from({ length: 6 }, (_, index) => item(`wake-${index + 1}`, index + 1));
+  const { harness, tree: initialTree } = await startApp(results);
+  let search = attachSearch(harness, initialTree);
+  mountGrid(harness, initialTree);
+  harness.document.activeElement = search.props.ref.current;
+
+  let tree = initialTree;
+  for (let index = 0; index < results.length; index += 1) {
+    dispatchKey(harness, keyEvent("ArrowDown"));
+    tree = harness.renderApp();
+    search = attachSearch(harness, tree);
+  }
+  const oldGrid = findNode(tree, (element) => element.type?.displayName === "VirtualHistoryGrid");
+  assert.equal(oldGrid.props.selectedId, "wake-6");
+  assert.deepEqual(harness.visibleItemIds(oldGrid.props.items), ["wake-6"]);
+  assert.equal(harness.gridScrollOffset, 5 * 219);
+
+  harness.panelShown?.("wake-request-2", "generation-2");
+  tree = harness.renderApp();
+  search = attachSearch(harness, tree);
+  const grid = findNode(tree, (element) => element.type?.displayName === "VirtualHistoryGrid");
+  assert.equal(grid.props.selectedId, "wake-1", "a new wake generation starts from the first filtered result");
+  assert.deepEqual(harness.visibleItemIds(grid.props.items), ["wake-1"], "the selected first result is visible at the start of the list");
+  assert.equal(harness.gridScrollOffset, 0, "wake scroll and selection point to the same first item");
+  const visibleGrid = mountGrid(harness, tree);
+  const firstCard = findNode(visibleGrid, (element) => element.type?.name === "HistoryCard" && element.props.item.id === "wake-1");
+  assert.ok(firstCard);
+  assert.equal(firstCard.props.selected, true);
+
+  harness.document.activeElement = search.props.ref.current;
+  for (let index = 0; index < results.length; index += 1) {
+    dispatchKey(harness, keyEvent("ArrowDown"));
+    tree = harness.renderApp();
+    search = attachSearch(harness, tree);
+  }
+  assert.equal(findNode(tree, (element) => element.type?.displayName === "VirtualHistoryGrid").props.selectedId, "wake-6");
+  assert.equal(harness.gridScrollOffset, 5 * 219);
+
+  harness.panelShown?.("wake-request-3", "generation-2");
+  tree = harness.renderApp();
+  const reusedGrid = findNode(tree, (element) => element.type?.displayName === "VirtualHistoryGrid");
+  assert.equal(reusedGrid.props.selectedId, "wake-1", "a repeated show event for the visible generation also resets selection");
+  assert.deepEqual(harness.visibleItemIds(reusedGrid.props.items), ["wake-1"]);
+  assert.equal(harness.gridScrollOffset, 0, "same-generation wake does not leave the selected card outside the reset viewport");
+});
+
 test("empty queries skip body reads and image search continues to use preview", async () => {
   let textBodyReads = 0;
   let imageContentReads = 0;

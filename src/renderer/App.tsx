@@ -304,6 +304,7 @@ function App() {
 
   useEffect(() => {
     return window.clipnest.onPanelShown((requestId, generation) => {
+      setSelectedId(null);
       if (activePanelGeneration.current !== generation) {
         activeCopyIntent.current = null;
         searchNavigationActive.current = false;

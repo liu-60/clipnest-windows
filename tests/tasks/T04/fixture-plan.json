@@ -348,13 +348,19 @@
         "01 §2",
         "04 §6"
       ],
-      "setup": "Multiple results are loaded and a non-first item is selected. Choose a new query that returns multiple results and still includes the previously selected item; open/close the panel with reduced motion both enabled and disabled.",
-      "action": "Change the query, then observe the selected card and viewport; navigate results by keyboard and observe the final window bounds and content transition.",
+      "setup": "Multiple results are loaded and a non-first item is selected. Choose a new query that returns multiple results and still includes the previously selected item; then deliver panel:shown both with a new generation and with a generation reused while the panel is visible.",
+      "action": "Change the query and observe selection/viewport; then wake the panel with new and reused generations and observe the selected card and viewport. Navigate results by keyboard and observe final window bounds and content transition.",
       "assert": [
         "after query change, selection resets to the first result in the new query and that result is visible even when the prior selection still matches",
+        "every panel:shown event resets selection to the first filtered result while the viewport returns to the list start, including a reused generation while the panel is visible",
         "keyboard selection and scrolling stay aligned",
         "one final bounds update is applied",
         "reduced motion disables positional animation"
+      ],
+      "evidence": [
+        "tests/tasks/T04/keyboard-renderer.test.cjs: a changed query resets selection to its first result even when the old selection still matches",
+        "tests/tasks/T04/keyboard-renderer.test.cjs: panel wake resets selection to the first visible result for new and reused generations",
+        "tests/tasks/T04/panel-presentation.test.cjs: final bounds and reduced-motion behavior"
       ]
     },
     {
