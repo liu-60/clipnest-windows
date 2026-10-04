@@ -139,6 +139,26 @@ test("a poll delayed past both deadlines fails closed instead of trusting an old
   monitor.cancel();
 });
 
+test("coarse Windows tick steps do not make fresh high-resolution cutoff samples stale", async () => {
+  const clock = createFakeClock();
+  const monitor = startSelectionKeyReleaseMonitor({
+    selectionDeadlineAt: 500,
+    selectionDeadlineTickMs: 500,
+    nowAt: () => clock.now,
+    nowTickMs: () => Math.floor(clock.now / 16) * 16,
+    keysReleased: () => true,
+    schedule: clock.schedule,
+  });
+
+  clock.advanceTo(500);
+  assert.deepEqual(await monitor.cutoff, {
+    kind: "continue",
+    operationBudgetMs: SELECTION_KEY_RELEASE_WINDOW_MS,
+  });
+  assert.equal(clock.pendingTimers, 0);
+  monitor.cancel();
+});
+
 test("a late release cannot replace a fresh pre-cutoff held sample", async () => {
   const clock = createFakeClock();
   let keyStateReads = 0;

@@ -21,6 +21,7 @@ if (!process.versions.electron) {
   const { app, BrowserWindow } = require("electron");
   const { PNG } = require("pngjs");
   const { NativeContentProvider } = require("../../../dist-electron/main/native/content-provider.js");
+  const { createWin32HostBridge } = require("../../../dist-electron/main/native/win32-host-bridge.js");
   const {
     IMAGE_LIMITS,
     ImagePreparationService,
@@ -95,6 +96,7 @@ if (!process.versions.electron) {
 
   async function run() {
     assert.equal(BrowserWindow.getAllWindows().length, 0, "the integration probe must not create a BrowserWindow");
+    const nativeClock = createWin32HostBridge();
     const sourcePixels = Buffer.from([240, 40, 20, 128, 5, 100, 240, 255]);
     const pngBytes = PNG.sync.write({ width: 2, height: 1, data: sourcePixels });
     const dataUrl = `data:image/png;base64,${pngBytes.toString("base64")}`;
@@ -141,10 +143,10 @@ if (!process.versions.electron) {
     const selectionMonitorDiagnostics = [];
     const monitorEvidence = {
       scheduler: "production default setTimeout on Electron main event loop",
-      monotonicClock: "same node:perf_hooks performance.now source for VM and bridge ticks",
+      monotonicClock: "production Win32HostBridge GetTickCount64 for helper deadline; node:perf_hooks performance.now for the monitor cutoff and sample ages",
     };
     const bridge = {
-      getMonotonicTickMs: () => Math.floor(performance.now()),
+      getMonotonicTickMs: () => nativeClock.getMonotonicTickMs(),
       getClipboardSequenceNumber: () => 41,
       getProcessIdentity(pid) { return { pid, processCreatedAt: "2200" }; },
       getForegroundWindow: () => HOST,
@@ -294,7 +296,7 @@ if (!process.versions.electron) {
         ...input,
         keysReleased: () => {
           const released = input.keysReleased();
-          diagnostic.keySamples.push({ at: performance.now(), tickMs: Math.floor(performance.now()), released });
+          diagnostic.keySamples.push({ at: performance.now(), tickMs: nativeClock.getMonotonicTickMs(), released });
           return released;
         },
       });
@@ -669,7 +671,7 @@ if (!process.versions.electron) {
       assert.ok(heldCutoffElapsedMs >= SELECTION_KEY_RELEASE_WINDOW_MS - 10, "held cutoff elapsed against the real monotonic clock");
       monitorEvidence.heldCutoffElapsedMs = Math.round(heldCutoffElapsedMs * 100) / 100;
       const heldSample = [...heldCutoffDiagnostic.keySamples]
-        .filter((sample) => sample.at < heldCutoffDiagnostic.deadlineAt && sample.tickMs < heldCutoffDiagnostic.deadlineTickMs)
+        .filter((sample) => sample.at < heldCutoffDiagnostic.deadlineAt)
         .at(-1);
       monitorEvidence.heldCutoffTimerLateAtMs = Math.round((performance.now() - heldCutoffDiagnostic.deadlineAt) * 100) / 100;
       monitorEvidence.heldCutoffLastPreCutoffSampleAgeMs = heldSample
@@ -751,7 +753,7 @@ if (!process.versions.electron) {
       assert.ok(releasedCutoffElapsedMs >= SELECTION_KEY_RELEASE_WINDOW_MS - 10, "released cutoff elapsed against the real monotonic clock");
       monitorEvidence.releasedCutoffElapsedMs = Math.round(releasedCutoffElapsedMs * 100) / 100;
       const releasedSample = [...releasedCutoffDiagnostic.keySamples]
-        .filter((sample) => sample.at < releasedCutoffDiagnostic.deadlineAt && sample.tickMs < releasedCutoffDiagnostic.deadlineTickMs)
+        .filter((sample) => sample.at < releasedCutoffDiagnostic.deadlineAt)
         .at(-1);
       monitorEvidence.releasedCutoffTimerLateAtMs = Math.round((performance.now() - releasedCutoffDiagnostic.deadlineAt) * 100) / 100;
       monitorEvidence.releasedCutoffLastPreCutoffSampleAgeMs = releasedSample
@@ -842,6 +844,7 @@ if (!process.versions.electron) {
       releasePreparationResponse.resolve();
       await selection.catch(() => undefined);
       await imagePreparationService.dispose();
+      nativeClock.close();
     }
   }
 
