@@ -17,3 +17,8 @@ server/projects.json
 server/data/
 Thumbs.db
 .DS_Store
+
+# Local acceptance profiles, caches and Rust build products
+.test-data/
+native/target/
+native/target-*/

@@ -1,0 +1,175 @@
+const assert = require("node:assert/strict");
+const test = require("node:test");
+const fs = require("node:fs");
+const path = require("node:path");
+const vm = require("node:vm");
+const { createRequire } = require("node:module");
+const { EventEmitter } = require("node:events");
+const { deflateSync } = require("node:zlib");
+const jpeg = require("jpeg-js");
+const { crc32 } = require("pngjs/lib/crc");
+const { decodeProductionImage } = require("../../../dist-electron/main/clipboard/image-decoder.js");
+const { IMAGE_LIMITS } = require("../../../dist-electron/main/clipboard/image-worker.js");
+
+function chunk(type, data) {
+  const bytes = Buffer.alloc(data.length + 12);
+  bytes.writeUInt32BE(data.length);
+  bytes.write(type, 4, "ascii");
+  data.copy(bytes, 8);
+  bytes.writeInt32BE(crc32(bytes.subarray(4, bytes.length - 4)), bytes.length - 4);
+  return bytes;
+}
+
+function png({ width = 2, height = 1, depth = 8, colorType = 6, interlace = 0,
+  raw = Buffer.from([0, 255, 0, 0, 255, 0, 255, 0, 128]), extra = [] } = {}) {
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width);
+  header.writeUInt32BE(height, 4);
+  header[8] = depth;
+  header[9] = colorType;
+  header[12] = interlace;
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk("IHDR", header),
+    ...extra, chunk("IDAT", deflateSync(raw)), chunk("IEND", Buffer.alloc(0)),
+  ]);
+}
+
+function request(format, bytes, width = 2, height = 1) {
+  return { jobId: "real-image", format, encodedBytes: Uint8Array.from(bytes), width, height };
+}
+const decode = (input) => decodeProductionImage(input, new AbortController().signal);
+
+test("production PNG decoder returns exact unpremultiplied RGBA and preserves encoded bytes", async () => {
+  const input = request("png", png());
+  const before = Uint8Array.from(input.encodedBytes);
+  const result = await decode(input);
+  assert.deepEqual([result.width, result.height], [2, 1]);
+  assert.ok(result.pixels instanceof Uint8Array);
+  assert.deepEqual([...result.pixels], [255, 0, 0, 255, 0, 255, 0, 128]);
+  assert.deepEqual(input.encodedBytes, before);
+});
+
+test("PNG decoder expands RGB and palette transparency, and rescales 16-bit grayscale to RGBA", async () => {
+  const rgb = await decode(request("png", png({ colorType: 2, raw: Buffer.from([0, 255, 0, 0, 0, 255, 0]) })));
+  assert.deepEqual([...rgb.pixels], [255, 0, 0, 255, 0, 255, 0, 255]);
+  const palette = await decode(request("png", png({ colorType: 3, raw: Buffer.from([0, 0, 1]), extra: [
+    chunk("PLTE", Buffer.from([255, 0, 0, 0, 255, 0])), chunk("tRNS", Buffer.from([255, 128])),
+  ] })));
+  assert.deepEqual([...palette.pixels], [255, 0, 0, 255, 0, 255, 0, 128]);
+  const grayscale = await decode(request("png", png({ colorType: 0, depth: 16, raw: Buffer.from([0, 0xff, 0xff, 0x80, 0x80]) })));
+  assert.deepEqual([...grayscale.pixels], [255, 255, 255, 255, 128, 128, 128, 255]);
+});
+
+test("Adam7 PNG decodes using its exact inflated size and rejects compressed excess", async () => {
+  const tinyInterlaced = png({ width: 1, height: 1, interlace: 1, raw: Buffer.from([0, 20, 40, 60, 80]) });
+  assert.deepEqual([...(await decode(request("png", tinyInterlaced, 1, 1))).pixels], [20, 40, 60, 80]);
+  const bomb = png({ width: 1, height: 1, interlace: 1, raw: Buffer.alloc(1024 * 1024) });
+  await assert.rejects(decode(request("png", bomb, 1, 1)), /image_decode_failed/);
+  const truncatedPixels = png({ raw: Buffer.from([0, 255, 0, 0]) });
+  await assert.rejects(decode(request("png", truncatedPixels)), /image_source_invalid/);
+});
+
+test("PNG decoder verifies IHDR, IDAT, and ancillary chunk CRCs before decoding", async () => {
+  const source = png({ extra: [chunk("tEXt", Buffer.from("author\0ClipNest"))] });
+  for (const type of ["IHDR", "tEXt", "IDAT"]) {
+    const broken = Buffer.from(source);
+    const offset = broken.indexOf(type, 8, "ascii");
+    broken[offset + 4] ^= 1;
+    await assert.rejects(decode(request("png", broken)), /image_png_crc_invalid/);
+  }
+  await assert.rejects(decode(request("png", source.subarray(0, source.length - 4))), /image_source_invalid/);
+  const falseDimensions = png({ width: 3 });
+  await assert.rejects(decode(request("png", falseDimensions)), /image_dimensions_mismatch/);
+});
+
+test("real JPEG decoder produces strict opaque RGBA and rejects damaged data", async () => {
+  const pixels = Buffer.from([240, 40, 20, 255, 240, 40, 20, 255]);
+  const encoded = jpeg.encode({ width: 2, height: 1, data: pixels }, 100).data;
+  const input = request("jpeg", encoded);
+  const before = Uint8Array.from(input.encodedBytes);
+  const result = await decode(input);
+  assert.deepEqual([result.width, result.height, result.pixels.length], [2, 1, 8]);
+  for (let index = 0; index < 8; index++) {
+    if (index % 4 === 3) assert.equal(result.pixels[index], 255);
+    else assert.ok(Math.abs(result.pixels[index] - pixels[index]) <= 2);
+  }
+  assert.deepEqual(input.encodedBytes, before);
+  await assert.rejects(decode(request("jpeg", encoded.subarray(0, encoded.length / 2))), /image_decode_failed/);
+  await assert.rejects(decode(request("jpeg", encoded, 1, 1)), /image_dimensions_mismatch/);
+});
+
+test("encoded source, actual pixel dimensions, and PNG working-set limits are enforced", async () => {
+  await assert.rejects(decode(request("png", Buffer.alloc(IMAGE_LIMITS.sourceBytes + 1))), /image_source_too_large/);
+  // Claimed small dimensions cannot hide an oversized real IHDR/SOF.
+  await assert.rejects(decode(request("png", png({ width: 5000, height: 4000 }))), /image_dimensions_too_large/);
+  const jpegHeader = Buffer.from([0xff, 0xd8, 0xff, 0xc0, 0, 11, 8, 0x0f, 0xa0, 0x13, 0x88, 1, 1, 0x11, 0]);
+  await assert.rejects(decode(request("jpeg", jpegHeader)), /image_dimensions_too_large/);
+  // A valid 16 MP 16-bit header would require excessive intermediate buffers.
+  await assert.rejects(decode(request("png", png({ width: 4000, height: 4000, depth: 16 }), 4000, 4000)), /image_worker_capacity_exceeded/);
+  // Filter bookkeeping for millions of narrow rows must also fit the budget.
+  await assert.rejects(decode(request("png", png({ width: 1, height: 16_000_000 }), 1, 16_000_000)), /image_worker_capacity_exceeded/);
+});
+
+test("decoder handles already-aborted requests and invalid format/signature without output", async () => {
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(decodeProductionImage(request("png", png()), controller.signal), /image_decode_cancelled/);
+  await assert.rejects(decode(request("gif", png())), /image_format_unsupported/);
+  await assert.rejects(decode(request("png", Buffer.from([1, 2, 3]))), /image_source_invalid/);
+  await assert.rejects(decode(request("jpeg", png())), /image_source_invalid/);
+});
+
+function loadWorker(electron, productionEntry) {
+  const filename = path.resolve(__dirname, "../../../dist-electron/main/clipboard/image-worker.js");
+  const module = { exports: {} };
+  const localRequire = createRequire(filename);
+  const requireMock = (name) => name === "electron" ? electron : localRequire(name);
+  requireMock.main = productionEntry ? module : {};
+  const wrapped = vm.runInThisContext(`(function (exports, require, module, __filename, __dirname, process) {\n${fs.readFileSync(filename, "utf8")}\n})`, { filename });
+  wrapped(module.exports, requireMock, module, filename, path.dirname(filename), { parentPort: electron.parentPort });
+  return module.exports;
+}
+
+test("compiled utility-process production entry decodes PNG through its real parentPort protocol", async () => {
+  const port = new EventEmitter();
+  const responses = [];
+  port.postMessage = (message) => responses.push(message);
+  loadWorker({ parentPort: port }, true);
+  const input = request("png", png());
+  port.emit("message", { data: { type: "decode", requestId: input.jobId, input } });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(responses.length, 1);
+  assert.equal(responses[0].type, "decoded");
+  assert.equal(responses[0].requestId, input.jobId);
+  assert.deepEqual([...responses[0].image.pixels], [255, 0, 0, 255, 0, 255, 0, 128]);
+});
+
+test("all cancellation reasons quarantine the dying utility process and ignore its late response", async () => {
+  for (const reason of [undefined, new Error("image_prepare_timeout")]) {
+    const children = [];
+    const { createUtilityProcessImageWorker } = loadWorker({ utilityProcess: { fork() {
+      const child = new EventEmitter();
+      child.kill = () => { child.killed = true; return true; };
+      child.postMessage = (message) => { child.request = message; };
+      children.push(child);
+      return child;
+    } } }, false);
+    const worker = createUtilityProcessImageWorker();
+    const controller = new AbortController();
+    const input = request("png", png());
+    const pending = worker.decode(input, controller.signal);
+    controller.abort(reason);
+    await assert.rejects(pending, reason ? /image_prepare_timeout/ : /image_decode_cancelled/);
+    assert.equal(children[0].killed, true);
+    await assert.rejects(worker.decode(input, new AbortController().signal), /image_worker_terminating/);
+    children[0].emit("message", { type: "decoded", requestId: input.jobId, image: { width: 2, height: 1, pixels: new Uint8Array(8) } });
+    children[0].emit("exit", 0);
+    const next = worker.decode({ ...input, jobId: "after-exit" }, new AbortController().signal);
+    assert.equal(children.length, 2);
+    children[1].emit("message", { type: "decoded", requestId: "after-exit", image: { width: 2, height: 1, pixels: new Uint8Array(8) } });
+    await next;
+    const disposed = worker.dispose();
+    children[1].emit("exit", 0);
+    await disposed;
+  }
+});
