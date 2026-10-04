@@ -1,0 +1,1060 @@
+{
+  "schemaVersion": 1,
+  "task": "T24",
+  "status": "not_started",
+  "executionStatus": "NOT_RUN",
+  "planType": "synthetic_fixture_planning_only",
+  "purpose": "Prepare synthetic observable fixtures for mobile reuse of the shared sync engine and foreground recovery while all implementation and behavior remain gated.",
+  "dependencyPolicy": "Conservative gate: require T24 card dependencies T21/T23 and 03 §11 T24 upstream T16/T18/T19. Also enumerate T21 card upstream T14/T17/T19/T20 plus its 03 §11 additions T15/T16/T18, T23 card upstream T15/T22, and the inspected T20 upstream T06/T15 and T22 upstream T06/T07 (including T23→T22→T06/T07). All 12 listed tasks must be accepted before T24 advances. This is not a claim that full recursive task-manifest closure was computed; deeper closure remains T24-OQ01.",
+  "dependencies": [
+    {
+      "task": "T21",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN",
+      "dependencySource": "T24 task card direct"
+    },
+    {
+      "task": "T23",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN",
+      "dependencySource": "T24 task card direct"
+    },
+    {
+      "task": "T16",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN",
+      "dependencySource": "03 §11 T24 upstream"
+    },
+    {
+      "task": "T18",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN",
+      "dependencySource": "03 §11 T24 upstream"
+    },
+    {
+      "task": "T19",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN",
+      "dependencySource": "03 §11 T24 upstream"
+    },
+    {
+      "task": "T14",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN",
+      "dependencySource": "T21 task card transitive"
+    },
+    {
+      "task": "T15",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN",
+      "dependencySource": "T21 card/03 §11 and T23 card; T20 upstream"
+    },
+    {
+      "task": "T17",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN",
+      "dependencySource": "T21 task card transitive"
+    },
+    {
+      "task": "T20",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN",
+      "dependencySource": "T21 card upstream; T20 card upstream T06/T15"
+    },
+    {
+      "task": "T22",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN",
+      "dependencySource": "T23 card upstream; T22 card upstream T06/T07"
+    },
+    {
+      "task": "T06",
+      "requiredStatus": "accepted",
+      "observedStatus": "in_progress",
+      "executionStatus": "NOT_RUN",
+      "dependencySource": "T20/T22 card upstream (T21→T20→T06; T23→T22→T06)"
+    },
+    {
+      "task": "T07",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN",
+      "dependencySource": "T22 card upstream (T23→T22→T07)"
+    }
+  ],
+  "sources": [
+    "docs/spec/tasks/T24.md",
+    "docs/spec/tasks/T21.md",
+    "docs/spec/tasks/T23.md",
+    "docs/spec/01-product-and-ux.md §3/§5",
+    "docs/spec/02-architecture.md §2/§4/§5/§6/§7",
+    "docs/spec/03-data-sync-and-security.md §2.1/§5.4/§6/§7.1/§7.2/§7.3/§9/§10/§11",
+    "docs/spec/08-acceptance-matrix.md §2/§3/S03-S12/S22-S27",
+    "docs/spec/limits.v1.json (planning defaults; benchmark validation required)",
+    "docs/progress.json status blocks T14/T15/T16/T17/T18/T19/T20/T21/T22/T23/T24",
+    "tests/tasks/T21/fixture-plan.json dependency gate/open questions",
+    "tests/tasks/T23/fixture-plan.json dependency gate/open questions",
+    "docs/spec/tasks/T20.md dependencies",
+    "docs/spec/tasks/T22.md dependencies",
+    "docs/spec/01-product-and-ux.md §2.1/P01; §2.2/P02; §3/P04/P05/P07; §4/P08",
+    "docs/spec/08-acceptance-matrix.md §2/U12",
+    "docs/spec/03-data-sync-and-security.md §2.2 ID lifecycle",
+    "docs/spec/01-product-and-ux.md §4/P09; §4/P10",
+    "docs/spec/08-acceptance-matrix.md §2/U07/U09/U10/U11"
+  ],
+  "dataBoundary": {
+    "fixtureData": "Synthetic account/workspace/device/entity/op identifiers, Decimal strings, state transitions, receipts/cursors, crash barriers, capability categories, injected counters, and opaque byte sentinels only.",
+    "opaqueWireBytes": "Non-secret sentinel bytes are only for exact outbox immutability checks; they are not ciphertext, encryption output, nonce material, known-answer vectors, or crypto evidence.",
+    "userDataRead": false,
+    "secretAccess": false,
+    "realAccountAccess": false,
+    "serviceAccess": false,
+    "databaseAccess": false,
+    "providerAccess": false,
+    "mobileDeviceUse": false,
+    "nativeBuild": false,
+    "behaviorExecuted": false,
+    "productionCodeWritten": false,
+    "sharedFixturesModified": false,
+    "mobileFilesModified": false,
+    "progressModified": false
+  },
+  "fixtureCount": 37,
+  "fixtures": [
+    {
+      "id": "T24-F01",
+      "platform": "shared",
+      "references": [
+        "T24/T21 task cards",
+        "02 §4/§6",
+        "03 §6/§11"
+      ],
+      "setup": "Synthetic caller presents a T21 shared TypeScript engine contract and a mobile repository adapter boundary; no implementation is loaded.",
+      "action": "Plan mobile integration through that shared engine and adapter.",
+      "assertions": "Reuse one revision/CAS, outbox, cursor, and snapshot rule set; mobile supplies platform/storage adapters instead of a second sync engine. Exact exports and adapter API remain OPEN_QUESTION.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ01",
+        "T24-OQ02"
+      ]
+    },
+    {
+      "id": "T24-F02",
+      "platform": "shared",
+      "references": [
+        "T24 task card",
+        "01 §5",
+        "02 §7",
+        "03 §6"
+      ],
+      "setup": "Synthetic unlocked account has cached records, a pending outbox, and injected offline network state.",
+      "action": "Open the library and inspect cached records and sync status offline.",
+      "assertions": "Cached unlocked records remain readable; pending drafts/outbox remain durable; no infinite spinner or deletion; show last successful sync metadata when available.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ08"
+      ]
+    },
+    {
+      "id": "T24-F03",
+      "platform": "shared",
+      "references": [
+        "T24 task card",
+        "03 §6"
+      ],
+      "setup": "A synthetic foreground event occurs with a persisted READY outbox row and a still-valid account/workspace/unlock state.",
+      "action": "Resume the shared engine on foreground and inspect the dispatch opportunity.",
+      "assertions": "Foreground recovery may resume the persisted row after scope validation; correctness does not depend on a background promise; preserve opId and wire_bytes.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ03"
+      ]
+    },
+    {
+      "id": "T24-F04",
+      "platform": "shared",
+      "references": [
+        "T24 task card",
+        "03 §6/§11",
+        "02 §6/§7"
+      ],
+      "setup": "Synthetic OS background wake is delayed, coalesced, or omitted while a READY operation is persisted.",
+      "action": "Compare no-wake state with a later foreground event.",
+      "assertions": "Outbox remains recoverable; no continuous background-sync or delivery-time guarantee; foreground resume is the recovery path.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ03"
+      ]
+    },
+    {
+      "id": "T24-F05",
+      "platform": "iOS",
+      "references": [
+        "T23/T24 task cards",
+        "01 §3/§5",
+        "03 §6"
+      ],
+      "setup": "Synthetic iOS app is suspended with persisted queue state; no device or OS API is invoked.",
+      "action": "Plan suspend, relaunch/foreground, and local queue inspection.",
+      "assertions": "Check recovery on foreground only; background scheduling outcome remains best-effort and NOT_RUN; suspension is not delivery evidence.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ03",
+        "T24-OQ04"
+      ]
+    },
+    {
+      "id": "T24-F06",
+      "platform": "Android",
+      "references": [
+        "T23/T24 task cards",
+        "01 §3/§5",
+        "03 §6"
+      ],
+      "setup": "Synthetic Android process is killed with a persisted operation; no device or native process is run.",
+      "action": "Plan later foreground launch and outbox recovery.",
+      "assertions": "A persisted row may resume in foreground with original opId/wire_bytes; process death does not permit dropping or regenerating it; no background guarantee.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ03",
+        "T24-OQ04"
+      ]
+    },
+    {
+      "id": "T24-F07",
+      "platform": "shared",
+      "references": [
+        "03 §6/S11",
+        "T24 task card"
+      ],
+      "setup": "Synthetic persisted row is SENDING with opId=op-kill-01, a non-secret opaque wire_bytes sentinel, and its digest.",
+      "action": "Inject a plan-only process-kill boundary after SENDING persistence; inspect recovered row.",
+      "assertions": "Recovered state is READY; wire_bytes and digest are byte-for-byte unchanged; do not regenerate identity or protocol bytes. Sentinel is not ciphertext/vector.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ04",
+        "T24-OQ13"
+      ]
+    },
+    {
+      "id": "T24-F08",
+      "platform": "shared",
+      "references": [
+        "03 §7.1/S03",
+        "03 §6",
+        "T24 task card"
+      ],
+      "setup": "Synthetic opId=op-01 with immutable wire_bytes committed once; response is lost; receipt has revision='4', seq='90'.",
+      "action": "Retry the same opId and exact same bytes; compare receipt and write counts.",
+      "assertions": "Return original receipt/seq; one version/change/usage event only; do not regenerate an operation after a lost response.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ05",
+        "T24-OQ11"
+      ]
+    },
+    {
+      "id": "T24-F09",
+      "platform": "shared",
+      "references": [
+        "03 §7.1/§9/S03",
+        "T24 task card"
+      ],
+      "setup": "Synthetic opId=op-02 already has canonical hash h1; a second request has changed bytes/hash h2.",
+      "action": "Submit changed bytes under the same opId.",
+      "assertions": "Return frozen HTTP 409 IDEMPOTENCY_MISMATCH; stop that op and do not automatically create a replacement opId.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ05"
+      ]
+    },
+    {
+      "id": "T24-F10",
+      "platform": "shared",
+      "references": [
+        "03 §6/§7.1",
+        "01 §2.2/§3",
+        "T24 task card"
+      ],
+      "setup": "Receipt for a synthetic operation confirms revision='8', seq='120'; a later unsent draft depends on that item.",
+      "action": "Plan local ACK transaction recording receipt/revision/seq, clearing acknowledged row, and advancing only the dependent unsent draft.",
+      "assertions": "Persist receipt, confirmedRevision, committedSeq, outbox clearing, and draft-chain state transactionally; no draft loss or invented baseRevision; success only after commit.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ04",
+        "T24-OQ05"
+      ]
+    },
+    {
+      "id": "T24-F11",
+      "platform": "shared",
+      "references": [
+        "03 §6/S11",
+        "T24 task card"
+      ],
+      "setup": "Synthetic ACK transaction has a pre-commit crash barrier with prior outbox, draft, view, and counter snapshots.",
+      "action": "Inject failure before commit and inspect recovery state.",
+      "assertions": "Rollback is atomic; prior outbox/draft and original bytes are recoverable; no ACK success or cleared operation is visible before commit.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ04"
+      ]
+    },
+    {
+      "id": "T24-F12",
+      "platform": "shared",
+      "references": [
+        "03 §6/§7.1/§9",
+        "T24 task card"
+      ],
+      "setup": "Synthetic saved draft references an attachment whose upload dependency is not ready.",
+      "action": "Stage the planned operation and inspect outbox state.",
+      "assertions": "Use frozen WAIT_DEPENDENCY; do not substitute BLOCKED, fabricate ready attachment, or dispatch early.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ05",
+        "T24-OQ06"
+      ]
+    },
+    {
+      "id": "T24-F13",
+      "platform": "shared",
+      "references": [
+        "03 §6/§7.1/§8",
+        "T24 task card"
+      ],
+      "setup": "Synthetic attachment dependency later reports ready; its operation has not yet been sent.",
+      "action": "Plan the transition and inspect the queued request.",
+      "assertions": "Do not dispatch before readiness; after readiness use the same planned op identity/bytes and confirmed attachment reference; provider success is not inferred.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ06"
+      ]
+    },
+    {
+      "id": "T24-F14",
+      "platform": "shared",
+      "references": [
+        "03 §7.2/S08",
+        "03 §10",
+        "T24 task card"
+      ],
+      "setup": "Synthetic pull spans multiple pages with fixed upperSeq='120'; another change exists beyond that bound.",
+      "action": "Fetch pages using the same upperSeq and inspect toSeq/hasMore.",
+      "assertions": "Every page reuses upperSeq='120'; toSeq advances only through returned changes; no skipped row; next-page request follows local page/cursor commit.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ05"
+      ]
+    },
+    {
+      "id": "T24-F15",
+      "platform": "shared",
+      "references": [
+        "03 §7.2/S08",
+        "03 §6/S11",
+        "T24 task card"
+      ],
+      "setup": "Synthetic page rows and prior cursor='89' are prepared with a local transaction crash barrier.",
+      "action": "Apply page/cursor atomically, interrupt before and after commit, then replay the page.",
+      "assertions": "Before commit neither rows nor cursor advances; after commit both appear together; replay is idempotent; HTTP receipt alone never advances cursor.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ04"
+      ]
+    },
+    {
+      "id": "T24-F16",
+      "platform": "shared",
+      "references": [
+        "03 §7.2",
+        "T24 task card"
+      ],
+      "setup": "Synthetic seq='100' response arrives before older in-flight seq='99'; a distinct new current-state probe is available.",
+      "action": "Deliver out of order, then make the current-state probe below its own request-time watermark.",
+      "assertions": "High-water remains max; tolerate old response/old upperSeq; isolate only a newly issued current probe below its sent watermark.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ05"
+      ]
+    },
+    {
+      "id": "T24-F17",
+      "platform": "shared",
+      "references": [
+        "03 §7.2/§7.3/S09-S10",
+        "03 §10",
+        "T24 task card"
+      ],
+      "setup": "Synthetic snapshotId=snap-90, epoch='1', H='90'; priorSeenHighWater='120'; catch-up rows 91..120 exist.",
+      "action": "Plan fixed-H pages, catch-up to 120, validation, atomic namespace/cursor swap, then bootstrap ACK.",
+      "assertions": "All pages use same snapshotId/epoch/H='90'; no swap/ACK before catch-up reaches priorSeenHighWater='120'; swap/cursor publish is atomic and ACK follows.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ07"
+      ]
+    },
+    {
+      "id": "T24-F18",
+      "platform": "shared",
+      "references": [
+        "03 §7.2/§7.3/S10",
+        "03 §6",
+        "T24 task card"
+      ],
+      "setup": "Old namespace has a draft and READY old outbox op with immutable bytes; partial recovery snapshot is canceled or expires.",
+      "action": "Cancel recovery, start a new snapshot, and reconcile receipt state before dispatch.",
+      "assertions": "Keep old namespace/draft/outbox; never blindly replay old op; reconcile receipt/entity/version; do not publish partial recovery.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ05",
+        "T24-OQ07",
+        "T24-OQ11"
+      ]
+    },
+    {
+      "id": "T24-F19",
+      "platform": "shared",
+      "references": [
+        "02 §7",
+        "03 §5.4/§7",
+        "03 §10/S23",
+        "T24 task card",
+        "docs/spec/08-acceptance-matrix.md §2/U07",
+        "docs/spec/01-product-and-ux.md §4/P09"
+      ],
+      "setup": "Synthetic unlocked cloud body/preview/index canaries sit behind a repository boundary; worker has staged output.",
+      "action": "Lock cloud and directly request the same item through repository/API boundary.",
+      "assertions": "Cloud body/preview/search is rejected or masked at access boundary; stop worker and ignore late output; UI hiding alone is insufficient; display mapping remains OPEN_QUESTION.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ05"
+      ]
+    },
+    {
+      "id": "T24-F20",
+      "platform": "shared",
+      "references": [
+        "03 §9/§10/S22",
+        "01 §3/§5",
+        "T24 task card"
+      ],
+      "setup": "Synthetic device is revoked with encrypted cache, pending outbox, and a previously issued download lease.",
+      "action": "Attempt a new API/sync/download lease and inspect local-state messaging.",
+      "assertions": "Refuse new authorized API/download work and stop cloud dispatch; handle cached data by user choice; old signed URL may live until frozen TTL; do not claim downloaded plaintext erased.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ05",
+        "T24-OQ10"
+      ]
+    },
+    {
+      "id": "T24-F21",
+      "platform": "shared",
+      "references": [
+        "03 §6/§10/S01/S23",
+        "01 §5",
+        "T24 task card",
+        "docs/spec/08-acceptance-matrix.md §2/U11"
+      ],
+      "setup": "Synthetic accounts A/B have separate workspace IDs, outboxes, subscription states, and non-secret key-handle labels.",
+      "action": "Switch account A to B and inspect namespace ownership and queued requests.",
+      "assertions": "Never reuse A namespace/outbox/key handle under B; never dispatch A wire with B identity; key handles contain no secret.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ04"
+      ]
+    },
+    {
+      "id": "T24-F22",
+      "platform": "shared",
+      "references": [
+        "03 §6",
+        "02 §4",
+        "T24 task card"
+      ],
+      "setup": "Synthetic async mutation preparation starts under A/WA/revision='7'; barrier allows switch to B/WB before transaction.",
+      "action": "Release preparation and perform transaction-time scope/account/current-revision recheck.",
+      "assertions": "Recheck scope/account/revision inside transaction; mismatch fails closed with no partial draft/view/outbox/counter write or dispatch under B.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ04"
+      ]
+    },
+    {
+      "id": "T24-F23",
+      "platform": "shared",
+      "references": [
+        "02 §4/§5/§7",
+        "01 §5",
+        "T24 task card",
+        "docs/spec/08-acceptance-matrix.md §2/U12"
+      ],
+      "setup": "Synthetic offline index has 40/100 cached entities through indexedUntilSeq='90'; cloudHighWaterSeq='120'.",
+      "action": "Query locally and inspect QueryPage coverage.",
+      "assertions": "Report indexed count/range and incomplete coverage; allow unlocked cache reads; never present partial index as complete cloud search.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ08"
+      ]
+    },
+    {
+      "id": "T24-F24",
+      "platform": "shared",
+      "references": [
+        "01 §5",
+        "02 §7",
+        "03 §5.4/§6",
+        "T24 task card",
+        "docs/spec/08-acceptance-matrix.md §2/U07",
+        "docs/spec/01-product-and-ux.md §4/P09"
+      ],
+      "setup": "Synthetic offline account has locked cloud namespace and independently unlocked local-only vault.",
+      "action": "Attempt cloud read while locked, then local-only read.",
+      "assertions": "Locked cloud content/search remains unavailable; local-only follows its own vault state; offline does not unlock cloud or expose locked cache.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ04",
+        "T24-OQ10"
+      ]
+    },
+    {
+      "id": "T24-F25",
+      "platform": "iOS",
+      "references": [
+        "T23/T24 task cards",
+        "01 §3/§5",
+        "02 §7",
+        "docs/spec/08-acceptance-matrix.md §2/U09",
+        "docs/spec/01-product-and-ux.md §4/P10"
+      ],
+      "setup": "Synthetic iOS adapter returns permission_required for a user-initiated import capability while an existing outbox is persisted.",
+      "action": "Deny the synthetic capability and inspect import/sync state.",
+      "assertions": "Do not report imported/synced success or discard existing outbox/draft; surface capability fallback category without inventing OS code or claiming device behavior.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ05",
+        "T24-OQ10"
+      ]
+    },
+    {
+      "id": "T24-F26",
+      "platform": "Android",
+      "references": [
+        "T23/T24 task cards",
+        "01 §3/§5",
+        "02 §7",
+        "docs/spec/08-acceptance-matrix.md §2/U09",
+        "docs/spec/01-product-and-ux.md §4/P10"
+      ],
+      "setup": "Synthetic Android adapter reports unsupported/temporarily_unavailable background-capture capability while READY sync row exists.",
+      "action": "Observe capability state and plan foreground resume.",
+      "assertions": "Do not claim background clipboard capture; show capability degradation; existing READY data remains eligible for foreground recovery; native mapping remains OPEN_QUESTION.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ03",
+        "T24-OQ05",
+        "T24-OQ10"
+      ]
+    },
+    {
+      "id": "T24-F27",
+      "platform": "shared",
+      "references": [
+        "03 §6/§7.1/§9",
+        "T24 task card"
+      ],
+      "setup": "Synthetic opId=op-cancel-01 push is canceled after dispatch may have reached server; receipt is unresolved.",
+      "action": "Cancel locally, reconnect, and reconcile operation receipt before another write.",
+      "assertions": "Cancellation does not mean server rollback; retain same opId/bytes/draft; unknown receipt is not proof of non-commit; no automatic replacement op.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ05",
+        "T24-OQ11"
+      ]
+    },
+    {
+      "id": "T24-F28",
+      "platform": "shared",
+      "references": [
+        "03 §6/§9",
+        "01 §5",
+        "T24 task card"
+      ],
+      "setup": "Synthetic cloud outbox is persisted; server responds 401 AUTH_REQUIRED while cloud remains locked.",
+      "action": "Restore login session without device approval/recovery and inspect unlock/outbox state.",
+      "assertions": "Retain outbox/draft on 401; login alone does not unlock cloud; dispatch waits for authorization/unlock; no operation regeneration.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ05"
+      ]
+    },
+    {
+      "id": "T24-F29",
+      "platform": "shared",
+      "references": [
+        "03 §6/§9",
+        "T24 task card"
+      ],
+      "setup": "Synthetic push receives 503 STORAGE_UNAVAILABLE and a separate request receives 429 RATE_LIMITED with Retry-After.",
+      "action": "Plan bounded retry scheduling and later foreground wake.",
+      "assertions": "Keep original opId/bytes; obey Retry-After and exponential backoff; retain queue; no false commit or immediate spin; no native mapping assumed.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ03",
+        "T24-OQ05"
+      ]
+    },
+    {
+      "id": "T24-F30",
+      "platform": "shared",
+      "references": [
+        "03 §6/S12",
+        "03 §9",
+        "limits.v1.json",
+        "T24 task card",
+        "docs/spec/08-acceptance-matrix.md §2/U10"
+      ],
+      "setup": "Synthetic outbox counter is at configured outboxHardLimitBytes and one byte beyond; values are injected only.",
+      "action": "Attempt a personal_cloud mutation at the boundary and one crossing it.",
+      "assertions": "Block only the new mutation that crosses the limit; preserve old draft/outbox; no silent scope switch or protected-data eviction; actual mobile charge/display remains OPEN_QUESTION.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ05",
+        "T24-OQ09"
+      ]
+    },
+    {
+      "id": "T24-F31",
+      "platform": "shared",
+      "references": [
+        "03 §6/S11-S12",
+        "03 §9",
+        "T24 task card",
+        "docs/spec/08-acceptance-matrix.md §2/U10"
+      ],
+      "setup": "Synthetic local store reports full/unavailable before commit; prior draft/view/outbox/refcount/pendingBytes values are known.",
+      "action": "Attempt one mutation with pre-commit storage failure.",
+      "assertions": "Rollback all affected records/counters together; show no success; retain prior data/old bytes; injected counters do not prove OS capacity.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ04",
+        "T24-OQ05",
+        "T24-OQ09"
+      ]
+    },
+    {
+      "id": "T24-F32",
+      "platform": "shared",
+      "references": [
+        "03 §7.1/§9",
+        "limits.v1.json",
+        "T24 task card"
+      ],
+      "setup": "Synthetic JSON push exceeds syncBatchBytes by one UTF-8 byte and contains valid operations.",
+      "action": "Submit oversized batch and inspect response/write counters.",
+      "assertions": "Return HTTP 413 with limitKey='syncBatchBytes' and zero operation/version/change/receipt writes; do not split or partially write request; UI copy remains OPEN_QUESTION.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ05"
+      ]
+    },
+    {
+      "id": "T24-F33",
+      "platform": "shared",
+      "references": [
+        "03 §9/§6",
+        "T24 task card",
+        "docs/spec/08-acceptance-matrix.md §2/U10"
+      ],
+      "setup": "Synthetic positive cloud write receives HTTP 507 QUOTA_EXCEEDED while cached read and separate delete/export choices exist.",
+      "action": "Inspect blocked mutation and permitted read/delete/export paths.",
+      "assertions": "Block new positive cloud delta; retain local data; read/delete/export remain available; no silent deletion or scope conversion.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ05",
+        "T24-OQ09"
+      ]
+    },
+    {
+      "id": "T24-F34",
+      "platform": "shared",
+      "references": [
+        "03 §7.1/§9/S04",
+        "01 §2.2/§3",
+        "T24 task card"
+      ],
+      "setup": "Synthetic stale baseRevision='7'; remote currentRevision='8', currentHeadVersionId=ver-remote-8, currentSeq='120'; local draft is pending.",
+      "action": "Submit stale update and inspect terminal conflict response.",
+      "assertions": "Return HTTP 409 REVISION_CONFLICT with currentRevision/currentHeadVersionId/currentSeq; retain local draft and remote head; no device-clock overwrite or automatic conflict copy.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ05"
+      ]
+    },
+    {
+      "id": "T24-F35",
+      "platform": "shared",
+      "references": [
+        "T21/T24 task cards",
+        "02 §2/§4",
+        "03 §6/§7/§10"
+      ],
+      "setup": "Plan-only alias T24-SHARED-SYNC-01 represents same synthetic workspace/entity/op IDs, epoch/baseRevision/Decimal fields, receipt, cursor, and opaque byte sentinel for desktop/Web/mobile.",
+      "action": "Compare planned adapter projections against the canonical alias; create or modify no shared fixture file.",
+      "assertions": "Adapters are required to preserve canonical IDs, Decimal strings, bytes, receipt/seq, and cursor semantics; this is not observed parity; shared fixture path/owner is OPEN_QUESTION and no crypto result is implied.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ12",
+        "T24-OQ13"
+      ]
+    },
+    {
+      "id": "T24-F36",
+      "platform": "shared",
+      "references": [
+        "03 §2.1/§10/S26",
+        "02 §2/§4",
+        "T24 task card"
+      ],
+      "setup": "Synthetic Decimal strings include values above 2^53, signed bigint max='9223372036854775807', and overflow='9223372036854775808'.",
+      "action": "Plan serialization, local persistence, recovery, and cross-adapter projection.",
+      "assertions": "Preserve Decimal strings without Number conversion; max remains exact; overflow returns COUNTER_EXHAUSTED and never wraps; no cryptographic vector is generated.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ02",
+        "T24-OQ05",
+        "T24-OQ12"
+      ]
+    },
+    {
+      "id": "T24-F37",
+      "platform": "shared",
+      "references": [
+        "T24 task card §c",
+        "docs/spec/01-product-and-ux.md §2.1/P01",
+        "docs/spec/01-product-and-ux.md §2.2/P02",
+        "docs/spec/01-product-and-ux.md §3/P04",
+        "docs/spec/01-product-and-ux.md §3/P05",
+        "docs/spec/01-product-and-ux.md §3/P07",
+        "docs/spec/01-product-and-ux.md §4/P08",
+        "docs/spec/08-acceptance-matrix.md §2/U12",
+        "docs/spec/03-data-sync-and-security.md §6/§7.1/§11",
+        "02 §4/§6",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §2.1/§2.2"
+      ],
+      "setup": "Synthetic-only lifecycle. IDs are fixed, lower-case UUIDv4-format fixture literals and revision values are Decimal strings; these literals do not test CSPRNG/random-source behavior. Desktop creates SavedItem entity id=8f14e45f-ea62-4f9f-8c4e-55c8aabb0001 at content revision \"1\"; Collection entity id=3c15e2ab-f3c6-4a90-9c72-67e1a0e90002 exists, with no relation yet. Phone caches the unlocked SavedItem offline. Coverage sentinel indexedUntilSeq=\"90\", cloudHighWaterSeq=\"120\"; no real content/account.",
+      "action": "Desktop saves the SavedItem. On phone, the user opens its detail and taps Copy; while offline, edits its content into a draft based on revision \"1\" and favorites it in the Collection, creating a separate collection_entry entity id=f4cb7782-2a5c-43e4-a194-0b2d17a30003 at its own initial revision \"1\" and a separate outbox operation. On explicit foreground resume, shared sync reconciles both operations. Web and desktop reload the SavedItem and relation.",
+      "assertions": "Copy success means only that the user-triggered system clipboard write succeeded; it does not claim paste into another app. Offline query finds the cached item and reports partial coverage (\"90\" < \"120\"), never full-cloud coverage. Foreground sync uses the shared T21 engine and commits the content edit once under SavedItem identity 8f14e45f-ea62-4f9f-8c4e-55c8aabb0001, advancing only its content revision from Decimal \"1\" to \"2\". Favorite is a distinct collection_entry identity f4cb7782-2a5c-43e4-a194-0b2d17a30003 targeting that SavedItem in Collection 3c15e2ab-f3c6-4a90-9c72-67e1a0e90002, with its own Decimal revision \"1\"; it does not change the SavedItem content revision or add a pin field. Web and desktop each observe exactly one SavedItem with the same identity/content revision and one relation with the same independent identity/revision; no duplicate or stale overwrite. Each draft/outbox operation clears only with its corresponding committed state. Static fixture literals are not behavior or random-source acceptance.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T24-OQ01",
+        "T24-OQ02",
+        "T24-OQ04",
+        "T24-OQ05",
+        "T24-OQ08",
+        "T24-OQ12"
+      ]
+    }
+  ],
+  "acceptanceGates": [
+    {
+      "id": "T24-G01",
+      "scope": "Enumerated dependency frontier: 12 named prerequisite tasks, including T20/T22 upstream links; full recursive dependency closure remains OPEN_QUESTION (T24-OQ01).",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T24-G02",
+      "scope": "Reuse accepted T21 shared TS engine and mobile adapter boundary; no duplicate sync/conflict rules.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T24-G03",
+      "scope": "Foreground recovery, offline unlocked use, interruption, and no background-sync promise.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T24-G04",
+      "scope": "Immutable outbox, exact retry/receipt, SENDING→READY, ACK/draft transaction.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T24-G05",
+      "scope": "Attachment WAIT_DEPENDENCY, pull/cursor/watermark, snapshot/catch-up and cancel reconciliation.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T24-G06",
+      "scope": "Lock/revoke/account isolation, partial index coverage, no full-cloud claim.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T24-G07",
+      "scope": "iOS/Android permission and process lifecycle, separately labeled.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T24-G08",
+      "scope": "Injected capacity, storage, HTTP errors and cancellation data-retention behavior.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T24-G09",
+      "scope": "Desktop/Web/mobile shared DTO fixture parity and Decimal representation; no crypto-vector substitution.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T24-G10",
+      "scope": "Independent T04 critical review after planning; no acceptance until issues close.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T24-G11",
+      "scope": "Physical iOS device: complete the T24-F37 bidirectional user flow—desktop SavedItem reaches phone; user Copy and offline edit plus separate favorite relation sync back; Web and desktop observe matching SavedItem and collection_entry identities/revisions without duplicate or overwrite. Archive platform-specific actual results at docs/evidence/T24/ios-f37-device-lifecycle.json.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "references": [
+        "T24 task card §c",
+        "T24-F37",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/01-product-and-ux.md §2.1/P01; §2.2/P02; §3/P04/P05/P07; §4/P08"
+      ]
+    },
+    {
+      "id": "T24-G12",
+      "scope": "Physical Android device: complete the T24-F37 bidirectional user flow—desktop SavedItem reaches phone; user Copy and offline edit plus separate favorite relation sync back; Web and desktop observe matching SavedItem and collection_entry identities/revisions without duplicate or overwrite. Archive platform-specific actual results at docs/evidence/T24/android-f37-device-lifecycle.json.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "references": [
+        "T24 task card §c",
+        "T24-F37",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/01-product-and-ux.md §2.1/P01; §2.2/P02; §3/P04/P05/P07; §4/P08"
+      ]
+    }
+  ],
+  "commands": [
+    {
+      "id": "T24-C01",
+      "command": "pnpm --filter @clipnest/mobile test sync",
+      "status": "NOT_RUN",
+      "blockedBy": [
+        "All required dependencies accepted",
+        "mobile sync test harness available"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "T24-C02",
+      "command": "pnpm test:integration -- --suite mobile-sync",
+      "status": "NOT_RUN",
+      "blockedBy": [
+        "T16/T18/T19 and T21/T23 accepted",
+        "isolated integration infrastructure available"
+      ],
+      "evidence": []
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "T24-OQ01",
+      "title": "recursive-dependency-closure",
+      "status": "OPEN_QUESTION",
+      "question": "The listed gate includes T24 direct T21/T23, 03 §11 T24 upstream T16/T18/T19, named T21/T23 upstreams, and inspected T20/T22 links T06/T15 and T06/T07. Deeper recursive task-manifest closure beyond these enumerated edges has not been established; reconcile it and keep T24 gated until all required tasks are accepted.",
+      "source": "T24/T21/T23/T20/T22 task cards; 03 §11; docs/progress.json"
+    },
+    {
+      "id": "T24-OQ02",
+      "title": "shared-engine-adapter",
+      "status": "OPEN_QUESTION",
+      "question": "Accepted T21 TypeScript engine exports, mobile repository adapter API, and transaction boundary are not frozen; T24 must reuse shared rules, not fork sync/conflict logic.",
+      "source": "T21/T24 task cards; 02 §4/§6"
+    },
+    {
+      "id": "T24-OQ03",
+      "title": "foreground-background-scheduler",
+      "status": "OPEN_QUESTION",
+      "question": "Foreground recovery is required; OS background wakeups are best effort. Exact iOS/Android APIs, cadence, cancellation, and presentation are not established.",
+      "source": "T24 task card; 03 §6/§11; 02 §6/§7"
+    },
+    {
+      "id": "T24-OQ04",
+      "title": "mobile-repository-transactions",
+      "status": "OPEN_QUESTION",
+      "question": "The precise accepted T22/T23 storage adapter and mapping of shared engine transactions to mobile persistence remain gated.",
+      "source": "T23/T24 task cards; 03 §6/§11"
+    },
+    {
+      "id": "T24-OQ05",
+      "title": "error-and-native-mapping",
+      "status": "OPEN_QUESTION",
+      "question": "Protocol codes/actions are frozen where specified, but mobile UI copy, native error codes, and retry presentation are not established.",
+      "source": "03 §9; 01 §5"
+    },
+    {
+      "id": "T24-OQ06",
+      "title": "attachment-provider-resume",
+      "status": "OPEN_QUESTION",
+      "question": "WAIT_DEPENDENCY and ATTACHMENT_NOT_READY are frozen; provider behavior, upload resumption, and T18 readiness remain unaccepted.",
+      "source": "03 §6/§7.1/§8/§11"
+    },
+    {
+      "id": "T24-OQ07",
+      "title": "snapshot-recovery-cancel",
+      "status": "OPEN_QUESTION",
+      "question": "T19 snapshot/lease implementation remains unaccepted; expiry/cancellation mapping and recovery-namespace capacity remain planning-only.",
+      "source": "03 §7.2/§7.3/§11"
+    },
+    {
+      "id": "T24-OQ08",
+      "title": "offline-index-coverage",
+      "status": "OPEN_QUESTION",
+      "question": "Shared QueryPage coverage fields exist, but mobile progress UI, index cadence, and interrupted-index recovery require accepted T21 interfaces.",
+      "source": "02 §4/§5; 01 §5; T21 task card"
+    },
+    {
+      "id": "T24-OQ09",
+      "title": "mobile-capacity-accounting",
+      "status": "OPEN_QUESTION",
+      "question": "Configured limits are planning defaults pending benchmark validation. Mobile byte charging, aggregation, storage failure codes, and presentation remain OPEN_QUESTION; fixtures use injected counters only.",
+      "source": "limits.v1.json; 03 §6; 02 §6"
+    },
+    {
+      "id": "T24-OQ10",
+      "title": "permission-fallback",
+      "status": "OPEN_QUESTION",
+      "question": "iOS/Android permission outcomes are symbolic. Exact OS permission names, native codes, and fallback ownership remain with T23/platform acceptance.",
+      "source": "T23 task card; 02 §7; 01 §3/§5"
+    },
+    {
+      "id": "T24-OQ11",
+      "title": "ambiguous-cancel-result",
+      "status": "OPEN_QUESTION",
+      "question": "Cancel/timeout cannot prove that the server did not commit. Keep original opId/wire bytes and reconcile operation receipt before a new operation; exact UX remains OPEN_QUESTION.",
+      "source": "03 §6/§7.1/§9"
+    },
+    {
+      "id": "T24-OQ12",
+      "title": "shared-fixture-ownership",
+      "status": "OPEN_QUESTION",
+      "question": "Authoritative shared fixture path, generator, and owners are not confirmed. T24 records parity assertions only and writes no fixtures/** files.",
+      "source": "T21/T24 task cards; 02 §2/§4; 03 §10"
+    },
+    {
+      "id": "T24-OQ13",
+      "title": "crypto-vector-ownership",
+      "status": "OPEN_QUESTION",
+      "question": "No crypto outputs or official cross-platform vectors are produced here; vector/KAT acceptance remains owned by T15.",
+      "source": "03 §10/§11; T23 task card"
+    }
+  ],
+  "openQuestionIds": [
+    "T24-OQ01",
+    "T24-OQ02",
+    "T24-OQ03",
+    "T24-OQ04",
+    "T24-OQ05",
+    "T24-OQ06",
+    "T24-OQ07",
+    "T24-OQ08",
+    "T24-OQ09",
+    "T24-OQ10",
+    "T24-OQ11",
+    "T24-OQ12",
+    "T24-OQ13"
+  ],
+  "limitations": [
+    "Fixture planning only. All 37 fixtures, 12 acceptance gates, and 2 commands are NOT_RUN; T24 remains not_started.",
+    "T21 and T23 are not accepted; T16/T18/T19 required by 03 §11 and the complete T21/T23 upstream closure remain unaccepted.",
+    "The T24 card and 03 §11 dependency sets differ. The plan keeps their union plus the upstream closure of T21 and T23 gated.",
+    "No production code, shared fixture, mobile app file, progress block, service, database, provider, native package, device, or user data was touched.",
+    "No crypto behavior, encryption output, official cross-platform vector, or parity PASS is claimed; official vectors remain T15-owned.",
+    "Mobile storage accounting, OS permission mapping, background scheduler, user-facing error mapping, provider attachment behavior, and snapshot implementation remain OPEN_QUESTION where referenced.",
+    "Independent T04 critical review is pending; static evidence does not establish acceptance."
+  ],
+  "dependencyExpansionPaths": [
+    "T24→T21→T20→T06/T15",
+    "T24→T23→T22→T06/T07",
+    "T24→T21 direct upstream: T14/T17/T19/T20; 03 §11: T15/T16/T18",
+    "T24→T23 direct upstream: T15/T22; 03 §11 direct T24 upstream: T16/T18/T19"
+  ]
+}

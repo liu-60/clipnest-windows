@@ -1,0 +1,487 @@
+{
+  "schemaVersion": 1,
+  "task": "T18",
+  "taskStatus": "not_started",
+  "planStatus": "preflight_only",
+  "executionStatus": "NOT_RUN",
+  "sourceOfExpectedBehavior": [
+    "docs/spec/tasks/T18.md",
+    "docs/spec/03-data-sync-and-security.md §8.1-8.3, §9, §10 S13-S18, §11",
+    "docs/spec/limits.v1.json",
+    "docs/spec/08-acceptance-matrix.md §3"
+  ],
+  "dependencyGate": {
+    "dependsOn": [
+      "T16"
+    ],
+    "requiredStatus": "accepted",
+    "state": "wait_for_T16_accepted",
+    "transitiveGate": "T16 depends on accepted T14 and T15 and transitively on T06 contracts/DTO and migration/test foundations.",
+    "beforeGate": "Only this synthetic fixture plan is prepared. Do not implement attachment/storage behavior, connect PostgreSQL or S3, run behavior tests/builds/migrations, or claim provider/database acceptance before dependencies are accepted."
+  },
+  "harnessBoundary": {
+    "syntheticInputs": "Use only symbolic workspaces WA/WB, devices D1/D2, upload IDs U1/U2, attachments A1/A2, and opaque ciphertext-byte canaries. No plaintext, real account, signed URL, credential, bucket, or user object is included.",
+    "plannedHarnesses": [
+      "After T16 acceptance, use isolated PostgreSQL with non-owner NOSUPERUSER NOBYPASSRLS roles, transaction barriers, ledger snapshots, and recording HTTP/session/device adapters.",
+      "Use an object-storage fake for application state-machine faults only. A fake cannot satisfy staging/final conditional-write, signed-header, immutable-version, CopyObject embedded-error, or deletion-confirmation provider gates.",
+      "Run provider-specific conditional PUT/COPY/version-delete acceptance only against a disposable isolated AWS S3 bucket with synthetic ciphertext and expiring credentials; no production or user bucket."
+    ],
+    "forbidden": [
+      "Production/shared PostgreSQL, real workspaces, accounts, user files, credentials, or buckets.",
+      "Mock-only evidence reported as S3 conditional-write/version/delete behavior acceptance.",
+      "Client-visible PUT permission for final object keys, multipart expansion, content-hash dedupe across workspaces, or plaintext server processing.",
+      "Releasing reserved/staging/pending-final bytes or object counts before physical deletion is confirmed.",
+      "Changing quota limits, lock order, immutable source version, final-key write permission, or usage-event idempotency to make a fixture pass."
+    ]
+  },
+  "cases": [
+    {
+      "id": "T18-RESERVE-AUTH-01",
+      "references": [
+        "T18.a",
+        "03 §8.1, §9",
+        "08 §3"
+      ],
+      "harness": "isolated_postgresql_and_recording_http",
+      "executionStatus": "NOT_RUN",
+      "setup": "Seed synthetic WA/D1 and WB/D2 with separate ledgers and entitlements.",
+      "action": "D1 reserves through WA path, then attempts WB path, mismatched path/body wid, and a WB attachment identifier.",
+      "assert": [
+        "Only WA can receive an upload lease; cross-workspace attempts are non-disclosing 404 RESOURCE_NOT_FOUND.",
+        "Mismatched route/body scope produces no upload, signed URL, ledger delta, or usage event."
+      ]
+    },
+    {
+      "id": "T18-RESERVE-DTO-01",
+      "references": [
+        "T18.a",
+        "03 §8.1, §9"
+      ],
+      "harness": "contract_boundary_fixture",
+      "executionStatus": "NOT_RUN",
+      "setup": "Prepare synthetic reserve DTOs at exact cipher-byte and purpose-specific limits from the frozen spec.",
+      "action": "Try unknown fields, malformed UUID/decimal/base64url, invalid nonce/hash lengths, unsupported purpose, and one-byte-over payload.",
+      "assert": [
+        "Frozen invalid DTO/envelope/decimal errors are returned; no storage URL or ledger write occurs.",
+        "Cipher size is bounded by the applicable plaintext limit plus the fixed 16-byte tag; image_thumb also obeys maxImageBytes."
+      ]
+    },
+    {
+      "id": "T18-RESERVE-ENTITLEMENT-01",
+      "references": [
+        "T18.a",
+        "03 §8.2, §9"
+      ],
+      "harness": "recording_entitlement_adapter",
+      "executionStatus": "NOT_RUN",
+      "setup": "Provide server-derived workspace entitlement and a request containing forged client plan/cloudBytes fields.",
+      "action": "Submit the reserve request with forged entitlement fields and then with the adapter's trusted entitlement.",
+      "assert": [
+        "Unknown fields are rejected or ignored only as the frozen DTO explicitly specifies; client values never increase the trusted quota.",
+        "A rejected request creates no reservation, URL, or usage event."
+      ]
+    },
+    {
+      "id": "T18-RESERVE-IDEMPOTENT-01",
+      "references": [
+        "T18.a",
+        "03 §8.2, §9"
+      ],
+      "harness": "isolated_postgresql_usage_ledger",
+      "executionStatus": "NOT_RUN",
+      "setup": "Start from a ledger with room for one upload and a stable reserveOpId/body.",
+      "action": "Submit the same reserveOpId and exact body concurrently and sequentially.",
+      "assert": [
+        "Both callers observe the same upload identity and no duplicate signed lease with a new upload identity.",
+        "Reserved bytes/object slots and usage events increase once only."
+      ]
+    },
+    {
+      "id": "T18-RESERVE-MISMATCH-01",
+      "references": [
+        "T18.a",
+        "03 §8.2, §9"
+      ],
+      "harness": "isolated_postgresql_usage_ledger",
+      "executionStatus": "NOT_RUN",
+      "setup": "Persist a reserveOpId with one immutable request body.",
+      "action": "Reuse that reserveOpId with a changed attachment, purpose, nonce, size, key identity, or checksum.",
+      "assert": [
+        "Return 409 IDEMPOTENCY_MISMATCH without changing the original upload, URL, ledger, or usage event."
+      ]
+    },
+    {
+      "id": "T18-RESERVE-QUOTA-RACE-01",
+      "references": [
+        "T18.a",
+        "03 §8.2, §10 S13"
+      ],
+      "harness": "postgres_transaction_barrier_and_usage_ledger",
+      "executionStatus": "NOT_RUN",
+      "setup": "Give WA enough remaining quota for either synthetic request alone, but not for both together.",
+      "action": "Synchronize two distinct concurrent reservations at the workspace/ledger lock boundary.",
+      "assert": [
+        "Exactly one reserve succeeds and one returns 507 QUOTA_EXCEEDED.",
+        "Logical/reserved/staging/pending-final and object counts remain non-negative and reconcile with the single committed upload."
+      ]
+    },
+    {
+      "id": "T18-RESERVE-OBJECT-BUDGET-01",
+      "references": [
+        "T18.a",
+        "03 §8.2, §11"
+      ],
+      "harness": "isolated_postgresql_usage_ledger",
+      "executionStatus": "NOT_RUN",
+      "setup": "Set synthetic live/staging/pending/reserved object counts one slot below or at maxStoredObjectsPerWorkspace.",
+      "action": "Reserve one attachment and repeat the same reserve request.",
+      "assert": [
+        "A new reserve accounts for both staging and final-candidate object slots before a URL is issued.",
+        "At insufficient capacity return the frozen 507 object-limit result; retries add no slots."
+      ]
+    },
+    {
+      "id": "T18-RESERVE-PENDING-CAP-01",
+      "references": [
+        "T18.a",
+        "03 §8.2, §11"
+      ],
+      "harness": "isolated_postgresql_usage_ledger",
+      "executionStatus": "NOT_RUN",
+      "setup": "Fill WA to maxPendingUploadsPerWorkspace with unexpired synthetic reservations.",
+      "action": "Attempt one additional reserve, then expire a reservation without confirming object deletion and retry.",
+      "assert": [
+        "A 507 response blocks the extra reservation without over-allocation; exact code/limitKey for maxPendingUploadsPerWorkspace remains OPEN_QUESTION.",
+        "Reservation expiry does not clear still-possible physical staging/candidate occupancy."
+      ]
+    },
+    {
+      "id": "T18-RESERVE-LEASE-01",
+      "references": [
+        "T18.a",
+        "03 §8.1-8.2",
+        "limits.v1.json cloud.uploadUrlSeconds/uploadReservationSeconds"
+      ],
+      "harness": "recording_signer_and_provider_contract",
+      "executionStatus": "NOT_RUN",
+      "setup": "Start from a valid synthetic reserve request and provider capability record.",
+      "action": "Inspect the returned UploadLeaseV1 and the signed staging PUT requirements.",
+      "assert": [
+        "The URL targets staging only and expires according to uploadUrlSeconds; reservation expiry uses uploadReservationSeconds.",
+        "Signed required headers include the immutable-create condition and frozen size/checksum semantics that the chosen provider actually enforces."
+      ]
+    },
+    {
+      "id": "T18-STAGING-CONDITIONAL-PUT-01",
+      "references": [
+        "T18.a-b",
+        "03 §8.1-8.2, §10 S15"
+      ],
+      "harness": "real_provider_conditional_put_gate",
+      "executionStatus": "NOT_RUN",
+      "setup": "Create one synthetic staging lease in an isolated disposable provider bucket.",
+      "action": "PUT the same synthetic ciphertext N times with the signed If-None-Match:* condition, then retry with the condition removed or changed.",
+      "assert": [
+        "Only one physical staging object version can be created; repeats fail conditionally or signature validation.",
+        "A client cannot remove/change the signed condition or bypass the bucket policy; fake-provider results do not pass this gate."
+      ]
+    },
+    {
+      "id": "T18-STAGING-ACCOUNTING-01",
+      "references": [
+        "T18.a-b",
+        "03 §8.2, §10 S14"
+      ],
+      "harness": "isolated_postgresql_and_recording_storage",
+      "executionStatus": "NOT_RUN",
+      "setup": "Persist a reservation, then expose the matching synthetic staging object to the observation worker.",
+      "action": "Run the worker once and replay its observation event.",
+      "assert": [
+        "Observed bytes move from reserved to staging accounting without dropping the reservation before terminal ready/failure.",
+        "Duplicate observation does not add bytes/object count or duplicate the usage event."
+      ]
+    },
+    {
+      "id": "T18-STAGING-INVALID-BYTES-01",
+      "references": [
+        "T18.b",
+        "03 §8.2, §10 S14"
+      ],
+      "harness": "isolated_postgresql_and_recording_storage",
+      "executionStatus": "NOT_RUN",
+      "setup": "Reserve frozen expected size/hash and stage synthetic objects with wrong size, wrong ciphertext checksum, or over-limit bytes.",
+      "action": "Attempt finalize for each object, then fail or retry physical cleanup.",
+      "assert": [
+        "No invalid object becomes ready or referenced.",
+        "Actual staging occupancy remains counted until provider deletion is confirmed; the fixture does not invent an unspecified transport error code."
+      ]
+    },
+    {
+      "id": "T18-STAGING-INCOMPLETE-FINALIZE-01",
+      "references": [
+        "T18.b",
+        "03 §8.2, §10 S14"
+      ],
+      "harness": "isolated_postgresql_and_recording_storage",
+      "executionStatus": "NOT_RUN",
+      "setup": "Create a valid unexpired reservation while its single bounded staging PUT has not completed or produced a verified immutable object version.",
+      "action": "Call finalize before the upload completes, then observe ledger state while the signed write window remains live.",
+      "assert": [
+        "An incomplete/unobserved upload never creates a ready attachment or final object.",
+        "Reservation and possible physical staging occupancy stay accounted until the upload is terminal and any required object deletion is confirmed; no unspecified exact error code is asserted."
+      ]
+    },
+    {
+      "id": "T18-RESERVATION-EXPIRY-01",
+      "references": [
+        "T18.a-c",
+        "03 §8.2-8.3, §10 S14",
+        "docs/spec/03-data-sync-and-security.md §8.2, §10 S15"
+      ],
+      "harness": "synthetic_clock_and_isolated_postgresql",
+      "executionStatus": "NOT_RUN",
+      "setup": "Create a reservation with an unobserved or still-present staging object and advance beyond reservation expiry and signed URL expiry independently.",
+      "action": "Attempt finalize and run cleanup before and after signed_until, including a delete failure.",
+      "assert": [
+        "Expiry closes finalize/new signing but does not release physical staging/candidate accounting by itself.",
+        "No final release occurs before signed_until and confirmed version deletion; a still-valid old URL cannot recreate an object removed too early."
+      ]
+    },
+    {
+      "id": "T18-FINALIZE-IMMUTABLE-SOURCE-01",
+      "references": [
+        "T18.b",
+        "03 §8.2, §10 S15-S16"
+      ],
+      "harness": "recording_storage_plus_real_provider_version_gate",
+      "executionStatus": "NOT_RUN",
+      "setup": "Create the staged synthetic ciphertext and record its immutable VersionId or equivalent verified immutable completion identity.",
+      "action": "Finalize while attempting source replacement/deletion around HEAD and copy.",
+      "assert": [
+        "Finalize copies the exact frozen immutable staging version and validates actual size/checksum.",
+        "HEAD followed by copy of a mutable key alone is insufficient; final key is never disclosed as a client PUT target."
+      ]
+    },
+    {
+      "id": "T18-FINALIZE-CONCURRENCY-01",
+      "references": [
+        "T18.b-c",
+        "03 §8.2, §10 S16"
+      ],
+      "harness": "postgres_transaction_barrier_and_recording_storage",
+      "executionStatus": "NOT_RUN",
+      "setup": "Block the first synthetic finalizer after it commits the copying candidate and releases DB locks.",
+      "action": "Start a second finalizer for the same upload while the first is copying.",
+      "assert": [
+        "The second caller receives 409 UPLOAD_IN_PROGRESS and no second candidate is allocated.",
+        "After the first succeeds there is one ready attachment and one usage event."
+      ]
+    },
+    {
+      "id": "T18-FINALIZE-NETWORK-OUTSIDE-LOCK-01",
+      "references": [
+        "T18.b",
+        "03 §8.2, §10 S16"
+      ],
+      "harness": "postgres_lock_observer_and_recording_storage",
+      "executionStatus": "NOT_RUN",
+      "setup": "Pause synthetic HEAD/COPY calls and observe workspace, ledger, and upload locks from another transaction.",
+      "action": "Hold the provider call while another bounded DB operation attempts the same workspace.",
+      "assert": [
+        "No PostgreSQL transaction/row lock is held across object-storage network I/O.",
+        "The persisted copying candidate and pending-final reservation remain visible and accounted during the pause."
+      ]
+    },
+    {
+      "id": "T18-FINALIZE-PROVIDER-CONDITION-01",
+      "references": [
+        "T18.b",
+        "03 §8.2, §10 S15-S16"
+      ],
+      "harness": "real_provider_copy_condition_and_response_gate",
+      "executionStatus": "NOT_RUN",
+      "setup": "Use the selected SDK against a disposable bucket with one immutable synthetic source version.",
+      "action": "Exercise destination If-None-Match:* on CopyObject, replay against an existing candidate, and inject/observe a 200 response carrying an embedded S3 error.",
+      "assert": [
+        "The actual selected SDK enforces destination conditional creation and copy retry reuses the same candidate.",
+        "The full response body and follow-up HEAD/checksum/version are validated; HTTP 200 alone never creates ready state."
+      ]
+    },
+    {
+      "id": "T18-FINALIZE-CRASH-REPLAY-01",
+      "references": [
+        "T18.b-c",
+        "03 §8.2, §10 S16"
+      ],
+      "harness": "isolated_postgresql_crash_barrier_and_recording_storage",
+      "executionStatus": "NOT_RUN",
+      "setup": "Pause after successful candidate copy but before final ready transaction; preserve its key/version and pending-final ledger entries.",
+      "action": "Crash the worker, then replay compensation/finalize while the exact candidate already exists.",
+      "assert": [
+        "The candidate remains billable and discoverable; retry HEADs and verifies the same candidate rather than creating another copy.",
+        "Exactly one ready attachment and usage transition are committed after verification."
+      ]
+    },
+    {
+      "id": "T18-FINALIZE-READY-ACCOUNTING-01",
+      "references": [
+        "T18.c",
+        "03 §8.2, §10 S16"
+      ],
+      "harness": "isolated_postgresql_usage_ledger",
+      "executionStatus": "NOT_RUN",
+      "setup": "Provide matching immutable staging/final synthetic objects and a verified copying upload candidate.",
+      "action": "Commit ready state, replay finalize, and separately delay staging cleanup.",
+      "assert": [
+        "Ready attachment bytes/hash/version match the verified final object; reserved/pending-final move to logical/live once.",
+        "Staging remains charged until its exact version deletion is confirmed; repeated finalize returns the same attachment with zero delta."
+      ]
+    },
+    {
+      "id": "T18-DOWNLOAD-LEASE-01",
+      "references": [
+        "T18.a-c",
+        "03 §8.1, §9",
+        "limits.v1.json cloud.downloadUrlSeconds"
+      ],
+      "harness": "recording_signer_and_workspace_authorization",
+      "executionStatus": "NOT_RUN",
+      "setup": "Seed ready, deleting, deleted, and foreign-workspace synthetic attachments.",
+      "action": "Request each download lease as WA/D1 and WB/D2.",
+      "assert": [
+        "Only same-workspace ready attachments yield a short-lived GET URL and frozen ciphertext byte/hash metadata.",
+        "Foreign-workspace lookup is non-disclosing; deleting/deleted/not-ready objects do not receive a usable URL."
+      ]
+    },
+    {
+      "id": "T18-ORPHAN-READY-ACCOUNTING-01",
+      "references": [
+        "T18.c",
+        "03 §8.2, §10 S18"
+      ],
+      "harness": "isolated_postgresql_usage_ledger",
+      "executionStatus": "NOT_RUN",
+      "setup": "Create a ready attachment without a version_attachments reference after a synthetic crash boundary.",
+      "action": "Query usage and run only the frozen GC eligibility calculation.",
+      "assert": [
+        "An unreferenced ready attachment remains charged and cannot accumulate as free storage.",
+        "GC does not remove an object while any current/history/trash/snapshot/change-log reference exists."
+      ]
+    },
+    {
+      "id": "T18-GC-REFERENCE-RACE-01",
+      "references": [
+        "T18.c",
+        "03 §8.3, §10 S17-S18"
+      ],
+      "harness": "postgres_transaction_barrier_and_usage_ledger",
+      "executionStatus": "NOT_RUN",
+      "setup": "Race creating a new version attachment reference against a collector that is preparing a zero-reference ready object.",
+      "action": "Pause both transactions at workspace→ledger→attachment lock acquisition and resume in both orders.",
+      "assert": [
+        "Only the transaction that observes the serialized ready/reference state can commit; deleting objects reject new refs as ATTACHMENT_NOT_READY.",
+        "An attachment is never resurrected and byte/object deltas follow the committed physical state."
+      ]
+    },
+    {
+      "id": "T18-GC-VERSION-DELETE-01",
+      "references": [
+        "T18.c",
+        "03 §8.3, §10 S17"
+      ],
+      "harness": "versioned_provider_delete_confirmation_gate",
+      "executionStatus": "NOT_RUN",
+      "setup": "Seed an object with multiple synthetic provider versions and a delete marker.",
+      "action": "Delete without VersionId, delete selected versions, inject delete failures, and confirm with provider HEAD/list semantics.",
+      "assert": [
+        "A delete marker or partial delete never releases ledger bytes/object counts.",
+        "Release occurs only after all required physical versions are confirmed absent; use of exact VersionId is verified with the real provider."
+      ]
+    },
+    {
+      "id": "T18-GC-OUTBOX-REPLAY-01",
+      "references": [
+        "T18.c",
+        "03 §8.2-8.3"
+      ],
+      "harness": "isolated_postgresql_and_recording_outbox_worker",
+      "executionStatus": "NOT_RUN",
+      "setup": "Commit cleanup_pending with one outbox event and its unique usage-event key.",
+      "action": "Deliver cleanup repeatedly, crash after physical delete but before DB acknowledgement, then replay.",
+      "assert": [
+        "Repeated compensation is idempotent and cannot double-decrement usage or duplicate a business event.",
+        "Failed cleanup remains retryable and charged until deletion confirmation."
+      ]
+    },
+    {
+      "id": "T18-GC-ORPHAN-RECONCILE-01",
+      "references": [
+        "T18.c",
+        "03 §8.3"
+      ],
+      "harness": "isolated_reconciliation_worker_and_storage_inventory",
+      "executionStatus": "NOT_RUN",
+      "setup": "Place one unregistered synthetic object and one same-hash object in WA/WB storage inventories.",
+      "action": "Run reconciliation without a user-facing download request.",
+      "assert": [
+        "Unregistered objects enter a restricted quarantine/cleanup workflow and are not returned to clients or immediately treated as free.",
+        "No global ciphertext-hash lookup or cross-workspace deduplication occurs."
+      ]
+    },
+    {
+      "id": "T18-GC-SHARED-REFERENCE-RETENTION-01",
+      "references": [
+        "T18.c",
+        "03 §8.3, §10 S18"
+      ],
+      "harness": "synthetic_clock_isolated_postgresql_and_recording_storage",
+      "executionStatus": "NOT_RUN",
+      "setup": "Use one synthetic attachment shared by current/history/saved versions, a trash head, and a valid snapshot/change-log pin; make the head 100 days old at deletion time and include a historical version past versionHistoryDays.",
+      "action": "Delete the old head, advance time across history and trash retention, clear a collection relation, and run GC while each independent reference is present and then removed.",
+      "assert": [
+        "The attachment remains billable while any current, retained-history, trash, snapshot, or change-log reference remains.",
+        "A 100-day-old head moved to trash is retained until deleted_at + trashDays even if older than versionHistoryDays.",
+        "Clearing a collection relation never deletes its saved target; physical bytes release only after all references and retention gates end and provider deletion is confirmed."
+      ]
+    }
+  ],
+  "openQuestions": [
+    {
+      "questionId": "T18-OQ-01",
+      "status": "OPEN_QUESTION",
+      "question": "The task card cites S09-S15 while current 03 §10 maps upload, quota, copy, and GC behavior to S13-S18; confirm the exact card-to-spec acceptance mapping before T18 acceptance."
+    },
+    {
+      "questionId": "T18-OQ-02",
+      "status": "OPEN_QUESTION",
+      "question": "The chosen object-store provider and SDK must prove non-removable conditional staging PUT, immutable source-version copy, destination If-None-Match:*, embedded-error parsing, and exact version deletion. No provider capability is assumed by this plan."
+    },
+    {
+      "questionId": "T18-OQ-03",
+      "status": "OPEN_QUESTION",
+      "question": "03 §9 freezes the 507 quota/storage/object-limit error family; the exact code and details.limitKey for maxPendingUploadsPerWorkspace overflow are not specified. Assert 507 and no allocation until the field mapping is frozen."
+    }
+  ],
+  "plannedCommands": [
+    {
+      "command": "pnpm --filter @clipnest/server test attachments",
+      "status": "NOT_RUN",
+      "gate": "wait_for_T16_accepted"
+    },
+    {
+      "command": "pnpm test:integration -- --suite s3-real",
+      "status": "NOT_RUN",
+      "gate": "wait_for_T16_accepted_and_disposable_AWS_S3_provider_setup"
+    }
+  ],
+  "acceptanceGates": {
+    "reserveIdempotencyQuotaAndObjectBudgets": "NOT_RUN",
+    "conditionalSingleWriteStagingAndImmutableSource": "NOT_RUN",
+    "verifiedConditionalCopyAndEmbeddedErrorParsing": "NOT_RUN",
+    "finalizeCrashConcurrencyAndAccounting": "NOT_RUN",
+    "sameWorkspaceDownloadLease": "NOT_RUN",
+    "gcReferenceRaceAndExactVersionDelete": "NOT_RUN",
+    "awsS3ProviderSemantics": "NOT_RUN",
+    "independentCriticalReview": "NOT_RUN"
+  }
+}
