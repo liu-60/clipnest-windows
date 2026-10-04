@@ -421,7 +421,18 @@ test("a released cutoff keeps waiting for pending preparation and clears its tim
 });
 
 test("the helper receives the absolute deadline only when commit starts before it", () => {
-  assert.deepEqual(selectionHelperDeadlineAtCommit(490, 500), { kind: "include", deadlineTickMs: 500 });
-  assert.deepEqual(selectionHelperDeadlineAtCommit(2_500, 500), { kind: "expired", selectionBudgetMs: 0 });
-  assert.deepEqual(selectionHelperDeadlineAtCommit(null, 500), { kind: "unavailable" });
+  assert.deepEqual(selectionHelperDeadlineAtCommit(490, 500, 490, 500), { kind: "include", deadlineTickMs: 500 });
+  assert.deepEqual(selectionHelperDeadlineAtCommit(2_500, 500, 496, 500), { kind: "expired", selectionBudgetMs: 0 });
+  assert.deepEqual(selectionHelperDeadlineAtCommit(null, 500, 496, 500), { kind: "unavailable" });
+});
+
+test("a coarse helper tick cannot reopen a release window after the high-resolution cutoff", () => {
+  assert.deepEqual(selectionHelperDeadlineAtCommit(501, 500, 496, 500), {
+    kind: "expired",
+    selectionBudgetMs: 0,
+  });
+});
+
+test("an early coarse helper cutoff fails closed before the high-resolution cutoff", () => {
+  assert.deepEqual(selectionHelperDeadlineAtCommit(499, 500, 500, 500), { kind: "unavailable" });
 });

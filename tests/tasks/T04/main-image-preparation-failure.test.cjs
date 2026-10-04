@@ -49,6 +49,8 @@ function makeHarness({
   authorizationAllowed = true,
   helperState = "ready",
   sequenceNumber = 41,
+  snapshotDelayMs = 0,
+  monotonicTickValues = null,
 } = {}) {
   const events = [];
   const effects = {
@@ -69,10 +71,17 @@ function makeHarness({
   let visible = true;
   let context;
   let nextId = 0;
+  let monotonicTickReadCount = 0;
   const elapsedMs = () => performance.now() - startedAt;
   const startedAt = performance.now();
   const bridge = {
-    getMonotonicTickMs: () => Math.floor(10_000 + elapsedMs()),
+    getMonotonicTickMs: () => {
+      if (monotonicTickValues) {
+        const index = Math.min(monotonicTickReadCount++, monotonicTickValues.length - 1);
+        return monotonicTickValues[index];
+      }
+      return Math.floor(10_000 + elapsedMs());
+    },
     getClipboardSequenceNumber: () => sequenceNumber,
     getProcessIdentity(pid) { return { pid, processCreatedAt: "2200" }; },
     getForegroundWindow: () => HOST,
@@ -144,6 +153,7 @@ function makeHarness({
       async snapshot() {
         effects.snapshotCalls += 1;
         events.push("snapshot");
+        if (snapshotDelayMs > 0) await new Promise((resolve) => setTimeout(resolve, snapshotDelayMs));
         if (snapshotError) throw new Error(snapshotError);
         return { itemRef: item.id, itemVersion: "version-1" };
       },
@@ -236,6 +246,20 @@ test("image selection fails closed when its clipboard sequence baseline is unava
   assert.equal(harness.isVisible(), true);
   assert.equal(harness.item.content, "data:image/png;base64,AA==");
   assert.deepEqual(harness.requests, []);
+});
+
+test("an expired high-resolution cutoff sends helper check-only when GetTickCount64 still lags", async () => {
+  const harness = makeHarness({
+    snapshotDelayMs: 510,
+    monotonicTickValues: [10_496, 10_992],
+  });
+
+  await harness.select();
+  const commit = harness.requests.find((request) => request.kind === "commit_write");
+  assert.ok(commit, "the released selection reaches the native conditional-write gate");
+  assert.equal(commit.selectionBudgetMs, 0, "an expired performance.now cutoff cannot restart a 500ms wait");
+  assert.equal("selectionDeadlineTickMs" in commit, false, "the stale coarse tick is not sent as an unexpired deadline");
+  assert.equal(harness.effects.pasteRequests, 1, "helper check-only retains the released-key success path");
 });
 
 test("non-image preparation errors keep the existing copy-only fallback", async () => {

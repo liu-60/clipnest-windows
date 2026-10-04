@@ -14,12 +14,42 @@ export type SelectionHelperDeadline =
 export function selectionHelperDeadlineAtCommit(
   nowTickMs: number | null,
   selectionDeadlineTickMs: number,
+): SelectionHelperDeadline;
+export function selectionHelperDeadlineAtCommit(
+  nowAt: number | null,
+  selectionDeadlineAt: number,
+  nowTickMs: number | null,
+  selectionDeadlineTickMs: number | null,
+): SelectionHelperDeadline;
+export function selectionHelperDeadlineAtCommit(
+  nowAt: number | null,
+  selectionDeadlineAt: number,
+  nowTickMs?: number | null,
+  selectionDeadlineTickMs?: number | null,
 ): SelectionHelperDeadline {
-  if (!Number.isSafeInteger(nowTickMs) || !Number.isSafeInteger(selectionDeadlineTickMs)) {
+  if (arguments.length === 2) {
+    if (!Number.isSafeInteger(nowAt) || !Number.isSafeInteger(selectionDeadlineAt)) {
+      return { kind: "unavailable" };
+    }
+    if (nowAt! >= selectionDeadlineAt) return { kind: "expired", selectionBudgetMs: 0 };
+    return { kind: "include", deadlineTickMs: selectionDeadlineAt };
+  }
+  if (
+    !Number.isFinite(nowAt) ||
+    !Number.isFinite(selectionDeadlineAt) ||
+    !Number.isSafeInteger(nowTickMs) ||
+    !Number.isSafeInteger(selectionDeadlineTickMs)
+  ) {
     return { kind: "unavailable" };
   }
-  if (nowTickMs! >= selectionDeadlineTickMs) return { kind: "expired", selectionBudgetMs: 0 };
-  return { kind: "include", deadlineTickMs: selectionDeadlineTickMs };
+  // The main-process cutoff uses the same high-resolution clock that created
+  // selectionDeadlineAt. GetTickCount64 can still be in the prior 15ms bucket
+  // after this point, so it must not reopen a fresh helper release window.
+  if (nowAt! >= selectionDeadlineAt) return { kind: "expired", selectionBudgetMs: 0 };
+  // It can also jump ahead of the high-resolution clock. Do not pass an
+  // already-expired helper deadline or continue before the authoritative cutoff.
+  if (nowTickMs! >= selectionDeadlineTickMs!) return { kind: "unavailable" };
+  return { kind: "include", deadlineTickMs: selectionDeadlineTickMs! };
 }
 
 export interface SelectionKeyReleaseMonitor {

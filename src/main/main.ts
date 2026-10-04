@@ -2279,6 +2279,8 @@ async function copySelectedItem(
       };
     }
     const helperSelectionDeadline = selectionHelperDeadlineAtCommit(
+      performance.now(),
+      selectionDeadlineAt,
       bridge.getMonotonicTickMs(),
       selectionDeadlineTickMs,
     );
