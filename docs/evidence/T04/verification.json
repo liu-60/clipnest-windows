@@ -255,7 +255,7 @@
     "A synthetic Electron main-process NativeImage toPNG/toJPEG plus Base64/SHA-256 diagnostic now verifies a late 500 ms poll fails closed after the real event loop resumes. It does not call clipboard.readImage, exercise RGBA-to-BGRA/DIB conversion, establish physical key timing, or validate the 3000 ms preparation deadline under real clipboard load.",
     "The helper zero-budget check-only path has 56 Rust fake tests and no new 500 ms wait. Physical-key timing, final-sample-to-EmptyClipboard/SendInput races, and the complete Electron/helper clipboard/paste path remain NOT_RUN.",
     "P15 remains open: src/main/native/content-provider.ts repeats Base64 decode/hash and main-thread pixel conversion. User chose not to add this file to current T04 scope.",
-    "PureJsImage 0.17.0 candidate feasibility spike: one fresh utilityProcess sample decoded each synthetic 16 MP baseline 4:2:0 and 4:4:4 JPEG near the 20 MiB source limit and materialized full RGBA below the observed 256 MiB target. Decoder AbortSignal was ineffective; repeated distributions, output IPC, ASAR, independent pixel oracle, and complete license/HEIF notice review are open. Candidate is not installed or approved; see docs/evidence/T04/purejsimage-16mp-feasibility-spike.json. This does not close the general image-memory or T04 gate.",
+    "PureJsImage 0.17.0 candidate feasibility spike: one fresh utilityProcess sample decoded each synthetic 16 MP baseline 4:2:0 and 4:4:4 JPEG near the 20 MiB source limit and materialized full RGBA below the observed 256 MiB target. Decoder AbortSignal was ineffective; repeated distributions, output IPC, ASAR, and independent pixel oracle remain open. The exact registry tarball integrity and archive inventory are now recorded in docs/evidence/T04/purejsimage-dependency-subcard.json; the HEVC/H.265 distribution decision and complete notice/legal review remain open. Candidate is not installed or approved. This does not close the general image-memory or T04 gate.",
     "Independent final static review passed with limitations; it does not close P15, actual keyboard timing, full Electron/helper clipboard/paste acceptance or full T04 acceptance. The latest compressed IPC code passed an isolated ASAR worker smoke, which is not installation or end-user UI acceptance."
   ],
   "artifacts": [
@@ -287,6 +287,7 @@
     "docs/evidence/T04/main-thread-image-deadline-diagnostic.json",
     "tests/tasks/T04/run-image-main-thread-deadline-electron.cjs",
     "tests/tasks/T04/main-image-preparation-failure.test.cjs",
-    "docs/evidence/T04/purejsimage-16mp-feasibility-spike.json"
+    "docs/evidence/T04/purejsimage-16mp-feasibility-spike.json",
+    "docs/evidence/T04/purejsimage-dependency-subcard.json"
   ]
 }

@@ -11,7 +11,7 @@
     "source": "https://registry.npmjs.org/purejsimage/-/purejsimage-0.17.0.tgz",
     "integrity": "sha512-u/A6tC4FYCRqL61QMAHiTEwKByh17txytXalgAjKhv84lFQfDNVaRc8H816dLqsTpm5MaEz9pd7UzHc0qaaJ8A==",
     "repositoryDependencyInstalled": false,
-    "distributionReview": "OPEN: the package archive includes optional HEIF/HEIC codec code; review complete notices, distribution scope, and the upstream patent note before considering approval."
+    "distributionReview": "PARTIALLY_REVIEWED: exact registry tarball integrity, shipped HEIF/HEVC and WASM files, and top-level license filename inventory are recorded in docs/evidence/T04/purejsimage-dependency-subcard.json. Product/legal distribution decision for HEVC/H.265 and complete notices remains OPEN."
   },
   "environment": {
     "platform": "win32",
@@ -73,7 +73,7 @@
     "cancellationGate": "Any integration must prove timely cancellation by ending iteration or terminating and retiring the utilityProcess; this spike did not validate the production cancellation path."
   },
   "decision": {
-    "nextStep": "Candidate merits a separate T06 dependency and distribution review before any installation or production integration.",
+    "nextStep": "Resolve the separate T06 dependency and distribution review in docs/evidence/T04/purejsimage-dependency-subcard.json before any installation or production integration.",
     "dependencyAccepted": false,
     "productionIntegrated": false,
     "t04MemoryGatePassed": false,
@@ -84,6 +84,7 @@
     "Synthetic fixtures were encoded by the candidate package; no independent pixel oracle was used, so the recorded output hashes identify outputs but do not independently establish decoder fidelity.",
     "The 64 MB RGBA output was not transferred to the parent process and the candidate was not loaded from a packaged ASAR.",
     "Progressive JPEG, EXIF, ICC, orientation, broad content variation, and the complete product pipeline were not tested.",
-    "Measurement harnesses and source fixtures remain in the local TEMP audit directory and are not archived in the repository; raw JSON measurements were transcribed into this evidence record."
+    "Measurement harnesses and source fixtures remain in the local TEMP audit directory and are not archived in the repository; raw JSON measurements were transcribed into this evidence record.",
+    "The exact published archive has been inventoried, but a complete file-level notice and HEVC/H.265 distribution decision remains open; the audit is not license clearance."
   ]
 }

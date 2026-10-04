@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "parentTask": "T04",
+  "subcard": "T06-purejsimage-win32-x64-image-decoder",
+  "status": "REVIEW",
+  "installationStatus": "NOT_INSTALLED",
+  "review": {
+    "reviewer": "independent dependency research",
+    "decision": "Exact-package and distribution findings are recorded for review only. No license clearance, dependency acceptance, or installation approval is granted.",
+    "date": "2026-10-05"
+  },
+  "dependency": {
+    "name": "purejsimage",
+    "version": "0.17.0",
+    "pin": "exact candidate only; not added to package.json or pnpm-lock.yaml",
+    "purpose": "Potential PNG/JPEG decoder in the T04 single image utility process",
+    "runtimeCompatibility": {
+      "packageType": "ES module",
+      "declaredNodeEngine": ">=22",
+      "projectElectron": "40.10.2",
+      "electronBundledNode": "24.15.0",
+      "assessment": "Static engine-version match only. CommonJS utility worker import, actual Windows x64 load, decoder adapter, and packaged ASAR resolution have not been verified."
+    },
+    "registry": {
+      "tarball": "https://registry.npmjs.org/purejsimage/-/purejsimage-0.17.0.tgz",
+      "integrity": "sha512-u/A6tC4FYCRqL61QMAHiTEwKByh17txytXalgAjKhv84lFQfDNVaRc8H816dLqsTpm5MaEz9pd7UzHc0qaaJ8A==",
+      "integrityMatchedRegistryMetadata": true,
+      "compressedBytes": 1358289,
+      "repositoryDependencyInstalled": false,
+      "auditMethod": "Downloaded and extracted the exact registry tarball into a temporary review directory; no project manifest, lockfile, or installed package was changed."
+    },
+    "manifest": {
+      "declaredLicense": "MIT",
+      "runtimeDependencies": [],
+      "publishedFiles": ["dist", "ROADMAP.md"],
+      "heicExport": "./codecs/experimental/heic",
+      "optionalWasmExports": [
+        "./accelerators/wasm/jpeg",
+        "./accelerators/wasm/png",
+        "./accelerators/wasm/webp"
+      ]
+    }
+  },
+  "distributionInventory": {
+    "unpackedBytes": 6657702,
+    "fileCount": 650,
+    "wasmFiles": [
+      { "path": "dist/accelerator-entries/jpeg-decoder-simd.wasm", "bytes": 31585 },
+      { "path": "dist/accelerator-entries/jpeg-decoder.wasm", "bytes": 31735 },
+      { "path": "dist/accelerator-entries/jpeg-encoder-simd.wasm", "bytes": 46266 },
+      { "path": "dist/accelerator-entries/jpeg-encoder.wasm", "bytes": 38034 },
+      { "path": "dist/accelerator-entries/png-codec-simd.wasm", "bytes": 7287 },
+      { "path": "dist/accelerator-entries/png-codec.wasm", "bytes": 3879 },
+      { "path": "dist/accelerator-entries/webp-codec-simd.wasm", "bytes": 11845 },
+      { "path": "dist/accelerator-entries/webp-codec.wasm", "bytes": 9329 }
+    ],
+    "heifHeicHevcFilenameMatches": [
+      "dist/codec-entries/experimental/heic.d.ts",
+      "dist/codec-entries/experimental/heic.js",
+      "dist/codecs/heif.d.ts",
+      "dist/codecs/heif.js",
+      "dist/codecs/hevc-cabac.d.ts",
+      "dist/codecs/hevc-cabac.js",
+      "dist/codecs/hevc-contexts.d.ts",
+      "dist/codecs/hevc-contexts.js",
+      "dist/codecs/hevc-deblock.d.ts",
+      "dist/codecs/hevc-deblock.js",
+      "dist/codecs/hevc-intra.d.ts",
+      "dist/codecs/hevc-intra.js",
+      "dist/codecs/hevc-picture.d.ts",
+      "dist/codecs/hevc-picture.js",
+      "dist/codecs/hevc-residual.d.ts",
+      "dist/codecs/hevc-residual.js",
+      "dist/codecs/hevc-sao.d.ts",
+      "dist/codecs/hevc-sao.js",
+      "dist/codecs/hevc-transform.d.ts",
+      "dist/codecs/hevc-transform.js",
+      "dist/codecs/hevc.d.ts",
+      "dist/codecs/hevc.js"
+    ],
+    "licenseNoticeFilenameScan": {
+      "patterns": ["LICENSE", "NOTICE", "COPYING", "PATENTS"],
+      "matches": ["package/LICENSE"],
+      "scope": "Filename scan only; it does not establish that every bundled component or patent issue is covered by the top-level MIT license."
+    }
+  },
+  "licenseAndDistribution": {
+    "mitLicenseFilePresent": true,
+    "upstreamHeifNote": "The upstream note describes the HEIF/HEIC decoder as experimental and opt-in while also shipping its code in the package. It flags HEVC/H.265 third-party patent due diligence as the distributor's responsibility; the package MIT declaration does not settle that question.",
+    "reviewStatus": "OPEN: product/legal review must decide distribution treatment for shipped HEIF/HEVC and WASM assets and confirm applicable notices before dependency approval.",
+    "notLegalAdvice": true
+  },
+  "installation": {
+    "status": "NOT_INSTALLED",
+    "packageJsonChanged": false,
+    "pnpmLockChanged": false,
+    "candidateOnly": true
+  },
+  "validation": {
+    "exactTarballAndIntegrity": "VERIFIED_READ_ONLY",
+    "archiveInventory": "VERIFIED_READ_ONLY",
+    "upstreamManifestAndLicense": "REVIEWED",
+    "upstreamHeifPatentNote": "REVIEWED; legal/distribution decision remains open",
+    "windowsX64UtilityProcessLoad": "NOT_RUN",
+    "commonJsToEsmAdapter": "NOT_RUN",
+    "packagedAsarLoad": "NOT_RUN",
+    "decoderFidelityAndMalformedInput": "NOT_RUN",
+    "cancellationAndWorkerRetirement": "NOT_RUN",
+    "peakMemoryAndRepeatedLatency": "NOT_VERIFIED"
+  },
+  "requiredBeforeAcceptance": [
+    "Resolve the HEVC/H.265 distribution question and determine whether all packaged files/notices can be distributed for this product.",
+    "Only after that decision, authorize installation of exact version 0.17.0 and verify the selected JPEG/PNG registration path does not load optional HEIF or WASM code.",
+    "Verify CommonJS worker import, ASAR loading, exact full-frame RGBA adapter output, malformed input fail-closed behavior, and timely worker cancellation/retirement on Windows x64.",
+    "Repeat representative 16 MP PNG/JPEG measurements, including inputs near the 20 MiB cap and parent-process output transfer, against the 256 MiB worker RSS target."
+  ],
+  "sources": [
+    {
+      "claim": "Published 0.17.0 package manifest, MIT declaration, Node engine, ESM exports, and published file list.",
+      "url": "https://raw.githubusercontent.com/a-r-d/PureJsImage/v0.17.0/package.json"
+    },
+    {
+      "claim": "MIT license text shipped with the exact tagged release.",
+      "url": "https://raw.githubusercontent.com/a-r-d/PureJsImage/v0.17.0/LICENSE"
+    },
+    {
+      "claim": "Experimental HEIF/HEIC packaging and upstream HEVC/H.265 patent note.",
+      "url": "https://raw.githubusercontent.com/a-r-d/PureJsImage/v0.17.0/heif-codec-support.md"
+    },
+    {
+      "claim": "Exact registry tarball and integrity metadata.",
+      "url": "https://registry.npmjs.org/purejsimage/-/purejsimage-0.17.0.tgz"
+    },
+    {
+      "claim": "Electron 40.10.2 release and bundled Node.js version used for the static engine comparison.",
+      "url": "https://releases.electronjs.org/release/v40.10.2"
+    }
+  ],
+  "notEvidenceOf": [
+    "No license clearance, patent opinion, dependency acceptance, or approval to install.",
+    "No changes to package.json, pnpm-lock.yaml, production code, or T04/T05 task status.",
+    "No Windows utilityProcess/ASAR load, complete decoder fidelity, cancellation, repeated performance, or process RSS acceptance.",
+    "No closure of the general 16 MP image-memory gate or T04 acceptance."
+  ]
+}

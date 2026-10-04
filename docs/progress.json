@@ -105,7 +105,8 @@
         "tests/tasks/T04/packaged-asar-worker-smoke.cjs",
         "docs/evidence/T04/main-thread-image-deadline-diagnostic.json",
         "tests/tasks/T04/run-image-main-thread-deadline-electron.cjs",
-        "docs/evidence/T04/purejsimage-16mp-feasibility-spike.json"
+        "docs/evidence/T04/purejsimage-16mp-feasibility-spike.json",
+        "docs/evidence/T04/purejsimage-dependency-subcard.json"
       ],
       "openGates": [
         "五个 fresh utilityProcess 的合成16MP RGBA PNG诊断测量：request→压缩传输→异步还原RGBA p50 524.91ms、p95/max 547.68ms，PeakWorkingSet64最高169066496B（161.23MiB），低于256MiB预算；每进程OS峰值、100ms private采样与Node 24.15/Electron 40.10.2环境见 image-worker-16mp-fresh-worker-5-sample-measurement.json。此结果只覆盖一种6.77MB合成PNG和5次样本，不证明所有PNG/JPEG、接近20MiB输入或打包运行的硬上限。",
@@ -115,7 +116,7 @@
         "本次selection准备竞速补丁的定向验证已通过：pnpm build:main / TypeScript 编译成功，20/20 fake tests 通过（图像准备11、selection截止9）；pnpm test:native 的56项 Rust 单元/隔离fake集成测试也通过。新增 0ms helper check-only：截止后即时检查按键，不重开500ms窗口，并在剪贴板/输入门前复核；native/tests/control.rs 和 protocol.rs 覆盖此契约。独立静态复核确认实现与证据一致，同时指出采样与 EmptyClipboard/SendInput 非原子，按键在最后采样后到 OS 调用前转换的竞态仍未排除。真实 Electron/utilityProcess/helper 取消竞速、物理按键、系统剪贴板/输入或面板行为仍未运行。静态路径显示预注册取消不重启 helper；已登记取消未确认时锁存 clipboard fence 并保留 job，直至 helper 退出确认。",
         "新增主进程生产编排失败路径fake：image_worker_capacity_exceeded在helper clipboard commit前返回blocked，Electron clipboard fallback、helper注册/commit_write/paste和面板隐藏均为0，历史原图保留；helper未就绪和clipboard sequence baseline缺失时图片也在snapshot/主线程解码前fail-closed且无上述副作用。非图片在这些分支仍使用原有copy-only fallback，commit后authorization_denied的复制降级未变。定向构建及20项回归（新VM fake、T03编排和host authorization）通过。T04-I04/P17容量、helper和baseline分支由tests/tasks/T04/main-image-preparation-failure.test.cjs覆盖；这些VM fake不替代真实worker/platform行为。",
         "新增JPEG SOF采样/MCU系数块及元数据预检，在调用jpeg-js前按112MiB进程余量、512B/系数块、组件行/RGB/RGBA、量化/Huffman表与Huffman树、注释字符串估算；将量化表和Huffman表定义各限64个、单表Huffman符号限256个、COM累计限1MiB，JPEG marker段数限4096。SOF后不完整长度字段或段超界会在调用解码器前以image_source_invalid拒绝，超4096段以image_worker_capacity_exceeded拒绝；元数据上限和截断路径均有fake回归。当前提交下16MP、20MiB合成baseline 4:4:4（5样本）与NativeImage生成4:2:0（5样本）均在153–184ms capacity reject p95内拒绝，PeakWorkingSet64最高106479616B（101.55MiB），低于256MiB；相同布局预检前曾分别达到656289792B（625.89MiB）与462811136B（441.37MiB）。当前guard成功样本各1次：4MP 4:2:0峰值200.16MiB，5MP 4:2:0峰值234.17MiB，3MP 4:4:4峰值221.63MiB。预检保守拒绝了曾以246.85MiB完成一次解码的4MP 4:4:4及曾以242.73MiB完成一次解码的6MP 4:2:0，显示其牺牲有效输入。该经验估算与少量合成样本不构成通用RSS硬上限；生产解码路径的16MP JPEG成功解码、更多采样/内容、渐进JPEG、EXIF/ICC及完整打包运行仍未验收，需评估内存更合适的解码器并复测后再关闭T04门。JPEG定向单测14/14通过；T04状态仍为in_progress。",
-        "PureJsImage 0.17.0候选在临时Electron utilityProcess中对合成16MP baseline 4:2:0和4:4:4 JPEG（各1个、输入距20MiB上限1/3字节）均完整物化64MB RGBA，单样本峰值分别149.32/151.97MiB、耗时1.96/2.14s。AbortSignal未中断解码；未测父进程传输、ASAR、独立像素oracle或重复分布，完整依赖/HEIF notice许可审查未完成。候选未安装、未接入，不构成通用256MiB门或T04验收；见docs/evidence/T04/purejsimage-16mp-feasibility-spike.json。",
+        "PureJsImage 0.17.0候选在临时Electron utilityProcess中对合成16MP baseline 4:2:0和4:4:4 JPEG（各1个，分别距20MiB上限1字节和3字节）均完整物化64MB RGBA，单样本峰值分别149.32/151.97MiB、耗时1.96/2.14s。AbortSignal未中断解码；未测父进程传输、ASAR、独立像素oracle或重复分布。已只读核验精确tarball integrity与650个文件清单；HEIF/HEVC、WASM、notice及专利分发决策仍开放。候选未安装、未接入，不构成通用256MiB门或T04验收；见docs/evidence/T04/purejsimage-16mp-feasibility-spike.json与purejsimage-dependency-subcard.json。",
         "T04-I03新增真实Electron utilityProcess图片选择集成：生产selection编排和NativeContentProvider走通PNG解码并核验2×1 DIB字节/hash；选择等待测试响应门时主事件循环可推进，历史原图和预览不变。损坏PNG CRC也经真实worker拒绝，selection返回blocked且helper注册、剪贴板/fallback、paste/input和panel副作用均未增加。配合renderer延迟IPC fake覆盖preparing可见性。helper、剪贴板、面板、输入仍为fake，没有真实BrowserWindow、OS剪贴板或物理输入；真实provider路径取消/超时、P15及完整T04门仍开放。证据：tests/tasks/T04/run-image-selection-electron.cjs 与 docs/evidence/T04/image-selection-provider-integration.json。"
       ]
     },
