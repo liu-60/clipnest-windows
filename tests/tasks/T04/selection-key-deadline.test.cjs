@@ -139,7 +139,7 @@ test("a poll delayed past both deadlines fails closed instead of trusting an old
   monitor.cancel();
 });
 
-test("a timer up to one poll interval late uses the fresh pre-cutoff held sample", async () => {
+test("a late release cannot replace a fresh pre-cutoff held sample", async () => {
   const clock = createFakeClock();
   let keyStateReads = 0;
   const monitor = startSelectionKeyReleaseMonitor({
@@ -159,12 +159,12 @@ test("a timer up to one poll interval late uses the fresh pre-cutoff held sample
   clock.jumpTo(503);
 
   assert.deepEqual(await monitor.cutoff, { kind: "blocked", reasonCode: "key_held" });
-  assert.equal(keyStateReads, preCutoffReads, "the cutoff does not sample a post-deadline release");
+  assert.equal(keyStateReads, preCutoffReads + 1, "the cutoff samples once to catch a still-held key, but retains the held pre-cutoff result");
   assert.equal(clock.pendingTimers, 0);
   monitor.cancel();
 });
 
-test("a timer up to one poll interval late accepts a fresh pre-cutoff released sample", async () => {
+test("a re-press after the last released sample blocks while held at cutoff", async () => {
   const clock = createFakeClock();
   let keyStateReads = 0;
   const monitor = startSelectionKeyReleaseMonitor({
@@ -174,7 +174,7 @@ test("a timer up to one poll interval late accepts a fresh pre-cutoff released s
     nowTickMs: () => clock.now,
     keysReleased: () => {
       keyStateReads += 1;
-      return clock.now < 500; // A post-deadline re-press cannot rewrite the sample.
+      return clock.now < 499; // Re-pressed at 499ms and still held at the cutoff callback.
     },
     schedule: clock.schedule,
   });
@@ -183,11 +183,8 @@ test("a timer up to one poll interval late accepts a fresh pre-cutoff released s
   const preCutoffReads = keyStateReads;
   clock.jumpTo(503);
 
-  assert.deepEqual(await monitor.cutoff, {
-    kind: "continue",
-    operationBudgetMs: SELECTION_KEY_RELEASE_WINDOW_MS,
-  });
-  assert.equal(keyStateReads, preCutoffReads, "the cutoff does not sample a post-deadline re-press");
+  assert.deepEqual(await monitor.cutoff, { kind: "blocked", reasonCode: "key_held" });
+  assert.equal(keyStateReads, preCutoffReads + 1, "the cutoff samples once and treats a still-held key as terminal");
   assert.equal(clock.pendingTimers, 0);
   monitor.cancel();
 });
@@ -231,7 +228,7 @@ test("a pre-cutoff sample older than one poll interval is not reused", async () 
   clock.jumpTo(503);
 
   assert.deepEqual(await monitor.cutoff, { kind: "blocked", reasonCode: "key_state_unavailable" });
-  assert.equal(keyStateReads, readsBeforeCutoff);
+  assert.equal(keyStateReads, readsBeforeCutoff + 1, "the cutoff's released state cannot make a stale pre-cutoff sample fresh");
   assert.equal(clock.pendingTimers, 0);
   monitor.cancel();
 });
@@ -342,6 +339,34 @@ test("held at the 500ms cutoff cancels pending preparation and outranks its late
   assert.equal(helperRequests, 0);
   assert.equal(preparationActive, false, "the canceled preparation promise has settled before selection returns");
   assert.deepEqual(effects, { clipboardWrites: 0, panelHides: 0, inputSubmissions: 0 });
+  assert.equal(clock.pendingTimers, 0);
+  monitor.cancel();
+});
+
+test("a re-press after the last released sample is latched when still held at cutoff", async () => {
+  const clock = createFakeClock();
+  let cancelCount = 0;
+  const monitor = startSelectionKeyReleaseMonitor({
+    selectionDeadlineAt: 500,
+    selectionDeadlineTickMs: 500,
+    nowAt: () => clock.now,
+    nowTickMs: () => clock.now,
+    keysReleased: () => clock.now < 497,
+    schedule: clock.schedule,
+  });
+  const preparation = new Promise(() => {});
+  const raced = raceSelectionPreparation({
+    monitor,
+    preparation,
+    cancelPreparation: () => { cancelCount += 1; },
+  });
+
+  clock.advanceTo(500);
+  assert.deepEqual(await raced, {
+    kind: "blocked",
+    decision: { kind: "blocked", reasonCode: "key_held" },
+  });
+  assert.equal(cancelCount, 1);
   assert.equal(clock.pendingTimers, 0);
   monitor.cancel();
 });

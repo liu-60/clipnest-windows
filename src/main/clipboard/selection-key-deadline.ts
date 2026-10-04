@@ -131,6 +131,18 @@ export function startSelectionKeyReleaseMonitor(input: {
     if (lateAtMs > KEY_STATE_POLL_INTERVAL_MS || lateTickMs > KEY_STATE_POLL_INTERVAL_MS) {
       return { kind: "blocked", reasonCode: "key_state_unavailable" };
     }
+    // A last-moment re-press may happen after the previous poll. A post-cutoff
+    // down state is conservative evidence to block; an up state cannot prove
+    // when the key was released, so only the pre-cutoff sample can continue.
+    const keysReleasedAtDecision = input.keysReleased();
+    if (keysReleasedAtDecision === null) return { kind: "blocked", reasonCode: "key_state_unavailable" };
+    if (!keysReleasedAtDecision) return { kind: "blocked", reasonCode: "key_held" };
+    const afterDecisionSample = readClock();
+    if (!afterDecisionSample) return { kind: "blocked", reasonCode: "selection_clock_unavailable" };
+    if (
+      afterDecisionSample.at - input.selectionDeadlineAt > KEY_STATE_POLL_INTERVAL_MS ||
+      afterDecisionSample.tickMs - input.selectionDeadlineTickMs > KEY_STATE_POLL_INTERVAL_MS
+    ) return { kind: "blocked", reasonCode: "key_state_unavailable" };
     const sample = latestKeySample;
     if (
       !sample ||
