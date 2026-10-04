@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "task": "T26",
+  "reviewType": "fixture_plan_static_check",
+  "reviewStatus": "AUTHOR_STATIC_CHECK_RECORDED",
+  "executionStatus": "NOT_RUN",
+  "result": "PLAN_ONLY_DEPENDENCIES_AND_OPEN_QUESTIONS_REMAIN",
+  "reviewedSources": [
+    "docs/progress.json T14/T18/T19/T26",
+    "docs/spec/06-model-runbook.md §2/§5/§6/§8",
+    "docs/spec/07-release-and-commercial.md §1/§2/§3/§5/§6",
+    "docs/spec/07-release-and-commercial.md §7",
+    "docs/spec/08-acceptance-matrix.md §3",
+    "docs/spec/08-acceptance-matrix.md §5-§6",
+    "docs/spec/limits.v1.json /cloud",
+    "docs/spec/tasks/T26.md",
+    "package.json and root workspace directories (read-only)"
+  ],
+  "dependencySnapshot": [
+    {
+      "task": "T14",
+      "status": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T18",
+      "status": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T19",
+      "status": "not_started",
+      "accepted": false
+    }
+  ],
+  "staticChecks": [
+    {
+      "id": "T26-R01",
+      "check": "Fixture/gate/command/acceptance/OQ IDs are unique; fixture and OQ references resolve.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T26-R02",
+      "check": "Every fixture, gate and planned command is NOT_RUN with empty evidence.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T26-R03",
+      "check": "Plan uses synthetic identities only and records no provider/database/service or behavior execution.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T26-R04",
+      "check": "B01-B12 map to observable scenarios for candidate config, trust, signatures, idempotency/order, restore, cross-channel, refunds/grace, downgrade, offline expiry and reconciliation.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T26-R05",
+      "check": "Unfrozen aggregation, grace/retention, offline time/key policy, refund variants, checkout unknown outcomes, quota/errors and reconciliation cadence remain OPEN_QUESTION.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T26-R06",
+      "check": "Dependency states match progress; no progress or production/shared path is changed.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T26-R07",
+      "check": "Task-card commands are listed NOT_RUN; root workspace inspection found no apps/server workspace and no matching root scripts.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T26-R08",
+      "check": "B01-B12 fixture acceptanceIds and coverage-map fixtureIds are reciprocal and semantically aligned.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T26-R09",
+      "check": "Synthetic logging/crash/error-packet redaction canary is sourced from 07 §7 and 08 §3.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T26-R10",
+      "check": "F007 leaves provider-fetch terminal mapping open; F027 leaves receipt/reservation/rollback side effects open.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T26-R11",
+      "check": "Independent real isolated PostgreSQL gate T26-G11 covers F006/F028/F029 and is explicitly separate from provider gates.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T26-R12",
+      "check": "Acceptance-to-gate and gate-to-acceptance relations are reciprocal; B09 explicitly requires offline platform gate G08 and B10 explicitly requires T14 identity/RLS G01 plus T18 quota G02.",
+      "status": "CHECKED_STATICALLY"
+    }
+  ],
+  "counts": {
+    "fixtureCount": 31,
+    "uniqueFixtureIdCount": 31,
+    "acceptanceIdCount": 12,
+    "gateCount": 11,
+    "uniqueGateIdCount": 11,
+    "behaviorCommandCount": 2,
+    "uniqueCommandIdCount": 2,
+    "openQuestionCount": 12,
+    "allFixturesNotRun": true,
+    "allGatesNotRun": true,
+    "allCommandsNotRun": true,
+    "allAcceptanceIdsMapped": true
+  },
+  "openQuestionIds": [
+    "T26-OQ01",
+    "T26-OQ02",
+    "T26-OQ03",
+    "T26-OQ04",
+    "T26-OQ05",
+    "T26-OQ06",
+    "T26-OQ07",
+    "T26-OQ08",
+    "T26-OQ09",
+    "T26-OQ10",
+    "T26-OQ11",
+    "T26-OQ12"
+  ],
+  "limitations": [
+    "Author static plan check only; independent critical-task adversarial review remains NOT_RUN.",
+    "No production, behavior, provider sandbox, DB/RLS, device, merchant or staging evidence exists.",
+    "T14/T18/T19 remain not_started; all fixtures/gates/commands remain NOT_RUN and T26 is not accepted."
+  ],
+  "independentCriticalReview": {
+    "required": true,
+    "reviewer": "T04 independent reviewer",
+    "reviewType": "READ_ONLY_CRITICAL_PLAN_REVIEW",
+    "status": "PASS_WITH_LIMITATIONS",
+    "result": "PASS_WITH_LIMITATIONS",
+    "reviewedAt": "2026-10-04",
+    "reviewedFiles": [
+      "tests/tasks/T26/fixture-plan.json",
+      "docs/evidence/T26/fixture-plan-static-review.json"
+    ],
+    "findingsClosed": [
+      "B09 explicitly links to G08 and the reverse G08 mapping includes B09.",
+      "B10 explicitly links to G01 and G02 and both reverse gate mappings include B10.",
+      "31 fixtures, 12 acceptance IDs, 11 gates, 2 commands, and 12 OQs have consistent counts and unique IDs; references and bidirectional acceptance/gate mappings resolve.",
+      "All fixtures, gates, and commands remain NOT_RUN with empty execution evidence."
+    ],
+    "noNewProtocolOrPlatformSemantics": true,
+    "behaviorAcceptance": false,
+    "remainingLimitations": [
+      "Plan-only independent review; no provider, PostgreSQL/RLS, device, staging, test, build, or production behavior was run.",
+      "T14, T18, and T19 remain unaccepted; all behavior gates remain open."
+    ]
+  }
+}

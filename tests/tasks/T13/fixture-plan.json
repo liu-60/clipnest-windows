@@ -1,0 +1,844 @@
+{
+  "schemaVersion": 1,
+  "task": "T13",
+  "status": "planned-not-executed",
+  "purpose": "Prepare macOS-specific synthetic fixtures and a static distribution-check matrix before implementing native platform behavior or producing signed artifacts.",
+  "dependencyGate": "wait_for_T11_T12_accepted",
+  "dependencyGateDetails": {
+    "requiredTasks": [
+      "T11",
+      "T12"
+    ],
+    "requiredStatus": "accepted",
+    "observedProgressStatuses": {
+      "T11": "not_started",
+      "T12": "not_started"
+    },
+    "source": "docs/progress.json#/tasks",
+    "rule": "Until both dependencies are accepted, only synthetic fixture/interface planning is allowed. Do not implement platform behavior, build/sign/notarize/package, install or update an app, run real-device behavior, or use user data."
+  },
+  "sources": [
+    {
+      "path": "docs/spec/tasks/T13.md",
+      "sections": [
+        "依赖",
+        "子任务顺序",
+        "完成标准与行为测试",
+        "验证命令",
+        "回滚与交付"
+      ]
+    },
+    {
+      "path": "docs/spec/04-desktop-performance.md",
+      "sections": [
+        "§5 唤醒和执行顺序",
+        "§6 图片、采集与后台任务",
+        "§7 Windows和macOS能力",
+        "§8 fixture、指标与Tauri gate"
+      ]
+    },
+    {
+      "path": "docs/spec/01-product-and-ux.md",
+      "sections": [
+        "§2 桌面双窗口",
+        "§5 所有页面必须覆盖的状态",
+        "§6 视觉变量与组件接口"
+      ]
+    },
+    {
+      "path": "docs/spec/02-architecture.md",
+      "sections": [
+        "§3 契约与跨语言生成",
+        "§7 平台capabilities"
+      ]
+    },
+    {
+      "path": "docs/spec/07-release-and-commercial.md",
+      "sections": [
+        "§7 发布与持续演进"
+      ]
+    },
+    {
+      "path": "docs/spec/08-acceptance-matrix.md",
+      "sections": [
+        "§2 功能矩阵",
+        "§4 性能测量",
+        "§6 证据格式"
+      ]
+    },
+    {
+      "path": "docs/spec/limits.v1.json",
+      "fields": [
+        "concurrency.captureQueueItems",
+        "concurrency.captureWorkers",
+        "concurrency.imageWorkers",
+        "concurrency.imageWorkerPeakBytes",
+        "content.maxImageBytes",
+        "content.maxDecodedPixels",
+        "local.decodedImageCacheBytes",
+        "performanceTargets.sameClipboardImageReencodes"
+      ]
+    }
+  ],
+  "platformBoundary": {
+    "macosSpecificSemantics": [
+      "pasteboard.changeCount is the clipboard-change signal",
+      "capture target/application identity through public macOS capabilities",
+      "automatic input requires Accessibility authorization",
+      "permission denial retains copy/search capability where available",
+      "menu-bar, multi-display, signing, notarization, and macOS update behavior require macOS evidence"
+    ],
+    "windowsSemanticsNotAssumed": [
+      "HWND/PID/process-created-time target identity",
+      "Win32 clipboard sequence semantics",
+      "UIPI error diagnosis or AllowSetForegroundWindow authorization",
+      "SetForegroundWindow, SW_RESTORE, or SendInput behavior",
+      "Windows tray or monitor-coordinate policy"
+    ],
+    "sharedBoundary": "Only accepted platform-neutral contracts and user-visible safety outcomes may be shared. Windows helper APIs and helper deadlines are not automatically macOS requirements; native macOS deadlines and API behavior need macOS-specific evidence. This plan does not claim that a Windows fixture, mock, or API result proves macOS behavior."
+  },
+  "fixturePolicy": {
+    "syntheticDataOnly": true,
+    "fixedSeed": "clipnest-t13-macos-fixed-seed-20261004",
+    "futureDeviceScope": "Any later native acceptance uses a disposable macOS test account/device, synthetic pasteboard content, a dedicated receiver, and a test-only shortcut. Native changeCount, target/application identity, Accessibility allow/denied copy-only behavior, two-display placement, menu-bar/startup/hotkey operation, cancellation, cache, and UI responsiveness require macOS-hosted evidence before their gates can close; Windows evidence cannot close them. Login-item and permission-state fixtures use a disposable account provisioned before the run and never mutate the user account. Release acceptance uses candidate-matched signed/notarized artifacts and synthetic local data in that disposable environment.",
+    "neverUse": [
+      "live user profile, clipboard, account, or application data",
+      "production cloud/storage/network service",
+      "developer signing private keys, notarization credentials, or personal Apple account credentials in repository files or reports",
+      "Windows behavior as a substitute for a macOS result",
+      "build, sign, notarize, install, or update an app during this fixture-only task"
+    ],
+    "resultAssertions": "Prefer observable synthetic content, changeCount, target identity stability, permission capability state, copy/paste side-effect counts, process/UI state, and artifact metadata. Do not invent exact error/result mappings or user authorization copy.",
+    "evidencePrivacy": "Later evidence may contain OS/build/architecture, sanitized signing identity reference, artifact hashes, permission state, timings, and synthetic IDs/counts. Never include clipboard payloads, signing secrets, tokens, or user content.",
+    "statusMeaning": "NOT_RUN means the behavior or release check has not been executed. This plan is not an implementation, build, signing result, notarization result, or platform-support claim.",
+    "futureReleaseScope": "Only after T11/T12 are accepted and release identity, notarization criteria, updater protocol, and schema compatibility are approved may a disposable macOS test account exercise a candidate-matched update/rollback pair. No production channel, user data, personal Apple account credentials, or signing secrets are used."
+  },
+  "fixtureCases": [
+    {
+      "caseNumber": 1,
+      "id": "t13-pasteboard-duplicate-notification-same-change-count",
+      "category": [
+        "pasteboard",
+        "changeCount",
+        "notification-policy-open",
+        "image"
+      ],
+      "input": "A fake macOS pasteboard adapter has already captured a deterministic synthetic image. It returns one changeCount and delivers several duplicate notifications for that value without changing image bytes.",
+      "action": "Feed duplicate notifications through the synthetic capture adapter and observe enqueue/coalescing and encoder calls.",
+      "expected": "Do not assert a duplicate-notification coalescing or capture-count policy until it is frozen. Re-encoding the unchanged clipboard image must remain zero per limits.v1.json performanceTargets.sameClipboardImageReencodes; that assertion is independent of how many notifications are admitted.",
+      "observation": "Record changeCount, notification count, capture jobs, content digest/byte length, and encoder call count only; never record image pixels.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 2,
+      "id": "t13-pasteboard-new-change-count-captures-new-version",
+      "category": [
+        "pasteboard",
+        "changeCount",
+        "capture"
+      ],
+      "input": "Two successive synthetic pasteboard states have distinct changeCount values and distinct harmless markers.",
+      "action": "Deliver one notification for each count and read through the fake adapter.",
+      "expected": "Each new changeCount is treated as a new clipboard version. Result summaries identify the correct synthetic version and never substitute an older read result.",
+      "observation": "Record old/new counts, capture IDs, response order, and digest/byte length only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 3,
+      "id": "t13-pasteboard-count-changes-during-delayed-read",
+      "category": [
+        "pasteboard",
+        "race",
+        "cancellation"
+      ],
+      "input": "A synthetic read for count A is delayed; the fake pasteboard advances to count B before A completes.",
+      "action": "Deliver B's notification, complete B, then release delayed A.",
+      "expected": "The older A result cannot overwrite or re-enqueue as the current B version. Cancellation/retry outcome remains bounded and no user clipboard data is involved.",
+      "observation": "Record count/job ordering, visible synthetic version, stale-read suppression, and adapter call counts.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 4,
+      "id": "t13-pasteboard-delayed-rendered-read-retry-boundary",
+      "category": [
+        "pasteboard",
+        "retry",
+        "deadline",
+        "error"
+      ],
+      "input": "A synthetic pasteboard representation is temporarily unavailable to a fake read adapter, then becomes readable; a second case never becomes readable.",
+      "action": "Exercise bounded retry and a changed changeCount while retry is pending.",
+      "expected": "A newer changeCount cancels stale read work and retry remains bounded. Do not reuse Windows helper deadlines for a native macOS pasteboard read; macOS retry count/deadline and terminal error mapping remain OPEN_QUESTION. Unbounded retry is not acceptable.",
+      "observation": "Record attempt count, elapsed time, count observed per attempt, cancellation state, and final capability category only.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 5,
+      "id": "t13-target-identity-captured-with-public-macos-capability",
+      "category": [
+        "target-identity",
+        "permissions",
+        "platform-boundary"
+      ],
+      "input": "A synthetic host adapter reports a target application identity and a separate ClipNest-owned/self target identity.",
+      "action": "Capture target identity before panel presentation, then request the self target as a negative case.",
+      "expected": "The application uses the public macOS target/application capability and excludes its own panel as an external target. Windows HWND/PID identity fields are not assumed.",
+      "observation": "Record opaque synthetic identity IDs, validity/self classification, and capability calls; exact native identity fields remain OPEN_QUESTION.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 6,
+      "id": "t13-target-identity-invalidated-before-action",
+      "category": [
+        "target-identity",
+        "safety",
+        "copy-only"
+      ],
+      "input": "The fake target identity changes or becomes unavailable after capture but before the final paste check.",
+      "action": "Continue the synthetic action after invalidation.",
+      "expected": "No input is sent to a stale/replaced target; a completed supported clipboard copy remains available as copy-only. Exact terminal error code is not assumed.",
+      "observation": "Record captured/current synthetic identity, clipboard state class, input count, and visible fallback category.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 7,
+      "id": "t13-minimized-target-restoration-on-macos",
+      "category": [
+        "target-identity",
+        "window-state",
+        "focus"
+      ],
+      "input": "A dedicated synthetic target app is minimized using a fake platform state; a separate scenario has the user switch to another app during restoration.",
+      "action": "Request one synthetic paste and observe any target restoration/focus transitions.",
+      "expected": "Only the originally captured target may be considered; if it cannot be verified or user intent changes, automatic input stops and copy-only remains. The specific macOS restoration API and policy are OPEN_QUESTION.",
+      "observation": "Record synthetic target identity timeline, restoration calls, frontmost app class, and input count.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 8,
+      "id": "t13-multidisplay-menu-panel-safe-area",
+      "category": [
+        "multi-monitor",
+        "menu-bar",
+        "responsive"
+      ],
+      "input": "Synthetic monitor topology metadata for a two-display Mac setup, including safe-area/work-area and scale values supplied by the fake adapter.",
+      "action": "Open/hide the synthetic panel from a target associated with each display and inspect bounds and operability.",
+      "expected": "The panel remains visible and operable without clipping on the selected display. Display-selection rule, mixed scale, notch/menu-bar safe area, virtual/RDP displays, and hot-plug coverage remain OPEN_QUESTION; no Windows coordinate rule is reused.",
+      "observation": "Record display IDs, safe-area/scale metadata, panel bounds, clipping, and selected-policy decision once frozen.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 9,
+      "id": "t13-menu-bar-item-hide-show-keeps-core-process",
+      "category": [
+        "menu-bar",
+        "tray",
+        "process-lifecycle",
+        "ui"
+      ],
+      "input": "Synthetic app host is initialized with the panel hidden and a running fake core/repository worker.",
+      "action": "Use the macOS menu-bar/status-item entry to show and hide the panel while a synthetic repository operation is active.",
+      "expected": "The menu-bar entry provides the specified panel lifecycle and hiding the panel does not stop the background core operation. macOS menu-item labels and exact activation/click semantics remain OPEN_QUESTION.",
+      "observation": "Record activation source, panel state, process/worker state, generation IDs, and summary-only events.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 10,
+      "id": "t13-login-startup-enabled-and-disabled-capability",
+      "category": [
+        "startup",
+        "capabilities",
+        "permissions"
+      ],
+      "input": "Fake macOS startup capability is separately configured as enabled, disabled, and unavailable by the synthetic settings adapter.",
+      "action": "Inspect the settings state and simulated next-launch behavior without registering a real login item.",
+      "expected": "The UI reflects the supplied capability and does not claim startup is enabled when registration is unavailable. Whether/how the OS prompts, requires explicit user activation, or reports a pending state is OPEN_QUESTION.",
+      "observation": "Record capability state, visible setting, fake registration call count, and simulated launch outcome.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 11,
+      "id": "t13-global-hotkey-conflict-degrades-without-stealing",
+      "category": [
+        "hotkey",
+        "conflict",
+        "capabilities",
+        "copy-only"
+      ],
+      "input": "A synthetic shortcut registration collides with a fake existing owner; no real system shortcut is registered.",
+      "action": "Attempt registration, then invoke the panel through a declared alternative synthetic activation path.",
+      "expected": "The app does not claim the global shortcut is active and does not steal/loop on the conflict. Search/copy remains available through supported UI. Exact conflict reason mapping and user-facing recovery wording are OPEN_QUESTION.",
+      "observation": "Record fake registration result, capability value, visible notice category, and copy/search callback counts.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 12,
+      "id": "t13-accessibility-authorization-allowed",
+      "category": [
+        "accessibility-permission",
+        "automatic-input",
+        "target-observation"
+      ],
+      "input": "A disposable macOS test account/device has an explicitly authorized synthetic test app and a dedicated receiver with a fixed harmless marker.",
+      "action": "Run the supported automatic-input flow once and independently inspect receiver content.",
+      "expected": "Only after the host reports the required capability as available and the captured target still matches may the synthetic receiver observe the marker once. A host/IPC acknowledgement alone is not target-observation evidence.",
+      "observation": "Record macOS/build/architecture, synthetic target observation, capability category, and call count; do not alter the user's Accessibility setting.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 13,
+      "id": "t13-accessibility-authorization-denied-copy-only",
+      "category": [
+        "accessibility-permission",
+        "copy-only",
+        "search"
+      ],
+      "input": "The synthetic capability adapter reports Accessibility authorization denied while pasteboard copy/search are available.",
+      "action": "Search/select synthetic content, copy it, and attempt the automatic-input action once.",
+      "expected": "Copy and search remain usable; no automatic input is claimed or sent; the UI offers an authorization/settings route. Exact system prompt/settings wording is OPEN_QUESTION.",
+      "observation": "Record capability snapshot, search/copy outcomes, input count, and visible notice category without changing OS permission state.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 14,
+      "id": "t13-accessibility-authorization-unknown-or-unavailable",
+      "category": [
+        "accessibility-permission",
+        "capabilities",
+        "copy-only"
+      ],
+      "input": "The adapter reports unknown, temporarily unavailable, or unsupported Accessibility capability in distinct synthetic cases.",
+      "action": "Render each state and invoke only the explicitly available copy/search controls.",
+      "expected": "Unknown/unavailable permission is never treated as authorized; no automatic input occurs. The app presents a truthful capability state and preserves copy/search when supported. Whether to request permission automatically or only after user action remains OPEN_QUESTION.",
+      "observation": "Record synthetic status class, visible action availability, prompt/request call count, and input count.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 15,
+      "id": "t13-accessibility-revoked-during-paste-job",
+      "category": [
+        "accessibility-permission",
+        "cancellation",
+        "safety"
+      ],
+      "input": "A fake paste job is paused before input commit; capability changes from authorized to denied/unknown.",
+      "action": "Resume the job after the capability change and separately cancel it during a blocked focus step.",
+      "expected": "The job does not continue to input on stale permission/target state; cancellation control remains responsive. Already-issued asynchronous OS calls may not be reversible; no later action is scheduled after cancellation.",
+      "observation": "Record capability transition, cancellation latency, subsequent platform calls, and input count.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 16,
+      "id": "t13-copy-only-without-valid-target-or-accessibility",
+      "category": [
+        "copy-only",
+        "pasteboard",
+        "permissions"
+      ],
+      "input": "Synthetic text and image content with an invalid target or unavailable autoPaste capability, while pasteboard writing remains supported.",
+      "action": "Invoke explicit copy and one automatic-input attempt.",
+      "expected": "Clipboard copy remains available; automatic input is reported as unavailable/copied-only and is not retried. Exact user-facing wording and native result discriminant remain OPEN_QUESTION.",
+      "observation": "Record pasteboard change category, capability snapshot, panel state, copy/input counts, and visible result category.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 17,
+      "id": "t13-cancel-before-native-clipboard-commit",
+      "category": [
+        "cancellation",
+        "pasteboard",
+        "safety"
+      ],
+      "input": "A synthetic paste job is held before its pasteboard write commit point.",
+      "action": "Cancel and release the preparation barrier.",
+      "expected": "Accepted cancellation before commit produces no pasteboard write or input submission; no delayed callback later performs either side effect.",
+      "observation": "Record cancellation state/timing and pasteboard/input call counts.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 18,
+      "id": "t13-cancel-during-focus-and-native-wait",
+      "category": [
+        "cancellation",
+        "focus",
+        "process-lifecycle"
+      ],
+      "input": "A fake macOS focus/permission operation is held while its control path remains available. A future controlled Mac host uses a synthetic adapter barrier and disposable receiver; no user app is targeted.",
+      "action": "Cancel the job, release the blocked adapter call, and inspect native host control responsiveness separately from any already-issued OS call.",
+      "expected": "Cancellation ordering prevents any not-yet-issued restoration or input after acceptance. Do not assume the Windows helper ACK deadline applies to macOS. Native cancellation deadline, already-issued native-call interruption, and supervision mapping remain OPEN_QUESTION.",
+      "observation": "Record cancel latency, host availability, operation release order, and post-cancel calls; native timing is not accepted against a Windows helper deadline.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 19,
+      "id": "t13-cancel-after-input-commit-unknown-result-not-retried",
+      "category": [
+        "cancellation",
+        "idempotency",
+        "unknown-result"
+      ],
+      "input": "A fake job reaches its single input commit point, then its acknowledgement is lost; cancellation/reopen follows.",
+      "action": "Inspect the terminal state and replay the same user intent once through the fixture adapter.",
+      "expected": "The system does not claim cancellation rolled back a committed action and does not automatically duplicate an action with an unknown result. Exact macOS-specific terminal enum remains OPEN_QUESTION.",
+      "observation": "Record commit ordering, request/job identity, replay count, and side-effect count.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 20,
+      "id": "t13-notification-and-capture-queue-bounds",
+      "category": [
+        "pasteboard",
+        "queue",
+        "capacity",
+        "cancellation"
+      ],
+      "input": "Synthetic unique and duplicate changeCount notifications arrive while one capture worker is blocked; queue pressure is driven around the configured captureQueueItems limit.",
+      "action": "Release the worker, change the active count, and inspect queued jobs and cancellation behavior.",
+      "expected": "Configured queue and worker limits are not exceeded; duplicate/current-sequence work may be coalesced only as specified, and any overflow is visible rather than silently promising every transient clipboard change was retained. Exact overflow result mapping is OPEN_QUESTION.",
+      "observation": "Record queue depth, unique counts, worker concurrency, overflow counter, current generation, and accepted/rejected synthetic IDs.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 21,
+      "id": "t13-image-cache-hit-miss-and-ui-responsiveness",
+      "category": [
+        "image",
+        "cache",
+        "worker",
+        "ui-responsiveness"
+      ],
+      "input": "A deterministic synthetic image is tested as unchanged cache hit and as cache miss with a controllable decode barrier.",
+      "action": "Deliver duplicate changeCount notifications for the hit case; select the miss case while interacting with search/cancel controls.",
+      "expected": "Unchanged image re-encoding is zero per limits.performanceTargets.sameClipboardImageReencodes. Cache-miss decoding remains off the UI/control path and configured worker/cache-count limits are observed. Numeric imageWorkerPeakBytes acceptance remains OPEN_QUESTION until T09 freezes allocation categories and measurement method.",
+      "observation": "Record changeCount, cache hit/miss, encode/decode counts, worker concurrency, raw peak observation only if available, UI/control responsiveness signal, and cancel progress; never save pixels. Raw peak is not a PASS metric.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 22,
+      "id": "t13-panel-hidden-webview-reload-and-core-continuity",
+      "category": [
+        "ui-lifecycle",
+        "process-lifecycle",
+        "generation"
+      ],
+      "input": "A synthetic repository operation/event is pending while the panel is hidden or WebView is recreated; no live profile is attached.",
+      "action": "Hide/reopen the menu-bar panel and deliver delayed prior-generation events after the new generation starts.",
+      "expected": "Background core work remains independent of panel visibility; stale events do not overwrite current UI state or trigger another paste. Database crash durability is not claimed by this fixture.",
+      "observation": "Record host/core process state, generations, summary/event IDs, and side-effect counts only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 23,
+      "id": "t13-menu-bar-quit-and-shutdown-child-cleanup",
+      "category": [
+        "menu-bar",
+        "shutdown",
+        "process-lifecycle",
+        "safety"
+      ],
+      "input": "An isolated test host owns a synthetic idle worker and a separate cancellable pre-commit task.",
+      "action": "Exercise the declared menu-bar quit action and observe task cancellation and child cleanup.",
+      "expected": "After explicit quit, no delayed pasteboard/input action occurs and owned test children exit. Whether close hides to menu bar or quits is OPEN_QUESTION until a product rule is frozen.",
+      "observation": "Record process identities/exit states, cancellation class, and post-shutdown calls.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 24,
+      "id": "t13-capability-state-never-assumes-windows-success",
+      "category": [
+        "capabilities",
+        "platform-boundary",
+        "permissions"
+      ],
+      "input": "Synthetic capability snapshots cover ready, permission_required, unsupported, and temporarily_unavailable states on the macOS adapter.",
+      "action": "Render capability-driven UI and select a supported copy/search operation for each state.",
+      "expected": "UI follows reported capability rather than OS-name assumptions. A Windows mock/status or T11 pass cannot set macOS autoPaste, target, pasteboard, or display capability to ready.",
+      "observation": "Record adapter/platform identity, capability fields/status, enabled actions, and copy/input callback counts.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 25,
+      "id": "t13-static-signing-identity-entitlements-and-secret-hygiene",
+      "category": [
+        "release-static-check",
+        "signing",
+        "capabilities",
+        "secrets"
+      ],
+      "checkType": "static-artifact-metadata-review",
+      "input": "A future signed candidate's sanitized build manifest, entitlement inventory, bundle/architecture metadata, and CI secret-reference inventory; no artifact is created in this task.",
+      "action": "Review manifest-to-bundle identity consistency, declared entitlements against the accepted capability plan, signing identity reference, and repository/report secret hygiene.",
+      "expected": "The later review can trace which identity/entitlements signed the intended build and find no private signing credential in source or evidence. Team ID, bundle ID, minimum OS, architecture set, and entitlement allowlist are OPEN_QUESTION until release identity is approved.",
+      "observation": "Record sanitized artifact/build identifiers and boolean checks only; never include private keys or credential values.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 26,
+      "id": "t13-static-notarization-and-distribution-evidence-review",
+      "category": [
+        "release-static-check",
+        "notarization",
+        "distribution"
+      ],
+      "checkType": "static-release-evidence-review",
+      "input": "A future release evidence bundle containing build identity, notarization submission/result metadata, and artifact hash; no notarization is performed here.",
+      "action": "Verify that evidence refers to the same candidate artifact/build and that any required distribution status is explicitly recorded.",
+      "expected": "No macOS distribution/support claim is made without matching evidence for the actual candidate. Notarization channel, accepted status/ticket evidence, and exact rejection policy are OPEN_QUESTION.",
+      "observation": "Record evidence references, artifact hash match, and result presence/status without credentials or user content.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 27,
+      "id": "t13-static-update-integrity-and-version-compatibility-review",
+      "category": [
+        "release-static-check",
+        "update",
+        "integrity"
+      ],
+      "checkType": "static-update-manifest-review",
+      "input": "A future signed update manifest and candidate artifact metadata with synthetic previous/current version identifiers and hashes.",
+      "action": "Check version/architecture/artifact-hash references and the accepted signature-verification policy without downloading or installing an update.",
+      "expected": "A mismatched/unsigned metadata record is not treated as a valid update. Updater protocol, signing envelope, version-channel policy, and exact failure/error mapping are OPEN_QUESTION.",
+      "observation": "Record synthetic versions, architectures, hash-match/signature-check booleans, and review result; no artifacts are executed.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 28,
+      "id": "t13-static-binary-rollback-schema-and-feature-off-review",
+      "category": [
+        "release-static-check",
+        "rollback",
+        "schema-compatibility"
+      ],
+      "checkType": "static-rollback-compatibility-review",
+      "input": "A future previous/current desktop version compatibility matrix and synthetic schema versions; no database or app is downgraded.",
+      "action": "Review whether a binary rollback can run without asking an older binary to write an unsupported newer schema; inspect the planned autoPaste-off rollback switch.",
+      "expected": "Rollback preserves local data and does not rely on automatic reverse migration. If compatibility is not proven, the plan keeps affected features disabled and records the user-visible limitation; exact compatibility window and feature switch mapping are OPEN_QUESTION.",
+      "observation": "Record version/schema pairs, compatibility decision, feature-off indicator, and evidence links only.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 29,
+      "id": "t13-static-supported-macos-version-and-architecture-matrix",
+      "category": [
+        "release-static-check",
+        "platform-support",
+        "compatibility"
+      ],
+      "checkType": "static-support-matrix-review",
+      "input": "A future support matrix lists macOS versions, CPU architectures, and available controlled CI/device evidence.",
+      "action": "Compare each claimed supported row with a corresponding native capability/permission/signing/update evidence reference.",
+      "expected": "Unmeasured versions/architectures remain unsupported or explicitly unverified; no cross-platform result fills a macOS evidence gap. Minimum/current macOS versions, Intel/Apple Silicon support, and device availability are OPEN_QUESTION.",
+      "observation": "Record matrix row count, evidence references, and rows marked unverified; do not claim support from this static plan.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 30,
+      "id": "t13-candidate-matched-macos-update-rollback-smoke",
+      "category": [
+        "release-candidate",
+        "update",
+        "rollback",
+        "signing",
+        "notarization",
+        "schema-compatibility"
+      ],
+      "checkType": "gated-native-release-smoke",
+      "input": "Only after T11/T12 are accepted and release identity, notarization criteria, updater protocol, and schema compatibility are approved: a signed/notarized baseline and candidate artifact pair with matching hashes/schema matrix is used on a disposable macOS test account with synthetic local data.",
+      "action": "On a supported controlled Mac device, verify candidate identity and matching signature/notarization references, then exercise the approved upgrade and compatible rollback path using the disposable synthetic profile.",
+      "expected": "Only the candidate matching the approved artifact identity/signature/notarization record is exercised. Upgrade, data preservation, and rollback behavior follow the approved version/schema matrix; incompatible rollback is blocked or affected autoPaste remains off as that matrix specifies. Exact updater/error policy remains OPEN_QUESTION.",
+      "observation": "Record macOS/build/architecture, sanitized artifact hashes/identity references, versions, synthetic schema/data verification class, and result only; no credentials or user content.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 31,
+      "id": "t13-synthetic-clipboard-content-redacted-from-telemetry",
+      "category": [
+        "privacy",
+        "telemetry",
+        "crash-reporting",
+        "synthetic-canary"
+      ],
+      "input": "A synthetic text canary and tiny synthetic image are processed by the isolated fixture, followed by a synthetic error path; test-only telemetry and crash serialization sinks are captured locally.",
+      "action": "Inspect serialized test output for exact canary values and prohibited raw content; do not submit or upload reports.",
+      "expected": "Clipboard body, title, source, image, key/token, and unsanitized SQL parameters never appear in telemetry/crash output; allowed diagnostic output contains sanitized status/IDs only.",
+      "observation": "Record canary-found booleans and output categories/counts only; do not place canary values or raw report bodies in evidence.",
+      "status": "NOT_RUN"
+    }
+  ],
+  "releaseStaticCheckMatrix": [
+    {
+      "id": "signing-identity-entitlements-and-secret-reference",
+      "plannedCase": "t13-static-signing-identity-entitlements-and-secret-hygiene",
+      "status": "NOT_RUN",
+      "evidenceNeededLater": [
+        "candidate build identity",
+        "sanitized signing identity reference",
+        "entitlement inventory",
+        "CI secret-reference review"
+      ],
+      "openQuestion": "Team/bundle identity, architecture set, minimum OS, and entitlement allowlist are not frozen."
+    },
+    {
+      "id": "notarization-artifact-match-and-distribution-status",
+      "plannedCase": "t13-static-notarization-and-distribution-evidence-review",
+      "status": "NOT_RUN",
+      "evidenceNeededLater": [
+        "candidate artifact hash",
+        "matching notarization evidence reference",
+        "distribution channel decision"
+      ],
+      "openQuestion": "Notarization workflow/channel, evidence required for acceptance, and rejection handling are not frozen."
+    },
+    {
+      "id": "signed-update-integrity-and-version-policy",
+      "plannedCase": "t13-static-update-integrity-and-version-compatibility-review",
+      "status": "NOT_RUN",
+      "evidenceNeededLater": [
+        "synthetic update manifest review",
+        "signature/hash verification result",
+        "version/channel compatibility record"
+      ],
+      "openQuestion": "Updater protocol and exact signature/rollback failure mapping are not frozen."
+    },
+    {
+      "id": "binary-rollback-schema-window-and-auto-paste-off",
+      "plannedCase": "t13-static-binary-rollback-schema-and-feature-off-review",
+      "status": "NOT_RUN",
+      "evidenceNeededLater": [
+        "previous/current binary-schema matrix",
+        "data-preservation decision",
+        "autoPaste-off rollback control reference"
+      ],
+      "openQuestion": "Supported schema compatibility window and exact feature-off switch are not frozen."
+    },
+    {
+      "id": "macos-version-architecture-support-claims",
+      "plannedCase": "t13-static-supported-macos-version-and-architecture-matrix",
+      "status": "NOT_RUN",
+      "evidenceNeededLater": [
+        "declared macOS version/architecture matrix",
+        "per-row native-device evidence references"
+      ],
+      "openQuestion": "Minimum/current supported macOS versions, CPU architectures, and test hardware/CI availability are not frozen."
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "supported-macos-versions-architectures-and-ci-devices",
+      "status": "OPEN_QUESTION",
+      "reason": "The task does not freeze a minimum macOS version, architecture support, or available signing/notarization test environment. Each claimed platform row will need its own native evidence."
+    },
+    {
+      "id": "accessibility-permission-detection-and-copy-only-mapping",
+      "status": "OPEN_QUESTION",
+      "reason": "The need for Accessibility authorization and copy/search fallback are specified, but the exact allowed/denied/unknown detection mapping, permission transition handling, status/result enum, and user-facing authorization text are not."
+    },
+    {
+      "id": "macos-target-identity-and-multidisplay-selection",
+      "status": "OPEN_QUESTION",
+      "reason": "The implementation must use public macOS target/application capabilities, but exact identity lifetime/revalidation, minimized-app restoration, safe-area/menu-bar placement, and display-selection policy are not frozen. Windows HWND and monitor rules are not substitutes."
+    },
+    {
+      "id": "pasteboard-notification-retry-and-terminal-enums",
+      "status": "OPEN_QUESTION",
+      "reason": "pasteboard.changeCount is the change signal and reads must be bounded, but duplicate notification coalescing, delayed-rendered retry count, overflow behavior, and exact terminal error mapping need a frozen contract."
+    },
+    {
+      "id": "menu-bar-startup-and-hotkey-conflict-policy",
+      "status": "OPEN_QUESTION",
+      "reason": "The task calls for menu-bar/status-item, startup, and hotkey conflict coverage; precise activation/menu semantics, login-item opt-in/permission flow, conflict resolution, and user-facing copy are not specified."
+    },
+    {
+      "id": "signing-notarization-update-rollback-thresholds",
+      "status": "OPEN_QUESTION",
+      "reason": "The release plan requires macOS signing/notarization and upgrade/rollback compatibility, but identity/entitlements, notarization evidence rules, updater signature protocol, supported schema window, and release acceptance thresholds are not frozen."
+    },
+    {
+      "id": "macos-permission-pasteboard-and-display-error-copy",
+      "status": "OPEN_QUESTION",
+      "reason": "No exact macOS permission/help copy or native failure reason strings are specified. Do not reuse Windows UIPI or focus-denial explanations."
+    },
+    {
+      "id": "macos-native-cancellation-deadline-and-interruption",
+      "status": "OPEN_QUESTION",
+      "reason": "The shared cancellation ordering/safety outcomes are reusable, but the Windows helper ACK deadline and worker-supervision implementation must not be assumed to govern macOS native API calls. Freeze the macOS host deadline, interruption limits for already-issued calls, and unavailable/recovery mapping before native cancellation acceptance."
+    },
+    {
+      "id": "image-worker-peak-memory-accounting",
+      "status": "OPEN_QUESTION",
+      "reason": "T09 progress leaves imageWorkerPeakBytes allocation categories and measurement method unfrozen. T13 may observe a raw peak, but cannot assert numeric peak acceptance until that cross-task accounting contract is frozen."
+    }
+  ],
+  "requiredNotRunGates": [
+    {
+      "id": "T11-T12-accepted",
+      "status": "NOT_RUN",
+      "reason": "T13 depends on both T11 and T12; both are currently not_started, so native implementation, build, and platform behavior remain gated."
+    },
+    {
+      "id": "macos-pasteboard-target-permission-and-ui-behavior",
+      "status": "NOT_RUN",
+      "reason": "No macOS pasteboard, target identity, Accessibility, menu-bar, startup, shortcut, display, cancellation, queue, cache, or UI responsiveness operation has been performed."
+    },
+    {
+      "id": "macos-signing-notarization-update-and-rollback",
+      "status": "NOT_RUN",
+      "reason": "No binary was built, signed, notarized, installed, updated, or rolled back. The release matrix above is planning only."
+    },
+    {
+      "id": "supported-macos-version-and-device-evidence",
+      "status": "NOT_RUN",
+      "reason": "No native Mac device/CI platform was exercised and the support matrix is not frozen. Windows behavior is not used as evidence for macOS."
+    }
+  ],
+  "plannedValidationCommands": [],
+  "executionSafety": {
+    "productionFilesChanged": false,
+    "contractsOrGeneratedFilesChanged": false,
+    "liveProfileOrClipboardRead": false,
+    "realMacPermissionChanged": false,
+    "signingOrNotarizationRun": false,
+    "appBuiltInstalledUpdatedOrRolledBack": false,
+    "nativeBehaviorTestsRun": false,
+    "userContentOrCredentialLogged": false,
+    "windowsResultsUsedAsMacAcceptance": false
+  },
+  "acceptanceReminder": "Every native behavior and release-check case is NOT_RUN. Keep T13 not_started until T11/T12 are accepted, OPEN_QUESTION items are resolved as needed, macOS-version-specific controlled-device evidence exists for each claimed capability, signing/notarization/update/rollback evidence matches the candidate artifacts, and required review is complete.",
+  "acceptanceGateMatrix": [
+    {
+      "id": "native-pasteboard-changeCount",
+      "requiredPlatform": "macOS",
+      "plannedCaseIds": [
+        "t13-pasteboard-duplicate-notification-same-change-count",
+        "t13-pasteboard-new-change-count-captures-new-version",
+        "t13-pasteboard-count-changes-during-delayed-read",
+        "t13-pasteboard-delayed-rendered-read-retry-boundary"
+      ],
+      "futureFixture": "Disposable macOS test account, synthetic pasteboard writer, native changeCount observation; no user clipboard",
+      "status": "NOT_RUN",
+      "openPolicy": "Duplicate coalescing, retry/deadline and terminal mapping remain OPEN_QUESTION."
+    },
+    {
+      "id": "native-target-identity-and-minimized-app",
+      "requiredPlatform": "macOS",
+      "plannedCaseIds": [
+        "t13-target-identity-captured-with-public-macos-capability",
+        "t13-target-identity-invalidated-before-action",
+        "t13-minimized-target-restoration-on-macos"
+      ],
+      "futureFixture": "Dedicated synthetic receiver and public macOS target capability on a disposable test account",
+      "status": "NOT_RUN",
+      "openPolicy": "Native identity fields/lifetime and restoration policy remain OPEN_QUESTION."
+    },
+    {
+      "id": "native-two-display-panel",
+      "requiredPlatform": "macOS",
+      "plannedCaseIds": [
+        "t13-multidisplay-menu-panel-safe-area"
+      ],
+      "futureFixture": "Controlled macOS device with two connected displays; inspect native panel bounds and operability",
+      "status": "NOT_RUN",
+      "openPolicy": "Display selection, mixed-scale and safe-area rules remain OPEN_QUESTION."
+    },
+    {
+      "id": "native-menu-bar-startup-lifecycle",
+      "requiredPlatform": "macOS",
+      "plannedCaseIds": [
+        "t13-menu-bar-item-hide-show-keeps-core-process",
+        "t13-login-startup-enabled-and-disabled-capability",
+        "t13-menu-bar-quit-and-shutdown-child-cleanup",
+        "t13-panel-hidden-webview-reload-and-core-continuity"
+      ],
+      "futureFixture": "Actual macOS status item and disposable test-account login-item/lifecycle observation with synthetic work",
+      "status": "NOT_RUN",
+      "openPolicy": "Menu labels, close-vs-hide and startup opt-in behavior remain OPEN_QUESTION."
+    },
+    {
+      "id": "native-global-hotkey-conflict",
+      "requiredPlatform": "macOS",
+      "plannedCaseIds": [
+        "t13-global-hotkey-conflict-degrades-without-stealing"
+      ],
+      "futureFixture": "Second disposable test process reserves only a test-only shortcut; never contend with user shortcuts",
+      "status": "NOT_RUN",
+      "openPolicy": "Native reason mapping and recovery wording remain OPEN_QUESTION."
+    },
+    {
+      "id": "native-accessibility-and-copy-only",
+      "requiredPlatform": "macOS",
+      "plannedCaseIds": [
+        "t13-accessibility-authorization-allowed",
+        "t13-accessibility-authorization-denied-copy-only",
+        "t13-accessibility-authorization-unknown-or-unavailable",
+        "t13-accessibility-revoked-during-paste-job",
+        "t13-copy-only-without-valid-target-or-accessibility"
+      ],
+      "futureFixture": "Dedicated receiver on a disposable account; denied state pre-provisioned; do not alter user permission settings",
+      "status": "NOT_RUN",
+      "openPolicy": "Detection, transition provisioning, exact error mapping and authorization copy remain OPEN_QUESTION."
+    },
+    {
+      "id": "native-cancel-queue-cache-ui",
+      "requiredPlatform": "macOS",
+      "plannedCaseIds": [
+        "t13-cancel-before-native-clipboard-commit",
+        "t13-cancel-during-focus-and-native-wait",
+        "t13-cancel-after-input-commit-unknown-result-not-retried",
+        "t13-notification-and-capture-queue-bounds",
+        "t13-image-cache-hit-miss-and-ui-responsiveness"
+      ],
+      "futureFixture": "Mac-hosted synthetic adapter barriers and synthetic content; observe UI/control path and side-effect counts",
+      "status": "NOT_RUN",
+      "openPolicy": "Mac cancellation deadline/recovery and T09 imageWorkerPeakBytes measurement remain OPEN_QUESTION."
+    },
+    {
+      "id": "native-release-candidate-update-rollback",
+      "requiredPlatform": "macOS",
+      "plannedCaseIds": [
+        "t13-static-signing-identity-entitlements-and-secret-hygiene",
+        "t13-static-notarization-and-distribution-evidence-review",
+        "t13-static-update-integrity-and-version-compatibility-review",
+        "t13-static-binary-rollback-schema-and-feature-off-review",
+        "t13-static-supported-macos-version-and-architecture-matrix",
+        "t13-candidate-matched-macos-update-rollback-smoke"
+      ],
+      "futureFixture": "Candidate-matched signed/notarized baseline and update on disposable synthetic profile after release rules are approved",
+      "status": "NOT_RUN",
+      "openPolicy": "Identity, notarization evidence, updater policy and schema window remain OPEN_QUESTION."
+    },
+    {
+      "id": "synthetic-telemetry-crash-redaction",
+      "requiredPlatform": "cross-platform-synthetic",
+      "plannedCaseIds": [
+        "t13-synthetic-clipboard-content-redacted-from-telemetry"
+      ],
+      "futureFixture": "Local test-only telemetry/crash sinks with synthetic canaries; never upload reports",
+      "status": "NOT_RUN",
+      "openPolicy": "Exact diagnostic allowlist remains bounded by 08 §6 and approved schemas."
+    }
+  ]
+}

@@ -1,0 +1,520 @@
+{
+  "schemaVersion": 1,
+  "task": "T22",
+  "status": "planned-not-executed",
+  "purpose": "Synthetic fixture/interface preparation for mobile SQLCipher and local repository only; no implementation or behavior is established.",
+  "dependencyGate": "wait_for_T06_T07_accepted",
+  "dependencyGateDetails": {
+    "requiredTasks": [
+      "T06",
+      "T07"
+    ],
+    "requiredStatus": "accepted",
+    "observedProgressStatuses": {
+      "T06": "in_progress",
+      "T07": "not_started"
+    },
+    "source": "docs/progress.json#/tasks",
+    "rule": "Until both dependencies are accepted, only synthetic fixture/interface preparation is allowed. Do not modify production code, create dependencies/lockfiles, connect fake-success services, or run native/repository behavior."
+  },
+  "sources": [
+    {
+      "path": "docs/spec/tasks/T22.md",
+      "sections": [
+        "dependencies",
+        "subtasks",
+        "completion criteria",
+        "validation commands"
+      ]
+    },
+    {
+      "path": "docs/spec/02-architecture.md",
+      "sections": [
+        "§1 mobile stack and Expo development build",
+        "§5 query semantics",
+        "§6 SQLCipher BLOB/transaction boundary",
+        "§7 platform capabilities",
+        "§8 engineering environment"
+      ]
+    },
+    {
+      "path": "docs/spec/03-data-sync-and-security.md",
+      "sections": [
+        "§5.4 localDBKey, OS vault, SQLCipher, Web/native boundaries",
+        "§5.5 recovery, reinstall and backup",
+        "§6 repository transaction/outbox",
+        "§9 local error categories",
+        "§10 S27 local gate",
+        "§11 T22 dependency boundary"
+      ]
+    },
+    {
+      "path": "docs/spec/01-product-and-ux.md",
+      "sections": [
+        "§2.3 settings/capacity/privacy",
+        "§5 locked/offline/quota/error states",
+        "§7 mobile active-share entry boundary"
+      ]
+    },
+    {
+      "path": "docs/spec/limits.v1.json",
+      "fields": [
+        "local.totalBytes",
+        "local.decodedImageCacheBytes",
+        "concurrency.databaseWriters",
+        "cloud.outboxHardLimitBytes"
+      ]
+    }
+  ],
+  "fixturePolicy": {
+    "syntheticDataOnly": true,
+    "fixedSeed": "clipnest-t22-local-store-fixed-seed-20261004",
+    "profiles": [
+      "anonymous-profile",
+      "account-A-profile",
+      "account-B-profile"
+    ],
+    "secretHandling": "Use opaque non-secret handles and canary categories only. Never include localDBKey, credentials, content or SQL parameters in evidence.",
+    "neverUse": [
+      "live user profile/database/clipboard",
+      "real account, cloud/service, backup or OS vault",
+      "Expo Go/native build/device operation",
+      "ordinary SQLite fallback or fake-success repository"
+    ],
+    "expectedResults": "Assert operation order, zero-write failure boundaries, preservation of existing DB/WAL/SHM/attachments/drafts, profile isolation and observable state. Use injected capacity counters; do not invent T07 accounting.",
+    "statusMeaning": "NOT_RUN means no SQLCipher native, vault, repository, query, backup, reinstall or mobile behavior was verified."
+  },
+  "interfacePreparation": {
+    "creationOrder": "Generate a 32-byte localDBKey with Expo Crypto CSPRNG and a random localDbId; write/read back CN-LDB1.<profileId>.<localDbId>; on the SQLCipher connection require nonempty cipher_version, then set the key, then read schema and initialize. Never report success before schema transaction commit.",
+    "keyBoundary": "localDBKey is a 32-byte profile/database-scoped CSPRNG value and independent of login/auth/device/workspace/CNREC1 key material; vault entry is CN-LDB1.<profileId>.<localDbId> and stores only small key/version metadata, not a full key-ring JSON.",
+    "persistenceBoundary": "Main DB, WAL/SHM/temp and attachments remain recovery evidence on failure. Native BLOB/WAL canary checks require real linked SQLCipher builds later; fixtures do not claim this was validated.",
+    "capacityBoundary": "limits.local.totalBytes is 524288000 as a planning default; T07 exact durable-byte accounting and any unfrozen boundary/charge are OPEN_QUESTION. Use injected counters only.",
+    "nativeBoundary": "iOS uses Expo SecureStore/Keychain with WHEN_UNLOCKED_THIS_DEVICE_ONLY and requireAuthentication=false; Android uses asynchronous Expo SecureStore backed by Android Keystore. Both require native-specific backup/reinstall evidence; Android excludes SecureStore and nonportable local DB artifacts from backup. Expo Go does not satisfy native SQLCipher evidence."
+  },
+  "fixtureCaseCount": 20,
+  "fixtureCases": [
+    {
+      "caseNumber": 1,
+      "id": "t22-vault-roundtrip-before-sqlcipher-create",
+      "source": "03-§5.4/T22-a",
+      "category": [
+        "key-vault",
+        "creation-order"
+      ],
+      "input": "Synthetic new profile/localDbId and non-secret metadata recording Expo Crypto CSPRNG source and 32-byte output length; vault adapter returns a stored opaque key handle. No key bytes are present.",
+      "action": "Request profile creation through an isolated interface fixture.",
+      "expected": "Generate a 32-byte localDBKey with Expo Crypto CSPRNG; store and read back the small entry named CN-LDB1.<profileId>.<localDbId> before DB/schema creation. On SQLCipher connection, require nonempty cipher_version, then set key, then read schema; no success before schema transaction commit.",
+      "observation": "Non-secret profile/localDbId and entry-name labels, CSPRNG source/length, event order (vault write/readback, cipher_version, set-key, schema read/commit), DB-create count; no key bytes.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 2,
+      "id": "t22-vault-write-denied-creates-no-db",
+      "source": "03-§5.4",
+      "category": [
+        "permission",
+        "key-vault",
+        "zero-write"
+      ],
+      "input": "New synthetic profile and vault write adapter returning permission denied.",
+      "action": "Attempt profile initialization.",
+      "expected": "Return frozen LOCAL_KEY_UNAVAILABLE; do not create DB/schema or report success, and preserve unrelated profiles. Exact OS reason detail and user-facing copy remain OPEN_QUESTION.",
+      "observation": "Frozen error category, OS outcome class only, DB/schema write counts, prior profile IDs; no raw OS secret or key bytes.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 3,
+      "id": "t22-vault-readback-mismatch-blocks-create",
+      "source": "03-§5.4",
+      "category": [
+        "key-vault",
+        "integrity"
+      ],
+      "input": "Vault write appears successful but synthetic readback handle/version mismatches.",
+      "action": "Continue initialization request.",
+      "expected": "Return frozen LOCAL_KEY_UNAVAILABLE for vault readback failure/mismatch; do not create/open DB with an unverified key or emit ready state. Exact OS cause and user-facing copy remain OPEN_QUESTION.",
+      "observation": "Vault write/readback version labels, frozen error category, OS outcome class only, DB open/create count, success event count.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 4,
+      "id": "t22-sqlcipher-unavailable-zero-writes-no-fallback",
+      "source": "03-§5.4/T22-a",
+      "category": [
+        "sqlcipher",
+        "configuration",
+        "zero-write"
+      ],
+      "input": "Synthetic native adapter reports empty cipher_version before schema access.",
+      "action": "Attempt database initialization.",
+      "expected": "Return SQLCIPHER_UNAVAILABLE with zero DB/schema writes; never continue as ordinary SQLite.",
+      "observation": "cipher_version-present flag, write counts, fallback attempt count, result code.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 5,
+      "id": "t22-existing-db-wrong-key-preserves-source",
+      "source": "03-§5.4/S27",
+      "category": [
+        "wrong-key",
+        "recovery",
+        "data-retention"
+      ],
+      "input": "Synthetic existing encrypted database, WAL/SHM and referenced attachment IDs; key handle cannot open it.",
+      "action": "Attempt open with wrong synthetic key handle.",
+      "expected": "Return LOCAL_DB_UNLOCK_FAILED; preserve original DB/WAL/SHM/attachments and diagnostic identity; do not reset/recreate/fallback.",
+      "observation": "Pre/post file identity/hash labels and attachment IDs; no file contents.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 6,
+      "id": "t22-existing-db-key-missing-does-not-rekey-or-reset",
+      "source": "03-§5.4/S27",
+      "category": [
+        "missing-key",
+        "recovery",
+        "data-retention"
+      ],
+      "input": "Synthetic existing DB/WAL/SHM/attachment set but vault lookup has no matching key.",
+      "action": "Open the profile and inspect recovery options.",
+      "expected": "Return LOCAL_KEY_MISSING; do not generate replacement key for same path, overwrite, create empty DB, or use ordinary SQLite; preserve evidence.",
+      "observation": "Vault lookup class, file identity labels, create/rekey/write counts.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 7,
+      "id": "t22-vault-screen-lock-pauses-without-data-loss",
+      "source": "03-§5.4",
+      "category": [
+        "lock",
+        "permission",
+        "recovery"
+      ],
+      "input": "Existing synthetic profile with OS vault state temporarily unavailable/screen locked.",
+      "action": "Request open, wait, then simulate vault becoming available.",
+      "expected": "Pause/wait for foreground unlock without treating data as lost, deleting files, or resolving through account-login refresh; distinguish cloud lock from local-vault unavailability. A terminal local-vault-unavailable result uses frozen LOCAL_KEY_UNAVAILABLE; exact OS reason detail and waiting-screen copy remain OPEN_QUESTION.",
+      "observation": "Local-vault/cloud-lock state, frozen error category if returned, pending-open state, file identity, request counts; no invented OS reason code.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 8,
+      "id": "t22-vault-permission-denied-retains-old-profile",
+      "source": "03-§5.4",
+      "category": [
+        "permission",
+        "recovery",
+        "data-retention"
+      ],
+      "input": "Existing profile and vault handle; synthetic OS permission denial on key retrieval.",
+      "action": "Attempt open and inspect local-only access/status.",
+      "expected": "Return frozen LOCAL_KEY_UNAVAILABLE; keep existing DB/WAL/attachments unchanged and do not report open/success. Exact OS permission cause and user-facing copy remain OPEN_QUESTION.",
+      "observation": "Frozen error category, OS outcome class only, file identity labels, success/read counts.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 9,
+      "id": "t22-cancel-or-crash-between-vault-and-db-creation",
+      "source": "03-§5.4/S27",
+      "category": [
+        "cancellation",
+        "creation",
+        "recovery"
+      ],
+      "input": "Synthetic create flow with barriers after vault write/readback and during first schema transaction.",
+      "action": "Cancel or inject interruption at each barrier; resume with the same synthetic profile.",
+      "expected": "Never overwrite an older profile or report initialized DB before commit; preserve any pre-existing data. Orphan vault-entry cleanup after cancellation is OPEN_QUESTION; no automatic key deletion is assumed.",
+      "observation": "Barrier, vault entry/profile IDs, DB schema commit flag, old file identity.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 10,
+      "id": "t22-anonymous-and-account-profiles-use-isolated-db-identities",
+      "source": "03-§5.4/§6",
+      "category": [
+        "profile-isolation",
+        "namespace"
+      ],
+      "input": "Synthetic anonymous, account-A, and account-B profiles with separate profileId/localDbId and opaque non-secret key handles.",
+      "action": "Open/switch/close profiles and query synthetic IDs.",
+      "expected": "Each profile uses only its own DB/key handle/namespace; account switch never opens prior account outbox under the new account; logout does not destroy anonymous profile key.",
+      "observation": "Profile/localDbId/handle labels, visible IDs, open/close counts.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 11,
+      "id": "t22-localdbkey-not-derived-or-written-to-unsafe-stores",
+      "source": "03-§5.4",
+      "category": [
+        "key-isolation",
+        "privacy",
+        "telemetry"
+      ],
+      "input": "Synthetic category canaries for login password, auth token, device credential, workspace root, CNREC1 secret, key-shaped data, logs and app storage.",
+      "action": "Trace only isolated adapter/logger/storage metadata categories for key creation/use.",
+      "expected": "localDBKey is independent of listed credentials/cloud secrets and is absent from env/log/analytics/crash/AsyncStorage/localStorage/SQL trace; no literal secret is recorded.",
+      "observation": "Canary category counts and storage surface names only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 12,
+      "id": "t22-sqlcipher-blob-wal-temp-have-no-plaintext-canary",
+      "source": "02-§6/03-§5.4/S27",
+      "category": [
+        "sqlcipher",
+        "blob",
+        "wal",
+        "privacy"
+      ],
+      "input": "Synthetic body/original/thumb canaries through future SQLCipher BLOB object path with crash/temp barriers.",
+      "action": "Plan inspection of the DB, WAL/SHM/temp/staging test surfaces after committed and interrupted synthetic writes.",
+      "expected": "No plaintext canary in DB/WAL/SHM/temp or external plaintext attachment; owned body/media remain in SQLCipher BLOB objects; SQL key invocation is absent from SQL trace. This is a future native verification, not a claim.",
+      "observation": "Canary category detections, file classes, BLOB/ref IDs, SQL-trace category; never copy canary.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 13,
+      "id": "t22-object-reference-record-outbox-transaction-is-atomic",
+      "source": "03-§6",
+      "category": [
+        "repository",
+        "transaction",
+        "outbox"
+      ],
+      "input": "Synthetic object/object_ref, materialized record, draft and outbox op prepared before one repository transaction.",
+      "action": "Exercise success and injected abort points in an isolated repository fixture.",
+      "expected": "Success commits related rows together; any abort exposes no partial committed graph and no success event; no plaintext attachment sidecar.",
+      "observation": "Synthetic row IDs by class, commit/rollback, file creation count, success event.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 14,
+      "id": "t22-quota-rejection-retains-protected-items-and-draft",
+      "source": "03-§6/§9/S12",
+      "category": [
+        "capacity",
+        "quota",
+        "draft-retention"
+      ],
+      "input": "Injected synthetic local-budget-full condition with saved/pinned item, pending draft and outbox already committed.",
+      "action": "Attempt one additional mutation.",
+      "expected": "Block new mutation as permitted; preserve protected item/draft/outbox; expose recovery affordance without silent deletion/scope change. Exact byte charge and boundary are OPEN_QUESTION.",
+      "observation": "Injected counters, IDs/hashes, result category, success/write counts.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 15,
+      "id": "t22-outbox-crash-recovery-and-receipt-clearing",
+      "source": "03-§6",
+      "category": [
+        "outbox",
+        "recovery",
+        "wire-immutability"
+      ],
+      "input": "Synthetic persisted SENDING op with fixed opId/wire hash and no local receipt; separate ACKED fixture with recorded receipt/revision/seq.",
+      "action": "Simulate crash/reopen, then separately apply committed receipt.",
+      "expected": "SENDING recovers READY with identical wire; ACKED clears only after receipt/revision/seq commit; attachment-dependent draft waits in WAIT_DEPENDENCY.",
+      "observation": "State transitions, opId/hash equality, receipt flag, dependency state.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 16,
+      "id": "t22-repository-query-uses-local-profile-and-frozen-search-semantics",
+      "source": "02-§5/§8",
+      "category": [
+        "query",
+        "repository",
+        "privacy"
+      ],
+      "input": "Synthetic local rows for Unicode NFKC/case-insensitive/Chinese substring and filter combinations in one profile; unrelated profiles have distinct rows.",
+      "action": "Query and paginate through repository interface; cancel a staged query.",
+      "expected": "Results follow frozen local search semantics and active profile only; sort by (capturedAt or updatedAt DESC, id DESC). Cursor carries sort values and query fingerprint; query change invalidates an older cursor and cancellation cannot replace current generation. No body enters telemetry. Exact return/error mapping remains OPEN_QUESTION.",
+      "observation": "Synthetic IDs/order/filter categories, cursor query fingerprint, generation/cancellation event, telemetry category counts.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 17,
+      "id": "t22-cnrec1-does-not-unlock-localdbkey-or-local-only-profile",
+      "source": "03-§5.5/S27",
+      "category": [
+        "recovery",
+        "scope",
+        "privacy"
+      ],
+      "input": "Synthetic profile lacks localDBKey; fixture separately marks CNREC1 available and some content cloud-committed versus local-only/pending.",
+      "action": "Attempt local DB open and model cloud-keyring recovery eligibility without contacting a service.",
+      "expected": "CNREC1 does not open the local database or recover localDBKey; only already-cloud-committed data is within cloud recovery boundary; local-only/pending content is not reported recovered.",
+      "observation": "Synthetic content-scope labels, local-open result class, no service call.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 18,
+      "id": "t22-android-backup-uninstall-does-not-claim-key-restored",
+      "source": "02-§1/03-§5.4/§5.5/S27",
+      "category": [
+        "android",
+        "backup",
+        "reinstall",
+        "recovery"
+      ],
+      "input": "Synthetic Android backup-policy descriptor and local data without a portable restore chain: SecureStore material plus DB/WAL/SHM/attachments are marked for exclusion; restore outcomes are fixture data only.",
+      "action": "Inspect Android asynchronous SecureStore/Keystore use and backup-exclusion policy for SecureStore plus nonportable DB/WAL/SHM/attachments, then model an unavailable-key restore branch.",
+      "expected": "Use asynchronous SecureStore backed by Android Keystore; backup configuration excludes SecureStore and data without a portable recovery path (DB/WAL/SHM/attachments). Do not mark the database recoverable or claim local-only data was restored/unlocked. Preserve any old DB evidence encountered and use only an approved recovery/new isolated localDbId path.",
+      "observation": "Configured exclusion categories, DB identity, key availability, recoverability-claim flag; no real backup.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 19,
+      "id": "t22-ios-reinstall-keychain-retention-is-not-guaranteed",
+      "source": "03-§5.4/§5.5/S27",
+      "category": [
+        "ios",
+        "reinstall",
+        "keychain",
+        "recovery"
+      ],
+      "input": "Two synthetic reinstall branches for same bundle ID: keychain entry present and absent.",
+      "action": "Attempt local open and separately inspect cloud-auth/device-authorization state.",
+      "expected": "Use the frozen iOS SecureStore/Keychain policy WHEN_UNLOCKED_THIS_DEVICE_ONLY with requireAuthentication=false and a small key entry. Do not promise reinstall erased or preserved the Keychain key; retained credentials cannot bypass account login/new-device authorization.",
+      "observation": "Synthetic policy attributes, branch, vault result, local DB identity, authorization state; no real device.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 20,
+      "id": "t22-portable-backup-and-key-rotation-remain-gated",
+      "source": "03-§5.5/§6",
+      "category": [
+        "backup",
+        "migration",
+        "open-question"
+      ],
+      "input": "Synthetic SQLCipher DB with WAL and a pending draft; proposed raw-file copy/rekey path represented as fixture choices.",
+      "action": "Inspect allowed recovery choices without executing export or rekey.",
+      "expected": "Do not call copying a live DB/DPAPI/Keystore package portable backup; key/format change requires reviewed backup plus atomic migration; T29 explicit export remains separate and not implemented here.",
+      "observation": "Choice categories and source DB identity; no file copy or key rotation.",
+      "status": "NOT_RUN"
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "T07-local-total-bytes-accounting",
+      "status": "OPEN_QUESTION",
+      "reason": "The local.totalBytes planning default exists, but exact durable-byte formula and treatment of DB pages, WAL/SHM, temp data, attachments and shared references are not frozen; no charge formula is asserted."
+    },
+    {
+      "id": "T06-mobile-toolchain-native-configuration",
+      "status": "OPEN_QUESTION",
+      "reason": "T06 package/version/contract readiness and Expo native SQLCipher configuration are unaccepted; no dependency install, lockfile change or native build is performed."
+    },
+    {
+      "id": "vault-permission-error-and-cancellation-mapping",
+      "status": "OPEN_QUESTION",
+      "reason": "Local error classes are listed in 03, but exact platform permission, cancellation, interrupted-create cleanup and user-facing recovery mapping require accepted contracts."
+    },
+    {
+      "id": "android-ios-backup-and-reinstall-results",
+      "status": "OPEN_QUESTION",
+      "reason": "Android SecureStore backup exclusion and iOS Keychain reinstall retention need separate real development-build/device evidence; synthetic cases cannot close them."
+    },
+    {
+      "id": "rekey-and-schema-migration-atomicity",
+      "status": "OPEN_QUESTION",
+      "reason": "03 requires a reviewed backup and atomic migration for key/SQLCipher format changes; exact rekey/migration procedure is not specified for this fixture-only task."
+    },
+    {
+      "id": "repository-query-error-and-cancellation-shape",
+      "status": "OPEN_QUESTION",
+      "reason": "Exact repository query error/cancel return mapping and UI copy remain unaccepted; scenarios check visible results and state only."
+    },
+    {
+      "id": "portable-local-only-export",
+      "status": "OPEN_QUESTION",
+      "reason": "Portable export/import belongs to T29; neither copying DB/OS vault packages nor CNREC1 is treated as a localDBKey backup."
+    }
+  ],
+  "acceptanceChecks": [
+    {
+      "id": "local-key-vault-readback-before-sqlcipher-schema",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "sqlcipher-linkage-wrong-key-and-zero-write-fallback",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "existing-database-wal-shm-attachment-preservation",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "profile-key-namespace-and-unsafe-store-isolation",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "encrypted-blob-wal-temp-canary-and-transaction-atomicity",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "outbox-query-error-cancel-and-capacity-retention",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "android-ios-backup-reinstall-vault-boundaries",
+      "status": "NOT_RUN"
+    }
+  ],
+  "requiredNotRunGates": [
+    {
+      "id": "T06-and-T07-accepted",
+      "status": "NOT_RUN",
+      "reason": "T06 is in_progress and T07 is not_started in docs/progress.json; production/native/repository work remains gated."
+    },
+    {
+      "id": "all-20-synthetic-fixture-cases",
+      "status": "NOT_RUN",
+      "reason": "Planning only; no SQLCipher, vault, repository, query, backup, reinstall or native behavior was run."
+    },
+    {
+      "id": "mobile-typecheck-install-check-repository-tests",
+      "status": "NOT_RUN",
+      "reason": "Task commands are recorded only; no package install, typecheck, Expo check, test or build is run."
+    },
+    {
+      "id": "real-android-ios-development-build-and-backup-gates",
+      "status": "NOT_RUN",
+      "reason": "No Expo Go, development build, physical device, OS vault, backup/restore or uninstall/reinstall behavior was exercised."
+    },
+    {
+      "id": "T07-capacity-formula-and-independent-review",
+      "status": "NOT_RUN",
+      "reason": "T07 local.totalBytes formula and high-risk independent final review remain open."
+    }
+  ],
+  "plannedValidationCommands": [
+    {
+      "command": "pnpm --filter @clipnest/mobile typecheck",
+      "status": "NOT_RUN",
+      "gate": "Wait for T06/T07 acceptance and mobile toolchain readiness."
+    },
+    {
+      "command": "pnpm --filter @clipnest/mobile exec expo install --check",
+      "status": "NOT_RUN",
+      "gate": "Wait for T06/T07 acceptance and selected Expo SDK/runtime."
+    },
+    {
+      "command": "pnpm --filter @clipnest/mobile test repository",
+      "status": "NOT_RUN",
+      "gate": "Wait for T06/T07 acceptance and repository test harness readiness."
+    }
+  ],
+  "executionSafety": {
+    "productionFilesChanged": false,
+    "sourceCodeChanged": false,
+    "dependenciesOrLockfilesChanged": false,
+    "liveProfileRead": false,
+    "realAccountOrServiceUsed": false,
+    "realDatabaseUsed": false,
+    "realNativeBuildOrDeviceUsed": false,
+    "testsBuildOrBehaviorRun": false,
+    "userDataLogged": false
+  },
+  "acceptanceReminder": "All 20 fixtures, acceptance checks, and commands remain NOT_RUN. Keep T22 not_started until T06 and T07 are accepted, T07 capacity accounting is resolved, native SQLCipher/vault behavior is verified separately on Android and iOS, and independent review is complete."
+}

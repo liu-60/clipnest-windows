@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "T06-a1",
+  "result": "in_progress-workspace-identity-only",
+  "recordedDate": "2026-10-04",
+  "worktree": {
+    "path": "D:/ClipNest-work/v2",
+    "branch": "codex/v2-clipboard",
+    "head": "91cafd765b9480e011647c9d8cd2976269f12aef",
+    "preflight": "docs/evidence/T06/preflight.json",
+    "fixturePlan": "tests/tasks/T06/fixture-plan.json"
+  },
+  "implementation": {
+    "handwrittenProductionOrConfigFiles": [
+      "pnpm-workspace.yaml",
+      "Cargo.toml",
+      "rust-toolchain.toml",
+      "packages/contracts/package.json"
+    ],
+    "rootPackageJsonChanged": false,
+    "electronL0ScriptsDependenciesAndBuildBehaviorChanged": false,
+    "dependencyPackagesOrVersionsAdded": false,
+    "pnpmLockfileChanged": true,
+    "pnpmLockfileDelta": "Only packages/contracts: {} was added as the empty workspace importer; no existing importer or package resolution changed.",
+    "cargoLockfileChanged": false,
+    "contractsCrateSourceCreated": false,
+    "schemasGeneratorsValidationScriptsCiAndFeatureApisImplemented": false
+  },
+  "rustToolchain": {
+    "executableSource": "D:/ClipNest-work/.tools/rust/rustup-home/toolchains/stable-x86_64-pc-windows-gnu/bin",
+    "rustcVersion": "1.99.0",
+    "rustcCommit": "b940084d7eb6a299eb4bfeb8e34901bc051e7ac4",
+    "cargoVersion": "1.99.0",
+    "target": "x86_64-pc-windows-gnu",
+    "targetLibraryDirectory": "D:/ClipNest-work/.tools/rust/rustup-home/toolchains/stable-x86_64-pc-windows-gnu/lib/rustlib/x86_64-pc-windows-gnu/lib",
+    "targetStandardLibraryPresent": true,
+    "pinBasis": "Direct rustc/cargo executables report 1.99.0; rustc target-libdir exists and --print cfg identifies windows-gnu. No rustup download or network install was run."
+  },
+  "validation": [
+    {
+      "command": "pnpm -r list --depth -1 --json",
+      "status": "PASS",
+      "exitCode": 0,
+      "observation": "Resolved root clipnest@1.1.4 and private @clipnest/contracts from the configured workspace globs."
+    },
+    {
+      "command": "pnpm --filter @clipnest/contracts list --depth -1 --json plus direct package.json parse",
+      "status": "PASS",
+      "exitCode": 0,
+      "observation": "Resolved exact name @clipnest/contracts and private=true."
+    },
+    {
+      "command": "pnpm --filter @clipnest/contracts exec node -e ...",
+      "status": "NOT_VERIFIED",
+      "exitCode": 1,
+      "observation": "pnpm exec attempted an implicit install and failed opening a temporary file with EPERM. Read-only pnpm list and direct JSON parsing passed; node_modules remained absent."
+    },
+    {
+      "command": "pnpm install --frozen-lockfile --lockfile-only --ignore-scripts --offline",
+      "status": "INCOMPLETE",
+      "exitCode": null,
+      "observation": "Recognized two workspace projects and wrote only the empty importer. Output remained at supply-chain policy verification; no successful completion is claimed."
+    },
+    {
+      "command": "cargo metadata --manifest-path Cargo.toml --no-deps --format-version 1 --offline --locked",
+      "status": "PASS",
+      "exitCode": 0,
+      "observation": "Cargo parsed the pinned workspace metadata; packages/workspace_members are empty by design, contracts-crate reservation is clipnest-contracts, and no Cargo.lock was created."
+    },
+    {
+      "command": "cargo check --manifest-path Cargo.toml --workspace --offline --locked",
+      "status": "NOT_APPLICABLE",
+      "exitCode": 1,
+      "observation": "Cargo reported that the virtual manifest contains no package because the workspace intentionally has zero members. No crate source or type was compiled; buildable crate entry is deferred to T06-a2."
+    },
+    {
+      "command": "direct rustc/cargo version, target-libdir, and target cfg checks",
+      "status": "PASS",
+      "exitCode": 0,
+      "observation": "rustc/cargo 1.99.0 matched the pin; x86_64-pc-windows-gnu std directory exists and rustc cfg reports target_env=gnu, target_family=windows."
+    },
+    {
+      "command": "node docs/spec/verify-plan.cjs",
+      "status": "PASS",
+      "exitCode": 0,
+      "observation": "Planning-integrity only: 33 cards, acyclic dependencies, card/manifest paths consistent, 232 local links."
+    },
+    {
+      "command": "JSON parse for progress, preflight, fixture plan, verification, and contracts package manifests; git diff --check",
+      "status": "PASS",
+      "exitCode": 0,
+      "observation": "All checked JSON parsed and git diff --check reported no whitespace errors. Pre-existing unrelated untracked files were preserved."
+    }
+  ],
+  "openGates": [
+    "Refresh selected-version compatibility, runtime support, maintenance, and license evidence before installing or freezing third-party dependencies; T06-a1 added no package dependencies or dependency versions.",
+    "The pnpm lockfile contains only the empty packages/contracts importer added by lockfile-only workspace synchronization; package versions and resolution snapshots are unchanged, but the frozen install did not finish its supply-chain policy verification.",
+    "T06-a2 buildable app/crate entries, Tauri/Expo configuration, module registration, and truthful FEATURE_NOT_ENABLED results are not implemented.",
+    "T06-b canonical strict schemas, generated JSON Schema/Rust DTOs, Decimal >2^53 and strict/size fixtures, provenance, and license records remain unimplemented and NOT_RUN.",
+    "T06-c root validation scripts, deterministic generated-drift checks, environment template, and CI checks remain unimplemented and NOT_RUN.",
+    "Full T06 acceptance and required independent adversarial review remain pending; T06-a1 metadata checks do not accept T06."
+  ]
+}

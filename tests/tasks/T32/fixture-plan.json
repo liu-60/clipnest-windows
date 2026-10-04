@@ -1,0 +1,235 @@
+{
+  "schemaVersion": 1,
+  "task": "T32",
+  "status": "not_started",
+  "executionStatus": "NOT_RUN",
+  "planType": "SYNTHETIC_FIXTURE_AND_INTERFACE_PLANNING_ONLY",
+  "progressSnapshotDate": "2026-10-04",
+  "dependencies": [
+    {
+      "task": "T31",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false,
+      "executionStatus": "NOT_RUN",
+      "note": "T31的静态计划存在，但progress仍为not_started；其作者自检和计划文件都不是个人商业版验收或依赖接受。"
+    }
+  ],
+  "dependencyChainSnapshot": [
+    { "task": "T25", "relationship": "T31直接依赖；个人跨端稳定性/成本输入", "observedStatus": "not_started", "accepted": false, "executionStatus": "NOT_RUN" },
+    { "task": "T27", "relationship": "T31直接依赖；支付与商业闭环", "observedStatus": "not_started", "accepted": false, "executionStatus": "NOT_RUN" },
+    { "task": "T28", "relationship": "T31直接依赖；商店购买/恢复", "observedStatus": "not_started", "accepted": false, "executionStatus": "NOT_RUN" },
+    { "task": "T29", "relationship": "T31直接依赖；导出/删除/恢复", "observedStatus": "not_started", "accepted": false, "executionStatus": "NOT_RUN" },
+    { "task": "T30", "relationship": "T31直接依赖；签名/灰度/运营", "observedStatus": "not_started", "accepted": false, "executionStatus": "NOT_RUN" }
+  ],
+  "dependencyInterpretation": "T32只准备后续决策与接口审查所需的synthetic fixture。当前T31未accepted，个人稳定性、商业成本和客户需求输入均没有被本计划替代。T31已有PASS_WITH_LIMITATIONS独立静态计划复核；它只关闭计划质量反馈，不证明G0-G4、行为、客户、支付、平台或运行证据通过。本计划不冻结Team产品范围/协议，不接后端，不改变当前FEATURE_NOT_ENABLED状态。",
+  "source": {
+    "taskCard": "docs/spec/tasks/T32.md",
+    "specifications": [
+      "docs/spec/06-model-runbook.md §1-§2/§5-§8",
+      "docs/spec/00-README.md §1/§4/§6-§7",
+      "docs/spec/03-data-sync-and-security.md §1-§2/§3.1-§3.2/§4.2-§4.3/§5.1-§5.3/§11",
+      "docs/spec/07-release-and-commercial.md §2/§5/§7",
+      "docs/spec/08-acceptance-matrix.md §1/§3/§5-§6",
+      "docs/spec/tasks/T31.md",
+      "tests/tasks/T31/fixture-plan.json",
+      "docs/evidence/T31/fixture-plan-static-check.json",
+      "docs/evidence/T31/fixture-plan-independent-review.json",
+      "docs/progress.json#/tasks/T25",
+      "docs/progress.json#/tasks/T27",
+      "docs/progress.json#/tasks/T28",
+      "docs/progress.json#/tasks/T29",
+      "docs/progress.json#/tasks/T30",
+      "docs/progress.json#/tasks/T31",
+      "docs/progress.json#/tasks/T32"
+    ],
+    "repositoryInstructions": {
+      "path": "AGENTS.md",
+      "status": "NOT_FOUND",
+      "searched": ["D:\\ClipNest-work\\v2", "D:\\ClipNest-work", "D:\\ClipNest"],
+      "note": "未发现仓库或父目录AGENTS.md；遵循本轮用户提供的AGENTS.md、T32任务卡与06执行手册，不推断额外规则。"
+    },
+    "reviewedTaskCardSections": ["依赖", "允许修改", "子任务顺序", "完成标准与行为测试", "验证命令", "回滚与交付"],
+    "observedProgressStatuses": {
+      "T25": "not_started",
+      "T27": "not_started",
+      "T28": "not_started",
+      "T29": "not_started",
+      "T30": "not_started",
+      "T31": "not_started",
+      "T32": "not_started"
+    }
+  },
+  "repositorySnapshot": {
+    "inspectedAt": "2026-10-04",
+    "relevantPaths": {
+      "docs/team/": "NOT_FOUND",
+      "packages/contracts/fixtures/team/": "NOT_FOUND",
+      "apps/server/src/modules/": "NOT_FOUND",
+      "tests/tasks/T31/fixture-plan.json": "PRESENT; planning-only artifact",
+      "docs/evidence/T31/fixture-plan-static-check.json": "PRESENT; author structural self-check",
+      "docs/evidence/T31/fixture-plan-independent-review.json": "PRESENT; PASS_WITH_LIMITATIONS static plan review only",
+      "docs/progress.json#/tasks/T31": "not_started; plan artifacts are registered, behavior acceptance is false"
+    },
+    "note": "本计划只新增T32的fixture-plan和静态核查记录；没有实施路径、服务、contracts或团队行为测试。"
+  },
+  "scope": {
+    "allowedNow": [
+      "为T32 a/b/c规划合成决策输入、接口边界和外部可观察的越权/错误/取消/容量/权限fixture。",
+      "将07已写明的候选范围（显式发布收藏到新workspace、默认不带私人来源历史、独立keys/roles/ledger）与尚未定义的实现语义区分开。",
+      "将owner/editor/viewer、成员撤销、团队key生命周期和组织托管恢复的决策缺口标为OPEN_QUESTION，不伪造团队协议或权限矩阵。",
+      "记录个人版依赖、feature-off边界、后续验证计划及其NOT_RUN状态。"
+    ],
+    "blockedUntilT31Accepted": [
+      "冻结Team是否发布、首发范围、商业方案、角色矩阵或密钥/恢复协议；不得用本计划替代T31实际验收或用户/业务决策。",
+      "创建团队workspace、邀请/分享API、成功形状的后端、数据库/RLS迁移、正式contracts/生成文件或产品UI。",
+      "运行任何团队行为、服务、数据库、加密、平台、性能、容量、价格或用户调研命令/测量；本计划中的命令与测量均NOT_RUN。"
+    ],
+    "excluded": [
+      "除tests/tasks/T32/**与docs/evidence/T32/**之外的文件；本交付不编辑docs/progress.json、产品代码、contracts、生成文件、T31或其他任务产物。",
+      "真实用户/组织数据、真实客户联系、账号/邀请、生产或staging服务、密钥材料、商业价格决定和计费资源。",
+      "假定owner/editor/viewer具体操作权、席位/计费归属、成员数/存储限额、邀请生命周期、key rotation/re-encryption方案、托管恢复权力或审计规则。",
+      "声称已撤回成员已下载/解密的明文，或声称已发出的签名URL、设备缓存及密文副本会因成员撤销立即失效。"
+    ]
+  },
+  "subtaskPlan": [
+    {
+      "id": "T32-a",
+      "name": "个人版稳定性、客户需求、成本与Team范围输入",
+      "status": "NOT_RUN",
+      "scope": "要求后续使用被接受的个人版稳定性/商业证据及有依据的客户需求、成本输入；比较Team范围选项并保留最终选择给决策人。当前所有输入UNKNOWN，不设数值门槛。",
+      "fixtureIds": ["T32-F001", "T32-F002", "T32-F003", "T32-F004", "T32-F005", "T32-F006", "T32-F007"]
+    },
+    {
+      "id": "T32-b",
+      "name": "角色、独立workspace keys/ledger与撤销边界",
+      "status": "NOT_RUN",
+      "scope": "准备个人/团队namespace隔离、权限矩阵、key ownership/rotation、成员撤销后未来访问、独立账本和容量决策fixture；精确协议不在T31未接受时冻结。",
+      "fixtureIds": ["T32-F008", "T32-F009", "T32-F010", "T32-F011", "T32-F012", "T32-F013", "T32-F014", "T32-F015", "T32-F016", "T32-F017", "T32-F018", "T32-F019", "T32-F020", "T32-F021", "T32-F022"]
+    },
+    {
+      "id": "T32-c",
+      "name": "组织托管模式、威胁模型与越权fixture",
+      "status": "NOT_RUN",
+      "scope": "将组织托管恢复和用户持有恢复区分；覆盖越权、密钥canary、日志边界、失败与取消接口问题；为未来独立安全评审准备输入，不实现协作或恢复服务。",
+      "fixtureIds": ["T32-F023", "T32-F024", "T32-F025", "T32-F026", "T32-F027", "T32-F028"]
+    }
+  ],
+  "decisionInputs": [
+    { "id": "T32-DI01", "input": "被接受的个人版稳定性与G0-G4范围证据", "observed": "UNKNOWN", "source": "T25/T31 owner evidence", "status": "NOT_RUN", "note": "T31目前not_started；其静态计划不能满足此输入。稳定性阈值和允许的未关闭子场景不得由T32猜定。" },
+    { "id": "T32-DI02", "input": "客户对团队共享/角色/托管恢复的需求证据", "observed": "UNKNOWN", "source": "产品负责人后续批准的研究", "status": "NOT_RUN", "note": "没有开展客户联系或研究；样本、隐私同意、需求阈值和结论规则均OPEN_QUESTION。" },
+    { "id": "T32-DI03", "input": "团队workspace成本/支持/容量模型", "observed": "UNKNOWN", "source": "T25/T31成本证据及未来经批准的模型", "status": "NOT_RUN", "note": "个人版候选10GiB不是Team配额、价格或成本结论；未使用虚构价格或成员数。" },
+    { "id": "T32-DI04", "input": "Team首发范围与组织托管模式是否进入后续独立任务", "observed": "OPEN_QUESTION", "source": "产品/安全负责人", "status": "NOT_RUN", "note": "本卡只形成待决输入清单；首发feature保持off。" }
+  ],
+  "interfacePlanning": {
+    "scopeAndPublishing": "07 §7给出的规划边界是：显式将共享收藏发布到新workspace，默认不带私人来源历史。是否支持逐项选择、收藏夹/集合、附件、来源字段、revision、导入后所有权与回滚，仍未定义。不得自动同步私人历史或把一次分享解释为团队成员可见整个个人空间。当前03 §1要求所有team创建/邀请/分享接口返回FEATURE_NOT_ENABLED。",
+    "workspaceAndRoles": "03 §2/§3.2预留workspace kind=team与membership role enum owner/editor/viewer，但03 §3.1明确首期RLS只允许personal owner本人，且03 §11禁止团队协作实现。团队身份到业务请求scope、角色操作矩阵、owner数/转让规则、membership状态/并发语义尚未冻结；角色名不能代替权限校验。",
+    "keyBoundary": "07 §7要求Team独立keys；03的个人key协议与T15安全gate不得被T32直接复制成团队协议。计划要求未来方案明确workspace级key隔离、成员包裹/设备、key版本、撤销后的新增内容可访问范围与重新加密成本。不得放入或生成实际key/nonce/ciphertext向量。",
+    "revocation": "已冻结的用户可见边界是：成员权限撤销影响未来访问；服务器/权限撤销不能收回成员已下载或解密的副本。已签名URL的寿命、离线端已缓存密文与key、撤销线性化点以及何时需要新key/重加密均为OPEN_QUESTION；不得宣称立即远程擦除。",
+    "ledgerAndCapacity": "07 §5要求按workspace约束bytes、对象数、实体、版本、操作率和pending数量且不跨账号内容去重；Team自己的账本、费用承担方、席位/成员限制、超额降级/删除、共享附件引用费用和组织停用策略还未定义。计划只要求未来观测不会污染personal账本，不复用个人10GiB候选值作为Team额度。",
+    "organizationRecovery": "07 §7规定组织托管恢复是与个人恢复分开的模式，不能让Team管理员获得私人keys。组织托管身份、密钥托管者/阈值、成员批准、审计可见字段、离职/丢失设备恢复、密钥轮换与失败策略均为OPEN_QUESTION；当前个人恢复协议不代表组织模式已经安全。",
+    "failureAndPrivacy": "未来行为fixture需覆盖失败、取消、超容量和权限拒绝，以外部可观察结果验收；当前错误码、事务原子性、邀请重放/过期、操作并发和用户文案没有被冻结时只记录OPEN_QUESTION。按08 §3，key/token/body/title/source/image不得进入telemetry/crash/support diagnostics。",
+    "threatModel": "计划威胁主体包括错误/恶意成员、被撤销成员、越权客户端/伪造workspace标识、组织管理员、离线设备和服务端数据访问边界。03明确不承诺防恶意服务器遗漏/回滚的透明日志或共识，客户端系统已被攻陷或Web服务交付恶意JS时也不能保证内容保密；T32需单列这些边界，不得暗示组织托管可保护已解密副本。"
+  },
+  "fixtures": [
+    { "id": "T32-F001", "subtask": "a", "topic": "T31 dependency has planning evidence only", "syntheticSetup": "依赖快照显示T31=not_started，且存在T31 fixture plan、作者静态自检及PASS_WITH_LIMITATIONS独立计划复核。", "plannedAction": "计划检查是否允许进入最终Team范围冻结或行为任务。", "observableAssertions": ["T31未accepted时只保留独立fixture/interface草案；静态计划复核只关闭计划质量反馈，不代替G0-G4或个人商业版稳定性证据。", "Team创建/邀请/分享继续FEATURE_NOT_ENABLED。"], "acceptanceIds": ["T32-A01", "T32-A12"], "gateIds": ["T32-G01", "T32-G02", "T32-G12"], "sourceRefs": ["docs/spec/tasks/T32.md §依赖", "docs/spec/tasks/T31.md §依赖/§完成标准", "docs/spec/03-data-sync-and-security.md §1", "docs/evidence/T31/fixture-plan-independent-review.json", "docs/progress.json#/tasks/T31"], "openQuestionRefs": ["T32-OQ01", "T32-OQ02"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F002", "subtask": "a", "topic": "personal stability evidence unavailable", "syntheticSetup": "合成输入缺少一个或多个被接受的个人端平台/G0-G4 owner evidence，或只含静态计划、mock结果、未测平台。", "plannedAction": "计划聚合已接受个人版稳定性证据并呈现适用范围。", "observableAssertions": ["缺失/NOT_RUN/平台不匹配的证据不得被聚合为个人版稳定性通过。", "不自行设定Team启动所需稳定性样本量或阈值。"], "acceptanceIds": ["T32-A01", "T32-A02"], "gateIds": ["T32-G01", "T32-G02"], "sourceRefs": ["docs/spec/tasks/T32.md §子任务顺序 1", "docs/spec/tasks/T31.md §完成标准", "docs/spec/08-acceptance-matrix.md §1/§6"], "openQuestionRefs": ["T32-OQ02"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F003", "subtask": "a", "topic": "customer demand evidence and research policy unknown", "syntheticSetup": "决策包中客户需求只有匿名汇总、样本来源/同意状态缺失或没有可追溯证据。", "plannedAction": "计划要求提交经批准且可审查的需求依据，不联系真实客户。", "observableAssertions": ["样本数、研究方法、同意/保留政策和支持范围未知时标OPEN_QUESTION。", "不得用合成样本或未授权消息冒充真实需求。"], "acceptanceIds": ["T32-A02", "T32-A12"], "gateIds": ["T32-G03"], "sourceRefs": ["docs/spec/tasks/T32.md §子任务顺序 1", "docs/spec/06-model-runbook.md §8"], "openQuestionRefs": ["T32-OQ03"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F004", "subtask": "a", "topic": "team unit cost and support model not available", "syntheticSetup": "符号化成本输入缺少Team成员/对象/请求/下载/支持假设，或误用个人10GiB候选值作为Team权益。", "plannedAction": "计划分离成本输入、容量决策、定价与权益批准。", "observableAssertions": ["个人容量候选值不被复制为Team配额/价格/承诺。", "成本缺口保持UNKNOWN；不生成虚构provider price、席位数或经营结论。"], "acceptanceIds": ["T32-A02", "T32-A08"], "gateIds": ["T32-G03", "T32-G09"], "sourceRefs": ["docs/spec/tasks/T32.md §子任务顺序 1", "docs/spec/07-release-and-commercial.md §5", "docs/spec/00-README.md §1/§6"], "openQuestionRefs": ["T32-OQ04", "T32-OQ09"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F005", "subtask": "a", "topic": "team launch scope alternatives remain a product decision", "syntheticSetup": "决策输入对比显式发布共享收藏、团队收藏管理、完整协作、组织托管恢复等范围，且没有负责人批准结论。", "plannedAction": "计划列出选项、证据和风险，由产品负责人后续选择。", "observableAssertions": ["不从候选项自行选定正式Team范围或发布日期。", "超出07 §7既有共享收藏夹边界的能力需另立范围/安全评审。"], "acceptanceIds": ["T32-A02", "T32-A03"], "gateIds": ["T32-G03", "T32-G04"], "sourceRefs": ["docs/spec/tasks/T32.md §子任务顺序 1", "docs/spec/07-release-and-commercial.md §7", "docs/spec/00-README.md §4/§6"], "openQuestionRefs": ["T32-OQ01", "T32-OQ03", "T32-OQ04"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F006", "subtask": "a", "topic": "explicit publish must not expose private history by default", "syntheticSetup": "隔离合成用户含私人history、saved favorites、collections、origin metadata和attachments；未显式选择的私人history与Team workspace分开。", "plannedAction": "规划一项显式发布动作的字段/实体白名单审阅。", "observableAssertions": ["不得自动共享私人history；07规定的默认边界是不带私人来源历史。", "来源字段、附件、集合结构和逐项发布语义没有定论时不作精确断言。"], "acceptanceIds": ["T32-A03", "T32-A10"], "gateIds": ["T32-G04", "T32-G11"], "sourceRefs": ["docs/spec/07-release-and-commercial.md §7", "docs/spec/00-README.md §1/§6", "docs/spec/03-data-sync-and-security.md §1"], "openQuestionRefs": ["T32-OQ05"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F007", "subtask": "a", "topic": "publication metadata and selection semantics unresolved", "syntheticSetup": "合成发布候选包含source app、URL、附件、集合关系、历史引用、作者和时间字段。", "plannedAction": "计划标注每个字段来自显式收藏还是私人历史，并等待冻结字段表。", "observableAssertions": ["不得把私人来源历史随收藏无提示带入Team。", "字段白名单和可见性未冻结前，逐字段结果为OPEN_QUESTION而不是默认全复制。"], "acceptanceIds": ["T32-A03", "T32-A10"], "gateIds": ["T32-G04", "T32-G11"], "sourceRefs": ["docs/spec/07-release-and-commercial.md §7", "docs/spec/03-data-sync-and-security.md §1/§2"], "openQuestionRefs": ["T32-OQ05"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F008", "subtask": "b", "topic": "personal and team workspaces have separate identities and scope", "syntheticSetup": "合成身份同时有personal workspace与team workspace，不含真实账号或key。", "plannedAction": "计划检查请求scope/workspace ID不能在两个namespace间互换。", "observableAssertions": ["加入Team不改变personal workspace owner；Team角色不授予personal历史或私人key访问。", "team创建与邀请行为本身在当前版本仍FEATURE_NOT_ENABLED。"], "acceptanceIds": ["T32-A04", "T32-A07"], "gateIds": ["T32-G05", "T32-G07"], "sourceRefs": ["docs/spec/00-README.md §1", "docs/spec/03-data-sync-and-security.md §1/§2/§3.1/§3.2", "docs/spec/07-release-and-commercial.md §7"], "openQuestionRefs": ["T32-OQ06"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F009", "subtask": "b", "topic": "forged or substituted workspace and entity identifiers", "syntheticSetup": "合成请求把个人workspaceId、其他Team workspaceId或跨workspace entity/attachment ID拼接到当前scope。", "plannedAction": "计划检查越权请求的外部结果与是否泄露对象存在性。", "observableAssertions": ["workspace ID和UUID不能代替授权；未授权对象不得读写或通过不同响应泄露其存在性。", "未来team RLS/FK策略需经独立安全审查；本计划不定义迁移。"], "acceptanceIds": ["T32-A04", "T32-A10"], "gateIds": ["T32-G05", "T32-G07", "T32-G11"], "sourceRefs": ["docs/spec/03-data-sync-and-security.md §3.1/§3.2", "docs/spec/08-acceptance-matrix.md §3"], "openQuestionRefs": ["T32-OQ06", "T32-OQ07"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F010", "subtask": "b", "topic": "owner/editor/viewer permission matrix must be explicit", "syntheticSetup": "合成角色提案包含owner/editor/viewer和资源/操作矩阵，但至少一个关键操作未定义。", "plannedAction": "计划审阅查看、编辑、删除、成员邀请/移除、key恢复、导出和计费操作的授权表。", "observableAssertions": ["03只冻结角色枚举，不冻结Team每个角色具体权限。", "未批准完整矩阵前，不把角色名或UI隐藏当后端授权通过。"], "acceptanceIds": ["T32-A05", "T32-A10"], "gateIds": ["T32-G06", "T32-G07", "T32-G11", "T32-G12"], "sourceRefs": ["docs/spec/03-data-sync-and-security.md §3.2", "docs/spec/tasks/T32.md §子任务顺序 2"], "openQuestionRefs": ["T32-OQ07", "T32-OQ08"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F011", "subtask": "b", "topic": "viewer mutation is a candidate permission boundary, not a frozen protocol", "syntheticSetup": "合成viewer尝试编辑/删除共享收藏、添加成员和触发密钥恢复。", "plannedAction": "计划按待批准矩阵逐项观察服务端的授权结果。", "observableAssertions": ["当前规格尚未冻结Team viewer可执行的具体操作，预期结果保持OPEN_QUESTION。", "客户端禁用按钮或本地成功toast不能证明服务端拒绝越权写入。"], "acceptanceIds": ["T32-A05", "T32-A11"], "gateIds": ["T32-G06", "T32-G07", "T32-G11"], "sourceRefs": ["docs/spec/03-data-sync-and-security.md §3.1-§3.2", "docs/spec/08-acceptance-matrix.md §3"], "openQuestionRefs": ["T32-OQ07", "T32-OQ08", "T32-OQ17"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F012", "subtask": "b", "topic": "editor and owner administrative authority boundaries", "syntheticSetup": "合成矩阵分别尝试改内容、管理成员、转移owner、改恢复模式、导出与更改账单。", "plannedAction": "计划要求每种操作有唯一授权角色和审计边界。", "observableAssertions": ["操作权限和owner转移语义未决，不从role名称推演或测试成功。", "任何Team admin角色都不获得personal key权限。"], "acceptanceIds": ["T32-A05", "T32-A09"], "gateIds": ["T32-G06", "T32-G07", "T32-G10"], "sourceRefs": ["docs/spec/tasks/T32.md §子任务顺序 2", "docs/spec/03-data-sync-and-security.md §3.2/§5.1-§5.3", "docs/spec/07-release-and-commercial.md §7"], "openQuestionRefs": ["T32-OQ08", "T32-OQ15"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F013", "subtask": "b", "topic": "personal owner isolation after team membership", "syntheticSetup": "合成用户以Team owner/editor身份请求自己或另一成员的personal history、saved items和workspace root。", "plannedAction": "计划从可信账号、workspace scope与角色映射验证隔离。", "observableAssertions": ["私人历史不因团队成员身份共享；组织权限不能授予personal private key。", "拒绝结果不得泄露私人记录是否存在。"], "acceptanceIds": ["T32-A04", "T32-A09", "T32-A10"], "gateIds": ["T32-G05", "T32-G07", "T32-G10"], "sourceRefs": ["docs/spec/00-README.md §1", "docs/spec/03-data-sync-and-security.md §1/§3.1", "docs/spec/07-release-and-commercial.md §7"], "openQuestionRefs": ["T32-OQ07", "T32-OQ14"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F014", "subtask": "b", "topic": "effective membership revocation blocks future authorized requests", "syntheticSetup": "隔离成员在Team workspace有效访问后，由经批准角色完成撤销；随后发起新的API请求。", "plannedAction": "计划记录撤销提交/生效界线及新请求的服务端可观察结果。", "observableAssertions": ["已生效的成员撤销必须阻止该成员未来访问Team服务端资源。", "不能据此声称旧明文或已下载副本被删除。"], "acceptanceIds": ["T32-A06", "T32-A10"], "gateIds": ["T32-G08", "T32-G11"], "sourceRefs": ["docs/spec/07-release-and-commercial.md §7", "docs/spec/03-data-sync-and-security.md §4.2"], "openQuestionRefs": ["T32-OQ11", "T32-OQ12"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F015", "subtask": "b", "topic": "revocation cannot claim remote erasure of decrypted copies", "syntheticSetup": "合成撤销场景中，前成员设备在撤销前已合法解密并保留本地副本。", "plannedAction": "计划审阅撤销提示和验收声明。", "observableAssertions": ["明确记录已解密副本无法撤回；不声称远程擦除或收回前成员已经读取的明文。", "本地缓存清理能力和证明边界须另行定义。"], "acceptanceIds": ["T32-A06", "T32-A10"], "gateIds": ["T32-G08", "T32-G11"], "sourceRefs": ["docs/spec/03-data-sync-and-security.md §4.2", "docs/spec/07-release-and-commercial.md §7"], "openQuestionRefs": ["T32-OQ11", "T32-OQ12"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F016", "subtask": "b", "topic": "offline device and stale membership/key state", "syntheticSetup": "合成设备在离线期间保留先前同步的密文/授权状态，成员被撤销后设备重新联网。", "plannedAction": "计划定义恢复联网后的授权、缓存和新密文可见性检查点。", "observableAssertions": ["撤销生效后不得把旧成员继续当作有权发起新服务端访问。", "离线缓存、已持有workspace key能否解密旧/新版本及精确重验时点保持OPEN_QUESTION。"], "acceptanceIds": ["T32-A06", "T32-A07", "T32-A11"], "gateIds": ["T32-G08"], "sourceRefs": ["docs/spec/03-data-sync-and-security.md §4.2/§5", "docs/spec/07-release-and-commercial.md §7"], "openQuestionRefs": ["T32-OQ10", "T32-OQ11", "T32-OQ12"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F017", "subtask": "b", "topic": "previously issued signed URL after member revocation", "syntheticSetup": "合成附件场景在成员撤销前取得尚未到期的signed download URL，撤销后尝试访问。", "plannedAction": "计划确认所选存储provider/URL协议的实际撤销保证与告知边界。", "observableAssertions": ["不假定撤销membership会让已签发URL立即失效。", "URL TTL、provider行为和对象缓存证据没有冻结，结果保持OPEN_QUESTION/NOT_RUN。"], "acceptanceIds": ["T32-A06", "T32-A10"], "gateIds": ["T32-G08", "T32-G11"], "sourceRefs": ["docs/spec/03-data-sync-and-security.md §4.2/§8.1", "docs/spec/08-acceptance-matrix.md §3"], "openQuestionRefs": ["T32-OQ12"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F018", "subtask": "b", "topic": "workspace keys are independent from personal and recovery keys", "syntheticSetup": "合成接口清单记录个人workspace root、Team workspace root、localDBKey与recovery secret的key-domain标签，不含密钥字节。", "plannedAction": "计划审阅所有key域/用途是否独立及server DTO是否只承载必要包裹密文。", "observableAssertions": ["Team key域不得复用成员personal root、localDBKey、recovery secret或登录凭据。", "不产生随机key向量，不把03个人协议误作已通过的团队协议。"], "acceptanceIds": ["T32-A07", "T32-A09"], "gateIds": ["T32-G08", "T32-G10"], "sourceRefs": ["docs/spec/03-data-sync-and-security.md §1/§4.2-§4.3/§5.1-§5.3", "docs/spec/07-release-and-commercial.md §7"], "openQuestionRefs": ["T32-OQ10", "T32-OQ14"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F019", "subtask": "b", "topic": "team member change and workspace key rotation protocol unresolved", "syntheticSetup": "合成成员撤销后仍有旧key持有者、已存历史密文和后续新写版本；未给出轮换/重包裹协议。", "plannedAction": "计划由安全负责人定义旧/新key可读范围、重加密步骤、恢复与失败原子性。", "observableAssertions": ["不得断言仅撤销API成员关系就令前成员失去已持有密文key。", "key rotation、历史重加密、设备缓存和不可逆失败策略必须过独立安全gate。"], "acceptanceIds": ["T32-A06", "T32-A07", "T32-A12"], "gateIds": ["T32-G08", "T32-G11", "T32-G12"], "sourceRefs": ["docs/spec/03-data-sync-and-security.md §4.2-§4.3", "docs/spec/tasks/T32.md §子任务顺序 2-3"], "openQuestionRefs": ["T32-OQ10", "T32-OQ11", "T32-OQ18"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F020", "subtask": "b", "topic": "team ledger is independent without selecting payer", "syntheticSetup": "合成计数器分别表示personal与team bytes、objects、operations和pending items。", "plannedAction": "计划确保workspace维度清晰，成本归属/账单身份另行决策。", "observableAssertions": ["Team使用量不写入或减少个人workspace ledger；不得按成员跨账号内容hash去重。", "谁承担Team成本/收入、共享附件重复引用如何计量保持OPEN_QUESTION。"], "acceptanceIds": ["T32-A08", "T32-A10"], "gateIds": ["T32-G09"], "sourceRefs": ["docs/spec/07-release-and-commercial.md §2/§5", "docs/spec/03-data-sync-and-security.md §1/§11"], "openQuestionRefs": ["T32-OQ04", "T32-OQ09", "T32-OQ13"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F021", "subtask": "b", "topic": "team capacity boundary and no partial overage", "syntheticSetup": "合成Team ledger依次处于未超额、恰好上限、将超限的状态；具体Team limits未指定。", "plannedAction": "计划在未来冻结额度与交易边界后观察容量拒绝是否可见且不部分成功。", "observableAssertions": ["不复用个人limits作为Team配额；不得在未知配额时报告容量行为已验收。", "额度单位、超额响应、降级/导出/恢复路径、部分事务策略保持OPEN_QUESTION。"], "acceptanceIds": ["T32-A08", "T32-A11"], "gateIds": ["T32-G09"], "sourceRefs": ["docs/spec/07-release-and-commercial.md §5", "docs/spec/03-data-sync-and-security.md §8/§11", "docs/spec/08-acceptance-matrix.md §5"], "openQuestionRefs": ["T32-OQ04", "T32-OQ09", "T32-OQ17"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F022", "subtask": "b", "topic": "invite retry, cancel, expiry and replay semantics", "syntheticSetup": "合成邀请流程包含重复请求、用户取消、token过期、重放、并发撤销及网络超时。", "plannedAction": "计划列出每种失败是否产生membership/key/ledger副作用，等待协议决策后再验收。", "observableAssertions": ["任何待决或取消操作不得给UI造成已加入/已授予key的假成功。", "具体终态、幂等键、到期时钟、撤销竞争和错误码未冻结时保留OPEN_QUESTION。"], "acceptanceIds": ["T32-A05", "T32-A11"], "gateIds": ["T32-G06", "T32-G07", "T32-G11"], "sourceRefs": ["docs/spec/tasks/T32.md §完成标准", "docs/spec/06-model-runbook.md §2/§8", "docs/spec/08-acceptance-matrix.md §3"], "openQuestionRefs": ["T32-OQ06", "T32-OQ16", "T32-OQ17"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F023", "subtask": "c", "topic": "organization-managed recovery is a separately selected mode", "syntheticSetup": "合成workspace分别标记user-held recovery、organization-managed recovery与mode未选择，不含key material。", "plannedAction": "计划审阅模式切换是否显式、可见、有审计且不得默认开启。", "observableAssertions": ["组织托管恢复不能被当作个人恢复协议的别名或默认权限。", "mode切换的authority、审批、迁移和恢复失败结果保持OPEN_QUESTION。"], "acceptanceIds": ["T32-A09", "T32-A12"], "gateIds": ["T32-G10", "T32-G12"], "sourceRefs": ["docs/spec/07-release-and-commercial.md §7", "docs/spec/03-data-sync-and-security.md §4.3/§5.1-§5.3", "docs/spec/tasks/T32.md §子任务顺序 2"], "openQuestionRefs": ["T32-OQ14", "T32-OQ15"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F024", "subtask": "c", "topic": "organization administrator never receives private workspace keys", "syntheticSetup": "合成组织管理员管理Team成员和组织恢复，但请求目标被设置为任一成员personal workspace/key。", "plannedAction": "计划验证权限表、DTO和支持工具不存在从组织身份到personal key的授权边。", "observableAssertions": ["Team admin不得获得成员私人keys或私人历史。", "管理员角色不能绕过服务端scope/RLS或依赖member提供原始key。"], "acceptanceIds": ["T32-A04", "T32-A09", "T32-A10"], "gateIds": ["T32-G05", "T32-G07", "T32-G10", "T32-G11"], "sourceRefs": ["docs/spec/07-release-and-commercial.md §7", "docs/spec/03-data-sync-and-security.md §1/§3.1/§4.3", "docs/spec/08-acceptance-matrix.md §3"], "openQuestionRefs": ["T32-OQ07", "T32-OQ14"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F025", "subtask": "c", "topic": "managed recovery authorities, lifecycle and failure policy unresolved", "syntheticSetup": "组织托管方案缺失托管人、恢复审批、设备离职、管理员离职、组织关闭或托管密钥丢失中的一项。", "plannedAction": "计划给每个责任/失败分支标owner、授权和恢复核验要求。", "observableAssertions": ["不推断组织管理员自动有解密权，也不发明门限/法定保留/审计可见性。", "未定义的托管范围、key custodian、审计边界、灾备和停用策略保持OPEN_QUESTION。"], "acceptanceIds": ["T32-A09", "T32-A10", "T32-A12"], "gateIds": ["T32-G10", "T32-G11", "T32-G12"], "sourceRefs": ["docs/spec/tasks/T32.md §子任务顺序 2-3", "docs/spec/07-release-and-commercial.md §6-§7", "docs/spec/03-data-sync-and-security.md §4.3/§5"], "openQuestionRefs": ["T32-OQ14", "T32-OQ15", "T32-OQ18"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F026", "subtask": "c", "topic": "key and private-content canaries in telemetry crash and support paths", "syntheticSetup": "未来隔离fixture拟用不含真实秘密的canary标记覆盖telemetry、crash、structured errors、logs与support bundle。", "plannedAction": "计划对每个通道核对敏感字段不出现；当前不生成或运行canary。", "observableAssertions": ["key、token、正文、URL、title、source、image及未脱敏SQL参数不得进入telemetry/crash/support data。", "静态fixture计划不代表实际日志/崩溃管道已经通过。"], "acceptanceIds": ["T32-A10", "T32-A12"], "gateIds": ["T32-G11", "T32-G12"], "sourceRefs": ["docs/spec/08-acceptance-matrix.md §3/§6", "docs/spec/03-data-sync-and-security.md §1/§4.3"], "openQuestionRefs": ["T32-OQ18"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F027", "subtask": "c", "topic": "threat model states server and compromised-client limitations", "syntheticSetup": "合成威胁模型同时列未授权/被撤销成员、伪造scope、组织管理员、恶意服务端和已失陷客户端。", "plannedAction": "计划检查正式安全gate明确纳入、缓解或排除每类主体。", "observableAssertions": ["不能把UUID难猜、RLS或组织托管表述为防住业务role之外的superuser/恶意服务端。", "恶意服务端回滚、被攻陷OS、恶意Web JS和已解密明文的保护边界按03明确披露。"], "acceptanceIds": ["T32-A10", "T32-A12"], "gateIds": ["T32-G05", "T32-G11", "T32-G12"], "sourceRefs": ["docs/spec/03-data-sync-and-security.md §3.1/§4.3", "docs/spec/08-acceptance-matrix.md §3/§6"], "openQuestionRefs": ["T32-OQ18"], "status": "NOT_RUN", "evidence": [] },
+    { "id": "T32-F028", "subtask": "c", "topic": "permission capacity cancellation and dependency failures do not become false success", "syntheticSetup": "合成未来行为场景分别模拟未授权角色、容量缺口、用户取消、网络超时、缺失依赖和不可用恢复服务。", "plannedAction": "计划在错误协议冻结后核验用户可见结果与是否产生副作用。", "observableAssertions": ["不得把HTTP success、客户端角色或mock transport当team access成功。", "精确错误码、重试/取消终态、事务副作用和用户文案未定义的部分维持OPEN_QUESTION/NOT_RUN。"], "acceptanceIds": ["T32-A05", "T32-A08", "T32-A11", "T32-A12"], "gateIds": ["T32-G06", "T32-G07", "T32-G09", "T32-G11", "T32-G12"], "sourceRefs": ["docs/spec/tasks/T32.md §完成标准/§验证命令", "docs/spec/06-model-runbook.md §2/§8", "docs/spec/08-acceptance-matrix.md §3/§5-§6"], "openQuestionRefs": ["T32-OQ09", "T32-OQ16", "T32-OQ17"], "status": "NOT_RUN", "evidence": [] }
+  ],
+  "acceptanceCriteria": [
+    { "id": "T32-A01", "statement": "T31依赖必须真正accepted；静态计划/自检不能满足依赖或个人版稳定性输入。", "fixtureIds": ["T32-F001", "T32-F002"], "status": "NOT_RUN", "gateIds": ["T32-G01", "T32-G02"] },
+    { "id": "T32-A02", "statement": "Team范围决策有可追溯的个人稳定性、客户需求与成本输入；未知项保持UNKNOWN且无虚构阈值。", "fixtureIds": ["T32-F002", "T32-F003", "T32-F004", "T32-F005"], "status": "NOT_RUN", "gateIds": ["T32-G02", "T32-G03"] },
+    { "id": "T32-A03", "statement": "共享内容由明确动作发布到新workspace；私人历史和未批准来源/附件字段不会默认共享。", "fixtureIds": ["T32-F005", "T32-F006", "T32-F007"], "status": "NOT_RUN", "gateIds": ["T32-G04"] },
+    { "id": "T32-A04", "statement": "personal与team workspace授权隔离；成员/管理员角色不能读取私人历史或私人keys。", "fixtureIds": ["T32-F008", "T32-F009", "T32-F013", "T32-F024"], "status": "NOT_RUN", "gateIds": ["T32-G05", "T32-G07"] },
+    { "id": "T32-A05", "statement": "owner/editor/viewer逐操作权限矩阵先冻结并由服务端执行；未知操作不推断成功。", "fixtureIds": ["T32-F010", "T32-F011", "T32-F012", "T32-F022", "T32-F028"], "status": "NOT_RUN", "gateIds": ["T32-G06", "T32-G07"] },
+    { "id": "T32-A06", "statement": "成员撤销阻止其未来获准的服务端访问；不声称回收已解密明文、已签URL或离线副本。", "fixtureIds": ["T32-F014", "T32-F015", "T32-F016", "T32-F017", "T32-F019"], "status": "NOT_RUN", "gateIds": ["T32-G08"] },
+    { "id": "T32-A07", "statement": "Team key domain与personal/local/recovery key domain独立；key分发、撤销和轮换需独立安全协议。", "fixtureIds": ["T32-F008", "T32-F016", "T32-F018", "T32-F019"], "status": "NOT_RUN", "gateIds": ["T32-G08"] },
+    { "id": "T32-A08", "statement": "Team ledger与个人账本隔离，Team额度/计费输入经批准后冻结，不继承个人候选配额。", "fixtureIds": ["T32-F004", "T32-F020", "T32-F021", "T32-F028"], "status": "NOT_RUN", "gateIds": ["T32-G03", "T32-G09"] },
+    { "id": "T32-A09", "statement": "组织托管恢复是另一个显式模式；任何Team角色不因此获得私人workspace keys。", "fixtureIds": ["T32-F012", "T32-F013", "T32-F018", "T32-F023", "T32-F024", "T32-F025"], "status": "NOT_RUN", "gateIds": ["T32-G10"] },
+    { "id": "T32-A10", "statement": "越权、威胁边界和key/privacy canary覆盖明确；日志/telemetry/crash/support不收集秘密或内容。", "fixtureIds": ["T32-F006", "T32-F007", "T32-F009", "T32-F010", "T32-F013", "T32-F014", "T32-F015", "T32-F017", "T32-F020", "T32-F024", "T32-F025", "T32-F026", "T32-F027"], "status": "NOT_RUN", "gateIds": ["T32-G05", "T32-G11"] },
+    { "id": "T32-A11", "statement": "错误、取消、容量和权限fixture以外部可观察结果为准；未冻结语义保留OPEN_QUESTION，不做假成功。", "fixtureIds": ["T32-F011", "T32-F016", "T32-F021", "T32-F022", "T32-F028"], "status": "NOT_RUN", "gateIds": ["T32-G06", "T32-G07", "T32-G09", "T32-G11"] },
+    { "id": "T32-A12", "statement": "本交付仅为计划：所有行为/命令/测量NOT_RUN，team feature保持off，独立critical安全评审仍待执行。", "fixtureIds": ["T32-F001", "T32-F003", "T32-F019", "T32-F023", "T32-F025", "T32-F026", "T32-F027", "T32-F028"], "status": "NOT_RUN", "gateIds": ["T32-G01", "T32-G12"] }
+  ],
+  "acceptanceGates": [
+    { "id": "T32-G01", "name": "T31 accepted dependency", "requiredEvidence": "progress中T31=accepted且对应行为/运行证据由负责人验收；静态plan review不能替代。", "status": "NOT_RUN", "fixtureIds": ["T32-F001", "T32-F002"] },
+    { "id": "T32-G02", "name": "personal stability input", "requiredEvidence": "引用被接受的个人版/跨端证据和适用平台；Team预研启动门槛需负责人冻结。", "status": "NOT_RUN", "fixtureIds": ["T32-F001", "T32-F002"] },
+    { "id": "T32-G03", "name": "demand and cost decision inputs", "requiredEvidence": "经批准的客户需求依据、隐私/研究边界、Team成本/支持模型与明确owner决策；无自动阈值。", "status": "NOT_RUN", "fixtureIds": ["T32-F003", "T32-F004", "T32-F005"] },
+    { "id": "T32-G04", "name": "explicit shared publishing scope", "requiredEvidence": "正式Team范围与分享字段/对象白名单经批准；私人历史默认排除。", "status": "NOT_RUN", "fixtureIds": ["T32-F005", "T32-F006", "T32-F007"] },
+    { "id": "T32-G05", "name": "workspace isolation", "requiredEvidence": "个人/团队workspace身份、FK、可信scope及RLS授权的独立计划与后续数据库证据。", "status": "NOT_RUN", "fixtureIds": ["T32-F008", "T32-F009", "T32-F013", "T32-F024", "T32-F027"] },
+    { "id": "T32-G06", "name": "role matrix", "requiredEvidence": "owner/editor/viewer逐资源逐操作权限矩阵、管理操作与服务端错误映射冻结。", "status": "NOT_RUN", "fixtureIds": ["T32-F010", "T32-F011", "T32-F012", "T32-F022", "T32-F028"] },
+    { "id": "T32-G07", "name": "authorization and transaction semantics", "requiredEvidence": "可信身份/scope、跨workspace拒绝、邀请/取消/并发语义与真实隔离证据。", "status": "NOT_RUN", "fixtureIds": ["T32-F008", "T32-F009", "T32-F010", "T32-F011", "T32-F012", "T32-F013", "T32-F022", "T32-F024", "T32-F028"] },
+    { "id": "T32-G08", "name": "independent key and revocation protocol", "requiredEvidence": "Team key lifecycle/distribution/rotation/re-encryption/offline and signed-URL boundary经独立安全审查及行为验收。", "status": "NOT_RUN", "fixtureIds": ["T32-F014", "T32-F015", "T32-F016", "T32-F017", "T32-F018", "T32-F019"] },
+    { "id": "T32-G09", "name": "team ledger and capacity", "requiredEvidence": "Team独立账本、付费归属、seat/bytes/object/operation limits、超额/恢复语义冻结并有隔离边界证据。", "status": "NOT_RUN", "fixtureIds": ["T32-F004", "T32-F020", "T32-F021", "T32-F028"] },
+    { "id": "T32-G10", "name": "organization-managed recovery boundary", "requiredEvidence": "显式托管模式、权力边界、与个人key隔离和独立恢复协议安全审查；此计划不提供托管能力。", "status": "NOT_RUN", "fixtureIds": ["T32-F012", "T32-F013", "T32-F018", "T32-F023", "T32-F024", "T32-F025"] },
+    { "id": "T32-G11", "name": "threat model, privacy and negative-path evidence", "requiredEvidence": "越权、隐私canary、撤销诚实边界、失败/取消/权限/容量的后续外部行为证据。", "status": "NOT_RUN", "fixtureIds": ["T32-F006", "T32-F007", "T32-F009", "T32-F010", "T32-F011", "T32-F014", "T32-F015", "T32-F017", "T32-F019", "T32-F022", "T32-F024", "T32-F025", "T32-F026", "T32-F027", "T32-F028"] },
+    { "id": "T32-G12", "name": "required independent critical security review", "requiredEvidence": "正式Team设计/威胁模型/越权行为完成后由独立agent对抗复核；严重发现闭合后再由验收负责人评定。", "status": "NOT_RUN", "fixtureIds": ["T32-F001", "T32-F010", "T32-F019", "T32-F023", "T32-F025", "T32-F026", "T32-F027", "T32-F028"] }
+  ],
+  "openQuestions": [
+    { "id": "T32-OQ01", "question": "Team目标客户、共享空间产品形态和后续发行/feature-off范围是什么？只发布收藏、持续协作、还是暂缓？", "owner": "产品负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ02", "question": "哪些已接受的个人稳定性/跨端指标、平台和运营证据足以开始Team方案，是否有额外门槛？", "owner": "产品/工程负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ03", "question": "客户需求研究采用何种样本、方法、同意/保留边界与决策阈值？", "owner": "产品/隐私负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ04", "question": "Team成本、seat/payer、支持与价格模型需要哪些输入；个人候选额度之外的目标是什么？", "owner": "商业/运营负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ05", "question": "显式发布共享收藏时，是否允许选集合/附件/来源字段/链接及历史关联；采用复制还是新的共享实体身份？", "owner": "产品/数据负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ06", "question": "Team创建、邀请、加入、跨账号scope与成员状态的完整生命周期和trusted identity契约是什么？", "owner": "身份/服务端负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ07", "question": "owner/editor/viewer对每种数据与管理操作的最小权限表、拒绝码和对象隐藏策略是什么？", "owner": "产品/安全/服务端负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ08", "question": "owner转让、增删管理员、step-up认证和成员管理是否需要多方批准/审计？", "owner": "产品/安全负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ09", "question": "Team seat、workspace bytes、实体/对象、版本、pending和operation limits分别如何定义，超限后哪些行为可用？", "owner": "产品/商业/存储负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ10", "question": "Team workspace key如何生成、分发给成员设备、包裹和恢复；如何独立于personal/local/recovery key并跨端互操作？", "owner": "密码/安全负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ11", "question": "成员撤销后旧/新版本密文的可见性如何划分；是否轮换key、重加密历史、处理已持有密钥/缓存及失败恢复？", "owner": "密码/安全/产品负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ12", "question": "成员撤销对在途请求、离线副本、设备cache与已签发附件URL分别何时生效？哪些旧副本无法撤回？", "owner": "服务端/存储/安全负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ13", "question": "独立Team ledger由workspace、组织还是订阅account承担；共享附件引用、删除、退款和迁移如何计费/对账？", "owner": "商业/账本负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ14", "question": "组织托管恢复的信任主体、密钥托管者、审批/门限、可恢复数据边界及审计范围是什么？", "owner": "安全/产品/法务负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ15", "question": "组织/owner/管理员离职、封禁、删除账号或丢失托管能力后，workspace所有权与密钥恢复/关闭如何处理？", "owner": "产品/安全/支持负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ16", "question": "邀请取消、过期、重复/并发、撤销竞态、重放和网络超时的线性化点及无副作用保证是什么？", "owner": "协议/服务端负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ17", "question": "团队错误码、容量detail、permission copy、重试策略及取消是否允许部分提交如何冻结？", "owner": "产品/API负责人", "status": "OPEN_QUESTION" },
+    { "id": "T32-OQ18", "question": "Team新增的威胁、运维/日志/导出边界及独立密码/权限评审的正式安全gate如何定义？", "owner": "安全负责人", "status": "OPEN_QUESTION" }
+  ],
+  "commands": [
+    { "id": "T32-C01", "command": "检查设计/fixture相互一致（本卡无生产构建命令）", "purpose": "后续检查fixture/source/decision/OQ映射；本规划交付中未运行行为或生产构建命令。", "status": "NOT_RUN", "evidence": [] }
+  ],
+  "measurementPlans": [
+    { "id": "T32-M01", "subject": "被接受的个人版稳定性与适用平台", "method": "复用T25/T31 owner报告及其环境、样本、失败/取消、平台边界；门槛由负责人确认。", "status": "NOT_RUN", "evidence": [], "openQuestionRefs": ["T32-OQ02"] },
+    { "id": "T32-M02", "subject": "Team客户需求证据", "method": "仅在研究方案、授权/同意、匿名汇总与保留策略获批准后采集；样本数和阈值不预设。", "status": "NOT_RUN", "evidence": [], "openQuestionRefs": ["T32-OQ03"] },
+    { "id": "T32-M03", "subject": "每Team/workspace的单位成本与支持成本", "method": "后续用经批准的地区/对象/请求/流量/运维输入做低中高情景；当前不调用provider价格或造假数据。", "status": "NOT_RUN", "evidence": [], "openQuestionRefs": ["T32-OQ04", "T32-OQ09", "T32-OQ13"] }
+  ],
+  "independentReview": {
+    "required": true,
+    "reviewType": "INDEPENDENT_CRITICAL_SECURITY_REVIEW",
+    "status": "NOT_RUN",
+    "behaviorAcceptance": false,
+    "note": "此静态作者核查不满足T32 high-risk独立安全评审；正式设计/行为fixture成熟后必须另行安排。"
+  },
+  "limitations": [
+    "T32 remains not_started; T31 is not accepted. Its independent PASS_WITH_LIMITATIONS review closes plan-quality findings only; neither review nor the static plan closes personal stability, commercial, platform, service, or Team dependency gates.",
+    "28 synthetic fixtures, 12 gates, 1 planned command, 3 measurement plans, 18 OPEN_QUESTION items and 12 acceptance criteria are planning records only; all fixtures/gates/commands/measurements remain NOT_RUN with empty evidence.",
+    "No Team backend, UI, schema, crypto protocol, customer research, pricing, capacity policy, behavior test, build, service, database, provider, platform or performance operation was performed.",
+    "Current 03 §1 keeps all Team create/invite/share APIs FEATURE_NOT_ENABLED, and 03 §11 prohibits implementing collaboration or organization-managed recovery in this planning slice.",
+    "Role details, key distribution and rotation, historical re-encryption, signed-URL/cache revocation, Team ledger ownership, capacity, invite semantics and organization-managed recovery remain OPEN_QUESTION.",
+    "The author static-check artifact verifies plan structure only; it is not independent security review, behavior acceptance or an accepted task gate."
+  ]
+}

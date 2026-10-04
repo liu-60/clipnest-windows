@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "task": "T23",
+  "reviewType": "fixture_plan_static_review",
+  "reviewStatus": "STATIC_REVIEW_RECORDED",
+  "executionStatus": "NOT_RUN",
+  "result": "PLANNING_ONLY_OPEN_QUESTIONS_REMAIN",
+  "reviewedSources": [
+    "docs/spec/tasks/T23.md",
+    "docs/spec/01-product-and-ux.md §3/§5",
+    "docs/spec/03-data-sync-and-security.md §5.4/§5.5/§6",
+    "docs/spec/08-acceptance-matrix.md §2/§3/S27",
+    "docs/spec/limits.v1.json",
+    "docs/progress.json T15/T22/T23 dependency/status blocks",
+    "tests/tasks/T15/fixture-plan.json open questions"
+  ],
+  "dependencySnapshot": [
+    {
+      "task": "T15",
+      "status": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T22",
+      "status": "not_started",
+      "accepted": false
+    }
+  ],
+  "staticChecks": [
+    {
+      "id": "T23-R01",
+      "check": "Fixture IDs are unique and coverage includes T15/T22 dependency boundaries plus P04-P07 share/import scope.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T23-R02",
+      "check": "Every fixture, gate, and planned command is NOT_RUN with an empty evidence list.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T23-R03",
+      "check": "Crypto integration delegates to T15; no protocol rewrite, fallback, real secret, fabricated vector, or cryptographic result is claimed.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T23-R04",
+      "check": "Plan follows frozen localDBKey separation, small vault entry, write/readback-before-database, SQLCipher failure categories, old-database preservation, and secret-exclusion requirements.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T23-R05",
+      "check": "Share plan covers bounded pending storage, old-item retention, cancellation/interruption OQs, foreground scope selection, and atomic main-app object/ref/record/outbox import.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T23-R06",
+      "check": "iOS and Android permission, SecureStore, lock, reinstall, and backup scenarios are explicitly platform-labeled; iOS/Android local-key and device behavior each have separate NOT_RUN gates.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T23-R07",
+      "check": "Anonymous/local-only, cloud-locked, logout, account-switch, offline/outbox, and recovery states preserve namespace/key isolation and do not infer silent scope changes.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T23-R08",
+      "check": "Unfrozen queue capacities, aggregate byte formula, item acknowledgement/deduplication, OS raw error mapping, fallback copy, and native configuration details remain OPEN_QUESTION.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T23-R09",
+      "check": "F02 specifies an independent 32-byte Expo Crypto native CSPRNG key request while recording metadata only and generating no actual key bytes.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T23-R10",
+      "check": "A successful SQLCipher open fixture requires nonempty cipher_version, then set key, then schema read; initial schema-transaction interruption cannot report ready.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T23-R11",
+      "check": "Android backup fixtures explicitly exclude SecureStore and nonportable DB/WAL/SHM/attachments without claiming restore.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T23-R12",
+      "check": "Sensitive share payload is restricted to a local protected authorized container; the unspecified exact mechanism is OPEN_QUESTION.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T23-R13",
+      "check": "iOS and Android local-key and permission/reinstall/backup device gates are separate and remain NOT_RUN.",
+      "status": "CHECKED_STATICALLY"
+    }
+  ],
+  "counts": {
+    "fixtureCount": 36,
+    "uniqueFixtureIdCount": 36,
+    "acceptanceGateCount": 6,
+    "uniqueAcceptanceGateIdCount": 6,
+    "commandCount": 3,
+    "uniqueCommandIdCount": 3,
+    "openQuestionCount": 12,
+    "allFixturesNotRun": true,
+    "allGatesNotRun": true,
+    "allCommandsNotRun": true
+  },
+  "openQuestionIds": [
+    "T23-OQ01",
+    "T23-OQ02",
+    "T23-OQ03",
+    "T23-OQ04",
+    "T23-OQ05",
+    "T23-OQ06",
+    "T23-OQ07",
+    "T23-OQ08",
+    "T23-OQ09",
+    "T23-OQ10",
+    "T23-OQ11",
+    "T23-OQ12"
+  ],
+  "limitations": [
+    "Static plan review only; it is not implementation, independent adversarial acceptance, a package/build result, crypto-vector evidence, or iOS/Android behavior evidence.",
+    "No tests, native build, Expo Go, physical device, provider, service, user profile, or user data was used.",
+    "T15 and T22 are not accepted; every planned command, fixture, and platform gate remains NOT_RUN. Exact queue/error/permission/cancellation mappings remain open.",
+    "The added SQLCipher success/crash cases and protected-container boundary are planning only; actual operation ordering, crash recovery, backup policy and storage protection remain unverified."
+  ]
+}

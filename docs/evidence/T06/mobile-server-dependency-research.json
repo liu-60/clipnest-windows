@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "mobile-server-dependency-research",
+  "recordedDate": "2026-10-04",
+  "result": "compatibility-evidence-refreshed-candidates-not-installed-or-frozen",
+  "inputs": {
+    "architecture": "docs/spec/02-architecture.md",
+    "versionSnapshot": "docs/spec/versions.snapshot.json",
+    "snapshotCheckedDate": "2026-10-02",
+    "snapshotStatus": "candidates-not-yet-installed-or-compatibility-tested",
+    "snapshotCandidates": {
+      "expo": "57.0.26",
+      "react-native": "0.87.1",
+      "react": "19.3.0",
+      "node": "24 LTS",
+      "fastify": "5.12.5"
+    }
+  },
+  "mobile": {
+    "npmCurrentTagsAsChecked": {
+      "expo": {
+        "latest": "57.0.26",
+        "sdk-57": "57.0.26",
+        "next": "58.0.3"
+      },
+      "react-native": {
+        "latest": "0.87.1",
+        "0.86-stable": "0.86.3"
+      },
+      "react": {
+        "latest": "19.3.0"
+      }
+    },
+    "sdk57CompatibleCandidate": {
+      "expo": "57.0.26",
+      "react-native": "0.86.3",
+      "react": "19.2.3",
+      "basis": [
+        "Expo SDK 57 reference targets React Native 0.86 and React 19.2.3; it lists minimum Node.js 22.13.x.",
+        "The official SDK-57 bundledNativeModules.json pins react-native 0.86.3 and react 19.2.3.",
+        "The SDK-57 expo package manifest is version 57.0.26 and lists react-native 0.86.3 and react 19.2.3 in its development dependency set."
+      ],
+      "assessment": "The snapshot's expo@57.0.26 is current on npm's latest and sdk-57 tags. Its react-native@0.87.1 and react@19.3.0 are registry-latest candidates, but they are not the stable SDK-57 curated pair. Keep mobile on Expo-managed versions; do not inherit the desktop/web React candidate. SDK 58 is on npm's next tag rather than latest and was not selected."
+    },
+    "packageMetadata": [
+      {
+        "name": "expo",
+        "version": "57.0.26",
+        "license": "MIT",
+        "enginesField": "absent-in-official-sdk-57-package-manifest",
+        "peerDependencies": {
+          "react": "*",
+          "react-native": "*",
+          "react-dom": "*",
+          "react-native-web": "*",
+          "react-native-webview": "*"
+        },
+        "peerDependenciesNote": "react and react-native are peers without semver bounds in the Expo package manifest; those wildcard peers do not prove cross-SDK compatibility. Use Expo's SDK mapping and install/doctor flow. react-dom, react-native-web, and react-native-webview are optional peers."
+      },
+      {
+        "name": "react-native",
+        "version": "0.86.3",
+        "license": "MIT",
+        "engines": {
+          "node": "^20.19.4 || ^22.13.0 || ^24.3.0 || >=25.0.0"
+        },
+        "peerDependencies": {
+          "react": "^19.2.3",
+          "@types/react": "^19.1.1 (optional)",
+          "@react-native/jest-preset": "0.86.3 (optional)"
+        },
+        "node24Assessment": "Node 24.21.0 satisfies ^24.3.0. The React peer range permits React 19.3.0 semver-wise, but Expo SDK 57's curated pairing remains React 19.2.3."
+      },
+      {
+        "name": "react",
+        "version": "19.2.3",
+        "license": "MIT",
+        "engines": {
+          "node": ">=0.10.0"
+        },
+        "peerDependencies": "none"
+      }
+    ],
+    "runtimeCompatibility": {
+      "nodeCandidate": "24.21.0",
+      "expoMinimumNode": "22.13.x for SDK 57",
+      "node24SatisfiesExpoMinimum": true,
+      "node24SatisfiesReactNative0863Engine": true,
+      "installCheck": "NOT_RUN; no Expo app was installed or created for this research task."
+    }
+  },
+  "server": {
+    "nodeRuntime": {
+      "candidate": "24.21.0",
+      "status": "LTS",
+      "releaseDate": "2026-09-08",
+      "maintenanceEvidence": "Node's official release page lists v24 as LTS. The Node 22-to-24 migration notice says the v24 release line receives updates through the end of April 2028.",
+      "license": "MIT for Node.js core; the official LICENSE lists separately licensed bundled third-party libraries."
+    },
+    "fastify": {
+      "candidate": "5.12.5",
+      "npmLatestTag": "5.12.5",
+      "license": "MIT",
+      "packageManifestFields": {
+        "engines": "absent",
+        "peerDependencies": "absent",
+        "directRuntimeDependencyCount": 15
+      },
+      "documentedNodeCompatibility": {
+        "minimum": "Node.js 20+ for Fastify v5",
+        "supportedNodeReleaseLines": ["20", "22", "24", "26"],
+        "node24Assessment": "Node 24 is explicitly listed in Fastify's current v5 LTS schedule and CI OS table; Node 24.21.0 is within the documented supported release line."
+      },
+      "maintenanceEvidence": [
+        "The npm package page reports 5.12.5 as latest.",
+        "The official v5.12.5 GitHub release is dated 2026-09-16 and is marked as a security release fixing GHSA-4mh8-r7rc-xpvc.",
+        "Fastify's LTS policy promises at least six months of support from a major release and security updates for an additional six months after the next major release; the v5 end-of-LTS date is currently TBD."
+      ]
+    }
+  },
+  "licenseAndMaintenanceScope": {
+    "directPackageLicenses": {
+      "expo@57.0.26": "MIT",
+      "react-native@0.86.3": "MIT",
+      "react@19.2.3": "MIT",
+      "fastify@5.12.5": "MIT",
+      "node@24.21.0": "MIT for Node.js core; bundled components have their own licenses"
+    },
+    "assessment": "The direct candidate licenses and upstream release/support evidence are recorded. This is not a transitive dependency license inventory or legal review."
+  },
+  "notVerified": [
+    "No npm registry installation, dependency resolution, manifest edit, or lockfile edit was performed.",
+    "Expo install --check, Expo Doctor, an Expo development build, and iOS/Android builds were not run; the mobile tuple is official compatibility evidence, not a local project build result.",
+    "No Fastify service was started or tested on Node 24.21.0; compatibility is based on official engine/support documentation and package metadata.",
+    "Licenses and engine ranges of Fastify's 15 direct runtime dependencies, Expo's dependency tree, and Node.js bundled third-party components were not audited. Recheck before first installation or lockfile freeze.",
+    "Recheck npm dist-tags, exact patches, Expo pairing, support windows, and licenses immediately before selecting and freezing versions; this file records a dated candidate snapshot only."
+  ],
+  "sources": [
+    {
+      "id": "architecture",
+      "url": "docs/spec/02-architecture.md",
+      "evidence": "§1 selects React Native + Expo development build and Node 24 LTS/TypeScript/Fastify; it explicitly says mobile React/RN are managed by the Expo SDK and may differ from desktop/web."
+    },
+    {
+      "id": "version-snapshot",
+      "url": "docs/spec/versions.snapshot.json",
+      "evidence": "Checked 2026-10-02; versions are candidates only and require compatibility, runtime, maintenance, and license rechecks before install/freeze."
+    },
+    {
+      "id": "expo-sdk-versions",
+      "url": "https://docs.expo.dev/versions/latest/",
+      "evidence": "SDK 57 maps to React Native 0.86 and React 19.2.3, minimum Node 22.13.x; Expo says each SDK targets one React Native version and recommends expo install for SDK packages."
+    },
+    {
+      "id": "expo-sdk-57-release-notes",
+      "url": "https://expo.dev/changelog/sdk-57",
+      "evidence": "SDK 57 released 2026-06-30; the 2026-08-27 update moved SDK 57 to React Native 0.86.3 and addressed the listed Hermes memory and development startup regressions."
+    },
+    {
+      "id": "expo-sdk-57-bundled-module-map",
+      "url": "https://raw.githubusercontent.com/expo/expo/sdk-57/packages/expo/bundledNativeModules.json",
+      "evidence": "Official SDK-57 compatibility map contains react 19.2.3 and react-native 0.86.3."
+    },
+    {
+      "id": "expo-package-metadata",
+      "url": "https://raw.githubusercontent.com/expo/expo/sdk-57/packages/expo/package.json",
+      "evidence": "Official sdk-57 package manifest identifies expo@57.0.26, MIT license, wildcard React/React Native peers, optional web peers, and the SDK's React/RN development dependency pair."
+    },
+    {
+      "id": "npm-expo-package-page",
+      "url": "https://www.npmjs.com/package/expo?activeTab=versions",
+      "evidence": "Npm current tags show latest and sdk-57 at 57.0.26; 58.0.3 is on next. The package page states MIT."
+    },
+    {
+      "id": "npm-react-native-package-page",
+      "url": "https://www.npmjs.com/package/react-native?activeTab=versions",
+      "evidence": "Npm current tags show latest 0.87.1 and 0.86-stable 0.86.3; the package page states MIT."
+    },
+    {
+      "id": "react-native-0863-package-metadata",
+      "url": "https://raw.githubusercontent.com/facebook/react-native/v0.86.3/packages/react-native/package.json",
+      "evidence": "Official version-tag package manifest supplies the exact Node engine, React peer range, optional peers, and MIT license for react-native@0.86.3."
+    },
+    {
+      "id": "npm-react-package-page",
+      "url": "https://www.npmjs.com/package/react?activeTab=versions",
+      "evidence": "Npm current latest tag is React 19.3.0; the package page states MIT."
+    },
+    {
+      "id": "react-1923-package-metadata",
+      "url": "https://raw.githubusercontent.com/facebook/react/v19.2.3/packages/react/package.json",
+      "evidence": "Official version-tag package manifest gives React 19.2.3's MIT license and Node engine range."
+    },
+    {
+      "id": "node-release-status",
+      "url": "https://nodejs.org/en/about/previous-releases",
+      "evidence": "Official Node.js release table identifies Node 24 as LTS."
+    },
+    {
+      "id": "node-24210-release",
+      "url": "https://nodejs.org/en/blog/release/v24.21.0",
+      "evidence": "Official release post identifies Node 24.21.0 as LTS and dates the release 2026-09-08."
+    },
+    {
+      "id": "node-24-support-window",
+      "url": "https://nodejs.org/en/blog/migrations/v22-to-v24",
+      "evidence": "Official migration note says the Node 24 release line receives updates through the end of April 2028."
+    },
+    {
+      "id": "node-license",
+      "url": "https://github.com/nodejs/node/blob/main/README.md",
+      "evidence": "Node.js states that core is MIT licensed and directs readers to LICENSE for bundled external-library licenses."
+    },
+    {
+      "id": "npm-fastify-package-page",
+      "url": "https://www.npmjs.com/package/fastify?activeTab=versions",
+      "evidence": "Npm current latest tag is Fastify 5.12.5; the package page states MIT and lists 15 runtime dependencies."
+    },
+    {
+      "id": "fastify-5125-package-metadata",
+      "url": "https://raw.githubusercontent.com/fastify/fastify/v5.12.5/package.json",
+      "evidence": "Official version-tag manifest identifies fastify@5.12.5, MIT, its 15 runtime dependencies, and has no engines or peerDependencies fields."
+    },
+    {
+      "id": "fastify-v5-node-floor",
+      "url": "https://fastify.dev/docs/v5.0.x/Guides/Migration-Guide-V5/",
+      "evidence": "Fastify v5 requires Node.js 20 or newer."
+    },
+    {
+      "id": "fastify-current-lts-matrix",
+      "url": "https://raw.githubusercontent.com/fastify/fastify/main/docs/Reference/LTS.md",
+      "evidence": "Current Fastify LTS policy says supported Node LTS lines are tested/verified; its v5 row lists Node 20, 22, 24, and 26, and CI-tested OS rows use Node 24."
+    },
+    {
+      "id": "fastify-5125-release",
+      "url": "https://github.com/fastify/fastify/releases/tag/v5.12.5",
+      "evidence": "Official v5.12.5 release dated 2026-09-16 is marked security release and fixes GHSA-4mh8-r7rc-xpvc."
+    }
+  ]
+}

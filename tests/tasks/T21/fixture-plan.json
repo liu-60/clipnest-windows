@@ -1,0 +1,952 @@
+{
+  "schemaVersion": 1,
+  "task": "T21",
+  "status": "planned-not-executed",
+  "purpose": "Synthetic fixture preparation for the Web library and TypeScript sync engine only; no implementation or behavior is established.",
+  "dependencyGate": "wait_for_all_task_card_and_03_upstream_dependencies_accepted",
+  "dependencyGateDetails": {
+    "taskCardRequiredTasks": [
+      "T14",
+      "T17",
+      "T19",
+      "T20"
+    ],
+    "additionalTasksListedBy03Section11": [
+      "T15",
+      "T16",
+      "T18"
+    ],
+    "requiredStatus": "accepted",
+    "observedProgressStatuses": {
+      "T14": "not_started",
+      "T15": "not_started",
+      "T16": "not_started",
+      "T17": "not_started",
+      "T18": "not_started",
+      "T19": "not_started",
+      "T20": "not_started"
+    },
+    "source": "docs/progress.json#/tasks",
+    "rule": "This plan is preparation only. Do not implement or run behavior before dependencies are accepted. Until the card and 03 §11 dependency lists are reconciled, honor their union as a conservative gate."
+  },
+  "sources": [
+    {
+      "path": "docs/spec/tasks/T21.md",
+      "sections": [
+        "dependencies",
+        "subtasks",
+        "completion criteria",
+        "validation commands"
+      ]
+    },
+    {
+      "path": "docs/spec/01-product-and-ux.md",
+      "sections": [
+        "§4 P08-P11 Web pages",
+        "§5 shared page states",
+        "§6 shared component contracts",
+        "§7 Web success criteria"
+      ]
+    },
+    {
+      "path": "docs/spec/02-architecture.md",
+      "sections": [
+        "§4 repository/interface boundary",
+        "§5 search semantics",
+        "§6 worker/lifecycle boundaries",
+        "§7 capabilities"
+      ]
+    },
+    {
+      "path": "docs/spec/03-data-sync-and-security.md",
+      "sections": [
+        "§5.4 Web lock and persistence boundary",
+        "§6 transactions/outbox",
+        "§7.1 push",
+        "§7.2 pull/watermarks",
+        "§7.3 snapshot recovery",
+        "§10 S03-S12/S19-S23/S26 and T21 stage row",
+        "§11 dependency row"
+      ]
+    },
+    {
+      "path": "docs/spec/08-acceptance-matrix.md",
+      "sections": [
+        "U01-U12",
+        "§6 evidence rules"
+      ]
+    },
+    {
+      "path": "docs/spec/limits.v1.json",
+      "fields": [
+        "local.anonymousWebSessionBytes",
+        "local.webCacheBytes",
+        "local.webIndexBytes",
+        "transport.summaryPageItems",
+        "transport.summaryPageBytes",
+        "transport.syncBatchOperations",
+        "transport.syncBatchBytes",
+        "transport.queryCancellationGeneration",
+        "cloud.outboxHardLimitBytes",
+        "cloud.snapshotTtlSeconds",
+        "cloud.snapshotMaxRows"
+      ]
+    }
+  ],
+  "fixturePolicy": {
+    "syntheticDataOnly": true,
+    "fixedSeed": "clipnest-t21-web-sync-fixed-seed-20261004",
+    "namespaces": [
+      "account-A/workspace-WA/device-D1",
+      "account-B/workspace-WB/device-D2",
+      "anonymous-web-session",
+      "recovery-namespace"
+    ],
+    "neverUse": [
+      "live user/profile/clipboard content",
+      "real account, production service, PostgreSQL, S3 or browser session",
+      "literal body, URL, title, image, key, token or SQL parameter in evidence",
+      "official crypto KAT or cross-platform crypto vector result before T15 acceptance"
+    ],
+    "expectedResults": "Assert externally visible state, synthetic identity/scope, immutable op and cursor behavior, generation, transaction boundaries and side-effect counts. Do not invent DTOs, error enums/copy, retry codes or unaccepted adapter behavior.",
+    "statusMeaning": "NOT_RUN means no Web UI, sync, storage, browser, integration, database or service behavior has been verified."
+  },
+  "interfacePreparation": {
+    "sourceLabels": "Case source fields are pointers for later review, not evidence that every cited requirement has been exhaustively covered.",
+    "syncBoundary": "Treat ciphertext and frozen DTO bytes as opaque; this plan does not test encryption, PostgreSQL/RLS, S3 provider semantics, or desktop/native behavior.",
+    "budgets": "Use injected synthetic counters for capacity boundaries; do not derive actual storage charge from content size.",
+    "webLifecycle": "Web background execution is not guaranteed; plan foreground recovery only.",
+    "errorMapping": "Exact typed API and user-facing mappings remain OPEN_QUESTION while T06/T16/T20 and applicable task contracts are unaccepted."
+  },
+  "fixtureCaseCount": 36,
+  "fixtureCases": [
+    {
+      "caseNumber": 1,
+      "id": "t21-u01-search-key-navigation",
+      "source": "08-U01",
+      "category": [
+        "keyboard",
+        "search"
+      ],
+      "input": "Synthetic visible results and focused field with spaces/caret.",
+      "action": "Type and navigate Left/Right/Home/End/Down; press non-composing Enter.",
+      "expected": "Editing keys preserve caret/value; Down selects; Enter invokes one action; no preview from edit keys.",
+      "observation": "Value/caret, selected synthetic ID, callback count.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 2,
+      "id": "t21-u02-ime-enter-escape",
+      "source": "08-U02",
+      "category": [
+        "keyboard",
+        "IME"
+      ],
+      "input": "Synthetic composing search input with selected result behind it.",
+      "action": "Press Enter and Esc during composition, then non-composing action.",
+      "expected": "Composition commit/cancel does not trigger paste, execute, or panel exit; later action follows normal rule.",
+      "observation": "Composition state, query, panel state, callback counts.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 3,
+      "id": "t21-u03-double-click-executes-once",
+      "source": "08-U03",
+      "category": [
+        "selection",
+        "deduplication"
+      ],
+      "input": "Visible synthetic card, no active job.",
+      "action": "Single click, double click, hold Enter for repeat.",
+      "expected": "Single click only selects; double click creates one job; repeats do not duplicate side effects.",
+      "observation": "Synthetic ID, event metadata, job count.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 4,
+      "id": "t21-u04-late-query-does-not-replace-current-generation",
+      "source": "08-U04",
+      "category": [
+        "search",
+        "generation",
+        "race"
+      ],
+      "input": "Synthetic request A owns generation gA and is held; request B starts as gB with distinct IDs and selection, then A resolves late.",
+      "action": "Start A, then B; verify starting B invalidates/cancels A; finish B, then release A. Observe each request/result generation and selected ID.",
+      "expected": "Generation ownership stays with the originating request; only gB can update current results/selection. A cancellation signal is observable, but no return enum is assumed.",
+      "observation": "Request/result generation tags, abort signal/event, result IDs, selection, and update count after late A.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 5,
+      "id": "t21-u05-page-failure-retains-results",
+      "source": "08-U05",
+      "category": [
+        "pagination",
+        "error"
+      ],
+      "input": "Two synthetic pages loaded; next page fails once.",
+      "action": "Press End, request next page, observe error, retry locally.",
+      "expected": "Keep loaded results and selection; End targets loaded tail; local retry does not reset all pages.",
+      "observation": "Page IDs, selection, retry action.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 6,
+      "id": "t21-u06-escape-preview-panel-hierarchy",
+      "source": "08-U06",
+      "category": [
+        "keyboard",
+        "preview"
+      ],
+      "input": "Synthetic preview open in Web panel; focus also tested in textarea/button.",
+      "action": "Press Esc twice across separate events.",
+      "expected": "First Esc closes preview only; second closes panel; input controls do not trigger extra global action.",
+      "observation": "Preview/panel state and callback counts.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 7,
+      "id": "t21-u07-lock-hides-cloud-and-terminates-worker",
+      "source": "08-U07,01-P09",
+      "category": [
+        "lock",
+        "privacy",
+        "worker"
+      ],
+      "input": "Synthetic unlocked cloud body/preview/thumb/search canaries and a separate anonymous item; worker has one staged late result.",
+      "action": "Lock cloud; verify worker termination and late-result suppression; then issue a new direct cloud repository/API read for the same canary.",
+      "expected": "Cloud body/preview/thumb/search are unavailable; worker terminates; late result is suppressed; a direct post-lock cloud read is rejected or masked without returning canary data. Anonymous session remains within its separate session boundary; exact read-error mapping stays OPEN_QUESTION.",
+      "observation": "Scopes/IDs, worker termination, visible result IDs, direct-read status/category, and absence of canary values.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "canonical-web-sync-dto-and-errors",
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 8,
+      "id": "t21-u08-anonymous-cap-warning-refresh-loss",
+      "source": "08-U08,01-§4",
+      "category": [
+        "capacity",
+        "anonymous",
+        "privacy"
+      ],
+      "input": "Synthetic anonymous session at injected 32 MiB cap with committed old IDs and proposed item.",
+      "action": "Attempt add, inspect export/loss notice, simulate refresh.",
+      "expected": "Reject new item and retain old; expose explicit export choice/loss notice; refresh loses anon session; no sensitive IDB plaintext.",
+      "observation": "Injected counters, IDs, visible notice/action, post-refresh presence.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "capacity-and-cache-accounting",
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 9,
+      "id": "t21-u09-clipboard-permission-degrades-safely",
+      "source": "08-U09,01-P10",
+      "category": [
+        "permission",
+        "clipboard"
+      ],
+      "input": "Synthetic HTTPS/Web permission denied and a manually-entered textarea fallback.",
+      "action": "Attempt user-initiated paste/copy path with permission denied.",
+      "expected": "Manual paste remains available; explain capability degradation; no false paste/clipboard success or background capture claim.",
+      "observation": "Permission category, visible fallback, success callback count.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 10,
+      "id": "t21-u10-capacity-full-preserves-draft-and-scope",
+      "source": "08-U10,01-§5",
+      "category": [
+        "capacity",
+        "outbox",
+        "draft"
+      ],
+      "input": "Injected local/outbox budget-full state with protected saved item and pending draft.",
+      "action": "Attempt a new cloud-scope mutation.",
+      "expected": "Show capacity/recovery affordance; retain protected item/draft; do not silently change to local-only.",
+      "observation": "Injected budget, item/draft IDs, scope, success count.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "capacity-and-cache-accounting",
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 11,
+      "id": "t21-u11-account-switch-isolates-pending-operations",
+      "source": "08-U11,01-§4",
+      "category": [
+        "namespace",
+        "account-switch",
+        "privacy"
+      ],
+      "input": "Synthetic account A has pending outbox, worker, subscription and opaque key handle; B has separate namespace.",
+      "action": "Switch A to B; release delayed A callback and attempt dispatch.",
+      "expected": "A worker/subscription/handle lifecycle is closed; B cannot see A data; A wire never dispatches under B.",
+      "observation": "Synthetic IDs/scopes, teardown and dispatch counts.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "canonical-web-sync-dto-and-errors",
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 12,
+      "id": "t21-u12-offline-empty-no-results-partial-coverage",
+      "source": "08-U12,01-§5",
+      "category": [
+        "offline",
+        "coverage",
+        "empty-state"
+      ],
+      "input": "Offline unlocked empty DB, no-match query, partial index, a delayed initial query, and a separate fixture yielding two nonzero results.",
+      "action": "Observe initial loading; cancel the delayed query; query the no-match, partial, and two-result fixtures.",
+      "expected": "Initial loading is not presented as empty/no-results; cancellation ends that request without stale output; empty/no-results/partial/nonzero results remain distinct; cached unlocked data remains usable with no full-cloud claim.",
+      "observation": "Loading/cancel state transitions, state category, IDs/count, coverage/claim flags, and generation ownership.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 13,
+      "id": "t21-p08-responsive-library-layout-breakpoints",
+      "source": "01-§4/P08",
+      "category": [
+        "responsive",
+        "accessibility"
+      ],
+      "input": "Synthetic library at viewport widths >=1024, 768-1023, and <768 logical px.",
+      "action": "Navigate sidebar/list/detail and return between list/detail routes.",
+      "expected": "Use specified layout transitions, preserve selectable body, visible keyboard focus, no clipped core task.",
+      "observation": "Viewport, route, focus, visible synthetic IDs.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 14,
+      "id": "t21-p09-login-does-not-unlock-cloud",
+      "source": "01-§4/P09",
+      "category": [
+        "auth",
+        "lock",
+        "privacy"
+      ],
+      "input": "Synthetic authenticated account with cloud locked, a distinct local-only session, and an unsent cloud draft; session expires while the draft is pending.",
+      "action": "Render locked page; expire session; try cloud search/preview and local-only read; renew login without device approval/recovery.",
+      "expected": "Show approve-device/recovery path; cloud body/preview/thumb/search remain hidden; login alone does not unlock; the unsent draft is retained across session expiry and awaits authorized recovery/sync; local-only remains distinct.",
+      "observation": "Auth/lock/scope states, draft digest/presence, visible IDs, and unlock state before/after login.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "canonical-web-sync-dto-and-errors",
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 15,
+      "id": "t21-p10-user-initiated-import-and-copy-fallback",
+      "source": "01-§4/P10",
+      "category": [
+        "clipboard",
+        "permission",
+        "privacy"
+      ],
+      "input": "Synthetic Web clipboard capability allowed/denied variants under HTTPS and user gesture.",
+      "action": "Use Paste/Upload/Copy actions; exercise denied permission fallback.",
+      "expected": "Use only user-initiated actions; denial offers manual textarea; copy failure gives optional selectable text; no background-capture claim.",
+      "observation": "Gesture/permission category, visible fallback, callback counts.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 16,
+      "id": "t21-p11-device-controls-and-revocation-boundary",
+      "source": "01-§4/P11,03-§5",
+      "category": [
+        "device",
+        "privacy",
+        "revoke"
+      ],
+      "input": "Synthetic current device metadata and second authorized device; downloaded-content flag.",
+      "action": "Inspect current device/authorization/last-sync/recovery controls; request synthetic revoke.",
+      "expected": "Controls show fixture metadata and revoke/recovery/export/delete choices; do not claim already downloaded plaintext is erased. Exact provider/DTO outcome remains OQ.",
+      "observation": "Visible control categories, synthetic device IDs, no plaintext values.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "device-revocation-result-and-local-copy",
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 17,
+      "id": "t21-web-locked-refresh-no-persistent-unlock-secret",
+      "source": "03-§5.4/S23",
+      "category": [
+        "privacy",
+        "refresh",
+        "indexeddb"
+      ],
+      "input": "Synthetic unlocked cloud cache and app-managed browser stores; cookie-present flag.",
+      "action": "Refresh, inspect app-managed durable stores, try cloud read before unlock.",
+      "expected": "No persistent cloud unlock capability in app-managed stores under test; cookie alone does not expose cloud data; worker starts only after approved unlock.",
+      "observation": "Store classes, lock/worker state, visible IDs.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 18,
+      "id": "t21-push-batch-order-partial-results",
+      "source": "03-§7.1/S26",
+      "category": [
+        "sync",
+        "push",
+        "partial-success"
+      ],
+      "input": "Synthetic ordered operations at configured batch item/byte boundaries and per-op committed/rejected results.",
+      "action": "Submit fixture batch and consume response.",
+      "expected": "Each result maps to corresponding op in request order; partial success is per-op, confirmed successes are not regenerated; do not assert unfrozen UI error copy.",
+      "observation": "op IDs/order/status classes, receipt/update counts.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "canonical-web-sync-dto-and-errors"
+      ]
+    },
+    {
+      "caseNumber": 19,
+      "id": "t21-push-idempotent-retry-keeps-op-bytes",
+      "source": "03-§7.1/S03",
+      "category": [
+        "sync",
+        "idempotency",
+        "retry"
+      ],
+      "input": "Synthetic opId=op-01 with canonical hash h1; first commit response is lost; exact same opId/hash retry plus same opId with changed hash h2.",
+      "action": "Retry identical immutable bytes; then submit the changed-hash variant under op-01.",
+      "expected": "Exact retry returns the original receipt/committedSeq with one version; changed hash returns frozen HTTP 409 IDEMPOTENCY_MISMATCH, stops that op, and never silently creates a replacement opId.",
+      "observation": "opId/hash digests, exact status/code, version count, receipt and committedSeq.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "canonical-web-sync-dto-and-errors"
+      ]
+    },
+    {
+      "caseNumber": 20,
+      "id": "t21-pull-fixed-upper-seq-never-skips-unreturned-change",
+      "source": "03-§7.2/S08",
+      "category": [
+        "sync",
+        "pull",
+        "pagination"
+      ],
+      "input": "Synthetic ordered change log exceeding 50 items or 128 KiB, with fixed upperSeq.",
+      "action": "Fetch pages using same upperSeq, inject response-byte cap boundary.",
+      "expected": "toSeq advances only through returned rows; no skipped changes; hasMore/next page uses fixed upperSeq.",
+      "observation": "Seqs, page sizes, upperSeq, applied IDs.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "canonical-web-sync-dto-and-errors"
+      ]
+    },
+    {
+      "caseNumber": 21,
+      "id": "t21-pull-page-and-cursor-apply-atomically",
+      "source": "03-§7.2/S08",
+      "category": [
+        "sync",
+        "pull",
+        "transaction",
+        "recovery"
+      ],
+      "input": "Synthetic pull page and prior local cursor; crash barriers before/after local transaction commit.",
+      "action": "Apply page, inject crash cases, then replay same page.",
+      "expected": "Rows and applied cursor commit together; replay is idempotent; cursor never advances from HTTP receipt alone.",
+      "observation": "Cursor/IDs before-after, commit result, duplicate count.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "canonical-web-sync-dto-and-errors"
+      ]
+    },
+    {
+      "caseNumber": 22,
+      "id": "t21-out-of-order-pull-preserves-high-water",
+      "source": "03-§7.2",
+      "category": [
+        "sync",
+        "watermark",
+        "race"
+      ],
+      "input": "Synthetic requests sent with known watermarks; response seq100 arrives before older seq99; separate new-current-state probe below sent watermark.",
+      "action": "Deliver responses out of order and then run current probe.",
+      "expected": "Maximum seen watermark never decreases; valid old in-flight/old-H response below latest arrival watermark is tolerated; new current probe below its sent watermark is isolated as rollback.",
+      "observation": "Request-sent watermark, response order, retained max, isolation event.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "canonical-web-sync-dto-and-errors"
+      ]
+    },
+    {
+      "caseNumber": 23,
+      "id": "t21-snapshot-fixed-h-catchup-before-namespace-swap",
+      "source": "03-§7.3/S09-S10",
+      "category": [
+        "snapshot",
+        "recovery",
+        "namespace"
+      ],
+      "input": "Synthetic snapshotId=snap-90, epoch='1', fixed high-water H='90'; local priorSeenHighWater='120'; concurrent change log contains seq 91..120.",
+      "action": "Download all pages at the same snapshotId/epoch/H; apply catchup through seq 120; validate, then attempt namespace swap and bootstrap ACK.",
+      "expected": "Every page retains H='90'; do not publish/swap or bootstrap-ACK before catchup reaches at least priorSeenHighWater='120'; then namespace/cursor swap is atomic and ACK follows it.",
+      "observation": "snapshotId/epoch/H, catchup seqs through 120, prior watermark, swap and ACK event order.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "snapshot-provider-and-platform-boundaries",
+        "canonical-web-sync-dto-and-errors"
+      ]
+    },
+    {
+      "caseNumber": 24,
+      "id": "t21-snapshot-interruption-preserves-old-library-and-drafts",
+      "source": "03-§7.3/S09-S10",
+      "category": [
+        "snapshot",
+        "recovery",
+        "cancellation"
+      ],
+      "input": "Synthetic current library, unsent draft, old READY outbox op with immutable wire_bytes, and partial recovery namespace; snapshot expires or epoch changes mid-page.",
+      "action": "Cancel/interupt page flow; start a new snapshot fixture; reconcile old outbox receipt/state before any dispatch.",
+      "expected": "Do not publish partial recovery namespace or overwrite old library/draft; cancellation/expiry preserves old outbox bytes and does not blindly replay the old op; use the gated recovery/reconciliation path without assuming error text.",
+      "observation": "Old/new namespace IDs, draft digest, outbox opId/wire_bytes/state, receipt probe, cursor and publish/dispatch event order.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "snapshot-provider-and-platform-boundaries",
+        "canonical-web-sync-dto-and-errors"
+      ]
+    },
+    {
+      "caseNumber": 25,
+      "id": "t21-revision-conflict-retains-draft-no-clock-overwrite",
+      "source": "03-§7.1/S04-S05",
+      "category": [
+        "conflict",
+        "draft",
+        "revision"
+      ],
+      "input": "Synthetic D1 stale baseRevision='7' and local draft; remote D2 currentRevision='8', currentHeadVersionId='ver-remote-8', currentSeq='120'.",
+      "action": "Submit stale update and consume conflict response; render retained draft/head comparison.",
+      "expected": "Frozen terminal HTTP 409 REVISION_CONFLICT includes currentRevision='8', currentHeadVersionId='ver-remote-8', currentSeq='120'; retain local draft and remote head, never overwrite by device time; create conflict copy only after explicit action with a new identity.",
+      "observation": "Exact status/code/three response fields, revisions, draft/head IDs, choices and mutation count.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "canonical-web-sync-dto-and-errors"
+      ]
+    },
+    {
+      "caseNumber": 26,
+      "id": "t21-attachment-not-ready-keeps-op-dependent",
+      "source": "03-§6/§8.1/T18",
+      "category": [
+        "outbox",
+        "attachment",
+        "dependency"
+      ],
+      "input": "Synthetic mutation references an attachment that is not ready and a matching upload dependency.",
+      "action": "Stage outbox; observe state before attachment readiness; then mark fixture attachment ready.",
+      "expected": "Before readiness the only allowed outbox state is WAIT_DEPENDENCY; do not use BLOCKED, fabricate a ready reference, or dispatch early. Exact UI mapping remains OPEN_QUESTION.",
+      "observation": "Outbox state transition, attachment state, dispatch count and user-visible category.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "canonical-web-sync-dto-and-errors",
+        "snapshot-provider-and-platform-boundaries"
+      ]
+    },
+    {
+      "caseNumber": 27,
+      "id": "t21-hard-outbox-limit-blocks-new-cloud-write",
+      "source": "03-§6/S12",
+      "category": [
+        "capacity",
+        "outbox"
+      ],
+      "input": "Injected pending/additional counters near 209715200-byte hard limit; old committed draft/op protected.",
+      "action": "Attempt crossing cloud mutation and inspect cleanup/export choices.",
+      "expected": "Block new cloud mutation, retain old queue/draft; allow safe read/delete/export path as contract permits; no implicit local-only conversion.",
+      "observation": "Counters, IDs, scope, recovery affordances.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "capacity-and-cache-accounting"
+      ]
+    },
+    {
+      "caseNumber": 28,
+      "id": "t21-web-close-foreground-resumes-without-background-promise",
+      "source": "03-§6,01-§5",
+      "category": [
+        "lifecycle",
+        "outbox",
+        "offline"
+      ],
+      "input": "Synthetic READY persisted cloud outbox and page lifecycle transitions.",
+      "action": "Close/suspend page, reopen/foreground, and inspect resume opportunity.",
+      "expected": "Persisted outbox can resume in foreground; UI never promises continuous Web background execution; anonymous session loss remains disclosed.",
+      "observation": "Op state, foreground event, dispatch opportunity, notice.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "web-e2e-and-permission-harness",
+        "canonical-web-sync-dto-and-errors"
+      ]
+    },
+    {
+      "caseNumber": 29,
+      "id": "t21-cross-runtime-wire-fixture-remains-opaque",
+      "source": "docs/spec/03-data-sync-and-security.md §6-§7; docs/spec/02-architecture.md §1; T15-owned vectors excluded",
+      "category": [
+        "cross-runtime",
+        "wire",
+        "crypto-boundary"
+      ],
+      "input": "Synthetic shared DTO fixture with opaque ciphertext bytes/manifest and fixed Rust/Web serializer inputs; no key or crypto vectors.",
+      "action": "Pass fixture through the planned TS boundary and compare canonical protocol bytes/state with the reference fixture.",
+      "expected": "Preserve frozen wire bytes, Decimal, and identity fields; this does not assert encryption correctness or official cross-platform crypto vectors, which remain gated by T15.",
+      "observation": "Canonical byte digest and DTO fields only; no secrets.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "cross-runtime-crypto-and-wire-serialization",
+        "canonical-web-sync-dto-and-errors"
+      ]
+    },
+    {
+      "caseNumber": 30,
+      "id": "t21-decimal-above-2-to-53-and-partial-receipt",
+      "source": "docs/spec/03-data-sync-and-security.md §2.1/§7.1/S26",
+      "category": [
+        "decimal",
+        "precision",
+        "partial-success"
+      ],
+      "input": "Synthetic canonical Decimal strings above 2^53, PG signed-bigint max='9223372036854775807', overflow='9223372036854775808', and a mixed per-op receipt batch.",
+      "action": "Persist/recover/serialize the Decimal strings; submit a boundary operation at max and an overflow operation; consume per-op results.",
+      "expected": "Preserve canonical Decimal strings exactly without JSON-number conversion; max signed bigint='9223372036854775807' round-trips; overflow='9223372036854775808' is rejected with frozen COUNTER_EXHAUSTED and never wraps to zero; update only individually receipted ops.",
+      "observation": "Exact Decimal strings, rejection status/code, no-wrap result, op IDs and status classes.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "cross-runtime-crypto-and-wire-serialization",
+        "canonical-web-sync-dto-and-errors"
+      ]
+    },
+    {
+      "caseNumber": 31,
+      "id": "t21-p11-private-mode-cache-warning-online-use",
+      "source": "docs/spec/01-product-and-ux.md §4/P11",
+      "category": [
+        "private-mode",
+        "cache",
+        "online",
+        "quota"
+      ],
+      "input": "Synthetic browser reports private mode or cache quota that makes persistent Web cache unavailable; online service fixture remains reachable.",
+      "action": "Load the library with persistence unavailable; observe notice and perform a synthetic online read.",
+      "expected": "Show a visible notice that browser cache may not persist; allow the eligible online use to continue; make no promise that cached data survives refresh.",
+      "observation": "Visible notice category, online request/result state, and absence of a cross-refresh durability claim.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "capacity-and-cache-accounting",
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 32,
+      "id": "t21-initial-loading-cancel-and-nonzero-results",
+      "source": "docs/spec/01-product-and-ux.md §5-§7; docs/spec/08-acceptance-matrix.md §6",
+      "category": [
+        "loading",
+        "cancellation",
+        "search",
+        "results"
+      ],
+      "input": "Synthetic initial query held behind a cancellation barrier plus a later query fixture returning two distinct results.",
+      "action": "Observe initial loading; cancel the held query; start the second query and release its two-result response.",
+      "expected": "Show loading before completion; cancellation does not masquerade as zero results or publish stale results; the completed second query shows exactly two nonzero results (count=2) with its own generation and selection.",
+      "observation": "Loading/cancel transitions, generation IDs, result count=2, result IDs and selected ID.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "web-e2e-and-permission-harness"
+      ]
+    },
+    {
+      "caseNumber": 33,
+      "id": "t21-outbox-crash-sending-to-ready-preserves-wire-bytes",
+      "source": "docs/spec/03-data-sync-and-security.md §6/S11",
+      "category": [
+        "outbox",
+        "crash",
+        "wire-bytes",
+        "recovery"
+      ],
+      "input": "Synthetic persisted outbox op with state=SENDING, opId=op-crash-01, immutable wire_bytes fixture and matching digest.",
+      "action": "Inject process-crash boundary after SENDING persistence and recover the local outbox.",
+      "expected": "Recovered state is READY and wire_bytes are byte-for-byte unchanged; do not regenerate the op or ciphertext.",
+      "observation": "Before/after state, opId, wire_bytes exact byte comparison and digest.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "canonical-web-sync-dto-and-errors"
+      ]
+    },
+    {
+      "caseNumber": 34,
+      "id": "t21-outbox-ack-records-receipt-before-clear-atomically",
+      "source": "docs/spec/03-data-sync-and-security.md §6-§7.1",
+      "category": [
+        "outbox",
+        "ack",
+        "receipt",
+        "transaction"
+      ],
+      "input": "Synthetic SENDING op with receipt receipt-01, confirmedRevision Decimal='8' and committedSeq Decimal='120' returned by the server fixture.",
+      "action": "Inject local transaction barriers while persisting receipt/revision/seq and clearing the acknowledged outbox row.",
+      "expected": "In one local transaction, persist the receipt, confirmedRevision and committedSeq and clear the acknowledged outbox row atomically; pre-commit failure leaves the prior outbox recoverable; no state can clear the op without all three confirmed fields.",
+      "observation": "Transaction commit marker, receipt/revision/seq, outbox row/state and crash recovery view.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "canonical-web-sync-dto-and-errors"
+      ]
+    },
+    {
+      "caseNumber": 35,
+      "id": "t21-local-mutation-rolls-back-draft-view-outbox-counter-together",
+      "source": "docs/spec/03-data-sync-and-security.md §6/S11",
+      "category": [
+        "local-mutation",
+        "transaction",
+        "rollback",
+        "capacity"
+      ],
+      "input": "Synthetic persisted draft/view/outbox and pendingBytes counter; inject a transaction failure before commit while staging one mutation.",
+      "action": "Attempt the mutation with a failure barrier before commit; inspect all four persisted components and success indication.",
+      "expected": "Rollback is all-or-nothing across draft, materialized view, outbox and pendingBytes counter; pre-commit failure preserves their prior values and reports no success; successful publication is possible only after commit.",
+      "observation": "Before/after digests and counter, outbox count, commit result and visible success state.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "canonical-web-sync-dto-and-errors",
+        "capacity-and-cache-accounting"
+      ]
+    },
+    {
+      "caseNumber": 36,
+      "id": "t21-push-over-limit-413-has-zero-writes",
+      "source": "docs/spec/03-data-sync-and-security.md §7.1/§9",
+      "category": [
+        "sync",
+        "push",
+        "size-limit",
+        "zero-write"
+      ],
+      "input": "Synthetic JSON push request exceeds configured syncBatchBytes by one UTF-8 byte and contains two otherwise valid operations.",
+      "action": "Submit the oversized request and inspect the response plus all affected synthetic server records.",
+      "expected": "Return HTTP 413 with limitKey=syncBatchBytes and zero operation/version/change/receipt writes; response code follows the frozen 413 family, with UI wording left OPEN_QUESTION.",
+      "observation": "HTTP status, limitKey, operation/version/change/receipt counts before and after, and visible error category.",
+      "status": "NOT_RUN",
+      "openQuestionRefs": [
+        "canonical-web-sync-dto-and-errors"
+      ]
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "dependency-list-reconciliation",
+      "status": "OPEN_QUESTION",
+      "reason": "T21 task card lists T14/T17/T19/T20, while 03 §11 lists T20/T15/T16/T18/T19. Keep the union gated until the accepted task graph is reconciled."
+    },
+    {
+      "id": "canonical-web-sync-dto-and-errors",
+      "status": "OPEN_QUESTION",
+      "reason": "T06/T16 DTO and database behavior are not accepted; exact error discriminators, return mapping, retry classification and UI copy are not asserted."
+    },
+    {
+      "id": "cross-runtime-crypto-and-wire-serialization",
+      "status": "OPEN_QUESTION",
+      "reason": "T15 crypto KAT/cross-platform vectors and T16 canonical wire serialization are not accepted; opaque fixture pass-through is planning only, no crypto vector is claimed."
+    },
+    {
+      "id": "snapshot-provider-and-platform-boundaries",
+      "status": "OPEN_QUESTION",
+      "reason": "T18 attachment/provider behavior and T19 snapshot/GC implementation remain gated; synthetic cases cannot prove PostgreSQL, RLS, S3 or production recovery semantics."
+    },
+    {
+      "id": "web-e2e-and-permission-harness",
+      "status": "OPEN_QUESTION",
+      "reason": "T01/T06 script/harness readiness, real browser HTTPS/clipboard permissions, accessibility thresholds and exact error presentation remain unverified."
+    },
+    {
+      "id": "capacity-and-cache-accounting",
+      "status": "OPEN_QUESTION",
+      "reason": "T07/T20 accounting and Web cache charge/eviction remain unresolved; tests use injected counters only."
+    },
+    {
+      "id": "device-revocation-result-and-local-copy",
+      "status": "OPEN_QUESTION",
+      "reason": "P11 states UI responsibilities and does not promise erasure of downloaded plaintext; exact revoke API/result mapping and copy await accepted contracts."
+    }
+  ],
+  "acceptanceChecks": [
+    {
+      "id": "U01-U06-core-web-search-navigation-and-pagination",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "U07-U12-lock-anonymous-cap-permission-capacity-account-switch-offline",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "P08-P11-web-library-unlock-import-device-states",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "push-partial-results-receipts-and-idempotency",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "pull-fixed-upper-seq-pagination-cursor-atomicity",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "snapshot-recovery-catchup-and-atomic-publication",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "revision-conflict-draft-retention-and-attachment-dependency",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "cross-runtime-opaque-wire-and-decimal-precision",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "real-db-provider-browser-platform-and-crypto-acceptance",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "P09-session-expiry-retains-unsent-draft-and-login-does-not-unlock",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "P11-private-cache-warning-allows-online-use-without-durability-promise",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "loading-cancel-generation-ownership-and-nonzero-results",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "outbox-crash-ack-and-local-mutation-transaction-atomicity",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "push-413-zero-writes-wait-dependency-and-exact-frozen-conflict-errors",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "snapshot-h90-prior-high-water-120-and-bigint-overflow-guard",
+      "status": "NOT_RUN"
+    }
+  ],
+  "requiredNotRunGates": [
+    {
+      "id": "task-card-and-03-upstream-dependencies",
+      "status": "NOT_RUN",
+      "reason": "T14/T15/T16/T17/T18/T19/T20 are not_started in current progress; dependency list also needs reconciliation."
+    },
+    {
+      "id": "all-36-fixture-cases-and-acceptance-checks",
+      "status": "NOT_RUN",
+      "reason": "Synthetic planning only; all 36 fixtures and every acceptance check remain NOT_RUN; no UI/sync/storage behavior executed."
+    },
+    {
+      "id": "web-unit-e2e-integration-commands",
+      "status": "NOT_RUN",
+      "reason": "Task-listed commands are recorded only; no tests/build/typecheck/browser/service was run."
+    },
+    {
+      "id": "real-postgres-rls-s3-browser-and-crypto-gates",
+      "status": "NOT_RUN",
+      "reason": "No database, provider, browser behavior, native runtime or cryptographic vector was exercised."
+    },
+    {
+      "id": "independent-high-risk-review",
+      "status": "NOT_RUN",
+      "reason": "No independent final adversarial review has occurred."
+    },
+    {
+      "id": "fixture-contracts-and-open-questions",
+      "status": "NOT_RUN",
+      "reason": "Exact frozen codes/fields and listed OQs are only specified in this plan; behavior remains NOT_RUN."
+    },
+    {
+      "id": "independent-review-after-plan-revision",
+      "status": "NOT_RUN",
+      "reason": "T04 findings are incorporated as planning corrections only; independent second review is pending."
+    }
+  ],
+  "plannedValidationCommands": [
+    {
+      "command": "pnpm --filter @clipnest/web test",
+      "status": "NOT_RUN",
+      "gate": "Wait for dependency acceptance and task harness readiness."
+    },
+    {
+      "command": "pnpm test:e2e -- --project web",
+      "status": "NOT_RUN",
+      "gate": "Wait for dependency acceptance and controlled synthetic Web E2E readiness."
+    },
+    {
+      "command": "pnpm test:integration -- --suite web-sync",
+      "status": "NOT_RUN",
+      "gate": "Wait for dependency acceptance and isolated integration infrastructure; not run in fixture preparation."
+    }
+  ],
+  "executionSafety": {
+    "productionFilesChanged": false,
+    "sourceCodeChanged": false,
+    "contractOrGeneratedFilesChanged": false,
+    "liveProfileRead": false,
+    "realAccountOrServiceUsed": false,
+    "realDatabaseUsed": false,
+    "realBrowserBehaviorRun": false,
+    "realClipboardReadOrWritten": false,
+    "testsBuildOrBehaviorRun": false,
+    "userDataLogged": false
+  },
+  "acceptanceReminder": "All 36 fixtures, acceptance checks, and commands remain NOT_RUN. Keep T21 not_started until the dependency set is reconciled and accepted, applicable open questions are resolved, required real/platform evidence exists, and independent review is complete.",
+  "reviewState": "awaiting-independent-review; not accepted"
+}

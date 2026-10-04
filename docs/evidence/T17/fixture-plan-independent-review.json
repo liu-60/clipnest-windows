@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "task": "T17",
+  "reviewType": "independent_adversarial_fixture_plan_review",
+  "reviewedDate": "2026-10-05",
+  "result": "PASS_WITH_LIMITATIONS",
+  "reviewedArtifacts": [
+    "docs/spec/tasks/T17.md",
+    "docs/spec/03-data-sync-and-security.md",
+    "tests/tasks/T17/fixture-plan.json",
+    "docs/evidence/T17/fixture-plan-static-check.json",
+    "docs/progress.json"
+  ],
+  "checks": {
+    "fixtureCount": 32,
+    "uniqueFixtureIds": 32,
+    "fixtureGateMappingEdges": 86,
+    "bidirectionalMapping": "PASS",
+    "openQuestionCount": 8,
+    "plannedCommandCount": 2,
+    "acceptanceGateCount": 7,
+    "allFixturesCommandsAndGates": "NOT_RUN",
+    "taskStatus": "not_started",
+    "planStatus": "preflight_only"
+  },
+  "resolvedFinding": "The earlier review's missing CURSOR_EXPIRED client recovery fixture is closed. The new gated case preserves prior high-water 120, draft and old outbox from afterSeq 80 below min_retained_seq 90; it catches up from H=90 through 120 before atomic namespace/cursor publication and does not blindly replay the old op.",
+  "retainedOpenQuestion": "T17-OQ-04 keeps exact local error/status mapping for CURSOR_EXPIRED unresolved until the canonical client contract is frozen.",
+  "dependencySnapshot": {
+    "T06": "in_progress",
+    "T07": "not_started",
+    "T14": "not_started",
+    "T15": "not_started",
+    "T16": "not_started",
+    "accepted": false
+  },
+  "limitations": [
+    "This review accepts the static fixture plan only; it is not behavior implementation, test execution or task acceptance.",
+    "All 8 OPEN_QUESTION items and dependency gates remain open; no behavior test, build, database/service connection, crypto vector or measurement was run.",
+    "Future critical implementation still requires the task card's critical review and behavior evidence."
+  ]
+}

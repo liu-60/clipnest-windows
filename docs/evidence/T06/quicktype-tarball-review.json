@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "reviewType": "independent_read_only_evidence_review",
+  "reviewedDate": "2026-10-04",
+  "reviewedArtifact": "docs/evidence/T06/quicktype-tarball-audit.json",
+  "result": "PASS_WITH_LIMITATIONS",
+  "scope": {
+    "changedFiles": [
+      "docs/evidence/T06/quicktype-tarball-review.json",
+      "docs/progress.json"
+    ],
+    "noInstall": true,
+    "noGeneratorExecution": true,
+    "noLockfileChange": true,
+    "method": "Read-only consistency review of the audit's recorded official npm package pages, upstream release notes, v26 source manifests, and the official compatibility issue against the planned synthetic fixture."
+  },
+  "verifiedConclusions": [
+    {
+      "claim": "The official npm package pages identify quicktype and quicktype-core as version 26.0.0, declare Apache-2.0, and report respectively 16 and 13 direct dependency names.",
+      "basis": "The audit records those package-page fields and links the official npm pages."
+    },
+    {
+      "claim": "The v26.0.0 upstream release notes state Node.js >=20.19.0 for the CLI and core embedders; the core source manifest at the tag declares >=20.0.0.",
+      "basis": "The audit distinguishes the release-note requirement from the source-manifest field and leaves the published core engine field unresolved."
+    },
+    {
+      "claim": "The v26 source manifests show version 24.0.0, while the v24 release notes describe release-version stamping during npm publication; this is a plausible explanation for the observed discrepancy, not direct verification of v26 tarball contents.",
+      "basis": "The audit labels the explanation as plausible and explicitly says the release notes do not verify exact v26 tarball contents."
+    },
+    {
+      "claim": "Upstream issue #2856 reports a Rust generation crash for a boolean JSON Schema const with quicktype-core 23.2.6. The issue page is closed and lists no branches or pull requests; this documents a version-specific risk report, but does not establish whether quicktype-core 26.0.0 is affected or fixed.",
+      "basis": "The official issue states version 23.2.6 and boolean const in its description, and its Development section lists no branches or pull requests. T06's synthetic boolean/numeric const fixture remains planned and NOT_RUN, gated on selecting and pinning the schema/generator/validator route."
+    }
+  ],
+  "limitations": [
+    "Exact npm tarball integrity hashes, byte sizes, archive file lists, published dependency ranges, and resolved recursive dependency inventory remain unavailable.",
+    "Direct and transitive dependency license notices, optional/platform-specific dependencies, and the quicktype input packages' transitive closures have not been audited.",
+    "The published quicktype-core engine field and exact internal dependency versions in the v26 tarballs were not retrieved.",
+    "PowerShell requests to the registry failed TLS and browser registry navigation returned ERR_BLOCKED_BY_CLIENT. The proposed app.unpkg.com route was rejected by auto-review, so no alternate mirror was used.",
+    "No package was installed, no lockfile was generated or changed, and generator compatibility was not exercised."
+  ],
+  "selectionDecision": "Audit-only evidence is adequate for the limited upstream identity, declared package license, direct dependency count/name, release-note runtime floor, and source-tag observations above. It does not establish supply-chain closure or justify selecting/freezing quicktype; retain the candidate as unselected pending exact tarball metadata, recursive license review, and generator compatibility review.",
+  "sources": [
+    "docs/evidence/T06/quicktype-tarball-audit.json",
+    "https://github.com/glideapps/quicktype/issues/2856"
+  ]
+}

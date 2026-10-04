@@ -1,0 +1,272 @@
+{
+  "schemaVersion": 1,
+  "task": "T14",
+  "status": "preflight_only",
+  "executionStatus": "NOT_RUN",
+  "sourceOfExpectedBehavior": [
+    "docs/spec/tasks/T14.md",
+    "docs/spec/03-data-sync-and-security.md §3.1-3.2, §5.1-5.5, §9, §10 S01-S02/S20-S23, §11 (capacity limits)",
+    "docs/spec/limits.v1.json",
+    "docs/spec/07-release-and-commercial.md §1",
+    "docs/spec/08-acceptance-matrix.md §1, §3, §6"
+  ],
+  "dependencyGate": {
+    "dependsOn": "T06",
+    "requiredStatus": "accepted",
+    "state": "wait_for_T06_accepted",
+    "beforeGate": "本文件仅准备fixture清单；不实现认证/授权后端、不连接假成功后端，也不执行fixture。"
+  },
+  "harnessBoundary": {
+    "syntheticInputs": "固定种子的合成user/workspace/device标识和仅供测试的canary秘密；运行时不得使用固定随机种子。",
+    "plannedHarnesses": [
+      "OAuth与应用层fixture使用记录型fake provider/session/logger；不把fake结果当真实Provider验收。",
+      "RLS fixture需使用隔离、可丢弃的本地PostgreSQL及非owner、NOBYPASSRLS应用角色；mock只能检查事务调用次序，不能证明RLS。"
+    ],
+    "forbidden": [
+      "真实Google/Apple/其他OAuth provider登录、真实回调或生产/共享OAuth凭据",
+      "真实用户/设备/恢复凭证、生产或共享数据库、真实租户数据",
+      "以fake provider、mock RLS、静态检查或沙箱输出宣称跨租户验收通过",
+      "把密码、授权码、state、nonce、PKCE verifier、cookie、device credential或数据密钥写入fixture输出/日志"
+    ],
+    "acceptanceStatus": {
+      "realOAuthProvider": "NOT_RUN",
+      "liveDatabase": "NOT_RUN",
+      "crossTenantAcceptance": "NOT_RUN",
+      "realAccountOrDevice": "NOT_RUN"
+    }
+  },
+  "cases": [
+    {
+      "id": "T14-AUTH-01",
+      "references": ["T14.a", "07 §1"],
+      "harness": "recording_fake_oauth_provider",
+      "executionStatus": "NOT_RUN",
+      "setup": "为合成登录尝试生成一次性state、nonce、PKCE verifier及S256 code_challenge，并登记唯一redirect URI。",
+      "action": "用匹配的合成授权响应完成一次callback，随后重放同一callback。",
+      "assert": [
+        "首次callback只按预登记的精确redirect URI、匹配state/nonce及对应code_verifier完成一次code交换",
+        "同一state/authorization code重放不建立第二个session、不创建第二个内部身份映射",
+        "Better Auth subject映射到服务器生成的内部userId；subject、邮箱和请求body不能充当userId",
+        "callback URL不携带长期session token、device credential或workspace key"
+      ]
+    },
+    {
+      "id": "T14-AUTH-02",
+      "references": ["T14.a", "07 §1"],
+      "harness": "recording_fake_oauth_provider",
+      "executionStatus": "NOT_RUN",
+      "setup": "分别准备缺失/错误/已消费state、nonce不匹配、code_verifier不匹配及redirect URI被改动的合成callback。",
+      "action": "逐一提交callback并检查provider exchange、session及内部user映射调用。",
+      "assert": [
+        "每种无效或重放输入均拒绝；不建立登录session、不映射内部userId、不授予device或workspace权限",
+        "校验失败不会退化到任意redirect、邮箱/subject直接建内部身份或明文凭据fallback",
+        "错误返回与记录不泄露授权码、state、nonce、verifier或cookie"
+      ]
+    },
+    {
+      "id": "T14-AUTH-03",
+      "references": ["T14.a", "07 §1"],
+      "harness": "recording_web_session_adapter",
+      "executionStatus": "NOT_RUN",
+      "setup": "合成HTTPS Web登录session及跨站请求；另准备native callback测试记录。",
+      "action": "建立Web session后检查cookie与CSRF校验，再尝试跨站状态变更和native callback；随后从服务端撤销session，并用旧cookie经新建的session adapter再次请求。",
+      "assert": [
+        "HTTPS session cookie使用HttpOnly、Secure及规格要求的SameSite属性；跨站状态变更缺CSRF校验时拒绝",
+        "native callback只交付短时code给应用，不回传长期session token或数据key",
+        "Web/native登录成功都只证明账号session，不自动把设备置为active或解锁workspace内容",
+        "服务端session撤销在新adapter/进程中仍生效；新adapter连接同一个共享持久session store后，旧cookie请求返回AUTH_REQUIRED且不能创建pending设备或签发授权；匿名local-only能力不因账号session撤销而被删除"
+      ]
+    },
+    {
+      "id": "T14-AUTH-04",
+      "references": ["T14.a", "07 §1"],
+      "harness": "recording_fake_oauth_provider_and_system_browser_adapter",
+      "executionStatus": "NOT_RUN",
+      "setup": "为两个独立合成登录尝试分别登记一次性state/nonce/PKCE verifier；一个provider返回access_denied，另一个在授权完成前由用户关闭系统浏览器。",
+      "action": "分别处理provider取消错误与无callback的浏览器关闭；再向已取消的第一尝试投递迟到的成功callback。",
+      "assert": [
+        "两种取消都形成可观察的终态取消结果，不建立session、内部user映射、workspace或pending device；access_denied路径不调用authorization code exchange",
+        "浏览器关闭路径不交换authorization code、不自动重启授权；迟到callback因该尝试已取消/一次性state失效而拒绝",
+        "取消错误与日志不含code、state、nonce、PKCE verifier、cookie或secret；取消不会把登录状态误报为成功"
+      ]
+    },
+    {
+      "id": "T14-DEVICE-01",
+      "references": ["T14.b", "03 §5.1, §9", "S20"],
+      "harness": "recording_device_api_and_pairing_adapter",
+      "executionStatus": "NOT_RUN",
+      "setup": "合成账号A拥有WA；创建pending设备D2，并用另一个账号及伪造deviceId准备请求。",
+      "action": "D2尝试sync pull、附件download lease和授权其他设备；active D1按配对流程批准D2后再访问。",
+      "assert": [
+        "pending设备没有正常资料下载/同步权限，不能签发下载URL，也不能仅凭deviceId自证授权",
+        "只有同账号、同个人workspace的active设备能批准配对；替换recipient public key或伪造deviceId失败",
+        "D2只有在核对第二QR完整grant hash、身份/nonce并单次消费pairId后才成为active",
+        "设备credential独立于public deviceId，服务器只持有credential hash；未激活grant不授予下载权限"
+      ]
+    },
+    {
+      "id": "T14-CHALLENGE-01",
+      "references": ["T14.b", "03 §5.3, §9", "S21"],
+      "harness": "recording_recovery_challenge_adapter",
+      "executionStatus": "NOT_RUN",
+      "setup": "为pending D2创建未过期recovery_activate challenge；合成签名消息绑定workspace、recoveryVersion、challengeId、nonce、deviceId、公钥、credential hash及expiry。",
+      "action": "提交一次有效签名激活D2，然后重放challenge；另提交过期、字段不匹配和其他workspace/device的challenge。",
+      "assert": [
+        "首次有效请求在同一事务验证账号、签名、字段和未消费/未过期状态，再原子消费challenge并激活D2",
+        "重复、过期、跨workspace、跨device或字段被替换的challenge拒绝，不更新credential、不激活设备",
+        "密码重置或单纯账号session不能代替恢复签名、覆盖恢复包或授予设备权限",
+        "recovery_replace需要规格要求的active unlocked device、近期验证和明确操作；新凭证验证前不撤销旧记录"
+      ]
+    },
+    {
+      "id": "T14-CAPACITY-01",
+      "references": ["T14.b", "03 §5.2, §9, §11", "limits.v1.json cloud.keyProtocolMaxPendingPerAccount"],
+      "harness": "isolated_postgresql_pending_pair_capacity",
+      "executionStatus": "NOT_RUN",
+      "setup": "从唯一limits配置读取keyProtocolMaxPendingPerAccount；为同一合成账号并发创建达到上限的pending pair requests，并准备一个额外请求。",
+      "action": "在隔离数据库中并发提交上限数量加一个的pair创建；检查超限响应和持久化行数。",
+      "assert": [
+        "并发与重试下该账号pending pair数始终不超过配置上限；超限请求不创建pair/grant、不激活设备，返回稳定容量错误",
+        "该容量fixture只观察规格定义的pending数量和持久化pair/grant；不假定任何未定义的终态清理规则，执行状态保持NOT_RUN"
+      ]
+    },
+    {
+      "id": "T14-CAPACITY-02",
+      "references": ["T14.b", "03 §3.2 recovery_packages", "03 §5.1, §5.3, §11", "limits.v1.json inlineEncryptedPayloadBytes"],
+      "harness": "isolated_postgresql_recovery_package_size_boundary",
+      "executionStatus": "NOT_RUN",
+      "setup": "从唯一limits配置读取inlineEncryptedPayloadBytes；准备有效合成恢复包ciphertext，长度分别恰为上限和超出1 byte。首次初始化的上限接受与超限拒绝分别从独立持久化快照启动，均已有按登录流程创建的个人workspace及pending device，workspace尚未initialized且没有恢复包；recovery_replace的接受与拒绝场景也分别从独立持久化快照启动，均已有workspace和有效恢复包/公钥/版本，并满足active unlocked device、近期账号验证及用户明确确认前置。",
+      "action": "首次初始化的独立场景分别提交上限长度与超限包，并通过新adapter读取workspace初始化状态、pending device状态及恢复包是否落盘；独立recovery_replace接受场景提交恰为上限的有效包并完成新凭证验证；另一独立recovery_replace拒绝场景提交超限包；分别通过新adapter读取各场景持久状态。",
+      "assert": [
+        "按解码后的ciphertext字节计量：首次初始化恰为上限时成功；超限返回413 REQUEST_TOO_LARGE或CONTENT_TOO_LARGE及正确limitKey/limitBytes，恢复包不落盘；个人workspace仍存在且未initialized，pending device仍为pending、不激活",
+        "recovery_replace恰为上限时成功；仅在active unlocked device、近期账号验证、明确用户操作及新凭证验证完成后，将recoveryVersion按规格恰增1并持久化替换后的恢复包/公钥",
+        "独立超限recovery_replace返回413且不增加recoveryVersion、不替换已有恢复包/公钥或撤销旧记录；通过新adapter重读，旧恢复状态完整保留",
+        "首次初始化上限接受与超限拒绝、上限recovery_replace和超限recovery_replace均使用独立持久化状态，避免接受场景改变拒绝场景基线",
+        "fixture不包含恢复secret/root明文，所有容量边界结果目前均为NOT_RUN"
+      ]
+    },
+    {
+      "id": "T14-CAPACITY-03",
+      "references": ["T14.b", "03 §5.2, §9", "limits.v1.json cloud.keyProtocolChallengeSeconds"],
+      "harness": "isolated_postgresql_expired_pair_replay",
+      "executionStatus": "NOT_RUN",
+      "setup": "账号A在WA创建pair；以配置中的有效期生成已过期pair记录，并保留合成pairId、设备公钥与grant canary。",
+      "action": "使用重建后的A-scoped adapter重放过期pairId的consume请求，再检查A侧持久化pair状态、grant和设备权限。",
+      "assert": [
+        "过期pair拒绝consume，不激活设备、不签发或接受grant；同一pairId重放仍拒绝",
+        "重建adapter从同一隔离持久存储读取pair状态，过期状态不依赖进程内存",
+        "仅对规格明确的pending/expired状态作断言；pending名额在不同终态之间是否复用若无明确规则，记录为OPEN QUESTION"
+      ]
+    },
+    {
+      "id": "T14-CAPACITY-04",
+      "references": ["T14.b", "03 §5.2, §9", "07 §1"],
+      "harness": "recording_account_switch_pair_cancellation_adapter",
+      "executionStatus": "NOT_RUN",
+      "setup": "账号A在WA创建pending pair；保留切换前的A adapter/request context，并建立账号B adapter。",
+      "action": "客户端从A切换到B后，先用切换前保留的A adapter尝试consume A的pairId，再用B adapter对同一A pairId发起consume；随后经重建的A-scoped adapter读取A侧持久状态。",
+      "assert": [
+        "账号切换按规格取消A的待配对授权；旧A请求不能完成该pair，B不能消费或取得A的pair/grant",
+        "重建A adapter后检查并记录A侧持久状态；pair_requests只定义pending/approved/consumed/expired，账号切换取消对应哪个持久状态尚未定义时记录OPEN QUESTION，不臆造状态名",
+        "账号切换取消后的pending名额是否立即释放若规格未定义，记录OPEN QUESTION；该fixture不得自行规定清理或容量记账行为"
+      ]
+    },
+    {
+      "id": "T14-DEVICE-02",
+      "references": ["T14.b-c", "03 §9", "S22"],
+      "harness": "recording_device_api_and_download_adapter",
+      "executionStatus": "NOT_RUN",
+      "setup": "同账号WA下有active D1、D2；D1以近期账号验证撤销D2。",
+      "action": "撤销后用D2旧credential请求API、配对grant和新的download lease；检查此前签发的短时URL边界。",
+      "assert": [
+        "撤销后D2新API与grant请求拒绝，不能签发新的下载URL；撤销不能由D2的deviceId或请求body取消",
+        "旧签名URL只按配置TTL表述其剩余有效期，不声称可立即撤回已下载密文或擦除远端明文",
+        "active与revoked状态变化不会把D2重新绑定到其他账号或workspace"
+      ]
+    },
+    {
+      "id": "T14-WORKSPACE-01",
+      "references": ["T14.b-c", "03 §2.2, §3.1, §9", "07 §1"],
+      "harness": "recording_workspace_api_adapter",
+      "executionStatus": "NOT_RUN",
+      "setup": "合成账号A/B分别登录；A的本机存在匿名local-only资料，服务端尚无A的personal workspace。",
+      "action": "重复请求取/建A个人workspace；尝试由请求指定owner、把A的pending请求切到B，并调用团队创建/邀请入口；模拟未知商户/云provider配置。",
+      "assert": [
+        "同一内部userId最多一个personal workspace，重试幂等；owner始终来自已验证身份而非客户端字段",
+        "切换到B后A的namespace、订阅、worker、内存keys和outbox不跨账号复用或发向B",
+        "团队创建/邀请保持FEATURE_NOT_ENABLED；未知商户/provider配置不授予云权益、不损坏或阻断local-only体验"
+      ]
+    },
+    {
+      "id": "T14-RLS-01",
+      "references": ["T14.c", "03 §3.1, §9-10 S01-S02", "08 §3"],
+      "harness": "isolated_postgresql_non_owner_role",
+      "executionStatus": "NOT_RUN",
+      "setup": "隔离数据库含合成WA/WB及密文元数据；应用role/worker均非表owner且NOBYPASSRLS，业务表启用并FORCE RLS。",
+      "action": "用A session+WA credential访问WB、替换path/body wid、猜测跨workspace附件，并在无scope/伪user上下文下读写。",
+      "assert": [
+        "跨workspace对象对业务API统一表现为404；RLS读0行、写被WITH CHECK拒绝，且不产生签名URL",
+        "无scope或伪user/workspace设置不能读取/插入其他空间；业务/worker role不是owner且没有BYPASSRLS",
+        "mock/静态检查不能作为本fixture通过或跨租户验收依据；真实隔离DB结果在执行前保持NOT_RUN"
+      ]
+    },
+    {
+      "id": "T14-RLS-02",
+      "references": ["T14.c", "03 §3.1", "08 §3"],
+      "harness": "isolated_postgresql_single_connection_pool",
+      "executionStatus": "NOT_RUN",
+      "setup": "隔离pool限制为一条物理连接；准备A、B两个不同workspace的合成请求及一个会在设置scope后失败的请求。",
+      "action": "A在事务内SET LOCAL user/workspace并提交；失败请求必须ROLLBACK；同一连接随后处理B，再执行一次无scope查询。",
+      "assert": [
+        "scope只在当前事务生效；事务结束/ROLLBACK并归还后下一请求看不到A的user/workspace context",
+        "B请求仅能看到B scope；无scope查询读0行且未授权写失败，不从池连接继承旧tenant context",
+        "业务查询、签名URL或账本写入发生在可信session/device验证及scope建立之后"
+      ]
+    },
+    {
+      "id": "T14-KEY-01",
+      "references": ["T14.a-b", "03 §2.1, §5.1, §5.4", "07 §1", "08 §3"],
+      "harness": "synthetic_key_and_auth_adapter",
+      "executionStatus": "NOT_RUN",
+      "setup": "生成彼此独立的合成auth password/session token、device credential、workspace root、recovery secret与localDBKey canary。",
+      "action": "尝试把一种凭据替代另一种进行登录、设备鉴权、恢复或本地解锁；再执行账号密码重置并检查key ring与恢复包状态。",
+      "assert": [
+        "登录token/password不派生或充当device credential、workspace root、recovery secret或localDBKey；deviceId本身也不是credential",
+        "按03 §5.1，设备持久层只保存SHA-256(deviceCredential)的32-byte hash；合成device credential canary不得出现在设备/恢复字段、响应或日志中，恢复表只含恢复包密文和恢复公钥",
+        "workspace root、recovery secret、localDBKey canary不进入服务端设备/恢复持久字段、响应或日志；本用例不限制Better Auth自身session/password哈希在auth store中的持久化",
+        "密码重置更新账号认证状态但不恢复、覆盖或轮换workspace/local key；密钥变更走对应授权流程"
+      ]
+    },
+    {
+      "id": "T14-LOG-01",
+      "references": ["T14.a-c", "03 §9", "08 §3"],
+      "harness": "captured_synthetic_logs_and_errors",
+      "executionStatus": "NOT_RUN",
+      "setup": "给密码、OAuth code/state/nonce/PKCE verifier、session cookie、device credential、workspace/local/recovery key、正文/URL及SQL参数赋唯一合成canary。",
+      "action": "触发登录成功/失败、设备待授权/撤销、RLS拒绝与挑战重放，扫描应用日志、access log、telemetry、crash和错误对象。",
+      "assert": [
+        "任何输出均不包含canary秘密、正文/URL/标题/来源、密钥/token或未脱敏SQL参数",
+        "敏感认证header不进入access log；错误保留requestId与稳定错误码，不回显凭据或跨workspace对象是否存在"
+      ]
+    }
+  ],
+  "plannedCommands": [
+    {
+      "command": "pnpm --filter @clipnest/server test auth",
+      "status": "NOT_RUN",
+      "gate": "wait_for_T06_accepted"
+    },
+    {
+      "command": "pnpm test:integration -- --suite tenancy",
+      "status": "NOT_RUN",
+      "gate": "wait_for_T06_accepted; requires isolated local PostgreSQL"
+    }
+  ],
+  "acceptanceGates": {
+    "realOAuthProviderCallback": "NOT_RUN",
+    "realProviderSessionAndAccountSwitch": "NOT_RUN",
+    "liveDatabaseRLS": "NOT_RUN",
+    "crossTenantAcceptance": "NOT_RUN",
+    "independentAdversarialReview": "NOT_RUN"
+  }
+}

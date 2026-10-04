@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "task": "T09",
+  "reviewType": "independent_read_only_fixture_plan_review",
+  "reviewedDate": "2026-10-04",
+  "reviewedArtifact": "tests/tasks/T09/fixture-plan.json",
+  "result": "PASS_WITH_LIMITATIONS",
+  "verified": {
+    "fixtureCount": 9,
+    "allFixturesExecutionStatus": "NOT_RUN",
+    "syntheticOnly": true,
+    "dependencyGate": "T07 is not accepted; production implementation and behavior tests remain gated.",
+    "sequenceAndQueue": "Repeated same-sequence notifications are checked for zero additional image encoding; superseded reads cannot commit. Queue and worker bounds reference canonical limit keys, overflow is observable, and disposition of a distinct sequence at a full queue is explicitly left unfrozen.",
+    "retry": "Delay-rendered retry success/exhaustion and supersession are covered with a fake clock; retry counts and scheduling remain gated rather than invented.",
+    "privacyAndPermissions": "Pause, exclusion, injected sensitive-format policy, unknown source, and capability permission/unavailable cases observe sink ordering without a format list or stable error code being fabricated.",
+    "sizeAndWorkerBudgets": "Text/image/pixel admission and decoded-cache/image-worker boundaries use canonical limits. The imageWorkerPeakBytes threshold is not accepted until its counted allocations and measurement method are frozen.",
+    "storageAndScope": "Injected storage/permission failures preserve committed protected data and assert transaction failure without real disk-full tests. local.totalBytes stays gated on T07's durable-byte formula; local_only capture does not implicitly upload when cloud unlock changes.",
+    "platformBoundary": "Fake clipboard and permission adapters are not treated as Windows notification, clipboard, or native permission validation."
+  },
+  "reviewChecks": {
+    "jsonParse": "PASS",
+    "independentReviewer": "PASS_WITH_LIMITATIONS",
+    "canonicalLimitsReferenced": "PASS",
+    "noBehaviorTestsOrBuild": true,
+    "noProductionImplementation": true,
+    "noLiveClipboardProfileOrService": true
+  },
+  "limitations": [
+    "T07 remains not_started, so T09 repository/SQLCipher and capture behavior remain NOT_RUN.",
+    "Retry count/schedule, full-queue disposition for a distinct sequence, worker peak memory accounting, and local.totalBytes accounting remain unresolved gates.",
+    "Actual Windows clipboard notifications, OS permission behavior, and native clipboard integration remain NOT_RUN."
+  ],
+  "sources": [
+    "docs/spec/tasks/T09.md",
+    "docs/spec/02-architecture.md §6-7",
+    "docs/spec/04-desktop-performance.md §6",
+    "docs/spec/limits.v1.json",
+    "tests/tasks/T09/fixture-plan.json",
+    "independent agent review in this task"
+  ]
+}

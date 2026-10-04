@@ -1,0 +1,1284 @@
+{
+  "schemaVersion": 1,
+  "task": "T26",
+  "status": "not_started",
+  "executionStatus": "NOT_RUN",
+  "planType": "synthetic_fixture_and_interface_planning_only",
+  "purpose": "Observable plan for entitlements, provider receipts, quota boundaries, offline expiry and reconciliation while T14/T18/T19 are unaccepted; not implementation or behavior evidence.",
+  "dependencyGate": {
+    "requiredTasks": [
+      "T14",
+      "T18",
+      "T19"
+    ],
+    "requiredStatus": "accepted",
+    "observedProgressStatuses": {
+      "T14": "not_started",
+      "T18": "not_started",
+      "T19": "not_started"
+    },
+    "behaviorAllowed": false,
+    "fakeSuccessBackendAllowed": false,
+    "rule": "Only independent synthetic fixture/interface planning is allowed before all direct dependencies are accepted.",
+    "dependencyFrontierNote": "Recursive prerequisite closure remains with canonical progress entries; this plan does not assert that the direct dependency list is the full transitive closure."
+  },
+  "sources": {
+    "taskCard": "docs/spec/tasks/T26.md",
+    "specifications": [
+      "docs/spec/06-model-runbook.md §2/§5/§6/§8",
+      "docs/spec/07-release-and-commercial.md §1/§2/§3/§5/§6",
+      "docs/spec/07-release-and-commercial.md §7",
+      "docs/spec/08-acceptance-matrix.md §3",
+      "docs/spec/08-acceptance-matrix.md §5-§6",
+      "docs/spec/limits.v1.json /cloud"
+    ],
+    "progress": "docs/progress.json#/tasks/T14,T18,T19,T26",
+    "currentCodeObservation": "No apps/server billing/usage module or server workspace was present in the inspected v2 tree. No production, contract, shared fixture, script, lockfile, or progress file is changed.",
+    "interpretation": "Candidate values are not grants. Provider, database/RLS, device, offline-cache, retention, merchant and release checks stay independent."
+  },
+  "allowlist": {
+    "currentWritePaths": [
+      "tests/tasks/T26/**",
+      "docs/evidence/T26/**"
+    ],
+    "deliverables": [
+      "tests/tasks/T26/fixture-plan.json",
+      "docs/evidence/T26/fixture-plan-static-review.json"
+    ],
+    "note": "Only the two T26 plan/evidence files are written; no implementation, shared fixture, progress, manifest, lockfile, service, or live provider state is changed."
+  },
+  "syntheticBoundary": {
+    "data": "Synthetic account/workspace/device/contract/event/price IDs, timestamps, byte counters and receipts only; no customer data, credentials, transaction payloads or secrets.",
+    "provider": "No Stripe, RevenueCat, App Store, Google Play, sandbox, staging, merchant or provider API was contacted.",
+    "storage": "No PostgreSQL, S3, worker, RLS role, live profile, customer ledger or cloud object was accessed.",
+    "execution": "No test, build, service, purchase, restore, refund or reconciliation behavior was run.",
+    "noFakeSuccessBackend": true
+  },
+  "subtaskPlan": [
+    {
+      "subtask": "a",
+      "scope": "Unique server-owned candidate configuration and trusted projection.",
+      "fixtureIds": [
+        "T26-F001",
+        "T26-F002",
+        "T26-F003",
+        "T26-F004"
+      ]
+    },
+    {
+      "subtask": "b",
+      "scope": "Channel receipts, trusted contract state, restore/refund, idempotency and reconciliation.",
+      "fixtureIds": [
+        "T26-F005",
+        "T26-F006",
+        "T26-F007",
+        "T26-F008",
+        "T26-F009",
+        "T26-F010",
+        "T26-F011",
+        "T26-F012",
+        "T26-F013",
+        "T26-F014",
+        "T26-F015",
+        "T26-F016",
+        "T26-F024",
+        "T26-F025",
+        "T26-F026",
+        "T26-F028",
+        "T26-F029",
+        "T26-F030",
+        "T26-F031"
+      ]
+    },
+    {
+      "subtask": "c",
+      "scope": "Downgrade, quota, pull/delete/export retention, offline expiry and permission/error edges.",
+      "fixtureIds": [
+        "T26-F017",
+        "T26-F018",
+        "T26-F019",
+        "T26-F020",
+        "T26-F021",
+        "T26-F022",
+        "T26-F023",
+        "T26-F024",
+        "T26-F027",
+        "T26-F031"
+      ]
+    }
+  ],
+  "candidateConfiguration": {
+    "status": "PROPOSAL_ONLY_NOT_GRANTED",
+    "cloudTrial": {
+      "trialDays": 14,
+      "cloudBytes": 1073741824,
+      "maxDevices": 3,
+      "historyDays": 7,
+      "sourceRef": "docs/spec/07-release-and-commercial.md §2"
+    },
+    "personalPro": {
+      "cloudBytes": 10737418240,
+      "maxDevices": 10,
+      "sourceRef": "docs/spec/07-release-and-commercial.md §2"
+    },
+    "additionalLimitSource": "docs/spec/limits.v1.json /cloud",
+    "assertionBoundary": "Check uniqueness and provenance only; proposals do not grant trial, entitlement, price, or capacity before policy approval."
+  },
+  "fixtures": [
+    {
+      "id": "T26-F001",
+      "acceptanceIds": [
+        "T26-a"
+      ],
+      "syntheticSetup": "Candidate-only config: Trial 14 days / 1 GiB / 3 devices / 7 history days; Personal Pro 10 GiB / 10 devices. Trial grant disabled pending explicit server policy.",
+      "plannedAction": "Inspect config ownership across server and clients and compare projected limits.",
+      "observableAssertions": [
+        "One canonical server-owned source holds candidate duration/device values; client constants cannot grant or alter rights.",
+        "Values match 07 proposals and limits.v1 candidates but remain unapproved and grant no trial or capacity.",
+        "No price or entitlement is inferred from a plan label."
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T26.md §子任务顺序",
+        "docs/spec/07-release-and-commercial.md §2",
+        "docs/spec/07-release-and-commercial.md §2",
+        "docs/spec/limits.v1.json /cloud"
+      ],
+      "openQuestionIds": [
+        "T26-OQ01",
+        "T26-OQ11"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F002",
+      "acceptanceIds": [
+        "B08",
+        "T26-a"
+      ],
+      "syntheticSetup": "Fresh synthetic account; cloud default disabled; no verified contract or explicit server-issued trial. Client submits isPro=true, planCode=pro and forged cloudBytes/maxDevices.",
+      "plannedAction": "Read entitlement and attempt positive-delta cloud write.",
+      "observableAssertions": [
+        "Login/client assertions alone do not grant cloud capacity; authorization uses trusted account projection.",
+        "No unauthorized write or ledger delta occurs; exact ignore/reject response is OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2",
+        "docs/spec/08-acceptance-matrix.md §5 B08",
+        "docs/spec/limits.v1.json /cloud"
+      ],
+      "openQuestionIds": [
+        "T26-OQ01",
+        "T26-OQ09"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F003",
+      "acceptanceIds": [
+        "T26-a"
+      ],
+      "syntheticSetup": "Synthetic server DTO cases for trial/active/grace/expired/revoked with documented fields version, accountId, status, features, cloudBytes, maxDevices, historyDays, validUntil, graceUntil, sourceChannels.",
+      "plannedAction": "Inspect serialized projection and state/account provenance.",
+      "observableAssertions": [
+        "Only documented status values/DTO fields are represented and projection is account-scoped.",
+        "Frontend isPro is not authorization; state timing and grace privileges stay gated."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2",
+        "docs/spec/08-acceptance-matrix.md §5 B03",
+        "docs/spec/08-acceptance-matrix.md §5 B05"
+      ],
+      "openQuestionIds": [
+        "T26-OQ03",
+        "T26-OQ04"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F004",
+      "acceptanceIds": [
+        "T26-a"
+      ],
+      "syntheticSetup": "Account has two separately verified channel contracts with overlapping and distinct features/limits.",
+      "plannedAction": "Record one projection and per-contract provenance without applying an unfrozen merge algorithm.",
+      "observableAssertions": [
+        "Projection identifies verified sourceChannels; unverified client claims contribute nothing.",
+        "Cross-channel union/max/precedence and duplicate-capacity treatment remain OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B07"
+      ],
+      "openQuestionIds": [
+        "T26-OQ02"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F005",
+      "acceptanceIds": [
+        "B01",
+        "T26-b"
+      ],
+      "syntheticSetup": "Synthetic webhook claims active but raw-body signature is invalid.",
+      "plannedAction": "Verify original raw bytes and headers; inspect receipt/job/projection counters.",
+      "observableAssertions": [
+        "Invalid signature yields no trusted receipt, projection, or grant; raw body is not reserialized before verification."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B01"
+      ],
+      "openQuestionIds": [],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F006",
+      "acceptanceIds": [
+        "B02",
+        "T26-b"
+      ],
+      "syntheticSetup": "Synthetic provider event is replayed exactly, reused under another provider namespace, and reused with changed bytes under the same provider/eventID.",
+      "plannedAction": "Inspect receipt, projection job, grant and capacity counters for each variant.",
+      "observableAssertions": [
+        "Exact same provider/eventID replay applies once; event and projection-job persistence are transactional and provider fetch is outside locks.",
+        "Equal eventID strings from distinct providers do not collide.",
+        "Changed-body same-ID response is OPEN_QUESTION and cannot cause a second side effect."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B02"
+      ],
+      "openQuestionIds": [
+        "T26-OQ07"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F007",
+      "acceptanceIds": [
+        "B02",
+        "T26-b"
+      ],
+      "syntheticSetup": "Provider-current contract state is newer than a delayed webhook; a separate fetch variant returns timeout.",
+      "plannedAction": "Deliver events out of order and compare provider-current fetch with final projection.",
+      "observableAssertions": [
+        "The projection decision is not labeled as provider-verified current contract state unless supported by a verified current-contract source.",
+        "Whether a failed provider fetch preserves, suspends, queues, or expires any prior projection, and the terminal response mapping, remain OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B02"
+      ],
+      "openQuestionIds": [
+        "T26-OQ07",
+        "T26-OQ10"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F008",
+      "acceptanceIds": [
+        "T26-b"
+      ],
+      "syntheticSetup": "Validly signed webhook has unknown event type or productCode/price mapping.",
+      "plannedAction": "Route through planned quarantine/review; inspect entitlement and capacity.",
+      "observableAssertions": [
+        "Unknown event/product is isolated for review and grants no entitlement or capacity.",
+        "Client cannot select price/product by label."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B01"
+      ],
+      "openQuestionIds": [
+        "T26-OQ11"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F009",
+      "acceptanceIds": [
+        "B03",
+        "T26-b"
+      ],
+      "syntheticSetup": "Sandbox fixture maps environment priceId to productCode and verified provider contract bound to account A.",
+      "plannedAction": "Complete planned purchase then read trusted projection.",
+      "observableAssertions": [
+        "Only verified contract mapped to A can produce A's projection; client displayPrice does not grant features.",
+        "Money is integer minor units plus currency; sandbox does not prove live purchase readiness."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2/§3",
+        "docs/spec/08-acceptance-matrix.md §5 B03"
+      ],
+      "openQuestionIds": [
+        "T26-OQ11",
+        "T26-OQ12"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F010",
+      "acceptanceIds": [
+        "B06",
+        "T26-b"
+      ],
+      "syntheticSetup": "Restore request is authenticated as A and provider app-user/contract binding resolves to A.",
+      "plannedAction": "Restore twice and compare contract/receipt/projection counts.",
+      "observableAssertions": [
+        "Restored contract resolves to correct internal account; body accountId is not ownership evidence.",
+        "Repeat restore creates no duplicate contract, event application, or capacity grant."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B06"
+      ],
+      "openQuestionIds": [
+        "T26-OQ08"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F011",
+      "acceptanceIds": [
+        "B06",
+        "T26-b"
+      ],
+      "syntheticSetup": "A requests restore of a provider contract already bound to B.",
+      "plannedAction": "Attempt restore without modifying either account binding.",
+      "observableAssertions": [
+        "No silent reassignment or B entitlement disclosure to A; conflict follows support path.",
+        "Exact conflict API mapping/workflow stays OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B06"
+      ],
+      "openQuestionIds": [
+        "T26-OQ08"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F012",
+      "acceptanceIds": [
+        "B07",
+        "T26-b"
+      ],
+      "syntheticSetup": "A has verified active entitlement on channel 1 and opens purchase/restore on channel 2.",
+      "plannedAction": "Inspect existing-subscription presentation, checkout calls and contract state.",
+      "observableAssertions": [
+        "Existing cross-channel entitlement is surfaced before duplicate purchase; system does not auto-cancel or mutate other channel.",
+        "Aggregate capacity rule remains OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B07"
+      ],
+      "openQuestionIds": [
+        "T26-OQ02",
+        "T26-OQ11"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F013",
+      "acceptanceIds": [
+        "B04",
+        "T26-b"
+      ],
+      "syntheticSetup": "Two verified channel contracts exist; only channel 1 receives provider-confirmed refund/revocation.",
+      "plannedAction": "Project refund and inspect both contract states and account capacity.",
+      "observableAssertions": [
+        "Refund affects only its own contract; unrelated channel contract is not canceled or modified.",
+        "Aggregate result follows frozen cross-channel policy when decided; no capacity delta is double-applied."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2/§3",
+        "docs/spec/08-acceptance-matrix.md §5 B04"
+      ],
+      "openQuestionIds": [
+        "T26-OQ02",
+        "T26-OQ05"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F014",
+      "acceptanceIds": [
+        "B04",
+        "T26-b"
+      ],
+      "syntheticSetup": "Provider snapshots model partial refund, reversal, chargeback and renewal-after-refund separately.",
+      "plannedAction": "Capture verified state without choosing a provider-specific interpretation.",
+      "observableAssertions": [
+        "No assertion invents partial-refund/proration/reversal semantics; unresolved variants remain OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2/§3",
+        "docs/spec/08-acceptance-matrix.md §5 B04"
+      ],
+      "openQuestionIds": [
+        "T26-OQ05"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F015",
+      "acceptanceIds": [
+        "B05",
+        "T26-b"
+      ],
+      "syntheticSetup": "Verified contract projects grace with validUntil/graceUntil; operations tagged read, pull, upload, device-add, delete, export; separate time points before/at/after expiry.",
+      "plannedAction": "Capture status and decisions at each boundary.",
+      "observableAssertions": [
+        "Projection carries verified provenance and documented graceUntil.",
+        "Grace duration/permissions, time equality, clock source and expiry retention/deletion remain OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2/§3",
+        "docs/spec/08-acceptance-matrix.md §5 B05"
+      ],
+      "openQuestionIds": [
+        "T26-OQ03",
+        "T26-OQ04"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F016",
+      "acceptanceIds": [
+        "B04",
+        "B05",
+        "T26-b"
+      ],
+      "syntheticSetup": "Provider-current contract is revoked/expired while an older active event arrives afterward.",
+      "plannedAction": "Attempt positive-delta upload/device-add after provider-current verification.",
+      "observableAssertions": [
+        "Stale active event cannot reinstate expired/revoked contract; absent another entitlement it grants no new cloud capacity.",
+        "Any other valid contract remains unaffected; cross-channel result is gated."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2/§3",
+        "docs/spec/08-acceptance-matrix.md §5 B04",
+        "docs/spec/07-release-and-commercial.md §2/§3",
+        "docs/spec/08-acceptance-matrix.md §5 B05"
+      ],
+      "openQuestionIds": [
+        "T26-OQ02",
+        "T26-OQ05"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F017",
+      "acceptanceIds": [
+        "B10",
+        "T26-c"
+      ],
+      "syntheticSetup": "Synthetic account is over effective quota with existing cloud data and a local copy.",
+      "plannedAction": "Attempt positive-delta upload/new restricted device, then pull/read, explicit delete, export and local access.",
+      "observableAssertions": [
+        "Over-limit positive-delta upload and new restricted device are blocked.",
+        "Pull/read, explicit delete, export, and existing local access remain available; favorites/data are not silently deleted.",
+        "Rejected write has no partial mutation/positive ledger delta."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3/§5",
+        "docs/spec/08-acceptance-matrix.md §5 B10"
+      ],
+      "openQuestionIds": [
+        "T26-OQ09",
+        "T26-OQ10"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F018",
+      "acceptanceIds": [
+        "B04",
+        "B05",
+        "B10",
+        "T26-c"
+      ],
+      "syntheticSetup": "Downgrade/refund/expiry leaves history, favorite, trash, versions and offline local content.",
+      "plannedAction": "Advance status and inspect references/export/delete options without issuing deletion.",
+      "observableAssertions": [
+        "Downgrade alone does not silently remove favorites or user data.",
+        "Automatic cloud purge is not assumed; deletion/retention deadline remains OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3/§5",
+        "docs/spec/08-acceptance-matrix.md §5 B10",
+        "docs/spec/07-release-and-commercial.md §2/§3",
+        "docs/spec/08-acceptance-matrix.md §5 B04",
+        "docs/spec/07-release-and-commercial.md §2/§3",
+        "docs/spec/08-acceptance-matrix.md §5 B05"
+      ],
+      "openQuestionIds": [
+        "T26-OQ03"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F019",
+      "acceptanceIds": [
+        "B10",
+        "T26-c"
+      ],
+      "syntheticSetup": "Explicit delete is accepted while over quota; provider deletion has controllable confirmation/failure barrier.",
+      "plannedAction": "Inspect usage ledger before and after provider confirmation.",
+      "observableAssertions": [
+        "Delete remains available during downgrade.",
+        "Bytes/object use is not released before required physical deletion is confirmed; failed/unknown delete retains occupancy."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3/§5",
+        "docs/spec/tasks/T26.md §子任务顺序 c"
+      ],
+      "openQuestionIds": [
+        "T26-OQ10"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F020",
+      "acceptanceIds": [
+        "B10",
+        "T26-c"
+      ],
+      "syntheticSetup": "Usage inventory includes versions, trash, pins, pending reservations and physically retained objects after limits are lowered.",
+      "plannedAction": "Request a new version and compare counters/references.",
+      "observableAssertions": [
+        "Existing retained/pending bytes are not silently free or deleted; full legitimate version budget blocks another version with a handling path.",
+        "Charge categories and capacity boundary await T18 acceptance."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3/§5",
+        "docs/spec/tasks/T26.md §子任务顺序 c"
+      ],
+      "openQuestionIds": [
+        "T26-OQ09",
+        "T26-OQ10"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F021",
+      "acceptanceIds": [
+        "B10",
+        "T26-c"
+      ],
+      "syntheticSetup": "Server-derived maxDevices is reached; extra device is pending and client submits higher forged maxDevices.",
+      "plannedAction": "Attempt activation/download, then a local-only action.",
+      "observableAssertions": [
+        "Device limit derives from trusted projection; pending device has no cloud download before T14 authorization.",
+        "Existing local access stays available; exact error mapping remains OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §1/§3",
+        "docs/spec/tasks/T26.md §完成标准"
+      ],
+      "openQuestionIds": [
+        "T26-OQ08",
+        "T26-OQ10"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F022",
+      "acceptanceIds": [
+        "B09",
+        "T26-c"
+      ],
+      "syntheticSetup": "Previously valid signed entitlement cache is tested offline just before and after validUntil.",
+      "plannedAction": "Attempt local read/search and separately cloud authorization.",
+      "observableAssertions": [
+        "Cache may be displayed while valid; after expiry client cannot claim cloud permission remains valid.",
+        "Local functionality remains available; clock tolerance and refresh UX are OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2",
+        "docs/spec/08-acceptance-matrix.md §5 B09"
+      ],
+      "openQuestionIds": [
+        "T26-OQ04",
+        "T26-OQ06"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F023",
+      "acceptanceIds": [
+        "B09",
+        "T26-c"
+      ],
+      "syntheticSetup": "Offline cache has altered signature, unknown key or clock rollback/advance across validUntil.",
+      "plannedAction": "Attempt validation in a disposable fixture.",
+      "observableAssertions": [
+        "Unverified cache cannot authorize cloud operations.",
+        "Signature/key rotation/time policy and exact errors remain OPEN_QUESTION; no crypto format is invented."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2",
+        "docs/spec/08-acceptance-matrix.md §5 B09"
+      ],
+      "openQuestionIds": [
+        "T26-OQ04",
+        "T26-OQ06"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F024",
+      "acceptanceIds": [
+        "T26-b",
+        "T26-c"
+      ],
+      "syntheticSetup": "Workspaces A/B have separate principals/contracts/ledgers; A submits B scope then a valid A request on the same pooled connection.",
+      "plannedAction": "Inspect protected reads/writes, projection, ledger and scope isolation.",
+      "observableAssertions": [
+        "No B billing/receipt/projection/quota is disclosed or mutated; subsequent A scope does not leak.",
+        "No owner/service-role bypass; RLS evidence waits for T14."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §1/§3",
+        "docs/spec/tasks/T26.md §完成标准"
+      ],
+      "openQuestionIds": [
+        "T26-OQ08"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F025",
+      "acceptanceIds": [
+        "T26-b"
+      ],
+      "syntheticSetup": "Checkout session is canceled before any verified provider contract exists.",
+      "plannedAction": "Return through callback and inspect projection, contract and usage.",
+      "observableAssertions": [
+        "Cancel is not purchase success and grants no entitlement absent a verified contract.",
+        "Exact callback/session result is OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/06-model-runbook.md §8",
+        "docs/spec/07-release-and-commercial.md §3"
+      ],
+      "openQuestionIds": [
+        "T26-OQ06"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F026",
+      "acceptanceIds": [
+        "T26-b"
+      ],
+      "syntheticSetup": "Provider accepted one checkout idempotency key but client timed out before response.",
+      "plannedAction": "Retry with same key and reconcile existing session/contract before another attempt.",
+      "observableAssertions": [
+        "Unknown result does not trigger a second checkout/charge; preserve same operation identity.",
+        "Key retention and exact response remain OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/06-model-runbook.md §8",
+        "docs/spec/07-release-and-commercial.md §3"
+      ],
+      "openQuestionIds": [
+        "T26-OQ06"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F027",
+      "acceptanceIds": [
+        "B10",
+        "T26-c"
+      ],
+      "syntheticSetup": "Over-capacity and permission-denied requests have before/after row, receipt, reservation, byte and ledger snapshots.",
+      "plannedAction": "Exercise positive-delta and unauthorized operations.",
+      "observableAssertions": [
+        "The observable result does not authorize the specified over-limit positive-delta operation or permission-denied action.",
+        "Receipt/reservation creation, rollback/partial-write effects, exact error code/fields, and retryability are OPEN_QUESTION; record observed values later without asserting zero receipt or zero rows."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3/§5",
+        "docs/spec/08-acceptance-matrix.md §5 B10",
+        "docs/spec/07-release-and-commercial.md §1/§3",
+        "docs/spec/tasks/T26.md §完成标准"
+      ],
+      "openQuestionIds": [
+        "T26-OQ09",
+        "T26-OQ10"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F028",
+      "acceptanceIds": [
+        "B12",
+        "T26-b"
+      ],
+      "syntheticSetup": "Provider-current state changes while webhook is dropped; reconciliation uses fixed account scope/watermark.",
+      "plannedAction": "Fetch/project and record receipt, projection version, provenance and capacity delta.",
+      "observableAssertions": [
+        "Reconciliation repairs from current contract without the lost webhook; fetch is outside DB lock and job/projection receipt commits idempotently."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3/§5",
+        "docs/spec/08-acceptance-matrix.md §5 B12"
+      ],
+      "openQuestionIds": [
+        "T26-OQ10"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F029",
+      "acceptanceIds": [
+        "B12",
+        "T26-b"
+      ],
+      "syntheticSetup": "Replay same reconciliation job/provider state; separate attempt has provider unavailable with prior verified projection.",
+      "plannedAction": "Compare event/receipt/projection/ledger counts and retry state.",
+      "observableAssertions": [
+        "Replay does not double-grant entitlement or ledger delta.",
+        "Unavailable provider creates no unverified grant; stale projection policy/cadence/backoff remain OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3/§5",
+        "docs/spec/08-acceptance-matrix.md §5 B12"
+      ],
+      "openQuestionIds": [
+        "T26-OQ10"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F030",
+      "acceptanceIds": [
+        "B11",
+        "T26-b"
+      ],
+      "syntheticSetup": "Environment-scoped priceId→productCode map and channel flags contain no merchant credentials or selected public entry.",
+      "plannedAction": "Inspect checkout mapping source and release readiness references.",
+      "observableAssertions": [
+        "Client does not infer price/product; unselected merchant/store channels remain disabled.",
+        "B11 needs separate merchant eligibility and T31 region/platform policy; fixture cannot pass it."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2/§3",
+        "docs/spec/08-acceptance-matrix.md §5 B11"
+      ],
+      "openQuestionIds": [
+        "T26-OQ11",
+        "T26-OQ12"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T26-F031",
+      "acceptanceIds": [
+        "T26-b",
+        "T26-c"
+      ],
+      "syntheticSetup": "Synthetic redaction canaries: unique sentinels stand in for body, URL, title, source, image, key, token, and SQL parameters across webhook/checkout/quota/reconciliation error and crash paths.",
+      "plannedAction": "Collect only synthetic telemetry/log/crash/error-packet outputs after planned error and crash-boundary cases; scan artifacts for every sentinel and raw provider/error payload.",
+      "observableAssertions": [
+        "No synthetic body, URL, title, source, image, key, token, or unsanitized SQL parameter canary appears in telemetry, crash output, or error packets.",
+        "Allowed operational event fields are limited to counts, type, duration, and error code; the canary proves only the isolated synthetic path when later run."
+      ],
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §7",
+        "docs/spec/08-acceptance-matrix.md §3"
+      ],
+      "openQuestionIds": [],
+      "status": "NOT_RUN",
+      "evidence": []
+    }
+  ],
+  "acceptanceMap": [
+    {
+      "id": "B01",
+      "sourceRef": "docs/spec/08-acceptance-matrix.md §5 B01",
+      "fixtureIds": [
+        "T26-F005"
+      ],
+      "requiredGateIds": []
+    },
+    {
+      "id": "B02",
+      "sourceRef": "docs/spec/08-acceptance-matrix.md §5 B02",
+      "fixtureIds": [
+        "T26-F006",
+        "T26-F007"
+      ],
+      "requiredGateIds": [
+        "T26-G11"
+      ]
+    },
+    {
+      "id": "B03",
+      "sourceRef": "docs/spec/08-acceptance-matrix.md §5 B03",
+      "fixtureIds": [
+        "T26-F009"
+      ],
+      "requiredGateIds": [
+        "T26-G04",
+        "T26-G05",
+        "T26-G06"
+      ]
+    },
+    {
+      "id": "B04",
+      "sourceRef": "docs/spec/08-acceptance-matrix.md §5 B04",
+      "fixtureIds": [
+        "T26-F013",
+        "T26-F014",
+        "T26-F016",
+        "T26-F018"
+      ],
+      "requiredGateIds": [
+        "T26-G04",
+        "T26-G05",
+        "T26-G06",
+        "T26-G11"
+      ]
+    },
+    {
+      "id": "B05",
+      "sourceRef": "docs/spec/08-acceptance-matrix.md §5 B05",
+      "fixtureIds": [
+        "T26-F015",
+        "T26-F016",
+        "T26-F018"
+      ],
+      "requiredGateIds": []
+    },
+    {
+      "id": "B06",
+      "sourceRef": "docs/spec/08-acceptance-matrix.md §5 B06",
+      "fixtureIds": [
+        "T26-F010",
+        "T26-F011"
+      ],
+      "requiredGateIds": [
+        "T26-G04",
+        "T26-G05",
+        "T26-G06"
+      ]
+    },
+    {
+      "id": "B07",
+      "sourceRef": "docs/spec/08-acceptance-matrix.md §5 B07",
+      "fixtureIds": [
+        "T26-F012"
+      ],
+      "requiredGateIds": []
+    },
+    {
+      "id": "B08",
+      "sourceRef": "docs/spec/08-acceptance-matrix.md §5 B08",
+      "fixtureIds": [
+        "T26-F002"
+      ],
+      "requiredGateIds": []
+    },
+    {
+      "id": "B09",
+      "sourceRef": "docs/spec/08-acceptance-matrix.md §5 B09",
+      "fixtureIds": [
+        "T26-F022",
+        "T26-F023"
+      ],
+      "requiredGateIds": [
+        "T26-G08"
+      ]
+    },
+    {
+      "id": "B10",
+      "sourceRef": "docs/spec/08-acceptance-matrix.md §5 B10",
+      "fixtureIds": [
+        "T26-F017",
+        "T26-F018",
+        "T26-F019",
+        "T26-F020",
+        "T26-F021",
+        "T26-F027"
+      ],
+      "requiredGateIds": [
+        "T26-G01",
+        "T26-G02"
+      ]
+    },
+    {
+      "id": "B11",
+      "sourceRef": "docs/spec/08-acceptance-matrix.md §5 B11",
+      "fixtureIds": [
+        "T26-F030"
+      ],
+      "requiredGateIds": [
+        "T26-G09"
+      ]
+    },
+    {
+      "id": "B12",
+      "sourceRef": "docs/spec/08-acceptance-matrix.md §5 B12",
+      "fixtureIds": [
+        "T26-F028",
+        "T26-F029"
+      ],
+      "requiredGateIds": [
+        "T26-G07",
+        "T26-G11"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "T26-G01",
+      "boundary": "T14 identity/RLS",
+      "requiredEvidence": "T14 accepted plus isolated scoped-role evidence; no cross-account access.",
+      "owner": "T14",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "requiredForAcceptanceIds": [
+        "B10"
+      ]
+    },
+    {
+      "id": "T26-G02",
+      "boundary": "T18 quota ledger",
+      "requiredEvidence": "T18 accepted plus reservation/pending/deleting accounting and physical-delete confirmation.",
+      "owner": "T18",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "requiredForAcceptanceIds": [
+        "B10"
+      ]
+    },
+    {
+      "id": "T26-G03",
+      "boundary": "T19 reconciliation interface",
+      "requiredEvidence": "T19 accepted plus worker/receipt/ledger/recovery interfaces.",
+      "owner": "T19",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "requiredForAcceptanceIds": []
+    },
+    {
+      "id": "T26-G04",
+      "boundary": "Stripe sandbox",
+      "requiredEvidence": "Isolated test-mode webhook/checkout/portal/restore/refund evidence; no live customers or credentials.",
+      "owner": "T28",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "requiredForAcceptanceIds": [
+        "B03",
+        "B04",
+        "B06"
+      ]
+    },
+    {
+      "id": "T26-G05",
+      "boundary": "iOS store sandbox",
+      "requiredEvidence": "Separate RevenueCat/App Store sandbox result on supported iOS development device.",
+      "owner": "T28",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "requiredForAcceptanceIds": [
+        "B03",
+        "B04",
+        "B06"
+      ]
+    },
+    {
+      "id": "T26-G06",
+      "boundary": "Android store sandbox",
+      "requiredEvidence": "Separate RevenueCat/Google Play sandbox result on supported Android development device.",
+      "owner": "T28",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "requiredForAcceptanceIds": [
+        "B03",
+        "B04",
+        "B06"
+      ]
+    },
+    {
+      "id": "T26-G07",
+      "boundary": "Staging reconciliation",
+      "requiredEvidence": "Isolated provider polling/worker evidence for lost events and idempotent retry.",
+      "owner": "T26/T28",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "requiredForAcceptanceIds": [
+        "B12"
+      ]
+    },
+    {
+      "id": "T26-G08",
+      "boundary": "Offline cache platforms",
+      "requiredEvidence": "Separate Web/desktop/iOS/Android expiry/signature evidence after time/key contract freezes.",
+      "owner": "T20/T23/T24/T26",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "requiredForAcceptanceIds": [
+        "B09"
+      ]
+    },
+    {
+      "id": "T26-G09",
+      "boundary": "Merchant and entry policy",
+      "requiredEvidence": "T00 merchant eligibility plus T31 selected region/platform/store entry/release policy.",
+      "owner": "T00/T31",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "requiredForAcceptanceIds": [
+        "B11"
+      ]
+    },
+    {
+      "id": "T26-G10",
+      "boundary": "G4 aggregate release",
+      "requiredEvidence": "Provider refunds T26-T28 and export/delete/rollout T29/T30 plus T31 review; plan does not pass G4.",
+      "owner": "T31",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "requiredForAcceptanceIds": []
+    },
+    {
+      "id": "T26-G11",
+      "boundary": "Independent real isolated PostgreSQL transaction/receipt/ledger/worker gate",
+      "requiredEvidence": "After prerequisite acceptance, use disposable isolated PostgreSQL and app/worker roles with synthetic fixed inputs and transaction barriers to check F006 receipt plus projection-job atomicity, F028 projection/ledger commit, and F029 replay idempotency. No real provider is called.",
+      "relatedFixtureIds": [
+        "T26-F006",
+        "T26-F028",
+        "T26-F029"
+      ],
+      "externalProviderCalls": false,
+      "separation": "Database/worker persistence gate only; separate from Stripe/App Store/Google Play provider gates T26-G04 through T26-G07.",
+      "owner": "T26/T18/T19",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "requiredForAcceptanceIds": [
+        "B02",
+        "B04",
+        "B12"
+      ]
+    }
+  ],
+  "plannedCommands": [
+    {
+      "id": "T26-C01",
+      "command": "pnpm --filter @clipnest/server test entitlement",
+      "scope": "server entitlement unit tests",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "availabilityObservation": "Static inspection found no apps/server workspace and root package.json has no server test script; not executed, T01/T06 infrastructure prerequisite."
+    },
+    {
+      "id": "T26-C02",
+      "command": "pnpm test:integration -- --suite billing",
+      "scope": "billing integration suite",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "availabilityObservation": "Static inspection found no root test:integration script; not executed, T01/T06 infrastructure prerequisite."
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "T26-OQ01",
+      "topic": "Trial eligibility/abuse policy, grant start instant and final approval of candidate values are not frozen.",
+      "handling": "Candidate values do not grant a trial; resolve before issuance.",
+      "relatedFixtureIds": [
+        "T26-F001",
+        "T26-F002"
+      ],
+      "status": "OPEN_QUESTION",
+      "owner": "T14/T18/T19/T26/T28/T31"
+    },
+    {
+      "id": "T26-OQ02",
+      "topic": "Cross-channel aggregation of features/bytes/devices/history and duplicate same-product contracts is unspecified.",
+      "handling": "Record provenance without choosing union/max/precedence.",
+      "relatedFixtureIds": [
+        "T26-F004",
+        "T26-F012",
+        "T26-F013",
+        "T26-F016"
+      ],
+      "status": "OPEN_QUESTION",
+      "owner": "T14/T18/T19/T26/T28/T31"
+    },
+    {
+      "id": "T26-OQ03",
+      "topic": "Grace duration/permissions, expiry equality and cloud retention/deletion deadlines are not frozen.",
+      "handling": "Do not infer grace access or automatic purge.",
+      "relatedFixtureIds": [
+        "T26-F003",
+        "T26-F015",
+        "T26-F018"
+      ],
+      "status": "OPEN_QUESTION",
+      "owner": "T14/T18/T19/T26/T28/T31"
+    },
+    {
+      "id": "T26-OQ04",
+      "topic": "Signed-cache format, key rotation, trusted clock, skew/rollback and revocation refresh are undefined.",
+      "handling": "No crypto protocol or client shortcut is invented.",
+      "relatedFixtureIds": [
+        "T26-F003",
+        "T26-F015",
+        "T26-F022",
+        "T26-F023"
+      ],
+      "status": "OPEN_QUESTION",
+      "owner": "T14/T18/T19/T26/T28/T31"
+    },
+    {
+      "id": "T26-OQ05",
+      "topic": "Partial refund, reversal, chargeback and renewal-after-refund mapping are unspecified.",
+      "handling": "Use verified provider snapshots only.",
+      "relatedFixtureIds": [
+        "T26-F013",
+        "T26-F014",
+        "T26-F016"
+      ],
+      "status": "OPEN_QUESTION",
+      "owner": "T14/T18/T19/T26/T28/T31"
+    },
+    {
+      "id": "T26-OQ06",
+      "topic": "Checkout cancellation/timeout result, idempotency retention, callback replay and expiry policy are undefined.",
+      "handling": "Unknown outcome keeps same operation identity; no exact response assumed.",
+      "relatedFixtureIds": [
+        "T26-F025",
+        "T26-F026"
+      ],
+      "status": "OPEN_QUESTION",
+      "owner": "T14/T18/T19/T26/T28/T31"
+    },
+    {
+      "id": "T26-OQ07",
+      "topic": "Changed-body eventID reuse, signature-key rotation, timestamps, provider-current fetch failure and its terminal mapping need definition.",
+      "handling": "Do not derive a provider-current contract from an unverified source; whether a failed fetch preserves/suspends/queues/expires prior projection remains open.",
+      "relatedFixtureIds": [
+        "T26-F006",
+        "T26-F007"
+      ],
+      "status": "OPEN_QUESTION",
+      "owner": "T14/T18/T19/T26/T28/T31"
+    },
+    {
+      "id": "T26-OQ08",
+      "topic": "Restore conflict/support mapping and accepted T14 identity/device/RLS contract are unavailable.",
+      "handling": "Client accountId is never ownership proof.",
+      "relatedFixtureIds": [
+        "T26-F010",
+        "T26-F011",
+        "T26-F021",
+        "T26-F024"
+      ],
+      "status": "OPEN_QUESTION",
+      "owner": "T14/T18/T19/T26/T28/T31"
+    },
+    {
+      "id": "T26-OQ09",
+      "topic": "Quota formula and reservation/cipher/trash/version/pin/unknown-delete categories depend on T18.",
+      "handling": "Candidate bytes do not define usage accounting.",
+      "relatedFixtureIds": [
+        "T26-F002",
+        "T26-F017",
+        "T26-F020",
+        "T26-F027"
+      ],
+      "status": "OPEN_QUESTION",
+      "owner": "T14/T18/T19/T26/T28/T31"
+    },
+    {
+      "id": "T26-OQ10",
+      "topic": "Exact capacity/device errors, positive-delta boundaries, rejected-operation receipt/reservation/rollback side effects, and reconciliation retry/stale policy are unspecified.",
+      "handling": "Assert no unauthorized positive delta; do not mint codes or schedules.",
+      "relatedFixtureIds": [
+        "T26-F007",
+        "T26-F017",
+        "T26-F019",
+        "T26-F021",
+        "T26-F027",
+        "T26-F028",
+        "T26-F029"
+      ],
+      "status": "OPEN_QUESTION",
+      "owner": "T14/T18/T19/T26/T28/T31"
+    },
+    {
+      "id": "T26-OQ11",
+      "topic": "Product/price catalogue, merchant eligibility, region and store entry are not selected.",
+      "handling": "No price/public purchase inferred from candidate package.",
+      "relatedFixtureIds": [
+        "T26-F001",
+        "T26-F008",
+        "T26-F009",
+        "T26-F030"
+      ],
+      "status": "OPEN_QUESTION",
+      "owner": "T14/T18/T19/T26/T28/T31"
+    },
+    {
+      "id": "T26-OQ12",
+      "topic": "Sandbox accounts, test harness/scripts and staging environment are not established.",
+      "handling": "No service contacted; commands remain NOT_RUN.",
+      "relatedFixtureIds": [
+        "T26-F009",
+        "T26-F030"
+      ],
+      "status": "OPEN_QUESTION",
+      "owner": "T14/T18/T19/T26/T28/T31"
+    }
+  ],
+  "counts": {
+    "fixtureCount": 31,
+    "acceptanceIdCount": 12,
+    "gateCount": 11,
+    "commandCount": 2,
+    "openQuestionCount": 12,
+    "allFixturesNotRun": true,
+    "allGatesNotRun": true,
+    "allCommandsNotRun": true
+  },
+  "releaseBoundary": "08 G4 is not passed. T26/T28 provider refund, T29/T30 export/delete/rollout and T31 aggregate release remain independent gates.",
+  "gateCoverageRule": "requiredGateIds in each B01-B12 acceptance-map entry are explicit mandatory gates; the matching gate lists the same acceptance IDs in requiredForAcceptanceIds. Every relation is validated bidirectionally."
+}

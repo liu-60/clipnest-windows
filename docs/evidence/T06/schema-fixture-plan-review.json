@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "reviewType": "independent_read_only_fixture_plan_review",
+  "reviewedDate": "2026-10-04",
+  "reviewedArtifact": "tests/tasks/T06/fixture-plan.json",
+  "result": "PASS_WITH_LIMITATIONS",
+  "scope": {
+    "changedFile": "tests/tasks/T06/fixture-plan.json",
+    "noInstall": true,
+    "noGeneratorExecution": true,
+    "noTestsOrBuild": true,
+    "executionStatus": "NOT_RUN"
+  },
+  "verified": [
+    {
+      "fixture": "contracts-generator-boolean-numeric-const",
+      "coverage": "true/7 acceptance and false/8 rejection for boolean/numeric const values; generator loss of const semantics is explicitly a compatibility failure."
+    },
+    {
+      "fixture": "contracts-json-schema-ref-additional-properties",
+      "coverage": "root.nested references #/$defs/Nested; Nested requires code:string and rejects extras; valid, root-extra, nested-extra, and missing-code instances have explicit external results and error paths."
+    },
+    {
+      "fixture": "contracts-ajv-draft-2020-12-accept-reject",
+      "coverage": "Draft 2020-12 compile, matching instance, missing required field, and unknown field acceptance/rejection are explicit."
+    },
+    {
+      "fixture": "contracts-format-valid-invalid-values",
+      "coverage": "date-time format valid and invalid values are explicit, including the requirement to exercise format assertion behavior after the validator route is selected."
+    }
+  ],
+  "reviewChecks": {
+    "jsonParse": "PASS",
+    "independentReviewer": "PASS; the initially ambiguous $ref structure was clarified with exact fields and four instances",
+    "diffCheck": "PASS"
+  },
+  "limitations": [
+    "All four additions are fixture definitions only, marked planned/NOT_RUN; they do not establish schema, generator, validator, or Rust behavior.",
+    "Execution remains gated on selecting and reviewing the schema/generator/validator route and its dialect; no candidate is selected or installed."
+  ],
+  "sources": [
+    "tests/tasks/T06/fixture-plan.json",
+    "independent agent review in this task"
+  ]
+}

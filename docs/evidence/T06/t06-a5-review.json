@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "T06-a5",
+  "result": "PASS_WITH_LIMITATIONS",
+  "reviewDate": "2026-10-04",
+  "reviewer": "Independent read-only T06 reviewer",
+  "scope": [
+    "Cargo.toml workspace membership",
+    "crates/platform-macos/Cargo.toml",
+    "crates/platform-macos/src/lib.rs",
+    "docs/evidence/T06/t06-a5-verification.json"
+  ],
+  "findings": [
+    "The three handwritten files are within the T06 allowlist and the workspace contains four local crates.",
+    "clipnest-platform-macos has no dependencies, platform API, or success-shaped placeholder behavior.",
+    "The offline metadata, crate test, workspace build, formatting results, and four-package local-only lockfile are consistent with the recorded slice."
+  ],
+  "limitations": [
+    "The recorded build only covers the Windows GNU target and contains zero unit/doc tests.",
+    "macOS compilation and runtime behavior remain unverified; this slice review does not accept T06.",
+    "The reviewer checked evidence consistency without rerunning builds or tests."
+  ]
+}

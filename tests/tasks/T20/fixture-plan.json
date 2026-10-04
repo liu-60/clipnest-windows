@@ -1,0 +1,488 @@
+{
+  "schemaVersion": 1,
+  "task": "T20",
+  "status": "planned-not-executed",
+  "purpose": "Synthetic Web storage/Worker fixture preparation only; no implementation or behavior is established.",
+  "dependencyGate": "wait_for_T06_T15_accepted",
+  "dependencyGateDetails": {
+    "requiredTasks": [
+      "T06",
+      "T15"
+    ],
+    "requiredStatus": "accepted",
+    "observedProgressStatuses": {
+      "T06": "in_progress",
+      "T15": "not_started"
+    },
+    "source": "docs/progress.json#/tasks",
+    "rule": "Before both are accepted, only synthetic fixture/interface preparation is allowed; no source changes, fake-success backend, user data, or behavior tests."
+  },
+  "sources": [
+    {
+      "path": "docs/spec/tasks/T20.md",
+      "sections": [
+        "dependencies",
+        "allowlist",
+        "subtasks",
+        "completion criteria",
+        "validation commands"
+      ]
+    },
+    {
+      "path": "docs/spec/03-data-sync-and-security.md",
+      "sections": [
+        "§5.4 Web session/lock/IndexedDB",
+        "§5.5 recovery",
+        "§6 Dexie transaction/outbox/budget"
+      ]
+    },
+    {
+      "path": "docs/spec/02-architecture.md",
+      "sections": [
+        "§4 repository boundary",
+        "§5 search/coverage",
+        "§6 worker budget",
+        "§7 capabilities"
+      ]
+    },
+    {
+      "path": "docs/spec/08-acceptance-matrix.md",
+      "sections": [
+        "U04",
+        "U07",
+        "U08",
+        "U12"
+      ]
+    },
+    {
+      "path": "docs/spec/limits.v1.json",
+      "fields": [
+        "local.anonymousWebSessionBytes",
+        "local.webCacheBytes",
+        "local.webIndexBytes",
+        "cloud.outboxHardLimitBytes",
+        "transport.queryCancellationGeneration"
+      ]
+    },
+    {
+      "path": "docs/spec/01-product-and-ux.md",
+      "sections": [
+        "§4 P11 browser quota/private mode: cache persistence notice and online use"
+      ]
+    }
+  ],
+  "fixturePolicy": {
+    "syntheticDataOnly": true,
+    "fixedSeed": "clipnest-t20-web-fixed-seed-20261004",
+    "namespaces": [
+      "personal-cloud-A",
+      "personal-cloud-B",
+      "anonymous-web-session"
+    ],
+    "neverUse": [
+      "live user/profile/clipboard data",
+      "real account/cloud/service/database",
+      "real content/key/token in evidence"
+    ],
+    "expectedResults": "Assert observable scope, worker lifecycle, retained synthetic IDs, transaction outcome, generation and coverage. Do not invent DTOs, error/retry enums, accounting formula, eviction order or exact UI copy.",
+    "statusMeaning": "NOT_RUN means no Web storage/Worker/adapter/renderer/browser behavior has been verified."
+  },
+  "interfacePreparation": {
+    "boundary": "Browser persistence is cloud ciphertext and encrypted drafts only; anonymous local-only is bounded session memory. Cloud unlock and local session availability are separate.",
+    "budgets": "Use injected synthetic counters; do not infer real charges from content size. Limits are planning defaults.",
+    "worker": "Lock terminates cloud worker and blocks later cloud reads/results. Do not claim JS GC proves secure erasure.",
+    "unresolved": "Storage/query errors, retry, cache eviction, export interaction and coverage presentation remain OPEN_QUESTION."
+  },
+  "fixtureCaseCount": 19,
+  "fixtureCases": [
+    {
+      "caseNumber": 1,
+      "id": "t20-u07-lock-worker-hides-cloud",
+      "source": "U07",
+      "category": [
+        "worker",
+        "lock",
+        "privacy"
+      ],
+      "input": "Unlocked synthetic cloud canaries, active query, local-only session item.",
+      "action": "Lock; release delayed query; try another read.",
+      "expected": "Cloud body/preview/thumb/source/search inaccessible; worker terminated; no delayed result; local session item remains.",
+      "observation": "Scopes/IDs, worker termination, result IDs, callbacks only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 2,
+      "id": "t20-u08-cap-rejects-import-preserves-items",
+      "source": "U08",
+      "category": [
+        "capacity",
+        "retention"
+      ],
+      "input": "Anon session at injected 33554432-byte usage; old IDs plus proposed item.",
+      "action": "Attempt add with positive injected charge.",
+      "expected": "Reject new item atomically; retain old items; no assumed error enum.",
+      "observation": "Counters, IDs, committed writes, scope.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 3,
+      "id": "t20-u08-warning-export-choice-refresh-loss",
+      "source": "U08",
+      "category": [
+        "privacy",
+        "export",
+        "refresh"
+      ],
+      "input": "Synthetic anon item before save/refresh.",
+      "action": "Inspect notice/export choice; simulate refresh.",
+      "expected": "Pre-save loss warning and explicit plaintext-export choice; refresh loses anon item; no exact copy/schema assertion.",
+      "observation": "Choice/notice availability and ID before/after; no real export.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 4,
+      "id": "t20-indexeddb-no-plaintext",
+      "source": "03-5.4",
+      "category": [
+        "privacy",
+        "indexeddb"
+      ],
+      "input": "Cloud ciphertext, encrypted draft, synthetic body/title/URL/key/token canaries.",
+      "action": "Inspect isolated fixture storage.",
+      "expected": "Only cloud ciphertext/encrypted drafts; no sensitive plaintext/key/token canary; no assumed table names.",
+      "observation": "Record classes and canary category counts only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 5,
+      "id": "t20-account-switch-namespace-isolation",
+      "source": "03-6",
+      "category": [
+        "privacy",
+        "namespace"
+      ],
+      "input": "Synthetic cloud-A/cloud-B and anonymous records/outbox, distinct scope/account/workspace IDs, and opaque non-secret key handles handle-A/handle-B.",
+      "action": "Switch A to B then anon; query each.",
+      "expected": "No cross-scope records, synthetic key-handle or outbox reuse; B cannot access A; anonymous remains session-only; no operation is silently retargeted.",
+      "observation": "Record synthetic namespace/visible IDs, opaque handle labels only, and worker/subscription teardown counts.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 6,
+      "id": "t20-dexie-atomic-object-draft-outbox",
+      "source": "03-6",
+      "category": [
+        "storage",
+        "transaction"
+      ],
+      "input": "Synthetic encrypted object/draft and matching outbox operation in multi-table harness.",
+      "action": "Run commit and injected abort cases.",
+      "expected": "Success commits all rows; abort leaves none partial; success event follows commit.",
+      "observation": "Rows by table, commit/rollback, event count.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 7,
+      "id": "t20-quota-abort-retains-prior-draft",
+      "source": "T20",
+      "category": [
+        "quota",
+        "draft-retention"
+      ],
+      "input": "Committed encrypted draft/outbox plus separate attempted mutation; inject quota abort.",
+      "action": "Attempt mutation; inspect synthetic state.",
+      "expected": "Prior draft/outbox retained; no success or scope switch; exact error/copy OPEN_QUESTION.",
+      "observation": "Row IDs/hashes, existence and result class.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 8,
+      "id": "t20-outbox-crash-sending-to-ready",
+      "source": "03-6",
+      "category": [
+        "outbox",
+        "recovery"
+      ],
+      "input": "Persisted synthetic SENDING op with fixed opId/wire hash/revision/dependency.",
+      "action": "Crash before receipt commit; reopen.",
+      "expected": "Recover as READY; same opId/wire/hash; never fabricate ACKED.",
+      "observation": "State and digest/opId equality.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 9,
+      "id": "t20-query-generation-late-result",
+      "source": "U04",
+      "category": [
+        "worker",
+        "search",
+        "generation"
+      ],
+      "input": "Hold synthetic query A; query B has newer generation/distinct IDs.",
+      "action": "Start A; start and complete B while observing cancellation of A; then release a pre-staged late A response at the harness boundary.",
+      "expected": "Starting B makes cancellation of A observable. If cancellation uses worker termination, record that termination event; regardless, only B remains visible and stale A is suppressed. Do not assume a cancellation return code.",
+      "observation": "Record generations, response order, rendered IDs, selection, cancellation request/event, any worker termination event, and stale suppression.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 10,
+      "id": "t20-worker-index-budget-partial-coverage",
+      "source": "02-5",
+      "category": [
+        "worker",
+        "index",
+        "coverage"
+      ],
+      "input": "Unlocked synthetic cache at injected 33554432-byte webIndexBytes plus new index work.",
+      "action": "Grow index over budget and query.",
+      "expected": "Stop growth at boundary; report known partial coverage, never full-cloud claim; exact byte/UI mapping OQ.",
+      "observation": "Counters, indexed IDs/count, coverage category, claim flag.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 11,
+      "id": "t20-u12-offline-state-distinction",
+      "source": "U12",
+      "category": [
+        "offline",
+        "coverage",
+        "empty-state"
+      ],
+      "input": "Offline unlocked empty DB, no-match query, partial index.",
+      "action": "Query each state.",
+      "expected": "Distinguish empty/no results/partial; cached unlocked data usable; known coverage without full-cloud claim.",
+      "observation": "State category, IDs/count, coverage and claim flag.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 12,
+      "id": "t20-refresh-cookie-not-unlock",
+      "source": "03-5.4",
+      "category": [
+        "privacy",
+        "refresh",
+        "unlock"
+      ],
+      "input": "Encrypted synthetic cloud cache, unlocked synthetic worker, cookie-present flag, and isolated inventory of app-managed durable stores exercised by the fixture (such as IndexedDB, localStorage, sessionStorage, and Cache Storage).",
+      "action": "Simulate refresh; inspect only app-managed durable stores in the isolated harness; attempt cloud read before/after an approved unlock transition.",
+      "expected": "Cloud content remains locked until approved unlock; the account cookie may remain but alone reveals nothing. No cloud-unlock secret/capability is persisted in app-managed durable stores under test. Browser/OS internals and JavaScript memory erasure are outside this assertion.",
+      "observation": "Record the app-managed stores inspected, lock/worker state, visible synthetic IDs, unlock transition, and persistence categories. Do not claim JS GC proves secure erasure.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 13,
+      "id": "t20-prepare-before-dexie-transaction",
+      "source": "03-6",
+      "category": [
+        "transaction-boundary"
+      ],
+      "input": "Instrumented synthetic validate/encrypt/byte-prep and transaction events.",
+      "action": "Run with barriers around transaction begin.",
+      "expected": "Prepare completes before transaction; no fetch/crypto/filesystem await inside Dexie transaction.",
+      "observation": "Event ordering and transaction operations.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 14,
+      "id": "t20-outbox-hard-cap-no-scope-fallback",
+      "source": "03-6",
+      "category": [
+        "capacity",
+        "outbox"
+      ],
+      "input": "Injected counters at 209715200-byte cloud outbox hard cap; protected old draft/op.",
+      "action": "Attempt crossing cloud mutation.",
+      "expected": "Reject new cloud mutation; retain old data; no local-only fallback; do not derive charge.",
+      "observation": "Counters, attempted/old IDs, scope, event count.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 15,
+      "id": "t20-close-reopen-cloud-outbox-and-anon-loss",
+      "source": "03-5.4/6",
+      "category": [
+        "recovery",
+        "session"
+      ],
+      "input": "Encrypted cloud draft/READY op in IDB and separate anon session item.",
+      "action": "Close/reopen with IDB retained and new memory session.",
+      "expected": "Cloud rows recover subject to unlock; anon item lost as disclosed; no anon plaintext persisted.",
+      "observation": "IDs/states, lock, anon presence, disclosure.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 16,
+      "id": "t20-decimal-over-safe-integer-roundtrip",
+      "source": "T20",
+      "category": [
+        "outbox",
+        "decimal"
+      ],
+      "input": "Synthetic canonical decimal string 9007199254740993 in outbox.",
+      "action": "Persist/recover/serialize through adapter boundary.",
+      "expected": "Exact string preserved; never round through JS Number.",
+      "observation": "Compare strings only; no network/crypto.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 17,
+      "id": "t20-adapter-permission-denied-and-storage-unavailable-fail-closed",
+      "source": "T20/03-6",
+      "category": [
+        "adapter",
+        "permission",
+        "storage",
+        "fail-closed"
+      ],
+      "input": "An old committed synthetic draft plus an attempted mutation; run isolated variants with adapter unavailable and storage permission denied.",
+      "action": "For each injected failure, attempt the mutation and inspect write counts and the old draft.",
+      "expected": "Both variants perform zero writes for the attempted mutation, retain the previously committed draft unchanged, and emit no success. Exact error code and user-facing copy remain OPEN_QUESTION.",
+      "observation": "Record injected failure category, pre/post write counts, prior draft ID/hash equality, and success-event count; do not invent an error enum or copy.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 18,
+      "id": "t20-async-prepare-rechecks-scope-account-and-revision-before-commit",
+      "source": "03-6",
+      "category": [
+        "storage",
+        "transaction-boundary",
+        "scope",
+        "revision",
+        "race"
+      ],
+      "input": "Synthetic mutation prepared for scope/account A at local revision R, using an opaque non-secret key handle; pause at an async prepare barrier before transaction entry.",
+      "action": "In separate fixture variants, change the active scope/account or advance the local revision while preparation is paused, then resume the transaction.",
+      "expected": "Transaction-time scope/account/revision recheck fails closed: zero new writes, no retarget to the new scope, old committed draft remains unchanged, and no success is emitted. Exact error code/copy remain OPEN_QUESTION.",
+      "observation": "Record synthetic before/after scope/account/revision labels, write counts, old draft ID/hash equality, and success-event count only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 19,
+      "id": "t20-p11-ephemeral-cache-notice-allows-online-use",
+      "source": "01-§4-P11",
+      "category": [
+        "web",
+        "privacy",
+        "cache-unavailable",
+        "online-use"
+      ],
+      "input": "Synthetic browser persistence adapter reports quota/private-mode inability to persist cache; an online service stub is available and the synthetic session meets its normal auth/unlock preconditions.",
+      "action": "Inject the non-persistent-cache condition and perform an eligible synthetic online query.",
+      "expected": "Show a notice that cache cannot be persisted while keeping eligible online use available. Do not promise offline cache availability or survival across refresh/close; do not silently switch data scope.",
+      "observation": "Record notice visibility/category, availability/result ID of the synthetic online query, and persistence status only; no real browser, service, or cache is used.",
+      "status": "NOT_RUN"
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "web-byte-accounting-and-cache-eviction",
+      "status": "OPEN_QUESTION",
+      "reason": "T07 durable bytes and exact Web cache charge/eviction policy are not frozen; use injected counters and do not assert eviction order."
+    },
+    {
+      "id": "storage-query-errors-and-retry",
+      "status": "OPEN_QUESTION",
+      "reason": "T06 contracts/result mappings are incomplete; exact adapter/storage permission-denied or unavailable discriminators, retry behavior, and user-facing copy are not invented."
+    },
+    {
+      "id": "query-coverage-and-cancellation-presentation",
+      "status": "OPEN_QUESTION",
+      "reason": "T10 accepted query/coverage UI and cancel result shapes are pending; assert latest generation and no false full-coverage claim only."
+    },
+    {
+      "id": "anonymous-export-interaction",
+      "status": "OPEN_QUESTION",
+      "reason": "U08 requires warning and explicit export choice, but exact copy/flow/schema is unspecified; no real export."
+    },
+    {
+      "id": "worker-memory-erasure-claim",
+      "status": "OPEN_QUESTION",
+      "reason": "03 §5.4 forbids claiming JS garbage collection is verifiable erasure; assert termination/non-observability only."
+    }
+  ],
+  "acceptanceChecks": [
+    {
+      "id": "U07-cloud-lock",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "U08-anonymous-cap-warning-export-refresh-loss",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "U12-offline-cache-and-coverage",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "atomic-outbox-and-quota-retention",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "query-generation-and-index-coverage",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "decimal-above-2-to-the-53rd",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "adapter-permission-unavailable-fail-closed",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "async-prepare-scope-account-revision-recheck",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "P11-ephemeral-cache-notice-online-use-no-durability-promise",
+      "status": "NOT_RUN"
+    }
+  ],
+  "requiredNotRunGates": [
+    {
+      "id": "T06-T15-accepted",
+      "status": "NOT_RUN",
+      "reason": "Current progress is T06 in_progress/T15 not_started; implementation and behavior tests gated."
+    },
+    {
+      "id": "all-19-fixtures",
+      "status": "NOT_RUN",
+      "reason": "Plan only; no storage/worker/adapter/renderer/browser/service behavior run."
+    },
+    {
+      "id": "storage-search-commands",
+      "status": "NOT_RUN",
+      "reason": "Listed commands not run; no tests/build/typecheck/service."
+    },
+    {
+      "id": "independent-review-and-platform-acceptance",
+      "status": "NOT_RUN",
+      "reason": "No independent adversarial or real platform acceptance."
+    }
+  ],
+  "plannedValidationCommands": [
+    {
+      "command": "pnpm --filter @clipnest/web test storage",
+      "status": "NOT_RUN",
+      "gate": "Wait for T06/T15 acceptance and harness readiness."
+    },
+    {
+      "command": "pnpm --filter @clipnest/web test search",
+      "status": "NOT_RUN",
+      "gate": "Wait for T06/T15 acceptance and harness readiness."
+    }
+  ],
+  "executionSafety": {
+    "productionFilesChanged": false,
+    "sourceCodeChanged": false,
+    "contractOrGeneratedFilesChanged": false,
+    "liveProfileRead": false,
+    "realAccountOrServiceUsed": false,
+    "realDatabaseUsed": false,
+    "realClipboardReadOrWritten": false,
+    "testsBuildOrBehaviorRun": false,
+    "userDataLogged": false
+  },
+  "acceptanceReminder": "All 19 cases, acceptance checks, and commands remain NOT_RUN. Keep T20 not_started until dependencies are accepted, required questions resolved, behavior/platform evidence exists, and review is complete."
+}

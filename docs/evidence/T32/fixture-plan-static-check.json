@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 1,
+  "task": "T32",
+  "evidenceType": "STATIC_FIXTURE_PLAN_ONLY",
+  "result": "AUTHOR_STRUCTURAL_SELF_CHECK_ONLY",
+  "reviewStatus": "AUTHOR_STRUCTURAL_SELF_CHECK_WITH_INDEPENDENT_REVIEW",
+  "reviewedAt": "2026-10-05",
+  "executionStatus": "NOT_RUN",
+  "planPath": "tests/tasks/T32/fixture-plan.json",
+  "reviewedSources": [
+    "docs/spec/tasks/T32.md",
+    "docs/spec/06-model-runbook.md §1-§2/§5-§8",
+    "docs/spec/00-README.md §1/§4/§6-§7",
+    "docs/spec/03-data-sync-and-security.md §1-§2/§3.1-§3.2/§4.2-§4.3/§5.1-§5.3/§11",
+    "docs/spec/07-release-and-commercial.md §2/§5/§7",
+    "docs/spec/08-acceptance-matrix.md §1/§3/§5-§6",
+    "docs/spec/tasks/T31.md",
+    "tests/tasks/T31/fixture-plan.json",
+    "docs/evidence/T31/fixture-plan-static-check.json",
+    "docs/evidence/T31/fixture-plan-independent-review.json",
+    "docs/progress.json#/tasks/T25",
+    "docs/progress.json#/tasks/T27",
+    "docs/progress.json#/tasks/T28",
+    "docs/progress.json#/tasks/T29",
+    "docs/progress.json#/tasks/T30",
+    "docs/progress.json#/tasks/T31",
+    "docs/progress.json#/tasks/T32"
+  ],
+  "repositoryInstructions": {
+    "path": "AGENTS.md",
+    "status": "NOT_FOUND",
+    "searched": [
+      "D:\\ClipNest-work\\v2",
+      "D:\\ClipNest-work",
+      "D:\\ClipNest"
+    ],
+    "note": "遵循本轮用户提供的AGENTS.md、T32任务卡及06执行手册；未推断额外规则。"
+  },
+  "dependencySnapshot": [
+    {
+      "task": "T31",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false,
+      "executionStatus": "NOT_RUN"
+    }
+  ],
+  "upstreamStatus": {
+    "T31ProgressStatus": "not_started",
+    "T31PlanReview": "PASS_WITH_LIMITATIONS",
+    "T31PlanReviewBehaviorAcceptance": false,
+    "T31DirectPrerequisites": [
+      {
+        "task": "T25",
+        "observedStatus": "not_started",
+        "accepted": false
+      },
+      {
+        "task": "T27",
+        "observedStatus": "not_started",
+        "accepted": false
+      },
+      {
+        "task": "T28",
+        "observedStatus": "not_started",
+        "accepted": false
+      },
+      {
+        "task": "T29",
+        "observedStatus": "not_started",
+        "accepted": false
+      },
+      {
+        "task": "T30",
+        "observedStatus": "not_started",
+        "accepted": false
+      }
+    ],
+    "note": "T31独立review只确认fixture-plan质量；不能当T31 accepted、G0-G4行为证据或T32决策输入。"
+  },
+  "staticChecks": [
+    {
+      "id": "T32-R01",
+      "check": "Fixture plan and evidence JSON parse; task is T32, status not_started and executionStatus NOT_RUN.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R02",
+      "check": "28 fixture IDs, 12 gate IDs, 12 acceptance IDs, 18 OQ IDs, 1 command ID and 3 measurement IDs are unique.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R03",
+      "check": "All declared fixture-to-gate/acceptance/OQ, criterion-to-fixture/gate, gate-to-fixture and measurement-to-OQ references resolve.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R04",
+      "check": "All fixture IDs are assigned once to the ordered T32-a/b/c subtask planning slices; the card's order is preserved.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R05",
+      "check": "Every fixture, gate, acceptance criterion, planned command and measurement remains NOT_RUN; fixture/command/measurement evidence arrays are empty.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R06",
+      "check": "T31 direct dependency matches the current progress snapshot (not_started/unaccepted); its PASS_WITH_LIMITATIONS independent plan review is not confused with behavior acceptance.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R07",
+      "check": "T31 direct predecessors T25/T27/T28/T29/T30 are recorded as not_started/unaccepted and no prerequisite is invented as passed.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R08",
+      "check": "T31's plan, author self-check and independent plan review are described as planning evidence only; T31 remains not_started with behaviorAcceptance=false.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R09",
+      "check": "03 §1 current FEATURE_NOT_ENABLED and §11 no-team-implementation boundary are preserved while T31 is unaccepted.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R10",
+      "check": "07 §7 explicit publication to a new workspace and default exclusion of private source history are represented without inventing field/attachment/collection copy semantics.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R11",
+      "check": "owner/editor/viewer enum is distinguished from an unfrozen per-operation permission matrix; client hiding is not treated as authorization.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R12",
+      "check": "Personal/team key domains, revocation, signed URL, offline cache, key rotation and historical re-encryption are separated; the plan does not claim remote erasure of plaintext or assume key revocation semantics.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R13",
+      "check": "Independent team ledger is represented without selecting payer, prices, seat limits or reusing the personal 10GiB candidate as a Team quota.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R14",
+      "check": "Organization-managed recovery is explicit and distinct from personal recovery; team admin access to private keys is forbidden and custody/approval semantics remain OPEN_QUESTION.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R15",
+      "check": "The plan includes negative permission/cross-workspace, capacity, cancel/replay, privacy-canary and threat-boundary fixtures with unresolved outcomes left OPEN_QUESTION.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R16",
+      "check": "Stability, customer-demand and cost decision inputs are explicitly UNKNOWN/NOT_RUN; no sample thresholds or customer research were invented or performed.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R17",
+      "check": "No production code, Team contract, docs/team, progress.json, service, database, crypto, customer, price or behavior operation was changed/run; only the two T32 planning/evidence files were added.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R18",
+      "check": "This author self-check is not the task-required independent critical security review or task acceptance.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T32-R19",
+      "check": "Fixture↔gate and fixture↔acceptance mappings are bidirectionally identical: every fixture declaration appears in the referenced gate/criterion fixtureIds, and every gate/criterion fixtureId declares the reciprocal gateId/acceptanceId.",
+      "status": "CHECKED_STATICALLY"
+    }
+  ],
+  "counts": {
+    "fixtureCount": 28,
+    "uniqueFixtureIdCount": 28,
+    "acceptanceGateCount": 12,
+    "uniqueAcceptanceGateIdCount": 12,
+    "commandCount": 1,
+    "uniqueCommandIdCount": 1,
+    "measurementPlanCount": 3,
+    "uniqueMeasurementPlanIdCount": 3,
+    "openQuestionCount": 18,
+    "uniqueOpenQuestionIdCount": 18,
+    "acceptanceCriterionCount": 12,
+    "uniqueAcceptanceCriterionIdCount": 12,
+    "staticCheckCount": 19,
+    "uniqueStaticCheckIdCount": 19,
+    "subtaskFixtureCounts": {
+      "a": 7,
+      "b": 15,
+      "c": 6
+    },
+    "allFixturesNotRun": true,
+    "allGatesNotRun": true,
+    "allCommandsNotRun": true,
+    "allMeasurementsNotRun": true,
+    "allEvidenceEmpty": true,
+    "allDirectDependenciesUnaccepted": true
+  },
+  "limitations": [
+    "Author structural static-check only; no independent T32 security review, behavior acceptance, or task acceptance is claimed.",
+    "T31 remains not_started despite independent PASS_WITH_LIMITATIONS review of the T31 plan; all T31 direct prerequisites remain unaccepted.",
+    "All 28 fixtures, 12 gates, 1 command and 3 measurement plans remain NOT_RUN; all evidence arrays are empty.",
+    "No Team behavior, customer research, service/database/crypto operation, pricing/cost measurement, platform test, performance test, build or production operation was run.",
+    "Product scope, role matrix, team limits and ledger payer, key distribution/rotation/re-encryption, invite semantics, signed URL/cache revocation, organization recovery authority and lifecycle remain OPEN_QUESTION.",
+    "The feature remains off. Current 03 §1 keeps team create/invite/share FEATURE_NOT_ENABLED; 03 §11 keeps implementation out of scope for this plan."
+  ],
+  "independentCriticalReview": {
+    "required": true,
+    "reviewType": "READ_ONLY_CRITICAL_PLAN_AND_SECURITY_REVIEW",
+    "status": "NOT_RUN",
+    "behaviorAcceptance": false,
+    "note": "本文件为作者结构自检，不替代T32任务卡要求的独立critical/security review。"
+  },
+  "independentReviewStatus": "PASS_WITH_LIMITATIONS",
+  "note": "作者静态核查和独立critical计划复审均通过。Fixture↔gate、fixture↔acceptance双向映射完整；执行行为/命令/测量仍NOT_RUN，T31依赖未接受。"
+}

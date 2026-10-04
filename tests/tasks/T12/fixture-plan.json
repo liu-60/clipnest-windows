@@ -1,0 +1,633 @@
+{
+  "schemaVersion": 1,
+  "task": "T12",
+  "status": "planned-not-executed",
+  "purpose": "Prepare synthetic renderer/UI fixtures for keyboard and IME behavior, history/library semantics, error and capacity states, permissions, responsive layout, and accessibility before T12 dependencies are accepted.",
+  "dependencyGate": "wait_for_T08_T10_T11_accepted",
+  "dependencyGateDetails": {
+    "requiredTasks": [
+      "T08",
+      "T10",
+      "T11"
+    ],
+    "requiredStatus": "accepted",
+    "observedProgressStatuses": {
+      "T08": "not_started",
+      "T10": "not_started",
+      "T11": "not_started"
+    },
+    "source": "docs/progress.json#/tasks",
+    "rule": "Until all three dependencies are accepted, only synthetic fixture/interface planning is allowed. Do not change renderer/domain production files, connect a fake-success backend, read user data, or run renderer/E2E behavior."
+  },
+  "sources": [
+    {
+      "path": "docs/spec/tasks/T12.md",
+      "sections": [
+        "依赖",
+        "子任务顺序",
+        "完成标准与行为测试",
+        "验证命令"
+      ]
+    },
+    {
+      "path": "docs/spec/01-product-and-ux.md",
+      "sections": [
+        "§2 桌面双窗口",
+        "§5 所有页面必须覆盖的状态",
+        "§6 视觉变量与组件接口",
+        "§7 初始引导与成功标准"
+      ]
+    },
+    {
+      "path": "docs/spec/08-acceptance-matrix.md",
+      "sections": [
+        "U01-U12",
+        "§4 性能测量",
+        "§6 证据格式"
+      ]
+    },
+    {
+      "path": "docs/spec/02-architecture.md",
+      "sections": [
+        "§3 契约与跨语言生成",
+        "§4 UI—仓储接口",
+        "§7 平台capabilities"
+      ]
+    },
+    {
+      "path": "docs/spec/limits.v1.json",
+      "fields": [
+        "content.maxPreviewCharacters",
+        "local.totalBytes",
+        "local.decodedImageCacheBytes",
+        "local.webCacheBytes",
+        "local.webIndexBytes",
+        "local.anonymousWebSessionBytes",
+        "transport.summaryPageItems",
+        "transport.summaryPageBytes",
+        "transport.panelOpeningGuardMs"
+      ]
+    }
+  ],
+  "interfacePreparation": {
+    "existingComponentContracts": [
+      "SearchBar(value,onChange,onNavigate,onExecute,isComposing)",
+      "FilterChips",
+      "ClipCard(summary,selected,onSelect,onExecute)",
+      "ResultList(page,onLoadMore)",
+      "ItemPreview(detail)",
+      "SyncBadge",
+      "QuotaMeter",
+      "EmptyState",
+      "PermissionNotice",
+      "ConflictDialog"
+    ],
+    "existingHostBoundary": "Renderer components receive summaries/details and callbacks; they do not directly call Tauri, database, filesystem, auth, or cloud APIs.",
+    "boundary": "Treat interfaces and visible states as specification references, not implemented or accepted contracts. Do not invent new DTO fields, error codes, return enums, or persistence behavior. Exact unresolved mappings are OPEN_QUESTION."
+  },
+  "fixturePolicy": {
+    "syntheticDataOnly": true,
+    "fixedSeed": "clipnest-t12-ui-fixed-seed-20261004",
+    "syntheticNamespaces": [
+      "profile-A",
+      "profile-B",
+      "anonymous-web-session"
+    ],
+    "neverUse": [
+      "live user profile, history, saved items, collection, or clipboard contents",
+      "real account, cloud data, production storage, or network service",
+      "real body text, URL, title, image, key, token, or SQL parameter in evidence",
+      "renderer/E2E/browser behavior execution before T08/T10/T11 are accepted"
+    ],
+    "limitsSource": "Read fixed preview, page, cache, and session thresholds from docs/spec/limits.v1.json. T07 storage-accounting formula and T10 page/error behavior remain gated; do not infer their missing rules from UI fixtures.",
+    "expectedResults": "Assert user-visible behavior, synthetic identity/scope, generation, selection, draft retention, and side-effect counts. Do not require an exact backend error string or result enum unless an accepted contract freezes it.",
+    "statusMeaning": "NOT_RUN means no renderer, domain, integration, or E2E behavior has been verified. This plan is preparation only."
+  },
+  "fixtureCases": [
+    {
+      "caseNumber": 1,
+      "id": "t12-u01-search-key-navigation-preserves-editing",
+      "uxFixture": "U01",
+      "category": [
+        "keyboard",
+        "search",
+        "selection"
+      ],
+      "input": "Synthetic search results plus a focused search field containing spaces and a caret at known offsets.",
+      "action": "Type text; press Left/Right/Home/End/Space; then Down and a non-composing Enter.",
+      "expected": "Editing keys move or update the search caret/value without preview or execution. Down enters the first result; non-composing Enter creates exactly one action for the current selection.",
+      "observation": "Record key sequence, field value/caret, selected synthetic ID, and callback/job counts only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 2,
+      "id": "t12-u02-ime-confirm-and-cancel-do-not-trigger-global-actions",
+      "uxFixture": "U02",
+      "category": [
+        "keyboard",
+        "IME",
+        "cancellation"
+      ],
+      "input": "A synthetic search string with compositionStart/compositionUpdate state and a selected result behind the input.",
+      "action": "Send Enter to confirm composition and Esc to cancel composition; then send a separate Enter/Esc after composition ends.",
+      "expected": "IME Enter commits text and IME Esc cancels composition without executing, opening preview, or exiting the panel. Only a later non-composing key follows the normal action rule.",
+      "observation": "Record composition state transitions, final synthetic query, panel/preview state, and execute callback count.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 3,
+      "id": "t12-u03-single-select-double-click-once-and-repeat-suppression",
+      "uxFixture": "U03",
+      "category": [
+        "selection",
+        "keyboard",
+        "deduplication"
+      ],
+      "input": "A visible synthetic ClipCard with no active action job.",
+      "action": "Single-click once, double-click once, and hold Enter long enough to generate repeat events.",
+      "expected": "Single-click only selects. Double-click creates one action job. Repeated Enter does not create additional jobs or duplicate side effects.",
+      "observation": "Record selected ID, event/repeat metadata, and execute/job invocation counts.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 4,
+      "id": "t12-u04-late-query-generation-cannot-replace-current-results",
+      "uxFixture": "U04",
+      "category": [
+        "search",
+        "generation",
+        "race"
+      ],
+      "input": "Synthetic query A is held behind a test barrier; query B has a distinct result set and newer generation.",
+      "action": "Start A, start B, complete B first, then release A.",
+      "expected": "Only B's current generation and results remain visible; stale A cannot replace results or selection. Selection/reset behavior follows current query B.",
+      "observation": "Record request/generation IDs, response order, rendered synthetic IDs, selected ID, and stale-response suppression.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 5,
+      "id": "t12-u05-end-and-next-page-failure-preserve-loaded-state",
+      "uxFixture": "U05",
+      "category": [
+        "pagination",
+        "keyboard",
+        "error",
+        "selection"
+      ],
+      "input": "Two synthetic result pages are loaded; the next-page callback is configured to fail once.",
+      "action": "Press End, request the next page, observe the failure, then invoke local retry.",
+      "expected": "End moves to the final currently loaded result and does not seek the whole corpus. The failed page preserves existing results and selection and shows local retry; when retry succeeds, the new page is appended without resetting already loaded pages or their selected item.",
+      "observation": "Record loaded IDs, selected ID, paging callbacks, failure/retry state, and whether existing rows remained visible.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 6,
+      "id": "t12-u06-escape-layer-order-and-local-control-keys",
+      "uxFixture": "U06",
+      "category": [
+        "keyboard",
+        "preview",
+        "accessibility"
+      ],
+      "input": "A synthetic panel with a preview overlay, an editable textarea, and a focused button.",
+      "action": "Press Esc twice from preview; separately type and press Enter/Esc while textarea/button owns focus.",
+      "expected": "First Esc closes only preview; second exits the panel. Textarea and button retain their local keyboard behavior and do not trigger an unintended global paste/exit action.",
+      "observation": "Record focus owner, preview/panel visibility, textarea value, and host execute/close callback counts.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 7,
+      "id": "t12-u07-cloud-lock-hides-cloud-content-but-keeps-local-only",
+      "uxFixture": "U07",
+      "category": [
+        "privacy",
+        "locking",
+        "scope",
+        "worker-lifecycle"
+      ],
+      "input": "Synthetic profile contains distinguishable personal_cloud and local_only summaries/details; cloud index worker is active.",
+      "action": "Lock the synthetic cloud namespace while leaving local-only available, then deliver a delayed cloud worker result after the lock transition.",
+      "expected": "Cloud body, preview, thumbnail, and search fields are no longer observable and the cloud worker is stopped. Local-only items remain available according to the desktop host fixture; locked cloud is not presented as an empty library.",
+      "observation": "Record visible IDs/scope, cloud-worker termination/quiescence, treatment of the delayed result, search results, and synthetic local-only availability; never record bodies or thumbnails.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 8,
+      "id": "t12-u08-anonymous-web-session-capacity-and-refresh-warning",
+      "uxFixture": "U08",
+      "category": [
+        "capacity",
+        "privacy",
+        "web-state"
+      ],
+      "input": "A synthetic anonymous Web session at limits.local.anonymousWebSessionBytes, plus one new synthetic item; no IndexedDB backend is mounted.",
+      "action": "Attempt the additional import, inspect warning/export affordances, then simulate refresh of the in-memory session.",
+      "expected": "The over-limit item is rejected without losing prior in-session items; the UI explains session-only retention and refresh loss and offers the explicit session-only plaintext export path specified by U08. No sensitive plaintext is written to IndexedDB.",
+      "observation": "Record synthetic byte totals, old/new ID availability, notice/action state, refresh loss, and fake persistence write counts.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 9,
+      "id": "t12-u09-permission-denial-degrades-to-available-capabilities",
+      "uxFixture": "U09",
+      "category": [
+        "permissions",
+        "capabilities",
+        "copy-only",
+        "error"
+      ],
+      "input": "Two synthetic capability states: autoPaste denied while supported clipboard/search remain available; and clipboard write unavailable while cached search/read remains available.",
+      "action": "Render both states and invoke only the supported copy/search behaviors for each.",
+      "expected": "Only unavailable actions are disabled. In the first state, copy and search remain usable without claiming automatic input; in the second, search/read remains usable and no failed clipboard write is reported as success. The denial has a settings/help route; exact reason text/status mapping remains OPEN_QUESTION.",
+      "observation": "Record provided capability values, visible enabled actions, synthetic clipboard result, input callback count, and notice category; exact reason text/status mapping remains OPEN_QUESTION.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 10,
+      "id": "t12-u10-budget-and-outbox-block-preserves-protected-items-and-draft",
+      "uxFixture": "U10",
+      "category": [
+        "capacity",
+        "quota",
+        "draft",
+        "scope"
+      ],
+      "input": "Synthetic local/cache/outbox/version budget counters independently report full; include a saved/pinned item, pending mutation, and unsubmitted draft.",
+      "action": "Attempt a new local save, a saved-item revision, cache cleanup, local-history cleanup, and a sync-scope mutation as separate actions.",
+      "expected": "The UI identifies which budget is full and offers the matching safe action. Protected items and the draft remain; cache cleanup, history cleanup, version-budget handling, and sync-scope changes are not conflated. Exact storage accounting/result codes remain OPEN_QUESTION until T07/T06 acceptance.",
+      "observation": "Record per-budget synthetic counters, protected IDs before/after, draft contents only as a presence bit, visible actions, and host callback counts.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 11,
+      "id": "t12-u11-account-switch-isolates-pending-namespace",
+      "uxFixture": "U11",
+      "category": [
+        "account-switch",
+        "privacy",
+        "worker-lifecycle",
+        "namespace"
+      ],
+      "input": "Synthetic namespace A has a pending operation, active subscription/index worker, and unique marker ID; namespace B has a different marker ID.",
+      "action": "Switch from A to B while A work is pending, then release delayed A responses.",
+      "expected": "A worker/subscription and in-memory references are terminated; B becomes current; A data/wire is not exposed or submitted through B, including from a late response.",
+      "observation": "Record namespace/generation, worker/subscription shutdown, rendered IDs, and fake dispatch destinations; do not persist synthetic payloads.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 12,
+      "id": "t12-u12-offline-empty-no-result-and-partial-index-states",
+      "uxFixture": "U12",
+      "category": [
+        "offline",
+        "coverage",
+        "loading",
+        "empty-state"
+      ],
+      "input": "Synthetic cases for offline with unlocked cached results, initial empty library, no search matches, and an explicitly partial index.",
+      "action": "Render each case and query the partial-index case.",
+      "expected": "Each state is distinguishable: offline cached data remains usable, first empty state differs from no results, and partial index reports its known coverage without claiming full-corpus search.",
+      "observation": "Record state identifiers, visible synthetic IDs/counts, coverage fields, and available recovery actions.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 13,
+      "id": "t12-save-history-creates-new-saved-identity",
+      "category": [
+        "history-library-isolation",
+        "save",
+        "identity"
+      ],
+      "input": "One synthetic immutable history record with stable history ID and one synthetic SavedItem namespace.",
+      "action": "Save the history record to the library, then inspect both identities and clear synthetic history.",
+      "expected": "Saving creates a distinct SavedItem ID while preserving the source history snapshot. Clearing history does not delete the saved copy; the original history is not edited in place.",
+      "observation": "Record synthetic IDs, entity kinds, source linkage, and post-clear presence only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 14,
+      "id": "t12-delete-collection-preserves-saved-content",
+      "category": [
+        "collection",
+        "history-library-isolation",
+        "deletion"
+      ],
+      "input": "A synthetic collection has relations to two saved items; one saved item is also referenced by a second collection.",
+      "action": "Delete the first collection with the default action and inspect both saved items and remaining relations.",
+      "expected": "The collection and its relations are removed according to the frozen default; saved item identities/content remain, including the item still related to the second collection. The UI does not preselect permanent item deletion.",
+      "observation": "Record collection/saved IDs and relation counts before/after; do not log saved content.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 15,
+      "id": "t12-history-is-read-only-edit-through-saved-copy",
+      "category": [
+        "history-library-isolation",
+        "editing",
+        "identity"
+      ],
+      "input": "A synthetic history snapshot appears in the panel and management detail.",
+      "action": "Open the edit affordance and then use the explicit save-copy-before-edit route.",
+      "expected": "History is not editable in place. The supported edit flow first creates a distinct SavedItem; changes apply to that saved identity while the history snapshot remains byte-for-byte unchanged.",
+      "observation": "Record available actions, entity IDs, and before/after synthetic source digests without storing content.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 16,
+      "id": "t12-saved-edit-base-revision-and-repeat-save",
+      "category": [
+        "editing",
+        "revision",
+        "draft"
+      ],
+      "input": "A synthetic SavedItem loads with baseRevision R and an unsaved draft; save callback is delayed behind a fixture barrier.",
+      "action": "Begin save, attempt a duplicate save while pending, then resolve the first save.",
+      "expected": "The draft remains until resolved; duplicate save is disabled or deduplicated while pending; successful completion advances the synthetic revision without dropping edits.",
+      "observation": "Record base/current revision identifiers, callback count, pending state, and draft-presence/content digest only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 17,
+      "id": "t12-edit-conflict-shows-both-versions-and-retains-draft",
+      "category": [
+        "conflict",
+        "editing",
+        "draft",
+        "error"
+      ],
+      "input": "Synthetic local draft at revision R and distinct remote/conflicting version R+1 with visibly different harmless markers.",
+      "action": "Resolve save as conflict, open comparison, choose either save-as-copy or re-edit, and separately dismiss without choosing.",
+      "expected": "Local and remote versions are distinguishable; no silent last-writer-wins overwrite occurs. If save-as-copy is chosen, it creates a distinct SavedItem identity from the local draft without overwriting the remote version. The draft remains when the dialog is dismissed or re-edit is chosen. Exact conflict return enum and merge policy remain OPEN_QUESTION.",
+      "observation": "Record revision IDs, dialog state, selected resolution action, callback count, and draft-presence bit; do not record version contents.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 18,
+      "id": "t12-filter-clear-and-query-clear-are-independent",
+      "category": [
+        "search",
+        "filters",
+        "keyboard"
+      ],
+      "input": "A synthetic query plus type/source/date/device filter chips and deterministic matching records.",
+      "action": "Clear filters while retaining query, then clear query while retaining filters.",
+      "expected": "ClearFilters and ClearQuery have independent effects; each updates the result generation and selection only according to the current query/filter state.",
+      "observation": "Record query/filter values, generations, selected IDs, and visible synthetic IDs.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 19,
+      "id": "t12-open-panel-retains-search-and-resets-selection",
+      "category": [
+        "panel",
+        "search",
+        "selection",
+        "lifecycle"
+      ],
+      "input": "A synthetic panel has non-default query/filter state and a non-first selected item; a second result set has no matches.",
+      "action": "Close/reopen the panel, then issue a changed query that returns no results.",
+      "expected": "Opening retains query/filters but resets selection to the first current result; a new query also resets selection, and an empty result set clears selectedId.",
+      "observation": "Record panel lifecycle, retained query/filter values, result order, and selected ID.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 20,
+      "id": "t12-summary-detail-separation-and-preview-limit",
+      "category": [
+        "privacy",
+        "summary",
+        "detail",
+        "capacity"
+      ],
+      "input": "Synthetic text/image bodies are larger than summary fields; preview boundaries use the configured maxPreviewCharacters.",
+      "action": "Render paged summaries, open one detail on demand, close it, and inspect all renderer-bound payloads.",
+      "expected": "Summaries include only small summary fields and bounded previews, never full body/DataURL/original image/key. Full detail is requested only through the explicit selected-item path and is cleared when the detail closes or its generation is invalidated.",
+      "observation": "Record field names, preview length, body-field presence/absence, request IDs, and synthetic payload byte counts only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 21,
+      "id": "t12-responsive-panel-and-management-layout",
+      "category": [
+        "responsive",
+        "layout",
+        "keyboard"
+      ],
+      "input": "Synthetic desktop panel width at the frozen 640 logical-pixel minimum and an available-work-area narrow case below it; Web management CSS viewports at 1024px, 768px, and below 768px.",
+      "action": "Render panel and management views at each viewport; resize while search and selected item are active.",
+      "expected": "The panel keeps search and execution entry visible, uses a single-column layout when extremely narrow, and does not clip controls. Web management uses sidebar+list+detail at >=1024px, collapses sidebar at 768–1023px, and routes list/detail separately below 768px. Exact narrow-panel transition width is OPEN_QUESTION.",
+      "observation": "Record viewport, layout mode, control visibility/focusability, horizontal overflow, and selected synthetic ID.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 22,
+      "id": "t12-keyboard-reachability-and-visible-focus",
+      "category": [
+        "accessibility",
+        "keyboard",
+        "focus"
+      ],
+      "input": "Synthetic shortcut panel and management window with search, filters, list, preview, save/edit/delete, quota and permission controls.",
+      "action": "Navigate every actionable control using keyboard only, including dialogs and return paths.",
+      "expected": "All core actions are keyboard reachable, focus remains visible and does not become trapped or lost after loading/error/dialog transitions. The specified 2px focus ring is retained; exact automated contrast/screen-reader acceptance thresholds are OPEN_QUESTION.",
+      "observation": "Record reachable control IDs, focus order, focus-visible state, dialog return target, and skipped/unreachable actions.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 23,
+      "id": "t12-reduced-motion-and-status-not-color-only",
+      "category": [
+        "accessibility",
+        "motion",
+        "status"
+      ],
+      "input": "Synthetic system reduced-motion preference and UI states for offline, locked, conflict, quota, permission, and error.",
+      "action": "Render each state under reduced motion and inspect status cues.",
+      "expected": "Reduced-motion mode removes positional movement animations. Status meaning is not conveyed by color alone and remains readable in light/dark semantic tokens.",
+      "observation": "Record motion classes/transforms, text/icon/status labels, and theme state; do not infer a WCAG numeric pass without a frozen threshold.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 24,
+      "id": "t12-loading-empty-offline-locked-and-error-state-preservation",
+      "category": [
+        "loading",
+        "empty-state",
+        "error",
+        "offline",
+        "locked"
+      ],
+      "input": "Synthetic adapters produce delayed initial load, first empty library, no matches, offline cached data, locked cloud, and one page error.",
+      "action": "Transition among the states while preserving any already loaded synthetic page and current selection where the spec requires it.",
+      "expected": "Initial loading is cancellable and not shown as zero items; first empty differs from no results; paging failure preserves prior page; offline/locked messages are distinct and do not erase local data or expose locked cloud fields.",
+      "observation": "Record state identifiers, visible rows, selection, retry/cancel affordances, and renderer-bound scope only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 25,
+      "id": "t12-settings-do-not-fake-cloud-or-export-availability",
+      "category": [
+        "settings",
+        "feature-gates",
+        "scope",
+        "error"
+      ],
+      "input": "Synthetic capability state with cloud sync disabled, prerequisites incomplete, the T29-gated bulk-export feature off, and only local controls available.",
+      "action": "Open settings and inspect gated cloud-sync and bulk-export actions without invoking any external service.",
+      "expected": "Unavailable cloud-sync and bulk-export controls remain off and explain their current availability; this does not disable the separately specified U08 explicit session-only plaintext export path. There is no fake success or implicit scope switch. Allowed settings changes remain scoped to their declared capability.",
+      "observation": "Record feature flags, visible/disabled controls, and callback counts; exact error and prerequisite return mapping remains OPEN_QUESTION.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 26,
+      "id": "t12-capacity-cleanup-does-not-turn-cache-eviction-into-delete",
+      "category": [
+        "capacity",
+        "cleanup",
+        "history-library-isolation"
+      ],
+      "input": "Synthetic saved, pinned, pending-mutation, ordinary history, and cached-thumbnail records with independent local/cache budget states.",
+      "action": "Preview reduced budget impact, clean cache, and separately request local-history cleanup.",
+      "expected": "The UI distinguishes cache cleanup from history deletion; cache eviction does not remove saved content or create a cloud-delete action. Protected saved/pinned/pending content is identified before any destructive confirmation.",
+      "observation": "Record IDs and cache/history/saved presence flags before/after plus callback names; storage byte-charge formula stays OPEN_QUESTION until T07 is accepted.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 27,
+      "id": "t12-unfrozen-host-errors-remain-readable-without-enum-assumptions",
+      "category": [
+        "error",
+        "interface",
+        "accessibility"
+      ],
+      "input": "Synthetic adapter returns a known success, a generic unavailable error, an unknown future error discriminator, and a retryable page failure.",
+      "action": "Render each response in panel and management context and inspect recovery actions.",
+      "expected": "No unknown response is displayed as success or destructive completion; known actions remain available where safe. Exact discriminator, retry classification, and copy wording are OPEN_QUESTION until T06/T10 contracts are accepted.",
+      "observation": "Record synthetic response class, visible status category, enabled recovery actions, and side-effect callback count without asserting a new error code.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 28,
+      "id": "t12-preview-and-navigation-cancellation-retain-unsaved-draft",
+      "category": [
+        "draft",
+        "cancellation",
+        "editing",
+        "keyboard"
+      ],
+      "input": "A synthetic saved-item edit has an unsaved draft and an in-flight detail/query request.",
+      "action": "Navigate away, cancel the pending detail request, and return through the draft confirmation path.",
+      "expected": "A stale detail result cannot overwrite the current selection; the unsaved draft is retained or the user receives the specified leave confirmation before it can be discarded.",
+      "observation": "Record request generations, draft-presence/digest, navigation confirmation state, and stale-response suppression.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 29,
+      "id": "t12-collection-sort-and-membership-stability",
+      "category": [
+        "collection",
+        "ordering",
+        "pagination"
+      ],
+      "input": "Synthetic saved items with tied updatedAt values and distinct IDs, initially related to two synthetic collections.",
+      "action": "Create a synthetic collection, rename it, browse all collections, add/remove one saved-item relation, and reload the visible page.",
+      "expected": "Collection creation/rename changes collection metadata; membership changes affect collection relations without changing SavedItem identity, content, or revision. Display order follows the specified update-time and ID tie-break; drag/manual ordering is not exposed as a supported operation.",
+      "observation": "Record ordered IDs, relation sets, selected ID, and visible actions; no body data.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 30,
+      "id": "t12-privacy-safe-ui-telemetry-and-error-preview",
+      "category": [
+        "privacy",
+        "error",
+        "telemetry"
+      ],
+      "input": "Synthetic canary body, URL, title, source, image marker, key-shaped value, token-shaped value, and unredacted SQL parameter are carried through query, preview, save, error, and cancellation paths.",
+      "action": "Exercise renderer state transitions with a fake telemetry/error collector and inspect emitted metadata.",
+      "expected": "Per 08 §6, no body, URL, title, source, image, key, token, or unredacted SQL parameter enters telemetry/crash metadata or error packages. The exact user-visible error text/content-redaction policy is OPEN_QUESTION and is not asserted; evidence contains only synthetic category/count observations.",
+      "observation": "Record whether any canary category was detected in captured metadata without copying the canary value into evidence.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "canonical-ui-error-and-return-enums",
+      "status": "OPEN_QUESTION",
+      "reason": "T06 generated strict schemas and T10 query/coverage result mappings are not accepted. This plan tests user-visible safety but does not invent exact discriminator, reasonCode, retryability, success wording, or the user-visible error-content redaction policy; the frozen telemetry/crash canary exclusions follow 08 §6."
+    },
+    {
+      "id": "storage-budget-accounting-and-full-outbox-results",
+      "status": "OPEN_QUESTION",
+      "reason": "The displayed limits exist, but T07's durable-byte accounting and exact capacity/outbox result mapping remain unresolved. UI fixtures use independently injected budget states without asserting a derived byte charge or error enum."
+    },
+    {
+      "id": "conflict-resolution-return-and-merge-policy",
+      "status": "OPEN_QUESTION",
+      "reason": "The UI must retain and compare local/remote drafts and offer save-as-copy or re-edit, but the accepted domain conflict result shape and merge semantics are not frozen in T06/T08/T11."
+    },
+    {
+      "id": "responsive-narrow-panel-transition-width",
+      "status": "OPEN_QUESTION",
+      "reason": "The 640 logical-pixel minimum and no-clipping intent are specified, but the exact width at which the desktop panel changes to its narrow single-column arrangement is not."
+    },
+    {
+      "id": "automated-accessibility-thresholds",
+      "status": "OPEN_QUESTION",
+      "reason": "Keyboard reachability, visible focus, a 2px focus ring, reduced motion, and semantic colors are specified; exact color-contrast, screen-reader, and automated accessibility acceptance thresholds are not."
+    },
+    {
+      "id": "renderer-test-harness-and-dependency-readiness",
+      "status": "OPEN_QUESTION",
+      "reason": "T08/T10/T11 are not accepted and the task-listed renderer/E2E commands depend on established scripts. No test command is run or implied by this fixture-only preparation."
+    }
+  ],
+  "requiredNotRunGates": [
+    {
+      "id": "T08-T10-T11-accepted",
+      "status": "NOT_RUN",
+      "reason": "All three T12 dependencies are currently not_started, so production UI/domain work and renderer behavior tests remain gated."
+    },
+    {
+      "id": "U01-U12-renderer-behavior",
+      "status": "NOT_RUN",
+      "reason": "All UX cases are specified here only; no renderer, unit, or E2E behavior has run."
+    },
+    {
+      "id": "history-library-edit-conflict-and-capacity",
+      "status": "NOT_RUN",
+      "reason": "No repository adapter or local database was exercised; identity isolation, conflict handling, and capacity behavior remain unverified."
+    },
+    {
+      "id": "permission-responsive-accessibility-and-privacy",
+      "status": "NOT_RUN",
+      "reason": "No real permission, viewport, accessibility, telemetry, or browser state was exercised."
+    },
+    {
+      "id": "renderer-e2e-and-typecheck-commands",
+      "status": "NOT_RUN",
+      "reason": "The task-listed validation scripts are not invoked during fixture-only preparation; their availability is not asserted."
+    }
+  ],
+  "plannedValidationCommands": [],
+  "executionSafety": {
+    "productionFilesChanged": false,
+    "contractOrGeneratedFilesChanged": false,
+    "liveProfileRead": false,
+    "realAccountOrServiceUsed": false,
+    "realClipboardReadOrWritten": false,
+    "rendererOrE2EBehaviorRun": false,
+    "userDataLogged": false
+  },
+  "acceptanceReminder": "All 30 cases remain NOT_RUN. Keep T12 not_started until T08/T10/T11 are accepted, unresolved interface mappings are frozen, renderer behavior/E2E evidence exists for applicable cases, and the task's completion review is performed."
+}

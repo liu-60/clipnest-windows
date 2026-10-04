@@ -1,0 +1,879 @@
+{
+  "schemaVersion": 1,
+  "task": "T23",
+  "status": "not_started",
+  "executionStatus": "NOT_RUN",
+  "planType": "synthetic_fixture_planning_only",
+  "dependencies": [
+    {
+      "task": "T15",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN"
+    },
+    {
+      "task": "T22",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN"
+    }
+  ],
+  "source": {
+    "taskCard": "docs/spec/tasks/T23.md",
+    "specifications": [
+      "docs/spec/01-product-and-ux.md §3/§5",
+      "docs/spec/03-data-sync-and-security.md §5.4-§5.5/§6",
+      "docs/spec/08-acceptance-matrix.md §2-§3, S27",
+      "docs/spec/limits.v1.json"
+    ],
+    "interpretation": "Only frozen boundaries are asserted. No plan value is a measured or accepted behavior result."
+  },
+  "dataBoundary": {
+    "fixtureData": "Synthetic profile/account/workspace/item identifiers, non-secret key handles, permission states, queue entries, encrypted-object placeholders, transaction outcomes, and injected capacity counters only.",
+    "crypto": "No key bytes, secret, nonce, ciphertext/tag known-answer vector, or crypto result is generated. F02 records only planned Expo Crypto native CSPRNG source/length/association metadata; T23 only integrates the accepted T15 module and approved vault API.",
+    "device": "No iOS/Android device, Expo Go, native build, OS store, provider, or service is used.",
+    "userDataRead": false,
+    "behaviorExecuted": false
+  },
+  "fixtures": [
+    {
+      "id": "T23-F01",
+      "platform": "shared",
+      "references": [
+        "T23 task card",
+        "03 §4.3",
+        "T15"
+      ],
+      "setup": "Synthetic caller references the T15 native-crypto module and key-vault adapter contract.",
+      "action": "Plan integration through the T15 package boundary only.",
+      "assertions": [
+        "T23 does not reimplement crypto, alter wire/key protocol, add a fallback, or manufacture a vector/result.",
+        "No cloud crypto feature is called accepted by this fixture."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ01"
+      ]
+    },
+    {
+      "id": "T23-F02",
+      "platform": "shared",
+      "references": [
+        "03 §5.4"
+      ],
+      "setup": "Use distinct synthetic anonymous/account profile IDs and localDbIds, plus non-secret labels for the planned CSPRNG source, 32-byte output length, and per-profile key request. Do not invoke CSPRNG or create/store any localDBKey bytes.",
+      "action": "Inspect only the planned key-generation API call metadata and profile/localDbId association; no native module or random-byte API is called.",
+      "assertions": [
+        "Each profile/localDbId has a separate planned localDBKey request sourced from Expo Crypto native CSPRNG with 32-byte output; record source, length, and association metadata only, without generating actual key material.",
+        "The planned localDBKey is independent of login password, auth token, device credential, workspace root, and CNREC1."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": []
+    },
+    {
+      "id": "T23-F03",
+      "platform": "shared",
+      "references": [
+        "03 §5.4",
+        "T23 task card"
+      ],
+      "setup": "Prepare a synthetic vault-entry descriptor and small key/version metadata; do not place secret bytes in the fixture.",
+      "action": "Plan vault entry naming by CN-LDB1 profileId/localDbId.",
+      "assertions": [
+        "Entry stores only small local-key/version material; it does not serialize the full cloud key ring as a large SecureStore JSON blob.",
+        "Opaque secrets are not included in evidence."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ01",
+        "T23-OQ02"
+      ]
+    },
+    {
+      "id": "T23-F04",
+      "platform": "shared",
+      "references": [
+        "03 §5.4",
+        "08 §3"
+      ],
+      "setup": "Instrumented synthetic persistence/log sinks are named without secret fixture values.",
+      "action": "Plan scanning AsyncStorage, localStorage, logs, analytics, crash payload, .env and SQL trace for sentinel labels only.",
+      "assertions": [
+        "No key or recovery/cloud secret is stored in AsyncStorage/localStorage or emitted to logs, analytics, crash data, or SQL trace.",
+        "Sentinel labels are not cryptographic vectors or real secrets."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": []
+    },
+    {
+      "id": "T23-F05",
+      "platform": "shared",
+      "references": [
+        "03 §5.4"
+      ],
+      "setup": "Start with a new synthetic profile and no SQLCipher database.",
+      "action": "Plan vault write and successful readback before creating the database or first schema transaction.",
+      "assertions": [
+        "Database creation occurs only after the small key entry round-trips through the vault.",
+        "No SQLCipher schema write precedes the verified vault entry."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ02"
+      ]
+    },
+    {
+      "id": "T23-F06",
+      "platform": "shared",
+      "references": [
+        "03 §5.4",
+        "03 §9"
+      ],
+      "setup": "Inject SecureStore/key-vault write failure and a separate write-succeeded/readback-failed outcome.",
+      "action": "Plan key initialization failure before database creation.",
+      "assertions": [
+        "Return the frozen LOCAL_KEY_UNAVAILABLE category where applicable and perform zero database writes.",
+        "Raw OS error mapping and exact UI copy remain OPEN_QUESTION."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ02",
+        "T23-OQ09"
+      ]
+    },
+    {
+      "id": "T23-F07",
+      "platform": "shared",
+      "references": [
+        "03 §5.4"
+      ],
+      "setup": "Provide a synthetic SQLCipher-unavailable open attempt with a counter for writes.",
+      "action": "Plan cipher_version preflight and startup failure handling.",
+      "assertions": [
+        "Empty cipher_version maps to SQLCIPHER_UNAVAILABLE with zero writes.",
+        "Ordinary SQLite fallback and empty-database replacement are forbidden."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ02"
+      ]
+    },
+    {
+      "id": "T23-F08",
+      "platform": "shared",
+      "references": [
+        "03 §5.4-§5.5",
+        "08 §3"
+      ],
+      "setup": "An existing synthetic SQLCipher database plus WAL/SHM and attachment evidence has no matching vault key.",
+      "action": "Plan open/restore handling without a valid localDBKey.",
+      "assertions": [
+        "Return LOCAL_KEY_MISSING and preserve the database, WAL/SHM, and attachments.",
+        "Do not mint a replacement key at that path, overwrite the old database, or create an empty database."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ09"
+      ]
+    },
+    {
+      "id": "T23-F09",
+      "platform": "shared",
+      "references": [
+        "03 §5.4",
+        "08 §3"
+      ],
+      "setup": "An existing synthetic database has a present but nonmatching opaque key handle.",
+      "action": "Plan wrong-key open behavior.",
+      "assertions": [
+        "Return LOCAL_DB_UNLOCK_FAILED and preserve the original library and recovery evidence.",
+        "Do not treat wrong-key as empty state or use ordinary SQLite."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ09"
+      ]
+    },
+    {
+      "id": "T23-F10",
+      "platform": "shared",
+      "references": [
+        "03 §5.4-§5.5"
+      ],
+      "setup": "A synthetic device becomes locked while a vault-protected local database is unopened or a new access request is pending.",
+      "action": "Plan lock-state handling before opening/resuming the local database.",
+      "assertions": [
+        "Pause access and wait for foreground unlock; do not classify this transient state as lost data or delete the database.",
+        "Exact native callback/state mapping remains OPEN_QUESTION."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ02",
+        "T23-OQ09"
+      ]
+    },
+    {
+      "id": "T23-F11",
+      "platform": "iOS",
+      "references": [
+        "03 §5.4-§5.5",
+        "08 §2-§3"
+      ],
+      "setup": "Use a synthetic iOS vault policy descriptor.",
+      "action": "Plan SecureStore/Keychain attributes for localDBKey.",
+      "assertions": [
+        "Policy is WHEN_UNLOCKED_THIS_DEVICE_ONLY with requireAuthentication=false and a small key value.",
+        "Do not infer reinstall or OS-level erase outcomes from this configuration."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ02"
+      ]
+    },
+    {
+      "id": "T23-F12",
+      "platform": "Android",
+      "references": [
+        "03 §5.4-§5.5",
+        "08 §2-§3"
+      ],
+      "setup": "Use a synthetic Android vault/backup-policy descriptor with SecureStore protection material and local DB/WAL/SHM/attachments marked as lacking a portable restore chain.",
+      "action": "Plan asynchronous SecureStore use and explicit Android backup exclusions for SecureStore plus nonportable DB/WAL/SHM/attachments; do not inspect or run a real manifest, backup, or device.",
+      "assertions": [
+        "Do not place localDBKey in AsyncStorage; Android backup policy excludes SecureStore and nonportable DB/WAL/SHM/attachments, and none is represented as a portable recovery chain.",
+        "Exact manifest/plugin configuration and device behavior remain NOT_RUN; backup/reinstall must not be treated as restoring the local key or database."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ02"
+      ]
+    },
+    {
+      "id": "T23-F13",
+      "platform": "iOS",
+      "references": [
+        "01 §3 P06",
+        "08 §2"
+      ],
+      "setup": "A user explicitly shares one synthetic text item from a foreground app.",
+      "action": "Plan receipt of only the actively shared item through the user-invoked share path.",
+      "assertions": [
+        "The share path does not inspect clipboard history or capture unrelated past items.",
+        "Actual iOS share extension behavior remains NOT_RUN."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ03",
+        "T23-OQ06"
+      ]
+    },
+    {
+      "id": "T23-F14",
+      "platform": "Android",
+      "references": [
+        "01 §3 P06",
+        "08 §2"
+      ],
+      "setup": "A user explicitly shares one synthetic text item from a foreground app.",
+      "action": "Plan receipt of only the actively shared item through the user-invoked Android share path.",
+      "assertions": [
+        "The share path does not read clipboard in background or inspect unrelated history.",
+        "Actual Android share behavior remains NOT_RUN."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ03",
+        "T23-OQ06"
+      ]
+    },
+    {
+      "id": "T23-F15",
+      "platform": "iOS",
+      "references": [
+        "01 §3 P06",
+        "08 §2"
+      ],
+      "setup": "A user initiates synthetic image paste/share with system authorization initially unknown, then denied in a separate branch.",
+      "action": "Plan foreground system-mediated image acquisition and denial handling.",
+      "assertions": [
+        "Do not bypass the system prompt or claim access after denial; no image is committed without an authorized explicit source.",
+        "Reason-code and fallback wording remain OPEN_QUESTION."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ06"
+      ]
+    },
+    {
+      "id": "T23-F16",
+      "platform": "Android",
+      "references": [
+        "01 §3 P06",
+        "08 §2"
+      ],
+      "setup": "A foreground user initiates synthetic image paste/share with permission or picker access denied.",
+      "action": "Plan user-triggered image import and denied-access branch.",
+      "assertions": [
+        "No background clipboard/image capture and no fabricated import success; the app exposes only supported user-action alternatives.",
+        "Exact denial mapping and UI copy remain OPEN_QUESTION."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ06"
+      ]
+    },
+    {
+      "id": "T23-F17",
+      "platform": "shared",
+      "references": [
+        "01 §3 P06",
+        "08 §2"
+      ],
+      "setup": "Prepare a synthetic share-extension payload with sensitive canary categories and an authorization result for a local protected container; no real payload or path is used.",
+      "action": "Plan transfer only into an authorized protected local share container; do not write payload to an unprotected path.",
+      "assertions": [
+        "Share intake contains only the current user-shared payload and never reads clipboard history.",
+        "Sensitive payload is stored only in a local protected and authorized container, never an unprotected path; exact mechanism, entitlement/protection class, encryption-at-rest and lifecycle remain OPEN_QUESTION.",
+        "Per-item accepted representation and aggregate budget remain OPEN_QUESTION."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ03",
+        "T23-OQ12"
+      ]
+    },
+    {
+      "id": "T23-F18",
+      "platform": "shared",
+      "references": [
+        "01 §3 P06",
+        "T23 task card"
+      ],
+      "setup": "Seed a synthetic bounded share container with prior pending items at its configured capacity; configuration value remains unresolved.",
+      "action": "Attempt to add one more synthetic item and open the app to resolve the full-queue state.",
+      "assertions": [
+        "Previously pending items are not overwritten or silently discarded.",
+        "The user is told to reopen the app to handle a full queue.",
+        "Whether the just-shared item itself is retained/rejected and the numeric capacity remain OPEN_QUESTION."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ03",
+        "T23-OQ04"
+      ]
+    },
+    {
+      "id": "T23-F19",
+      "platform": "shared",
+      "references": [
+        "03 §5.4",
+        "03 §9",
+        "docs/spec/limits.v1.json"
+      ],
+      "setup": "Prepare synthetic text/image payloads at, below, and above configured per-item content limits plus a separate aggregate queue-budget boundary.",
+      "action": "Plan input validation and capacity observations without asserting an unfrozen combined queue size.",
+      "assertions": [
+        "Configured content limits are treated as planning inputs, not measured results.",
+        "Aggregate share queue bytes, eviction behavior, and exact local error mapping remain OPEN_QUESTION."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ03",
+        "T23-OQ08",
+        "T23-OQ09"
+      ]
+    },
+    {
+      "id": "T23-F20",
+      "platform": "shared",
+      "references": [
+        "01 §3 P06",
+        "T23 task card"
+      ],
+      "setup": "A previously persisted queue item exists; a user cancels a second share-extension interaction at synthetic points before and after its durable append.",
+      "action": "Plan user-cancel handling without a successful fake backend.",
+      "assertions": [
+        "A prior pending item is preserved and not replaced by the cancellation.",
+        "Whether the current item was durably accepted and its terminal presentation depend on the cancellation boundary and remain OPEN_QUESTION."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ04",
+        "T23-OQ05"
+      ]
+    },
+    {
+      "id": "T23-F21",
+      "platform": "shared",
+      "references": [
+        "01 §3 P06",
+        "08 §3"
+      ],
+      "setup": "Interrupt a synthetic extension process during a staged container write while older queue entries already exist.",
+      "action": "Plan process termination/relaunch at pre-append and post-append checkpoints.",
+      "assertions": [
+        "Older committed queue items remain available for main-app import.",
+        "Partial-item cleanup, acknowledgement, and re-delivery behavior remain OPEN_QUESTION; no item is marked imported without a main-app commit."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ04",
+        "T23-OQ05",
+        "T23-OQ12"
+      ]
+    },
+    {
+      "id": "T23-F22",
+      "platform": "shared",
+      "references": [
+        "01 §3 P06",
+        "03 §5.4",
+        "T23 task card"
+      ],
+      "setup": "A share extension receives one bounded synthetic payload while no main-app account/session process is available.",
+      "action": "Plan extension work boundary and return to the main app.",
+      "assertions": [
+        "The extension persists only bounded pending share input and does not run long cloud sync or create another account/database system.",
+        "Exact native lifecycle callback remains NOT_RUN."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ02",
+        "T23-OQ03"
+      ]
+    },
+    {
+      "id": "T23-F23",
+      "platform": "shared",
+      "references": [
+        "01 §3 P06",
+        "03 §6"
+      ],
+      "setup": "A received share item has not yet been committed and no destination scope has been selected.",
+      "action": "Open the main app, preview the item, then require the user to choose scope before save.",
+      "assertions": [
+        "The item is previewed before save and the target scope is explicit.",
+        "No default account or silent cloud/local-only conversion is inferred."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ07"
+      ]
+    },
+    {
+      "id": "T23-F24",
+      "platform": "shared",
+      "references": [
+        "03 §6",
+        "01 §3 P06"
+      ],
+      "setup": "Create synthetic item bytes, refs, local record, and a cloud outbox mutation only for an explicitly selected unlocked cloud scope.",
+      "action": "Plan main-app repository transaction import with injected failure before commit and success after commit.",
+      "assertions": [
+        "Object, refs, record, and applicable outbox state commit together; failure rolls back the local transaction and emits no success UI.",
+        "The source pending share remains recoverable until the import commit outcome is known."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ05",
+        "T23-OQ08"
+      ]
+    },
+    {
+      "id": "T23-F25",
+      "platform": "shared",
+      "references": [
+        "03 §6",
+        "01 §3 P06"
+      ],
+      "setup": "Interrupt the main app immediately before and after a synthetic local transaction commit but before queue cleanup is observed.",
+      "action": "Plan restart and retry against a synthetic queue entry.",
+      "assertions": [
+        "No confirmed item lacks its required local object/refs because of a partial transaction.",
+        "Exact dedupe identity and queue-ack ordering across commit/restart remain OPEN_QUESTION; no exactly-once claim is made."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ05"
+      ]
+    },
+    {
+      "id": "T23-F26",
+      "platform": "shared",
+      "references": [
+        "03 §5.4",
+        "01 §5"
+      ],
+      "setup": "A user has an anonymous local-only profile with an available OS vault and no account or CNREC1.",
+      "action": "Plan opening the local library and importing an explicitly scoped local-only share.",
+      "assertions": [
+        "Anonymous local-only use does not require account login or CNREC1 when the OS vault is available.",
+        "The profile remains physically distinct from cloud profiles."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": []
+    },
+    {
+      "id": "T23-F27",
+      "platform": "shared",
+      "references": [
+        "01 §4 P09",
+        "01 §5",
+        "03 §5.4"
+      ],
+      "setup": "A signed-in account has a cloud-locked profile and a synthetic incoming share.",
+      "action": "Plan preview and save attempt while cloud unlock is absent.",
+      "assertions": [
+        "Cloud content remains locked at the repository/backend boundary; incoming data is not written to cloud while locked.",
+        "No silent switch to another account or local-only scope; exact user choice/copy remains OPEN_QUESTION."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ07"
+      ]
+    },
+    {
+      "id": "T23-F28",
+      "platform": "shared",
+      "references": [
+        "03 §5.4",
+        "03 §6",
+        "08 §3"
+      ],
+      "setup": "Account A has a synthetic pending outbox item and a share import is open when the user switches to account B.",
+      "action": "Plan scope/account revalidation at commit and pending-queue handling.",
+      "assertions": [
+        "A namespace/key/outbox from A is never reused or sent under B.",
+        "The share item is not implicitly reassigned; pending-item owner and resolution UI remain OPEN_QUESTION."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ05",
+        "T23-OQ07"
+      ]
+    },
+    {
+      "id": "T23-F29",
+      "platform": "shared",
+      "references": [
+        "03 §6",
+        "03 §9",
+        "01 §5"
+      ],
+      "setup": "An explicitly cloud-scoped share is prepared offline or the personal-cloud outbox is at its configured hard limit.",
+      "action": "Plan local draft retention and retry after connectivity/budget becomes available.",
+      "assertions": [
+        "A full cloud outbox blocks a new cloud-scope mutation and preserves committed operations/draft; do not silently convert it to local-only.",
+        "Exact share-specific copy/retry mapping and durable-byte accounting remain OPEN_QUESTION."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ07",
+        "T23-OQ08",
+        "T23-OQ09"
+      ]
+    },
+    {
+      "id": "T23-F30",
+      "platform": "shared",
+      "references": [
+        "03 §5.4"
+      ],
+      "setup": "An anonymous local-only profile and a separate cloud profile both have synthetic vault entries.",
+      "action": "Plan account logout, followed by a distinct explicit delete-local-data action.",
+      "assertions": [
+        "Default account logout ends cloud authorization but retains the anonymous local-only key/library.",
+        "Only explicit local-data deletion removes that profile database and vault entry."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": []
+    },
+    {
+      "id": "T23-F31",
+      "platform": "iOS",
+      "references": [
+        "03 §5.4-§5.5",
+        "08 §2-§3"
+      ],
+      "setup": "A synthetic iOS same-bundle reinstall scenario has a previously issued Keychain entry; no real device state is inspected.",
+      "action": "Plan the documented uncertain-Keychain-retention branch.",
+      "assertions": [
+        "The plan does not promise that reinstall erases or preserves the Keychain key, and never uses a retained credential to bypass account/new-device authorization.",
+        "Actual iOS result remains NOT_RUN."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ02"
+      ]
+    },
+    {
+      "id": "T23-F32",
+      "platform": "Android",
+      "references": [
+        "03 §5.4-§5.5",
+        "08 §2-§3"
+      ],
+      "setup": "A synthetic Android uninstall/OS-backup restore is missing SecureStore protection material; the prior encrypted library, WAL/SHM and attachments are explicitly marked nonportable and excluded from backup.",
+      "action": "Plan backup exclusions and missing-key recovery branch.",
+      "assertions": [
+        "Backup configuration excludes SecureStore and nonportable DB/WAL/SHM/attachments; do not claim the old local-only library is restored, preserve its evidence, and do not create a replacement key over the same path.",
+        "Android device-specific backup outcome remains NOT_RUN."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ02",
+        "T23-OQ10"
+      ]
+    },
+    {
+      "id": "T23-F33",
+      "platform": "shared",
+      "references": [
+        "03 §5.5",
+        "08 §3"
+      ],
+      "setup": "A profile has synthetic CNREC1/approved-device cloud recovery access but lacks its former localDBKey; local-only and cloud-committed records are distinguished.",
+      "action": "Plan recovery into a separate new local profile/database.",
+      "assertions": [
+        "CNREC1/approved-device recovery is limited to already cloud-committed content and does not unlock the old SQLCipher library or restore unsynced local-only/outbox data.",
+        "No password-reset or ordinary-backup shortcut is claimed."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ10"
+      ]
+    },
+    {
+      "id": "T23-F34",
+      "platform": "shared",
+      "references": [
+        "03 §5.4",
+        "08 §3"
+      ],
+      "setup": "Use nonsecret synthetic sentinel labels for a body, URL, source, image, local key, and token across log/analytics/crash fixtures.",
+      "action": "Plan privacy redaction inspection of error and telemetry payload boundaries.",
+      "assertions": [
+        "Body, URL, title/source, image, keys, tokens, and unredacted SQL parameters are excluded from telemetry/crash output.",
+        "No real user content or secret enters the plan."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": []
+    },
+    {
+      "id": "T23-F35",
+      "platform": "shared",
+      "references": [
+        "03 §5.4",
+        "T23 task card"
+      ],
+      "setup": "A synthetic SQLCipher adapter reports a nonempty cipher_version and records operation labels; the key is an opaque handle, with no key bytes.",
+      "action": "Plan a successful existing-database open and inspect the required adapter call order.",
+      "assertions": [
+        "On successful open, require nonempty cipher_version before setting the key, then read schema; do not report ready before the required schema read succeeds.",
+        "Record event labels/order only; no SQLCipher operation or secret is executed."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ02"
+      ]
+    },
+    {
+      "id": "T23-F36",
+      "platform": "shared",
+      "references": [
+        "03 §5.4",
+        "T23 task card"
+      ],
+      "setup": "A synthetic new localDbId has completed key-vault write/readback; initial database creation and the first schema transaction have injectable interruption barriers.",
+      "action": "Plan process termination during initial database creation and before first schema transaction commit, then model reopen of the same synthetic identity.",
+      "assertions": [
+        "A half-initialized database is never exposed as ready; ready is possible only after the first schema transaction commits.",
+        "Preserve any preexisting profile/database evidence and do not report a successful initialization after interruption.",
+        "Exact cleanup/retry behavior for interrupted initial creation remains OPEN_QUESTION; no recovery behavior is claimed."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T23-OQ11"
+      ]
+    }
+  ],
+  "acceptanceGates": [
+    {
+      "id": "T23-G01",
+      "scope": "T15 native crypto/key-vault integration contract; protocol implementation remains owned by T15.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "platform": "shared"
+    },
+    {
+      "id": "T23-G02",
+      "scope": "iOS localDBKey SecureStore/Keychain lifecycle, SQLCipher open/create ordering, and secret-exclusion boundaries.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "platform": "iOS"
+    },
+    {
+      "id": "T23-G03",
+      "scope": "Bounded share container, foreground main-app transactional import, cancellation and process interruption.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "platform": "shared"
+    },
+    {
+      "id": "T23-G04",
+      "scope": "iOS paste/image permission, lock/reinstall, scope isolation, failure and capacity device gates.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "platform": "iOS"
+    },
+    {
+      "id": "T23-G05",
+      "platform": "Android",
+      "scope": "Android localDBKey asynchronous SecureStore/Keystore lifecycle, SQLCipher open/create ordering, backup exclusions, and secret-exclusion boundaries.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T23-G06",
+      "platform": "Android",
+      "scope": "Android paste/image permission, lock/reinstall/backup, scope isolation, failure and capacity device gates.",
+      "status": "NOT_RUN",
+      "evidence": []
+    }
+  ],
+  "commands": [
+    {
+      "id": "T23-C01",
+      "command": "pnpm --filter @clipnest/mobile test import",
+      "status": "NOT_RUN",
+      "blockedBy": [
+        "T15 accepted",
+        "T22 accepted",
+        "mobile import harness available"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "T23-C02",
+      "command": "pnpm --filter @clipnest/crypto-native test vectors",
+      "status": "NOT_RUN",
+      "blockedBy": [
+        "T15 accepted; official vector gate owned by T15, not replaced by T23 fixtures"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "T23-C03",
+      "command": "pnpm --filter @clipnest/mobile typecheck",
+      "status": "NOT_RUN",
+      "blockedBy": [
+        "T22 accepted and mobile project scripts available"
+      ],
+      "evidence": []
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "T23-OQ01",
+      "topic": "T15 accepted native-crypto and key-vault adapter API/version/ownership contract; do not implement or invent a second crypto/key serialization protocol.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T23-OQ02",
+      "topic": "T22 Expo/React Native/SecureStore/SQLCipher setup, exact backup-exclusion configuration path, and native harness/script readiness; frozen platform key-storage boundaries remain fixed.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T23-OQ03",
+      "topic": "Share-container maximum pending item count, aggregate bytes, retention/expiry, payload envelope, and precise full-queue result; no queue budget is frozen in limits.v1.json.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T23-OQ04",
+      "topic": "Share-extension cancellation/process-interruption durability and terminal presentation at each persist/import boundary; no queue item ack/retry enum is invented.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T23-OQ05",
+      "topic": "Queue item identity/deduplication and exact acknowledgement/removal ordering across main-app database commit and process crash.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T23-OQ06",
+      "topic": "iOS/Android paste, image and share permission/reason-code mapping, denial/cancel UX text, and each platform-specific supported fallback.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T23-OQ07",
+      "topic": "Pending share scope/account association and user-visible resolution when login, account switch, anonymous local-only, or cloud-locked state changes before import.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T23-OQ08",
+      "topic": "Exact local.totalBytes allocation for native pending-share storage, SQLCipher/WAL/temp, newly owned image blobs and outbox; keep numeric durable-byte acceptance NOT_RUN until the common formula is frozen.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T23-OQ09",
+      "topic": "Mapping of OS-specific vault/SQLCipher raw errors and item types to frozen local error categories where no mapping is specified; preserve old data and do not add enum values.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T23-OQ10",
+      "topic": "Recovery/export UX for local-only data after localDBKey loss is assigned to T29; CNREC1/approved-device recovery does not recover the old local SQLCipher database.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T23-OQ11",
+      "topic": "Initial SQLCipher database creation and first-schema-transaction crash cleanup/retry/publish-ready recovery procedure; readiness is forbidden before commit, while exact cleanup and retry behavior are not specified.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T23-OQ12",
+      "topic": "Specific protected local share-container storage mechanism, platform entitlement/protection class, encryption-at-rest and lifecycle; require a protected authorized container and prohibit unprotected paths, but exact mechanism is not frozen.",
+      "status": "OPEN_QUESTION"
+    }
+  ],
+  "limitations": [
+    "Fixture/interface plan only. T15 and T22 are not accepted; no production implementation, native build, device behavior, test, package, provider, or service was run.",
+    "Share queue capacity and aggregate storage accounting are not inferred; numeric capacity and raw platform mappings remain OPEN_QUESTION.",
+    "iOS and Android evidence must be gathered and reported separately; neither platform can stand in for the other."
+  ],
+  "shareStorageBoundary": "Sensitive share payload may enter only a local protected and authorized container; no unprotected storage path is allowed. The exact mechanism, entitlement/protection class, encryption-at-rest and lifecycle remain T23-OQ12."
+}

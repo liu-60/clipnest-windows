@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtasks": [
+    "T06-a3",
+    "T06-a4"
+  ],
+  "result": "PASS_WITH_LIMITATIONS",
+  "reviewDate": "2026-10-04",
+  "reviewer": "Independent read-only T06 reviewer",
+  "reviews": [
+    {
+      "subtask": "T06-a3",
+      "scope": [
+        "crates/core/Cargo.toml",
+        "crates/core/src/lib.rs",
+        "docs/evidence/T06/t06-a3-verification.json"
+      ],
+      "result": "PASS_WITH_LIMITATIONS",
+      "findings": [
+        "The clipnest-core manifest inherits workspace edition and rust-version, is publish=false, and declares no dependencies.",
+        "The crate entry only forbids unsafe code and defers product behavior; it adds no fake-success API.",
+        "The evidence matches the zero-dependency, offline Cargo metadata/build results and states zero unit/doc tests and GNU-only validation."
+      ],
+      "limitations": [
+        "This review did not cover the concurrently changing root Cargo.toml or Cargo.lock.",
+        "This crate slice review does not accept T06."
+      ]
+    },
+    {
+      "subtask": "T06-a4",
+      "scope": [
+        "Cargo.toml workspace membership",
+        "crates/platform-windows/Cargo.toml",
+        "crates/platform-windows/src/lib.rs",
+        "docs/evidence/T06/t06-a4-verification.json"
+      ],
+      "result": "PASS_WITH_LIMITATIONS",
+      "findings": [
+        "The clipnest-platform-windows crate is in the T06 allowlist, inherits workspace package settings, and has no dependencies.",
+        "Its entry adds no Windows API, placeholder success result, or fake behavior.",
+        "The offline Cargo evidence accurately reports three workspace crates, zero dependencies, zero tests, and GNU-only compilation."
+      ],
+      "limitations": [
+        "No Windows API, MSVC, or Tauri compatibility has been verified.",
+        "This crate slice review does not accept T06."
+      ]
+    }
+  ],
+  "overallLimitation": "Full T06 acceptance still requires the remaining app/configuration, contracts, CI, compatibility, license, behavior, and final adversarial-review gates."
+}

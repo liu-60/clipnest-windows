@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "task": "T19",
+  "reviewType": "independent_fixture_plan_review",
+  "reviewer": "/root/t04_safe_work",
+  "reviewedAt": "2026-10-04T11:09:59Z",
+  "result": "PASS_WITH_LIMITATIONS",
+  "planPath": "tests/tasks/T19/fixture-plan.json",
+  "staticEvidencePath": "docs/evidence/T19/fixture-plan-static-review.json",
+  "progressPath": "docs/progress.json#/tasks/T19",
+  "counts": {
+    "fixtures": 17,
+    "resourceGates": 5,
+    "behaviorCommands": 2,
+    "openQuestions": 9,
+    "allFixturesNotRun": true,
+    "allGatesNotRun": true,
+    "allCommandsNotRun": true
+  },
+  "dependencySnapshot": [
+    {
+      "task": "T16",
+      "status": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T18",
+      "status": "not_started",
+      "accepted": false
+    }
+  ],
+  "conclusions": [
+    "F09 correctly enforces live <= maxLive and live + retired <= maxRetired; creates reserve a retirement slot; deletion converts the reserved slot without increasing the combined count; full-budget create is blocked but delete remains allowed; fences are not reused or compacted.",
+    "F06 explicitly uses priorSeenHighWater=120 > reused snapshot H=90; the old namespace remains active at H=90 and swap requires validated catchup through at least 120.",
+    "F16 rejects an over-cap reserve before provider API work and leaves live/staging/pending-final/reserved counters and ledger unchanged.",
+    "F17 enforces at most one building/ready snapshot per workspace and reuses an existing valid ready snapshot.",
+    "F13 prevents stale deletion watermark 25 from lowering durable marker 41 and requires post-backup deletion replay before reopening; evidence source, completeness proof and encoding remain OPEN_QUESTION.",
+    "G03 full-flow 1,800-second monotonic TTL and G04 capacity boundaries remain NOT_RUN; all fixtures remain NOT_RUN and all OQs remain open."
+  ],
+  "limitations": [
+    "Static plan review only; no behavior, benchmark, database, object-store, package, build or service operation was run.",
+    "T16 and T18 are not accepted; all behavior remains gated and configured budgets are not measured results."
+  ]
+}

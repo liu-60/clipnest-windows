@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "task": "T10",
+  "reviewType": "independent_read_only_fixture_plan_review",
+  "reviewedDate": "2026-10-04",
+  "reviewedArtifact": "tests/tasks/T10/fixture-plan.json",
+  "result": "PASS_WITH_LIMITATIONS",
+  "verified": {
+    "fixtureCount": 10,
+    "allFixturesExecutionStatus": "NOT_RUN",
+    "syntheticOnly": true,
+    "dependencyGate": "T07 and T09 are not accepted; T10 production behavior and performance tests remain gated.",
+    "searchSemantics": "Chinese one/two/three-character substring, NFKC and case-insensitive matching, combined filters, source preservation, and coverage beyond the first page are planned against synthetic deterministic oracles.",
+    "paginationAndCursor": "Stable timestamp/id tie-break and keyset page traversal check gaps and duplicates on a static result set. Query changes invalidate prior cursors without inventing an exact error code.",
+    "pageBudgets": "Item count, serialized page bytes, and preview character limits reference canonical limit keys. The byte-boundary input states each complete summary is smaller than the full page cap; only cumulative page usage crosses the remaining budget.",
+    "accessFailure": "The local-vault/query-store unavailable fixture is synthetic and gated OPEN_QUESTION. It does not invent a response shape, coverage state, or error code; protected content and profile data stay out of evidence.",
+    "performance": "The 10,000-item first-page P95 fixture references the canonical target and §4 sample/reporting rules; it claims no timing or target pass."
+  },
+  "reviewChecks": {
+    "jsonParse": "PASS",
+    "independentReviewer": "PASS_WITH_LIMITATIONS",
+    "summaryByteCapPreconditionExplicit": "PASS",
+    "noBehaviorOrPerformanceTestsOrBuild": true,
+    "noContractsOrGeneratedFilesChanged": true,
+    "noLiveProfileOrService": true
+  },
+  "limitations": [
+    "T06 query DTO/error contract remains in progress; T07/T09 are not accepted, so all T10 behavior remains NOT_RUN.",
+    "Date-range endpoint equality, the response to a single summary larger than the full page-byte cap, and query response/error/coverage mapping when local access is unavailable remain OPEN_QUESTION or NOT_RUN.",
+    "The 10,000-item first-page P95 and fixed-environment sample report remain NOT_RUN."
+  ],
+  "sources": [
+    "docs/spec/tasks/T10.md",
+    "docs/spec/02-architecture.md §4-5, §7",
+    "docs/spec/03-data-sync-and-security.md §5.5",
+    "docs/spec/08-acceptance-matrix.md §4",
+    "docs/spec/limits.v1.json",
+    "tests/tasks/T10/fixture-plan.json",
+    "independent agent review in this task"
+  ]
+}

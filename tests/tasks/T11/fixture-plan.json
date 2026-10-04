@@ -1,0 +1,874 @@
+{
+  "schemaVersion": 1,
+  "task": "T11",
+  "status": "planned-not-executed",
+  "purpose": "Prepare synthetic interface and behavior fixtures for the Windows Tauri end-to-end PoC without implementing the host or running desktop behavior.",
+  "dependencyGate": "wait_for_T05_T06_T07_T10_accepted",
+  "dependencyGateDetails": {
+    "requiredTasks": [
+      "T05",
+      "T06",
+      "T07",
+      "T10"
+    ],
+    "requiredStatus": "accepted",
+    "observedProgressStatuses": {
+      "T05": "not_started",
+      "T06": "in_progress",
+      "T07": "not_started",
+      "T10": "not_started"
+    },
+    "source": "docs/progress.json#/tasks",
+    "rule": "Until all dependencies are accepted, prepare synthetic fixtures and frozen-interface notes only. Do not implement production behavior, connect a fake-success backend, run package/build or desktop behavior checks, or use a live profile."
+  },
+  "sources": [
+    {
+      "path": "docs/spec/tasks/T11.md",
+      "sections": [
+        "依赖",
+        "子任务顺序",
+        "完成标准与行为测试",
+        "验证命令",
+        "回滚与交付"
+      ]
+    },
+    {
+      "path": "docs/spec/02-architecture.md",
+      "sections": [
+        "§3 契约与跨语言生成",
+        "§7 平台capabilities",
+        "§4 UI—仓储接口"
+      ]
+    },
+    {
+      "path": "docs/spec/04-desktop-performance.md",
+      "sections": [
+        "§3 最小协议",
+        "§4 并发与状态机",
+        "§5 唤醒和执行顺序",
+        "§6 图片、采集与后台任务",
+        "§7 Windows和macOS能力",
+        "§8 fixture、指标与Tauri gate"
+      ]
+    },
+    {
+      "path": "docs/spec/08-acceptance-matrix.md",
+      "sections": [
+        "§1 Gate",
+        "§4 性能测量"
+      ]
+    },
+    {
+      "path": "docs/spec/limits.v1.json",
+      "fields": [
+        "transport.helperFrameBytes",
+        "transport.helperRawChunkBytes",
+        "transport.helperBufferBytes",
+        "transport.helperCaptureTimeoutMs",
+        "transport.helperCancelAckTimeoutMs",
+        "transport.helperReadyTimeoutMs",
+        "transport.helperContentPrepareTimeoutMs",
+        "transport.panelOpeningGuardMs",
+        "transport.pasteFocusDeadlineMs",
+        "transport.pasteModifierDeadlineMs",
+        "concurrency.captureQueueItems",
+        "concurrency.captureWorkers",
+        "concurrency.imageWorkers",
+        "concurrency.pasteJobs",
+        "concurrency.imageWorkerPeakBytes",
+        "content.maxTextUtf8Bytes",
+        "content.maxImageBytes",
+        "content.maxDecodedPixels",
+        "content.decodedImageCacheBytes",
+        "performanceTargets.warmWakeActionableP95Ms",
+        "performanceTargets.warmNormalTextInputSubmittedP95Ms",
+        "performanceTargets.sameClipboardImageReencodes"
+      ]
+    },
+    {
+      "path": "docs/progress.json",
+      "sections": [
+        "T09.openGates: imageWorkerPeakBytes allocation categories and measurement method remain unfrozen"
+      ]
+    }
+  ],
+  "interfacePreparation": {
+    "commandsAlreadyNamedInArchitecture": [
+      "capabilities_get",
+      "history_query",
+      "item_read",
+      "copy_or_paste",
+      "paste_cancel"
+    ],
+    "capabilitiesShapeAlreadyNamedInArchitecture": [
+      "backgroundCapture",
+      "globalShortcut",
+      "clipboardText",
+      "clipboardImage",
+      "autoPaste",
+      "status",
+      "reasonCode"
+    ],
+    "boundary": "Treat these as existing specification references, not implemented or generated interfaces. Do not add command names, capability fields, permission enums, or error codes in this preparation. T06 canonical schemas and the actual Tauri host/capability configuration are not accepted."
+  },
+  "fixturePolicy": {
+    "syntheticDataOnly": true,
+    "fixedSeed": "clipnest-t11-fixed-seed-20261004",
+    "futureControlledTargetOnly": "Any later OS integration must use a disposable, dedicated test process/window, a test-only shortcut, and synthetic text/image. It must never target the user's active application or use user clipboard/history.",
+    "neverUse": [
+      "live user profile or installed application database",
+      "real account, cloud data, production storage, or network service",
+      "user clipboard contents or real user text/image",
+      "user foreground window or unsupervised desktop input",
+      "package installation or production packaging before dependencies and scripts are accepted"
+    ],
+    "frozenLimitsSource": "Read fixed thresholds from docs/spec/limits.v1.json and performance reporting rules from docs/spec/08-acceptance-matrix.md §4. Do not shadow limits with fixture-local values.",
+    "resultAssertions": "Prefer externally observable effects: target text/image content, clipboard sequence/content ownership, panel visibility, process state, and recorded fake platform call counts. Where the spec does not freeze a wire enum or reason code, assert the safety property and leave the exact code OPEN_QUESTION.",
+    "evidencePrivacy": "Future evidence may include synthetic IDs, byte counts, hashes, timings, call counts, environment/build identifiers, and pass/fail outcomes; do not persist synthetic or real body/image payloads in reports.",
+    "statusMeaning": "NOT_RUN means no behavior or performance result has been verified. This plan and its synthetic case descriptions are preparation only."
+  },
+  "fixtureCases": [
+    {
+      "caseNumber": 1,
+      "id": "t11-p01-target-already-foreground",
+      "specFixture": "P01",
+      "category": [
+        "focus",
+        "text",
+        "latency"
+      ],
+      "executionProfile": "fake-platform-then-controlled-windows-target",
+      "input": "A synthetic text item and a valid disposable target already foreground when selection starts.",
+      "action": "Select the item and run the normal text action with all required keys released.",
+      "expected": "No target restoration is needed. The clipboard contains the selected synthetic text and the controlled target receives it at most once; inputSubmitted is not treated as proof until the target content is observed.",
+      "observation": "Record fake restore/focus/input call counts, clipboard sequence ownership, selected synthetic item ID, and the controlled target's final synthetic text without storing its body.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 2,
+      "id": "t11-p02-background-target-restoration",
+      "specFixture": "P02",
+      "category": [
+        "focus",
+        "text"
+      ],
+      "executionProfile": "fake-platform-then-controlled-windows-target",
+      "input": "A valid disposable target is not foreground; no user-initiated switch occurs during the fixture.",
+      "action": "Select a synthetic text item and attempt the configured automatic-input path.",
+      "expected": "Only the captured target may be restored. Input is submitted once only if that same target is confirmed foreground and the final gate still passes; otherwise copying is retained and no input is sent.",
+      "observation": "Record target identity, focus calls, final foreground identity, copy/input outcomes, and target content observation.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 3,
+      "id": "t11-p03-minimized-target-restoration",
+      "specFixture": "P03",
+      "category": [
+        "focus",
+        "window-state"
+      ],
+      "executionProfile": "fake-platform-then-controlled-windows-target",
+      "input": "The synthetic target is minimized before selection.",
+      "action": "Select a synthetic text item and allow the focus phase to restore the captured target.",
+      "expected": "The captured target is restored within limits.transport.pasteFocusDeadlineMs; if it cannot be confirmed, the safe copy-only path is used and input is not submitted.",
+      "observation": "Record whether the target was minimized, restore/focus call counts, elapsed focus time, final foreground identity, and whether the target observed the synthetic text.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 4,
+      "id": "t11-p04-maximized-target-geometry-preserved",
+      "specFixture": "P04",
+      "category": [
+        "focus",
+        "window-state",
+        "geometry"
+      ],
+      "executionProfile": "fake-platform-then-controlled-windows-target",
+      "input": "A disposable target is maximized and its synthetic pre-action bounds are recorded.",
+      "action": "Select and use a synthetic item through the normal restore/focus flow.",
+      "expected": "The target remains maximized and its bounds are not changed as a side effect of focus restoration.",
+      "observation": "Compare pre/post target state and bounds; record focus result and input count.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 5,
+      "id": "t11-p05-invalid-or-closed-target",
+      "specFixture": "P05",
+      "category": [
+        "focus",
+        "safety",
+        "copy-only"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "Invalidate the synthetic target HWND or close its disposable process after capture and before the final check.",
+      "action": "Continue the synthetic selection flow through the final target validation.",
+      "expected": "No input is sent to an invalid/reused target. If clipboard commit already occurred, retain that copied result and report a non-successful automatic-input outcome without inventing an exact error code.",
+      "observation": "Record target identity validity, clipboard writes, hide/focus/input calls, and the visible copy-only outcome.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 6,
+      "id": "t11-p06-held-shift-blocks-input",
+      "specFixture": "P06",
+      "category": [
+        "keys",
+        "safety",
+        "copy-only"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "Shift remains held at the selection deadline; the fake clock starts at selection.",
+      "action": "Run the normal key-release gate without synthesizing a key-up event.",
+      "expected": "At the selection-relative absolute deadline in limits.transport.pasteModifierDeadlineMs, a still-held required key stops automatic input; the fixture must not release a physical key or restart the deadline. The panel remains available and SendInput is not called.",
+      "observation": "Record selection-relative timing, key state, panel visibility, clipboard side effects, and SendInput count.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 7,
+      "id": "t11-p07-cancel-before-clipboard-commit",
+      "specFixture": "P07",
+      "category": [
+        "cancellation",
+        "clipboard",
+        "safety"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "Cancellation is accepted before the clipboard conditional-write commit begins.",
+      "action": "Cancel the synthetic job and release any held preparation barrier.",
+      "expected": "No clipboard write and no input submission occur after accepted cancellation.",
+      "observation": "Record cancel acknowledgement timing, clipboard write count, focus calls, input calls, and worker-quiescent state.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 8,
+      "id": "t11-p08-cancel-during-focus-or-wait",
+      "specFixture": "P08",
+      "category": [
+        "cancellation",
+        "focus",
+        "safety"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "A focus/wait operation is held behind a controllable fake platform barrier.",
+      "action": "Cancel while that operation is pending, then release the barrier after the acknowledgement.",
+      "expected": "The control path acknowledges cancellation within limits.transport.helperCancelAckTimeoutMs or supervises the helper into unavailable; releasing the old operation cannot trigger a later focus restoration or input call.",
+      "observation": "Record cancel latency, helper state, barrier release order, and every post-cancel platform call.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 9,
+      "id": "t11-p09-cancel-after-input-commit-is-too-late",
+      "specFixture": "P09",
+      "category": [
+        "cancellation",
+        "commit-gate",
+        "idempotency"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "Cancellation arrives after the single in-memory INPUT_COMMITTING gate has accepted the job.",
+      "action": "Issue cancel and replay the same job intent once.",
+      "expected": "Cancellation is too late to promise rollback; SendInput is called at most once and no automatic retry occurs.",
+      "observation": "Record commit-gate ordering, cancel result, job identity, and SendInput call count.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 10,
+      "id": "t11-p10-helper-crash-unknown-result-no-retry",
+      "specFixture": "P10",
+      "category": [
+        "process-lifecycle",
+        "unknown-result",
+        "idempotency"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "The helper exits after an input request with no trustworthy final acknowledgement.",
+      "action": "Restart the helper and inspect the old pending job state.",
+      "expected": "The old action is treated as unknown/unavailable and is not automatically resubmitted; a new helper instance does not reuse old target authorization.",
+      "observation": "Record old/new instance IDs, pending-job result class, and input call count. Do not assert an unfrozen wire error name.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 11,
+      "id": "t11-p11-external-clipboard-change-preserved",
+      "specFixture": "P11",
+      "category": [
+        "clipboard",
+        "race",
+        "safety"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "An external synthetic clipboard sequence replaces the baseline while content preparation is pending.",
+      "action": "Finish preparation and attempt the conditional clipboard write.",
+      "expected": "The stale selection does not overwrite the newer synthetic clipboard value; the stale job does not send input or restore an older clipboard value.",
+      "observation": "Record baseline/current/returned sequences, write calls, and whether the externally supplied synthetic marker remains current without logging its body.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 12,
+      "id": "t11-p12-double-click-and-repeat-enter-deduplicated",
+      "specFixture": "P12",
+      "category": [
+        "ui",
+        "input-deduplication",
+        "lifecycle"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "One selected synthetic item receives a double-click plus repeated Enter events while its job is active.",
+      "action": "Deliver events with repeat metadata and inspect job creation and side effects.",
+      "expected": "One user intention creates at most one active paste job; repeated events do not duplicate clipboard writes or input submissions.",
+      "observation": "Record event sequence/repeat flags, active and pending job counts, and write/input calls.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 13,
+      "id": "t11-p13-stale-panel-ack-ignored",
+      "specFixture": "P13",
+      "category": [
+        "ui-lifecycle",
+        "generation",
+        "stale-response"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "Panel generation A is canceled; panel generation B is shown before A's delayed acknowledgement arrives.",
+      "action": "Deliver A's acknowledgement after B has become current.",
+      "expected": "The stale acknowledgement cannot complete, hide, or mutate the new panel generation.",
+      "observation": "Record generation/request/job IDs and panel visibility/state before and after the delayed acknowledgement.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 14,
+      "id": "t11-p14-elevated-target-degrades-to-copy",
+      "specFixture": "P14",
+      "category": [
+        "permissions",
+        "copy-only",
+        "safety"
+      ],
+      "executionProfile": "fake-platform-then-isolated-windows-integration",
+      "input": "A synthetic target has a higher integrity level than the app/helper, or the fake platform reports input unavailable.",
+      "action": "Attempt automatic input and retain the separately available clipboard copy action.",
+      "expected": "The app does not claim that the target received text. Copy remains available when supported, no repeated input is sent, and no exact UIPI diagnosis is inferred from a generic failure.",
+      "observation": "Record capability snapshot, visible fallback, clipboard result, and zero-or-one input count; later live run must use a disposable elevated test process only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 15,
+      "id": "t11-p15-unchanged-clipboard-image-not-reencoded",
+      "specFixture": "P15",
+      "category": [
+        "image",
+        "performance",
+        "cache"
+      ],
+      "executionProfile": "fake-platform-then-controlled-windows-integration",
+      "input": "A deterministic synthetic clipboard image repeats the same content/sequence across notifications.",
+      "action": "Process repeated notifications and select the corresponding synthetic history item.",
+      "expected": "Unchanged clipboard image content is re-encoded zero times as specified by limits.performanceTargets.sameClipboardImageReencodes.",
+      "observation": "Record synthetic image identity/sequence, notification count, cache hits, and encoder invocation count only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 16,
+      "id": "t11-p16-image-cache-miss-prepared-off-ui-thread",
+      "specFixture": "P16",
+      "category": [
+        "image",
+        "worker",
+        "ui-responsiveness"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "A deterministic synthetic image item has a cache miss and a controllable decode barrier.",
+      "action": "Select the image while holding the worker barrier, then release preparation before the item/version is invalidated.",
+      "expected": "Image preparation runs in the bounded image worker, the UI remains responsive and can show preparing state, and an invalidated version cannot proceed to clipboard/input commit.",
+      "observation": "Record worker count, UI event-loop responsiveness signal, item version, prepare/write/input calls, and synthetic byte counts.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 17,
+      "id": "t11-p17-queue-and-image-memory-bounds",
+      "specFixture": "P17",
+      "category": [
+        "capacity",
+        "image",
+        "queue",
+        "memory"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "Synthetic capture jobs and images are supplied around the configured queue, image-size, decoded-pixel, cache, worker, and worker-peak limits.",
+      "action": "Exercise below-limit and over-limit cases with a fixed fake allocator/queue and record all admitted and rejected work.",
+      "expected": "Queue and per-item image admission follow their configured docs/spec/limits.v1.json fields. Exact imageWorkerPeakBytes acceptance remains OPEN_QUESTION until allocation categories and measurement method are frozen in T09; no protected/accepted work is silently lost. Exact overflow result wording/enums remain OPEN_QUESTION until the canonical contract is accepted.",
+      "observation": "Record configured limit references, queue depth, worker concurrency, candidate peak allocated bytes with its measurement method, encode/decode counts, and rejected synthetic item IDs; do not treat the numeric peak as accepted while its method is open.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 18,
+      "id": "t11-p18-user-switch-stops-old-input",
+      "specFixture": "P18",
+      "category": [
+        "focus",
+        "user-intent",
+        "safety"
+      ],
+      "executionProfile": "fake-platform-then-controlled-windows-integration",
+      "input": "The user switches to a third disposable application during focus preparation, before the final input commit gate.",
+      "action": "Continue the prior selection job after the switch event.",
+      "expected": "The old target is not pulled back over the user's new foreground choice; the old job sends no input after detecting the switch.",
+      "observation": "Record foreground identity timeline, restoration calls after switch, cancel outcome, and input count.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 19,
+      "id": "t11-p19-external-copy-during-preparation",
+      "specFixture": "P19",
+      "category": [
+        "clipboard",
+        "race",
+        "safety"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "Synthetic baseline clipboard sequence 41; while prepare is blocked, a separate fixture writer changes it to 42.",
+      "action": "Release preparation and invoke conditional commit_write.",
+      "expected": "The stale operation reports clipboard-changed semantics; EmptyClipboard, SetClipboardData, and input submission call counts are zero, and the external synthetic clipboard remains current.",
+      "observation": "Record sequence values and all write/input call counts; do not save clipboard bytes.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 20,
+      "id": "t11-p20-external-copy-after-own-write",
+      "specFixture": "P20",
+      "category": [
+        "clipboard",
+        "race",
+        "safety"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "A synthetic conditional write returns ownSeq 42; before the input gate, an external writer changes sequence to 43.",
+      "action": "Run the final sequence check and observe the new external value.",
+      "expected": "No input is sent, the external value is not restored over, and ownSeq is not replaced with the later external sequence.",
+      "observation": "Record baseline/own/current sequence and input/restore calls only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 21,
+      "id": "t11-p21-trigger-repressed-during-image-prepare",
+      "specFixture": "P21",
+      "category": [
+        "image",
+        "keys",
+        "deadline",
+        "safety"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "Image cache miss; the trigger key is released at selection, then Enter or V is pressed again during preparation.",
+      "action": "Complete image preparation on both sides of the selection-relative absolute deadline in limits.transport.pasteModifierDeadlineMs, with a case where the key is released before the deadline and a case where it remains held at the deadline.",
+      "expected": "The limits.transport.pasteModifierDeadlineMs deadline is never restarted. If still held at deadline, the panel is not hidden and there is no input; a released key may continue only after all final checks pass.",
+      "observation": "Record selection-relative key timeline, prepare completion time, panel visibility, final key state, and write/input counts.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 22,
+      "id": "t11-p22-control-cancel-while-platform-worker-blocks",
+      "specFixture": "P22",
+      "category": [
+        "cancellation",
+        "worker",
+        "process-lifecycle"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "A fake focus API remains blocked while the protocol control reader remains available.",
+      "action": "Send cancel, observe acknowledgement/supervision, then unblock the old worker.",
+      "expected": "Cancel is acknowledged within limits.transport.helperCancelAckTimeoutMs or the helper is made unavailable under supervision; the control reader stays responsive and the released worker issues no subsequent restore/input call.",
+      "observation": "Record control-reader progress, acknowledgement duration, helper state, worker state, and post-cancel calls.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 23,
+      "id": "t11-p23-cancel-versus-single-commit-gate",
+      "specFixture": "P23",
+      "category": [
+        "cancellation",
+        "commit-gate",
+        "idempotency"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "Two schedules place cancel immediately before and immediately after the in-memory INPUT_COMMITTING transition.",
+      "action": "Run both schedules with the same synthetic job and record gate ordering.",
+      "expected": "Before the gate, accepted cancellation implies zero input. After the gate, the result is too-late semantics. SendInput runs at most once and is never retried.",
+      "observation": "Record gate outcome, cancellation result, and invocation count; exact wire discriminant remains subject to T06 canonical generation.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 24,
+      "id": "t11-p24-stale-object-profile-and-helper-tokens",
+      "specFixture": "P24",
+      "category": [
+        "authorization",
+        "versioning",
+        "profile-isolation"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "After prepare, independently change the synthetic item version, synthetic profile, or helper instance identity while replaying an old token.",
+      "action": "Attempt to finish the stale job for each invalidation reason.",
+      "expected": "Stale authority is rejected before clipboard write/input; no arbitrary file path is accepted as content authority.",
+      "observation": "Record which synthetic binding changed and the resulting side-effect counts; do not invent exact error-code spelling.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 25,
+      "id": "t11-p25-invalid-or-over-limit-content-chunks",
+      "specFixture": "P25",
+      "category": [
+        "protocol",
+        "capacity",
+        "safety"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "Synthetic requests include an over-limit serialized frame, over-limit aggregate buffer, out-of-order or missing chunk, and incorrect chunk/final hash; a valid control uses one outstanding chunk at a time.",
+      "action": "Register and stream each case through the test protocol adapter.",
+      "expected": "Invalid content is rejected before prepare/clipboard/input; temporary object authority is released. The valid control does not exceed docs/spec/limits.v1.json and only has one unacknowledged chunk.",
+      "observation": "Record frame/raw byte counts, index/offset sequences, hash comparison booleans, object-token release, and side-effect counts without storing chunk payloads.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 26,
+      "id": "t11-p26-host-foreground-authorization-and-instance-match",
+      "specFixture": "P26",
+      "category": [
+        "permissions",
+        "focus",
+        "process-lifecycle"
+      ],
+      "executionProfile": "fake-platform-then-controlled-windows-integration",
+      "input": "The host is not foreground, foreground authorization fails, or helper PID/creation identity changes after authorization.",
+      "action": "Attempt the automatic-input continuation for each synthetic condition.",
+      "expected": "The panel does not hide into an unconfirmed automatic-input path; any already copied result remains available; old authorization is not reused for a new helper instance.",
+      "observation": "Record host/helper identities, authorization result class, visibility, clipboard outcome, and input count.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 27,
+      "id": "t11-p27-new-external-foreground-during-focus-prepare",
+      "specFixture": "P27",
+      "category": [
+        "focus",
+        "user-intent",
+        "safety"
+      ],
+      "executionProfile": "fake-platform-then-controlled-windows-integration",
+      "input": "A third disposable target becomes foreground during focus preparation after the app panel has hidden.",
+      "action": "Resume the old job after the foreground-change notification.",
+      "expected": "The old job is canceled; it issues no new SetForegroundWindow or input call, and limits.transport.panelOpeningGuardMs does not swallow the genuine external activation.",
+      "observation": "Record foreground timeline, opening-guard state, focus calls after activation, and input count.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 28,
+      "id": "t11-p28-rapid-intents-and-protocol-backpressure",
+      "specFixture": "P28",
+      "category": [
+        "concurrency",
+        "protocol",
+        "cancellation",
+        "backpressure"
+      ],
+      "executionProfile": "fake-platform",
+      "input": "One active synthetic job receives repeated Enter, double-click, and show intentions while protocol output consumption is deliberately slow.",
+      "action": "Continue sending bounded control and content messages while observing job state and reader responsiveness.",
+      "expected": "Active paste jobs never exceed docs/spec/limits.v1.json; no paste intent is queued for a later duplicate action; cancellation remains readable; over-limit buffering makes the helper unavailable rather than silently accepting more work.",
+      "observation": "Record active/pending counts, frame and buffer sizes, reader progress, duplicate side effects, and helper terminal state.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 29,
+      "id": "t11-controlled-text-end-to-end-target-observation",
+      "category": [
+        "text",
+        "clipboard",
+        "real-target",
+        "acceptance"
+      ],
+      "executionProfile": "controlled-windows-integration-after-dependencies",
+      "input": "A deterministic synthetic text item in an isolated v2 test profile and a dedicated disposable text-receiver process/window; use a test-only hotkey and no user clipboard/history.",
+      "action": "Wake the Tauri panel, find/select the synthetic item, run the normal copy-or-paste flow, and inspect the dedicated receiver's resulting text.",
+      "expected": "The clipboard carries the selected synthetic text and the receiver observes the exact text once only when the final target/key/sequence checks pass. A protocol input acknowledgement alone does not pass the target-observation assertion.",
+      "observation": "Record synthetic item ID, byte count/hash, panel/action timings, clipboard sequence and target-observation boolean; never persist the text itself.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 30,
+      "id": "t11-controlled-image-end-to-end-target-observation",
+      "category": [
+        "image",
+        "clipboard",
+        "real-target",
+        "acceptance"
+      ],
+      "executionProfile": "controlled-windows-integration-after-dependencies",
+      "input": "A deterministic synthetic raster image generated from the fixed seed, stored only in an isolated test profile, and a dedicated disposable image-receiver process/window.",
+      "action": "Wake the panel, select the synthetic image, and copy/paste it through the native clipboard path into the dedicated receiver.",
+      "expected": "The receiver obtains the expected synthetic pixel content once only when the supported image-copy path succeeds; the original is not silently replaced by a thumbnail. Windows clipboard representation and receiver details remain OPEN_QUESTION until the host adapter is selected.",
+      "observation": "Record dimensions, byte count/hash, receiver comparison result, clipboard sequence, cache/encode counts, and timings without storing image bytes.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 31,
+      "id": "t11-tray-hotkey-hide-show-and-warm-wake",
+      "category": [
+        "tray",
+        "hotkey",
+        "ui-lifecycle",
+        "performance"
+      ],
+      "executionProfile": "controlled-windows-integration-after-dependencies",
+      "input": "The synthetic app is running with its panel hidden, Rust host/core initialized, and only the declared test shortcut configured.",
+      "action": "Exercise the accepted tray activation and shortcut paths to show/hide the panel, then repeat warm wake measurements.",
+      "expected": "Tray/hotkey can reach the required hidden/shown and actionable states without duplicate active jobs; the warmed wake target is evaluated against limits.performanceTargets.warmWakeActionableP95Ms. Exact tray-click, window-close, and activation mapping remain OPEN_QUESTION until UI policy is frozen.",
+      "observation": "Record activation source, visibility, request/generation IDs, first-frame/actionable timestamps, and failures; do not record desktop content.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 32,
+      "id": "t11-two-monitor-panel-placement-and-dpi",
+      "category": [
+        "multi-monitor",
+        "geometry",
+        "display-capabilities"
+      ],
+      "executionProfile": "controlled-windows-integration-after-dependencies",
+      "input": "Synthetic panel state and a controlled two-physical-monitor layout; later evidence records resolution, scale, monitor bounds, and primary/secondary identity only.",
+      "action": "Wake the panel while the target is associated with each display and inspect panel visibility, bounds, and clipping.",
+      "expected": "The panel is visible and operable on the selected display without clipping. Which display should be selected, mixed-DPI behavior, negative coordinates, RDP/virtual displays, hot-plug handling, and monitor-selection rule are OPEN_QUESTION; do not infer a policy from one topology.",
+      "observation": "Record display topology metadata, DPI, panel bounds, visible/actionable result, and selected-policy decision once frozen; no screenshot is treated as focus/input acceptance evidence.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 33,
+      "id": "t11-capabilities-permission-denial-and-copy-only-ui",
+      "category": [
+        "capabilities",
+        "permissions",
+        "copy-only",
+        "ui"
+      ],
+      "executionProfile": "fake-platform-then-controlled-windows-integration",
+      "input": "A synthetic capability adapter reports clipboard support and automatic-input unavailable/permission-required; a separate supported state enables both.",
+      "action": "Read the declared capabilities interface, inspect the user-facing available actions, and run the explicit copy path with synthetic content.",
+      "expected": "UI reflects capability data rather than assuming support from OS name. With autoPaste unavailable, copy remains available when clipboard capability is present and input count is zero. Capability status fields are specified, but exact Windows reason-code mapping and permission-instructions UI remain OPEN_QUESTION.",
+      "observation": "Record capability booleans/status, visible action availability, clipboard result, and input count; no permission is granted or changed by this plan.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 34,
+      "id": "t11-copy-only-without-valid-target-or-automatic-input",
+      "category": [
+        "copy-only",
+        "clipboard",
+        "focus-fallback"
+      ],
+      "executionProfile": "fake-platform-then-controlled-windows-integration",
+      "input": "Synthetic text/image content with no valid target or with automatic-input explicitly unavailable while clipboard copy is available.",
+      "action": "Invoke the user-visible copy action and separately exercise a failed automatic-input attempt after a successful copy.",
+      "expected": "A supported copy action is reported as copied only; automatic input is not reported successful and is never retried. Exact UI wording and the final result-code mapping are OPEN_QUESTION where not frozen by T06.",
+      "observation": "Record action selection, clipboard sequence/change, panel visibility, copy/input call counts, and visible status category without storing body/image bytes.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 35,
+      "id": "t11-rust-core-and-repository-outlive-panel-hide",
+      "category": [
+        "process-lifecycle",
+        "background-core",
+        "ui-lifecycle"
+      ],
+      "executionProfile": "fake-platform-then-controlled-isolated-windows-test-environment-after-dependencies",
+      "input": "A dedicated disposable Windows test environment has a synthetic-only clipboard producer and isolated v2 test profile; backgroundCapture is reported supported. A synthetic text or image clipboard update arrives while the panel is hidden; no user clipboard or history is mounted.",
+      "action": "Hide or detach the panel WebView, emit a synthetic clipboard update through the disposable test producer, allow capture and a bounded repository operation to finish, then reopen and query the current generation.",
+      "expected": "When backgroundCapture is supported, the Rust host/core capture and repository lifecycle continue independently of panel visibility; reopening obtains the current synthetic item through summary/event references only. Unsupported capture does not pass the T11 capture gate. Database crash-durability claims remain gated on T07.",
+      "observation": "Record process identities/states, capability status, request generation, synthetic item type/byte count/hash, summary IDs, event identifiers, operation completion, and body-field absence; do not persist clipboard or history payloads.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 36,
+      "id": "t11-webview-reload-does-not-replay-old-input",
+      "category": [
+        "ui-lifecycle",
+        "process-lifecycle",
+        "generation",
+        "safety"
+      ],
+      "executionProfile": "fake-platform-then-synthetic-integration",
+      "input": "A synthetic query or cancellable pre-commit action is active while the WebView/panel is detached or reloaded; a second generation is created on reopen.",
+      "action": "Deliver delayed old-generation events after the new UI generation has started.",
+      "expected": "Stale UI events do not expose a prior generation's body or trigger an automatic input replay; cancellation and helper instance boundaries remain enforced. Exact recovery of an interrupted repository write is not asserted before T07 is accepted.",
+      "observation": "Record generations, event/request IDs, visibility, process state, and clipboard/input call counts only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 37,
+      "id": "t11-host-shutdown-cancels-work-and-reaps-children",
+      "category": [
+        "process-lifecycle",
+        "shutdown",
+        "cancellation",
+        "safety"
+      ],
+      "executionProfile": "fake-platform-then-isolated-integration",
+      "input": "The synthetic host owns an idle worker and a separate cancellable pre-commit job; no user data is open.",
+      "action": "Request orderly app shutdown at the listed idle-worker and cancellable pre-commit states, then observe host/helper/worker termination.",
+      "expected": "Shutdown does not create a delayed clipboard write or input after termination; child processes owned by the test host are reaped. Whether closing the last window hides to tray or exits is OPEN_QUESTION until specified.",
+      "observation": "Record process tree identities/exit states, accepted/too-late cancellation class, and post-shutdown side effects.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    },
+    {
+      "caseNumber": 38,
+      "id": "t11-warm-wake-actionable-p95",
+      "category": [
+        "performance",
+        "wake",
+        "tray",
+        "hotkey"
+      ],
+      "executionProfile": "fixed-environment-benchmark-after-dependencies",
+      "input": "An accepted desktop build with fixed and recorded Windows machine/OS/display/power configuration, build mode, synthetic profile seed, cache state, and network condition; the warmed normal sample has at least 100 repetitions.",
+      "action": "Measure hotkey/tray wake through actionable panel state, splitting hotkey/capture/show/first-frame/actionable timings as specified.",
+      "expected": "Report p50/p95/max/failure count and compare warmed wake-to-actionable P95 to limits.performanceTargets.warmWakeActionableP95Ms. No result is established by this plan.",
+      "observation": "Record commit/build mode, OS/machine class, display/power conditions, seed, cache/network conditions, at least 100 normal samples, requestId correlation, each process own monotonic timing segments, p50/p95/max, and failures; do not subtract uncalibrated cross-process timestamps or record user content.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 39,
+      "id": "t11-normal-text-selection-to-input-submitted-p95",
+      "category": [
+        "performance",
+        "text",
+        "real-target"
+      ],
+      "executionProfile": "fixed-environment-controlled-target-after-dependencies",
+      "input": "The same fixed benchmark environment with a dedicated disposable receiver, warmed app, synthetic short-text item, released modifiers, and at least 100 normal repetitions.",
+      "action": "Measure selection through the inputSubmitted event and independently record when the controlled target displays the synthetic text.",
+      "expected": "Compare selection-to-inputSubmitted P95 to limits.performanceTargets.warmNormalTextInputSubmittedP95Ms and report target-observation completion separately. An IPC or SendInput result does not replace target observation; no result is established by this plan.",
+      "observation": "Record selection/write/hide/focus/modifier/inputSubmitted phases, target-observation outcome, environment/build, at least 100 normal samples, requestId correlation, each process own monotonic timing segments, p50/p95/max, and failure count; do not subtract uncalibrated cross-process timestamps or record the text itself.",
+      "status": "NOT_RUN"
+    },
+    {
+      "caseNumber": 40,
+      "id": "t11-full-app-memory-and-idle-cpu-versus-l0",
+      "category": [
+        "performance",
+        "memory",
+        "idle-cpu",
+        "process-lifecycle"
+      ],
+      "executionProfile": "matched-l0-v2-benchmark-after-dependencies",
+      "input": "L0 and v2 run the same synthetic normal scenarios, profile size, display/power/OS, build mode, idle interval, cache/network conditions, and measurement method; collect at least 100 normal samples per scenario and include the full app process tree and all child/helper/WebView processes.",
+      "action": "Measure memory and idle CPU at matched lifecycle points, including startup/warm panel, hidden idle, and active synthetic operation.",
+      "expected": "Report per-process full-application metrics and the same-scenario L0 comparison, with p50/p95/max and failure counts for each normal scenario; do not report only the Rust process or add RSS values as if they were exclusive physical memory. Numeric regression thresholds, the exact physical-memory metric/attribution, and sampling duration remain OPEN_QUESTION, so this case cannot pass a numeric gate yet.",
+      "observation": "Record process identities, per-process metrics, physical-memory attribution method, sampling window, at least 100 normal samples per scenario, p50/p95/max and failure counts, OS/build/scenario, and all exclusions; do not sum RSS or include user data.",
+      "status": "NOT_RUN",
+      "readiness": "OPEN_QUESTION"
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "tauri-host-capability-and-msvc-build-scope",
+      "status": "OPEN_QUESTION",
+      "reason": "T06 is still in progress. The canonical host DTOs and actual Tauri command/capability configuration are not accepted, and the existing GNU target is not the required Tauri Windows target. Resolve the MSVC target/build and capability manifest before an implementation or package acceptance claim."
+    },
+    {
+      "id": "tray-hotkey-and-close-activation-policy",
+      "status": "OPEN_QUESTION",
+      "reason": "T11 requires tray and hide/show but the precise tray click/menu actions, hotkey activation source, close-to-tray behavior, and explicit quit behavior are not frozen. Cases assert only specified state transitions until this policy is decided."
+    },
+    {
+      "id": "monitor-selection-and-topology-coverage",
+      "status": "OPEN_QUESTION",
+      "reason": "The required multi-monitor PoC is named, but monitor selection, mixed-DPI bounds, negative coordinates, RDP/virtual displays, hot-plug behavior, and supported topology range are not specified. Do not infer the rule from one two-monitor fixture."
+    },
+    {
+      "id": "windows-permission-reason-and-result-mapping",
+      "status": "OPEN_QUESTION",
+      "reason": "The capability status shape and copy fallback are specified, while exact Windows reasonCode/result mapping for UIPI, focus denial, and other permission failures is not. The spec explicitly forbids claiming a UIPI cause from a generic error."
+    },
+    {
+      "id": "windows-image-clipboard-representation-and-receiver",
+      "status": "OPEN_QUESTION",
+      "reason": "Image copy/paste is required, but the Windows clipboard format selection and a supported disposable image receiver are not frozen. Pixel identity and original-versus-thumbnail safety can be planned; format-specific assertions wait for the adapter/interface decision."
+    },
+    {
+      "id": "exact-terminal-enums-and-copy-only-wording",
+      "status": "OPEN_QUESTION",
+      "reason": "T06 canonical generated schemas remain incomplete. Safety and visible outcome categories can be tested, but this plan does not invent wire discriminants, exact reasonCode values, or final UI wording where no accepted contract specifies them."
+    },
+    {
+      "id": "full-process-memory-and-idle-cpu-thresholds",
+      "status": "OPEN_QUESTION",
+      "reason": "The spec requires matched full-process comparison against L0 and freezes normal-scenario reporting at at least 100 samples with p50/p95/max/failure counts, but it does not freeze numeric regression thresholds, the exact physical-memory metric/attribution, or sampling duration. Record per-process data without summing RSS until the remaining method and thresholds are fixed."
+    },
+    {
+      "id": "tauri-gate-stability-criteria",
+      "status": "OPEN_QUESTION",
+      "reason": "The fallback decision is frozen (retain Electron if Tauri capability/stability misses the gate), but the exact stability sample set beyond named fixtures and the decision procedure for ambiguous capability gaps are not detailed."
+    },
+    {
+      "id": "image-worker-peak-memory-accounting",
+      "status": "OPEN_QUESTION",
+      "reason": "docs/progress.json records T09 as not_started and leaves the imageWorkerPeakBytes allocation categories and measurement method unfrozen. Keep the numeric peak-memory assertion NOT_RUN until that method is specified and independently reviewed."
+    }
+  ],
+  "requiredNotRunGates": [
+    {
+      "id": "T05-T06-T07-T10-accepted",
+      "status": "NOT_RUN",
+      "reason": "These are T11 dependencies and none is accepted in the observed progress. Production implementation and behavior testing remain gated."
+    },
+    {
+      "id": "P01-P28-fake-platform-and-windows-behavior",
+      "status": "NOT_RUN",
+      "reason": "All 28 referenced desktop state/race fixtures are planned only; no fake behavior tests or Windows integration have run."
+    },
+    {
+      "id": "controlled-real-text-and-image-targets",
+      "status": "NOT_RUN",
+      "reason": "No desktop input or system clipboard operation was performed. Future end-to-end acceptance must use disposable controlled target processes and synthetic content only."
+    },
+    {
+      "id": "tray-multimonitor-and-permission-capabilities",
+      "status": "NOT_RUN",
+      "reason": "No tray, display, permission, focus, or capability API was exercised; policy gaps remain OPEN_QUESTION."
+    },
+    {
+      "id": "warm-wake-and-text-latency-benchmarks",
+      "status": "NOT_RUN",
+      "reason": "No benchmark or performance script was run. Later measurement requires the accepted build, fixed environment, synthetic profile, and at least 100 normal samples."
+    },
+    {
+      "id": "full-process-resource-comparison",
+      "status": "NOT_RUN",
+      "reason": "No L0/v2 process-tree memory or idle-CPU comparison was run; acceptance thresholds and the measurement method remain OPEN_QUESTION."
+    },
+    {
+      "id": "package-and-release-artifacts",
+      "status": "NOT_RUN",
+      "reason": "No desktop package was built or installed. Target/toolchain and host dependency gates remain unresolved in T06."
+    }
+  ],
+  "plannedValidationCommands": [],
+  "executionSafety": {
+    "productionFilesChanged": false,
+    "contractOrGeneratedFilesChanged": false,
+    "liveProfileRead": false,
+    "liveProfileHashed": false,
+    "userClipboardReadOrWritten": false,
+    "userWindowInputPerformed": false,
+    "packageInstalledOrBuilt": false,
+    "behaviorTestsRun": false,
+    "performanceTestsRun": false
+  },
+  "acceptanceReminder": "Every behavior and performance case is NOT_RUN. This file is synthetic planning only; keep T11 not_started until T05/T06/T07/T10 are accepted, the frozen and open interfaces are resolved, controlled Windows behavior/performance evidence exists, and the required independent adversarial review passes."
+}

@@ -1,0 +1,152 @@
+{
+  "generatedAt": "2026-10-02T12:33:00.678Z",
+  "nodeVersion": "v24.16.0",
+  "sourcePath": "installed-original-derived-main.js (ClipNest 1.1.4)",
+  "sourceSha256": "c0b5766dd6272a92e9b6e4c0a0097b7e8aeee46e37a0d5e1314224fcf8162928",
+  "safety": "Read-only GetForegroundWindow and Add-Type compilation. No clipboard access, focus restoration, SendInput, or paste execution.",
+  "method": "Seven sequential, interleaved fresh-process samples per variant. Foreground matches installed spawnSync flags and validates numeric output. Compile-only stops on errors, validates class existence, rejects stderr, and measures stdout READY. Small-sample p95 is not production p95.",
+  "emptyProcessExit": {
+    "n": 7,
+    "minMs": 880.755,
+    "medianMs": 909.715,
+    "sampleP95Ms": 1040.633,
+    "maxMs": 1040.633,
+    "samplesMs": [
+      880.755,
+      1040.633,
+      909.715,
+      887.665,
+      1026.92,
+      982.833,
+      903.404
+    ]
+  },
+  "foregroundFullProcess": {
+    "n": 7,
+    "minMs": 1581.167,
+    "medianMs": 1628.295,
+    "sampleP95Ms": 1663.14,
+    "maxMs": 1663.14,
+    "samplesMs": [
+      1628.295,
+      1615.574,
+      1663.14,
+      1582.268,
+      1653.78,
+      1662.623,
+      1581.167
+    ]
+  },
+  "pasteClassCompileReadiness": {
+    "n": 7,
+    "minMs": 1295.557,
+    "medianMs": 1304.16,
+    "sampleP95Ms": 1334.082,
+    "maxMs": 1334.082,
+    "samplesMs": [
+      1313.089,
+      1304.16,
+      1302.223,
+      1306.308,
+      1334.082,
+      1295.557,
+      1296.964
+    ]
+  },
+  "pasteClassCompileExit": {
+    "n": 7,
+    "minMs": 1347.471,
+    "medianMs": 1356.481,
+    "sampleP95Ms": 1388.972,
+    "maxMs": 1388.972,
+    "samplesMs": [
+      1365.248,
+      1356.481,
+      1352.59,
+      1359.154,
+      1388.972,
+      1347.471,
+      1350.085
+    ]
+  },
+  "residentForegroundRead": {
+    "startupMs": 1244.044,
+    "roundTrip": {
+      "n": 30,
+      "minMs": 0.055,
+      "medianMs": 0.122,
+      "sampleP95Ms": 0.35,
+      "maxMs": 28.272,
+      "samplesMs": [
+        28.272,
+        0.149,
+        0.087,
+        0.254,
+        0.116,
+        0.198,
+        0.153,
+        0.127,
+        0.35,
+        0.201,
+        0.082,
+        0.056,
+        0.057,
+        0.058,
+        0.058,
+        0.127,
+        0.141,
+        0.143,
+        0.186,
+        0.118,
+        0.101,
+        0.07,
+        0.071,
+        0.069,
+        0.118,
+        0.055,
+        0.129,
+        0.122,
+        0.18,
+        0.08
+      ]
+    },
+    "steadyAfterFirst": {
+      "n": 29,
+      "minMs": 0.055,
+      "medianMs": 0.118,
+      "sampleP95Ms": 0.254,
+      "maxMs": 0.35,
+      "samplesMs": [
+        0.149,
+        0.087,
+        0.254,
+        0.116,
+        0.198,
+        0.153,
+        0.127,
+        0.35,
+        0.201,
+        0.082,
+        0.056,
+        0.057,
+        0.058,
+        0.058,
+        0.127,
+        0.141,
+        0.143,
+        0.186,
+        0.118,
+        0.101,
+        0.07,
+        0.071,
+        0.069,
+        0.118,
+        0.055,
+        0.129,
+        0.122,
+        0.18,
+        0.08
+      ]
+    }
+  }
+}

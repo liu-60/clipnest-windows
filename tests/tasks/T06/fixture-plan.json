@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "status": "planned-not-executed",
+  "purpose": "Define observable contract/workspace acceptance fixtures before implementation; synthetic values only.",
+  "fixtureFamilies": [
+    {
+      "id": "contracts-decimal-boundary",
+      "stage": "b",
+      "input": "A canonical DTO carrying a decimal integer greater than 2^53 as a base-10 string.",
+      "expected": "Zod/JSON Schema and generated Rust DTO preserve the exact decimal string through serialize/deserialize; no JavaScript number rounding occurs.",
+      "observation": "Compare exact serialized strings and Rust boundary result against the fixed synthetic expected value.",
+      "status": "planned"
+    },
+    {
+      "id": "contracts-strict-unknown-field",
+      "stage": "b",
+      "input": "A valid protocol DTO plus one unknown property at the top level and one unknown nested property.",
+      "expected": "Canonical TS validation, generated-schema validation, and Rust deserialization reject the unknown fields with a structured validation/protocol error.",
+      "observation": "Each boundary returns failure; no partial DTO is accepted.",
+      "status": "planned"
+    },
+    {
+      "id": "contracts-size-and-limits",
+      "stage": "b",
+      "input": "Synthetic strings/arrays exactly at configured limits and one byte/item above each selected boundary.",
+      "expected": "At-limit values pass; over-limit values fail before application behavior or storage.",
+      "observation": "Assert boundary result and stable error family; source only limits from the canonical limits file.",
+      "status": "planned"
+    },
+    {
+      "id": "contracts-generator-boolean-numeric-const",
+      "stage": "b",
+      "input": "A synthetic strict DTO schema containing boolean const true and numeric const 7; test matching values true/7 and near-miss values false/8.",
+      "expected": "Matching values validate and round-trip with their exact JSON scalar values across the canonical validator, generated JSON Schema validator, and Rust boundary. Near-miss values are rejected by the validation boundary; a generated Rust data type alone is not treated as proof of const enforcement.",
+      "observation": "Record accept/reject results and structured error paths for each boundary. If generation drops const semantics, mark the candidate compatibility gate failed until an explicit boundary check or approved schema adjustment preserves the behavior.",
+      "executionGate": "Run only after the schema/generator/validator route is selected, pinned, and reviewed; this plan does not select or install a tool.",
+      "executionStatus": "NOT_RUN",
+      "status": "planned"
+    },
+    {
+      "id": "contracts-json-schema-ref-additional-properties",
+      "stage": "b",
+      "input": "Use a root object schema with properties.nested = {$ref:'#/$defs/Nested'}, required:['nested'], and additionalProperties:false. Define $defs.Nested as an object with properties.code={type:'string'}, required:['code'], and additionalProperties:false. Test these exact synthetic JSON instances: valid {\"nested\":{\"code\":\"A1\"}}; root extra {\"nested\":{\"code\":\"A1\"},\"extra\":true}; nested extra {\"nested\":{\"code\":\"A1\",\"extra\":true}}; nested missing code {\"nested\":{}}.",
+      "expected": "The valid instance is accepted. The root-extra instance is rejected for /extra; the nested-extra instance is rejected for /nested/extra; the nested-missing-code instance is rejected because /nested lacks required field code. The same outcomes are required from canonical validation, generated JSON Schema validation, and the Rust boundary.",
+      "observation": "Record each of the four external results and its error path. A $ref that loses the referenced required constraint, or either schema/generated DTO path that accepts an extra property, fails this compatibility fixture.",
+      "executionGate": "Run only after the schema/generator/validator route is selected and pinned. Keep the JSON Schema dialect unset until final candidate selection; this fixture plan selects no package or dialect.",
+      "executionStatus": "NOT_RUN",
+      "status": "planned"
+    },
+    {
+      "id": "contracts-ajv-draft-2020-12-accept-reject",
+      "stage": "b",
+      "input": "A schema declaring https://json-schema.org/draft/2020-12/schema with a required protocol field constrained to 1 and additionalProperties:false; validate a matching object, an object missing protocol, and an object with an unknown field.",
+      "expected": "The selected Draft 2020-12 validator compiles the schema, accepts the matching object, and rejects both invalid objects with a validation result identifying the relevant keyword/path.",
+      "observation": "Record schema compilation and all three validation results. Compilation using an incompatible default dialect, or accepting either invalid object, fails the fixture.",
+      "executionGate": "Run only after the Draft 2020-12 validator entry point and dependency route are selected, pinned, and reviewed; this is a planned behavior, not evidence of current Ajv compatibility.",
+      "executionStatus": "NOT_RUN",
+      "status": "planned"
+    },
+    {
+      "id": "contracts-format-valid-invalid-values",
+      "stage": "b",
+      "input": "A synthetic field constrained by the canonical date-time format; test valid UTC value 2026-10-04T08:00:00Z and invalid values 2026-10-04T08:00:00 (missing timezone) and not-a-date.",
+      "expected": "With format assertion enabled in the selected validator, the UTC value is accepted and both invalid values are rejected; validation reports the field path and format failure without accepting a partial DTO.",
+      "observation": "Record the validator configuration and all three external results. If the selected format implementation treats format as annotation only or accepts either invalid value, the compatibility gate fails and must be resolved before dependency freeze.",
+      "executionGate": "Run only after the format assertion behavior and reviewed format implementation are selected; no format plugin or dependency is selected by this fixture plan.",
+      "executionStatus": "NOT_RUN",
+      "status": "planned"
+    },
+    {
+      "id": "contracts-generated-drift",
+      "stage": "b-c",
+      "input": "Canonical schema and committed generated JSON Schema/Rust DTOs, plus a temporary intentional generated-output difference.",
+      "expected": "contracts:check passes for canonical outputs, fails on drift, and never changes the worktree.",
+      "observation": "Record exit code and before/after worktree status; restore temporary test output in the test harness.",
+      "status": "planned"
+    },
+    {
+      "id": "contracts-generator-provenance",
+      "stage": "b-c",
+      "input": "Pinned generator/tool versions, canonical source schema, generated outputs, and license records.",
+      "expected": "Evidence identifies exact generator versions and provenance; unsupported schema constructs fail explicitly rather than producing divergent Rust DTOs.",
+      "observation": "Inspect provenance metadata and make unsupported-construct fixture return a nonzero check.",
+      "status": "planned"
+    },
+    {
+      "id": "workspace-feature-disabled",
+      "stage": "a2",
+      "input": "Call a scaffolded feature entry whose product behavior has not been implemented.",
+      "expected": "Return the specified FEATURE_NOT_ENABLED result; never report success or fabricated data.",
+      "observation": "Assert stable error code and no persisted side effect.",
+      "status": "planned"
+    },
+    {
+      "id": "workspace-independent-mobile-versions",
+      "stage": "a",
+      "input": "Expo app package using versions selected by Expo's compatibility resolver while desktop/web packages use their separately reviewed versions.",
+      "expected": "Workspace accepts compatible independent package versions; no forced desktop React/RN pair is installed in mobile.",
+      "observation": "Run Expo compatibility check and workspace dependency inspection after version/license review.",
+      "status": "planned-gated-on-current-expo-toolchain-and-reviewed-dependencies"
+    },
+    {
+      "id": "workspace-identity-a1",
+      "stage": "a1",
+      "input": "pnpm workspace globs and the private @clipnest/contracts package manifest, plus the virtual Cargo workspace manifest and exact verified toolchain pin.",
+      "expected": "pnpm resolves @clipnest/contracts as a workspace package; Cargo parses the workspace manifest; the pinned compiler release and Windows GNU standard library match the available direct toolchain installation.",
+      "observation": "Record pnpm recursive package metadata, Cargo metadata/check output, rustc/cargo versions, and the target-libdir existence result. Do not claim a contracts crate or feature behavior is implemented.",
+      "status": "executed"
+    }
+  ],
+  "plannedValidationCommands": [
+    {
+      "command": "pnpm contracts:check",
+      "availabilityAtPreflight": "unavailable; script/package absent"
+    },
+    {
+      "command": "pnpm -r typecheck",
+      "availabilityAtPreflight": "unavailable; workspace packages and typecheck scripts absent"
+    },
+    {
+      "command": "cargo test -p clipnest-contracts",
+      "availabilityAtPreflight": "unavailable; Cargo toolchain and crate absent"
+    },
+    {
+      "command": "pnpm -r list --depth -1 --json",
+      "availabilityAtPreflight": "workspace globs/package absent",
+      "executionStatus": "PASS; workspace metadata only"
+    },
+    {
+      "command": "cargo metadata --manifest-path Cargo.toml --no-deps --format-version 1 --offline",
+      "availabilityAtPreflight": "Cargo workspace absent",
+      "executionStatus": "PASS; virtual workspace metadata only"
+    },
+    {
+      "command": "cargo check --manifest-path Cargo.toml --workspace --offline --locked",
+      "availabilityAtPreflight": "Cargo workspace absent",
+      "executionStatus": "NOT_APPLICABLE; exit 1 because the virtual workspace intentionally has zero members; no crate source was compiled."
+    },
+    {
+      "command": "pnpm install --frozen-lockfile --lockfile-only --ignore-scripts --offline",
+      "availabilityAtPreflight": "pnpm workspace package/importer absent",
+      "executionStatus": "INCOMPLETE; command recognized two workspace projects and wrote only the empty packages/contracts importer, then remained at supply-chain policy verification; final install completion was not observed."
+    }
+  ],
+  "executionSafety": {
+    "syntheticOnly": true,
+    "liveProfile": false,
+    "liveClipboard": false,
+    "networkServices": false,
+    "productionAccounts": false,
+    "realUserContent": false
+  },
+  "acceptanceReminder": "Fixture definitions are not test results. Mark each executed only with command, environment, exact output/result, and evidence; unavailable platform/toolchain results remain NOT_RUN."
+}

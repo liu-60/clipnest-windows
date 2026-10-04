@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 1,
+  "task": "T09",
+  "status": "planned-not-executed",
+  "purpose": "Define synthetic, externally observable capture privacy, sequence, queue, size, worker, and storage-failure scenarios before T09 implementation.",
+  "dependencyGate": "wait_for_T07_accepted",
+  "dependencyGateDetails": {
+    "requiredTask": "T07",
+    "requiredStatus": "accepted",
+    "observedProgressStatus": "not_started",
+    "source": "docs/progress.json#/tasks/T07/status",
+    "rule": "Until T07 is accepted, only independent fixture/interface preparation is allowed. Do not implement T09 production behavior, use a fake-success repository, or run behavior tests."
+  },
+  "sources": [
+    {
+      "path": "docs/spec/tasks/T09.md",
+      "sections": ["依赖", "子任务顺序", "完成标准与行为测试", "验证命令"]
+    },
+    {
+      "path": "docs/spec/02-architecture.md",
+      "sections": ["§6 线程、队列与故障边界", "§7 平台capabilities"]
+    },
+    {
+      "path": "docs/spec/04-desktop-performance.md",
+      "sections": ["§6 图片、采集与后台任务"]
+    },
+    {
+      "path": "docs/spec/limits.v1.json",
+      "fields": [
+        "concurrency.captureQueueItems",
+        "concurrency.captureWorkers",
+        "concurrency.imageWorkers",
+        "concurrency.imageWorkerPeakBytes",
+        "local.decodedImageCacheBytes",
+        "local.totalBytes",
+        "content.maxTextUtf8Bytes",
+        "content.maxImageBytes",
+        "content.maxDecodedPixels"
+      ]
+    }
+  ],
+  "fixturePolicy": {
+    "syntheticInputsOnly": true,
+    "fakeAdapters": [
+      "OS notification and clipboard sequence source",
+      "clipboard content reader including delay-rendered outcomes",
+      "clock and retry scheduler",
+      "privacy/pause/exclusion policy decision",
+      "preview, persistence, OCR, upload, and local repository sinks",
+      "image worker and resource observer"
+    ],
+    "neverUse": [
+      "live user clipboard or profile",
+      "real clipboard listener during fixture runs",
+      "production storage, account, or network service",
+      "real clipboard contents or secrets"
+    ],
+    "limitsSource": "Read every size, queue, worker, and cache threshold from docs/spec/limits.v1.json; fixture text uses limit keys and relative boundary offsets, not copied numeric constants.",
+    "unfrozenRules": "Do not invent retry counts/backoff, full-queue disposition for a new distinct sequence, worker-peak accounting, local.totalBytes accounting, or new error codes. The affected fixture remains NOT_RUN until the rule and observable measurement are frozen.",
+    "statusMeaning": "NOT_RUN means no behavior has been verified. This document and its fake adapters are fixture preparation only."
+  },
+  "fixtureFamilies": [
+    {
+      "id": "t09a-sequence-coalescing-and-supersession",
+      "stage": "a",
+      "category": ["sequence", "cancellation", "privacy", "persistence"],
+      "input": "An injected notification source emits one clipboard sequence, repeats notifications for that unchanged sequence, then emits a newer sequence while the prior content read is still pending.",
+      "action": "Start capture for the first sequence, deliver repeated same-sequence notifications, hold its read at a fake barrier, then deliver the newer sequence and release both reads in controlled order.",
+      "expected": "Repeated notifications for an unchanged sequence do not trigger another image encode. A superseded sequence is canceled and cannot later produce a preview, durable record, or upload; only output allowed by the current sequence and privacy/scope checks may be committed. The fixture does not infer that every transient sequence must become durable.",
+      "observation": "Record injected sequence order, read/encode invocation counts, cancel outcome, preview/persist/upload sink calls, and committed synthetic record IDs.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T09.md · 子任务顺序 a / 完成标准", "docs/spec/02-architecture.md §6", "docs/spec/04-desktop-performance.md §6"]
+    },
+    {
+      "id": "t09a-bounded-capture-queue-and-overflow",
+      "stage": "a",
+      "category": ["capacity", "sequence", "error", "cancellation"],
+      "input": "A deterministic burst of synthetic notification sequences that fills and exceeds limits.concurrency.captureQueueItems, including a repeated notification for the same latest sequence and a distinct new sequence at capacity.",
+      "action": "Hold the injected capture worker, enqueue up to the configured limit, repeat the current latest sequence, then submit distinct additional sequences and release the worker.",
+      "expected": "Outstanding queued items never exceed the canonical captureQueueItems limit; active capture workers never exceed captureWorkers. A repeated same-latest sequence may be coalesced and overflow is counted. Overflow is observable and the system does not claim every transient sequence was durably saved. The exact retain/drop/admit result for a distinct new sequence at a full queue is intentionally unspecified here and must be frozen before asserting which sequence survives.",
+      "observation": "Record high-water queue length, active worker count, coalesced sequence IDs, overflow counter/result, and which synthetic records were actually committed after the worker is released.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T09.md · 子任务顺序 a / 完成标准", "docs/spec/02-architecture.md §6", "docs/spec/limits.v1.json#/concurrency/captureQueueItems", "docs/spec/limits.v1.json#/concurrency/captureWorkers"],
+      "gate": "Do not freeze a result for distinct-sequence admission/drop at full capacity until that policy is specified."
+    },
+    {
+      "id": "t09a-delay-rendered-read-bounded-retry",
+      "stage": "a",
+      "category": ["error", "cancellation", "sequence", "permissions"],
+      "input": "The fake clipboard reader returns a delay-rendered/not-yet-available result before eventually returning synthetic content, plus a case where content never becomes available; a fake clock and retry scheduler expose every attempt.",
+      "action": "Run one read that succeeds within the configured retry policy and one that exhausts it; in a separate run deliver a newer sequence while the old read is waiting between attempts.",
+      "expected": "Retry work is finite and bounded by the configured policy; exhaustion produces an explicit non-success result with no preview or persistence. A newer sequence cancels pending retries for the old sequence, and a late old read cannot commit. The fixture does not choose retry count, delay, or backoff values.",
+      "observation": "Record fake-clock attempt timeline, configured policy identity, terminal result, cancellation acknowledgment, and preview/persist/upload sink calls.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T09.md · 子任务顺序 a", "docs/spec/02-architecture.md §6", "docs/spec/04-desktop-performance.md §6"],
+      "gate": "Freeze the retry bound and scheduling rule in the canonical configuration/spec before running an assertion that depends on a particular attempt count or elapsed time."
+    },
+    {
+      "id": "t09b-privacy-rules-precede-preview-and-storage",
+      "stage": "b",
+      "category": ["privacy", "permissions", "persistence", "error"],
+      "input": "Injected capture candidates for paused capture, an excluded source, a candidate rejected by the injected sensitive-format policy, and a candidate with unknown source identity.",
+      "action": "Send each candidate through the pipeline with instrumented read, preview, OCR, local-persistence, and upload sinks; configure the fake privacy policy with the expected pause/exclude decision without inventing a format list.",
+      "expected": "Paused, excluded, and policy-rejected candidates produce no preview, OCR, durable record, or upload; rejection happens before those observable sinks. Unknown source identity is not reported as proof that all password/sensitive content was detected or excluded. Any disclosure of source-detection limits follows the product copy once frozen.",
+      "observation": "Record the injected policy decision and ordered sink invocation trace; verify zero forbidden preview/OCR/storage/upload calls for rejected candidates and no unsupported password-detection claim for unknown source.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T09.md · 子任务顺序 b / 完成标准", "docs/spec/02-architecture.md §6"]
+    },
+    {
+      "id": "t09b-platform-permission-and-unavailable-boundary",
+      "stage": "b",
+      "category": ["permissions", "error", "sequence"],
+      "input": "The injected platform adapter reports ready, permission_required, unsupported, or temporarily_unavailable outcomes for the relevant clipboard capability, without accessing an OS clipboard.",
+      "action": "Attempt to start a synthetic capture under each adapter outcome, then restore availability and issue a fresh sequence.",
+      "expected": "Unavailable or denied capability does not emit capture success, preview, or durable content; the externally returned capability/status reflects the adapter result and uses a stable reason when one is specified. Restoring permission permits only a fresh eligible sequence; no stale content is replayed automatically.",
+      "observation": "Compare returned capability/status, sequence handling, sink calls, and durable synthetic state before denial, during denial, and after a new sequence following recovery.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T09.md · 完成标准与行为测试", "docs/spec/02-architecture.md §7"]
+    },
+    {
+      "id": "t09b-text-image-size-and-pixel-admission",
+      "stage": "b",
+      "category": ["capacity", "error", "privacy", "persistence"],
+      "input": "Synthetic text payloads at and one UTF-8 byte above limits.content.maxTextUtf8Bytes; valid image inputs at and over limits.content.maxImageBytes and limits.content.maxDecodedPixels, plus bounded-header-detectable malformed/truncated inputs.",
+      "action": "Run each case through injected admission, preview, image-worker, and repository adapters. For valid boundary inputs, allow subsequent checks to determine whether worker/storage budgets permit commit; for oversized or preflight-detectable invalid inputs, observe rejection before preview and object write.",
+      "expected": "Text sizing is measured in UTF-8 bytes. Inputs within canonical content limits may proceed to subsequent privacy, worker, and storage checks; inputs above the relevant limit and malformed inputs rejected by bounded admission return explicit non-success before preview or durable object creation. Existing synthetic records/objects remain unchanged. Error identifiers must come from the canonical error contract; this plan creates none.",
+      "observation": "Record the referenced limit key, byte/pixel boundary relation, rejection phase, sink calls, and pre/post synthetic durable state without logging payload content.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T09.md · 子任务顺序 b / 完成标准", "docs/spec/04-desktop-performance.md §6", "docs/spec/limits.v1.json#/content/maxTextUtf8Bytes", "docs/spec/limits.v1.json#/content/maxImageBytes", "docs/spec/limits.v1.json#/content/maxDecodedPixels"]
+    },
+    {
+      "id": "t09c-image-worker-and-decoded-cache-budgets",
+      "stage": "c",
+      "category": ["capacity", "cancellation", "persistence", "error"],
+      "input": "Synthetic image work scheduled through injected worker/cache observers, including competing image tasks, a decode at the pixel boundary, and a cache fill at limits.local.decodedImageCacheBytes.",
+      "action": "Hold one image worker at a barrier while submitting another image task; fill the decoded cache to its canonical limit and request further eligible image work. Record high-water worker concurrency, cache occupancy, and the agreed worker-peak observation.",
+      "expected": "Active image workers never exceed limits.concurrency.imageWorkers; decoded cache occupancy never exceeds limits.local.decodedImageCacheBytes, and cache pressure evicts or declines to retain decoded entries without deleting the original source. The observed worker peak must remain within limits.concurrency.imageWorkerPeakBytes under the measurement rule frozen for the implementation. Decode remains off the event loop; cancellation produces no stale success or durable mutation.",
+      "observation": "Record concurrency/cache high-water values by canonical limit key, worker-peak measurement method and result, eviction/non-retention result, event-loop responsiveness, and durable source/object state.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T09.md · 子任务顺序 c / 完成标准", "docs/spec/02-architecture.md §6", "docs/spec/04-desktop-performance.md §6", "docs/spec/limits.v1.json#/concurrency/imageWorkers", "docs/spec/limits.v1.json#/concurrency/imageWorkerPeakBytes", "docs/spec/limits.v1.json#/local/decodedImageCacheBytes", "docs/spec/limits.v1.json#/content/maxDecodedPixels"],
+      "gate": "The worker-peak byte measurement method and counted memory categories must be specified before a numeric peak assertion; do not invent an accounting formula."
+    },
+    {
+      "id": "t09c-storage-failure-and-protected-data-preservation",
+      "stage": "c",
+      "category": ["capacity", "error", "transactions", "protected-data", "persistence"],
+      "input": "An isolated synthetic repository adapter seeded with committed saved/favorited, pending, and unuploaded objects; its storage layer can deterministically fail at object, reference, and transaction-commit boundaries as a disk-full/permission failure.",
+      "action": "Attempt one synthetic capture that writes its original/thumbnail and record, injecting failure at each boundary; separately have the repository report its configured local-budget-full condition without measuring any live disk.",
+      "expected": "Storage or configured-budget rejection is explicit and never reports success; no partial capture/object/reference/outbox state is committed. Previously committed records, saved/favorited items, pending data, and unuploaded objects remain unchanged. No failure silently changes cloud scope or deletes protected data. Exact error codes follow the canonical contract and are not invented here.",
+      "observation": "Compare synthetic state before/after each injected failure, returned error category, preview/persistence/upload sink calls, and whether a commit acknowledgment was emitted.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T09.md · 子任务顺序 c / 完成标准", "docs/spec/02-architecture.md §6", "docs/spec/limits.v1.json#/local/totalBytes"],
+      "gate": "Only deterministic adapter failures are planned. local.totalBytes boundary acceptance remains NOT_RUN until T07 freezes and reviews a verifiable durable-byte formula; no real disk-full test is included."
+    },
+    {
+      "id": "t09c-local-and-cloud-scope-separation",
+      "stage": "c",
+      "category": ["profile-isolation", "privacy", "persistence", "error"],
+      "input": "A synthetic local_only capture with cloud disabled or locked, fake upload/outbox observers, and a later state change to cloud unlocked.",
+      "action": "Commit an eligible local_only capture through the injected repository, change only the fake cloud unlock state, and observe behavior without issuing an explicit import/scope-change command.",
+      "expected": "The capture remains local_only and does not create cloud outbox/upload activity merely because cloud becomes unlocked. Scope changes or uploads require the explicit supported user action; a cloud-locked state cannot be bypassed by renderer-provided state. This plan uses no network service.",
+      "observation": "Record persisted scope, fake outbox/upload call counts, and result before and after unlock; confirm no implicit scope mutation or upload occurred.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T09.md · 子任务顺序 c", "docs/spec/02-architecture.md §6-7"]
+    }
+  ],
+  "requiredNotRunGates": [
+    {
+      "id": "t07-accepted-repository-and-sqlcipher",
+      "status": "NOT_RUN",
+      "reason": "T09 depends on accepted T07. No repository implementation, SQLCipher transaction test, or successful persistence result may be inferred from these injected fixtures."
+    },
+    {
+      "id": "delay-render-retry-policy-frozen",
+      "status": "NOT_RUN",
+      "reason": "The referenced specs require bounded retries but do not freeze a numeric attempt count or schedule; define the bound before behavior tests assert it."
+    },
+    {
+      "id": "full-queue-distinct-sequence-policy-frozen",
+      "status": "NOT_RUN",
+      "reason": "The specs allow coalescing the same latest sequence and require overflow visibility, but do not define which distinct sequence is retained/dropped when full. Do not invent that result."
+    },
+    {
+      "id": "image-worker-peak-measurement-frozen",
+      "status": "NOT_RUN",
+      "reason": "The peak limit is canonical, but the counted allocation categories and measurement method must be specified before numeric worker-peak acceptance."
+    },
+    {
+      "id": "local-total-bytes-formula-frozen",
+      "status": "NOT_RUN",
+      "reason": "T07 progress records that local.totalBytes durable-byte components are not frozen. Local budget boundary acceptance stays NOT_RUN until a verifiable formula is specified and reviewed."
+    },
+    {
+      "id": "native-platform-clipboard-validation",
+      "status": "NOT_RUN",
+      "reason": "Fake event/permission adapters do not validate actual Windows notification, clipboard, or OS permission behavior. Native platform checks remain separate and must be performed in an isolated test environment after dependencies are accepted."
+    }
+  ],
+  "plannedValidationCommands": [
+    {
+      "command": "cargo test -p clipnest-core capture",
+      "executionStatus": "NOT_RUN",
+      "gate": "T07 accepted; T09 implementation and the workspace test target exist."
+    },
+    {
+      "command": "cargo test -p clipnest-platform-windows clipboard",
+      "executionStatus": "NOT_RUN",
+      "gate": "T07 accepted; T09 Windows clipboard implementation and the workspace test target exist."
+    }
+  ],
+  "executionSafety": {
+    "productionFilesChanged": false,
+    "productionDependenciesChanged": false,
+    "progressOrSharedEvidenceChanged": false,
+    "liveProfile": false,
+    "liveClipboard": false,
+    "liveOSClipboardListener": false,
+    "networkServices": false,
+    "productionAccounts": false,
+    "realUserContent": false,
+    "behaviorTestsRun": false
+  },
+  "acceptanceReminder": "This plan is fixture/interface preparation only. Keep every behavior and platform gate NOT_RUN until T07 is accepted and the relevant unfrozen retry, overflow, worker-memory, error, and local-budget rules are resolved. Do not treat adapter scenarios as live Windows/clipboard validation or as evidence that production behavior passes."
+}

@@ -1,0 +1,296 @@
+{
+  "schemaVersion": 1,
+  "task": "T07",
+  "status": "planned-not-executed",
+  "purpose": "Specify observable local-vault, SQLCipher repository, object-budget, and summary-pagination behavior before implementation; synthetic profiles only.",
+  "dependencyGate": "wait_for_T06_accepted",
+  "dependencyGateDetails": {
+    "requiredTask": "T06",
+    "requiredStatus": "accepted",
+    "observedProgressStatus": "in_progress",
+    "source": "docs/progress.json#/tasks/T06/status",
+    "rule": "Until T06 is accepted, only independent fixture/interface preparation is allowed; do not implement T07 production behavior or connect a fake-success backend."
+  },
+  "sources": [
+    {
+      "path": "docs/spec/tasks/T07.md",
+      "sections": ["依赖", "子任务顺序", "完成标准与行为测试", "验证命令"]
+    },
+    {
+      "path": "docs/spec/02-architecture.md",
+      "sections": ["§4 UI—仓储接口", "§5 本地实体与搜索语义", "§6 线程、队列与故障边界"]
+    },
+    {
+      "path": "docs/spec/03-data-sync-and-security.md",
+      "sections": ["§4.2 算法与 AAD（客户端 image/decoded-pixel admission 与图片 worker limits）", "§5.4 SQLCipher、本地 key vault 与退出", "§5.5 丢钥、卸载与备份恢复 gate", "§6 客户端事务与同步 outbox", "§10 S11/S12/S27"]
+    },
+    {
+      "path": "docs/spec/08-acceptance-matrix.md",
+      "sections": ["§3 数据与安全", "§6 证据格式"]
+    },
+    {
+      "path": "docs/spec/limits.v1.json",
+      "fields": ["local.totalBytes", "local.decodedImageCacheBytes", "transport.summaryPageItems", "transport.summaryPageBytes", "content.maxImageBytes", "content.maxDecodedPixels", "concurrency.databaseWriters", "cloud.outboxSoftWarnBytes", "cloud.outboxHardLimitBytes"]
+    }
+  ],
+  "fixturePolicy": {
+    "syntheticProfilesOnly": true,
+    "syntheticAccounts": ["anonymous", "account-A", "account-B"],
+    "runtimeKeyGeneration": "Use the platform CSPRNG in implementation. Test adapters may inject ephemeral bytes in memory; never hard-code, persist, or print a key in a fixture or artifact.",
+    "canaryHandling": "Generate a synthetic plaintext canary in memory during the eventual test run. Do not include its literal value in this plan, source fixtures, console output, evidence, SQL trace, logs, or crash artifacts; assert it is absent from protected database files and diagnostic outputs.",
+    "neverUse": ["live user profile", "production data", "real account credentials", "cloud/recovery secrets", "live service", "real clipboard"],
+    "statusMeaning": "NOT_RUN means no behavior has been verified. A fixture definition is not evidence of passing behavior."
+  },
+  "fixtureFamilies": [
+    {
+      "id": "t07a-local-key-profile-isolation",
+      "stage": "a",
+      "category": ["profile-isolation", "key-independence", "permissions"],
+      "input": "Create synthetic anonymous, account-A, and account-B profiles/databases through an in-memory vault adapter and injected CSPRNG adapter.",
+      "action": "Initialize each profile, close it, then request opens across the other profile IDs and localDbIds; sign out account-A while the anonymous profile remains openable.",
+      "expected": "Each database has its own random 32-byte localDBKey and localDbId, vault entry is keyed by CN-LDB1.<profileId>.<localDbId>, and cross-profile opens fail without exposing data. Keys are not derived from account, auth/device credential, workspace root, or CNREC1. Signing out does not destroy the anonymous local-only key or database.",
+      "observation": "Compare profile/database identities and operation outcomes using synthetic records; inspect returned DTOs for absence of key material.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "t07a-vault-first-bootstrap-and-cancel",
+      "stage": "a",
+      "category": ["cancellation", "permissions", "error"],
+      "input": "A new isolated synthetic profile with vault adapter outcomes: write/readback succeeds, permission denied, unavailable, canceled, or readback differs.",
+      "action": "Attempt initialization for each adapter outcome, including cancellation between key generation, vault write, vault readback, SQLCipher open, and first schema transaction.",
+      "expected": "The database/schema is created only after vault write and readback verification. Denial/unavailable/cancel/mismatch returns an explicit non-success result, never creates an empty usable database, and never reports readiness. Retrying is safe and does not replace an existing database key silently.",
+      "observation": "Check operation result, initialization state, and synthetic filesystem manifest before/after each injected boundary; no literal key in output.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "t07a-existing-db-key-missing-or-unavailable",
+      "stage": "a",
+      "category": ["error", "permissions", "profile-isolation", "preservation"],
+      "input": "An existing synthetic SQLCipher database plus WAL/SHM and referenced object state, with its vault entry absent, unreadable, or denied.",
+      "action": "Open the existing profile while the vault returns missing, unavailable, or permission-denied.",
+      "expected": "Return LOCAL_KEY_MISSING or LOCAL_KEY_UNAVAILABLE as appropriate; preserve the original database, WAL/SHM, and object evidence byte-for-byte; do not generate a replacement key, create an empty database at that path, truncate files, or fall back to ordinary SQLite.",
+      "observation": "Compare pre/post synthetic file hashes and verify no success response or new schema is produced.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "t07a-wrong-key-and-sqlcipher-unavailable",
+      "stage": "a-b",
+      "category": ["error", "encryption", "permissions"],
+      "input": "A database created by the encrypted test build, then opened once with a wrong synthetic key and once with a build lacking the SQLCipher native library.",
+      "action": "Open/read schema and query a synthetic row in each condition.",
+      "expected": "Wrong key returns LOCAL_DB_UNLOCK_FAILED without interpreting the database as empty. Missing or unlinked SQLCipher returns SQLCIPHER_UNAVAILABLE before writes. Neither condition falls back to ordinary SQLite or changes the original files.",
+      "observation": "Record the native cipher_version check, stable error code, read/write counts, and before/after file hashes.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "t07a-os-vault-and-directory-permission-boundaries",
+      "stage": "a",
+      "category": ["permissions", "os-gate", "error"],
+      "input": "An isolated OS test profile with denied vault access, denied database-directory access, locked/unavailable vault state, and the supported current-user protection mode.",
+      "action": "Attempt open/create while each OS permission or vault condition is active.",
+      "expected": "Operations wait or fail closed with a stable local error, preserve existing data, and never elevate protection to machine-wide scope. Windows uses user-scope DPAPI and a private directory ACL; macOS uses the profile-scoped non-synchronizing Keychain entry.",
+      "observation": "Inspect OS protection configuration and actual operation outcomes in isolated profiles; platform-specific results are recorded separately.",
+      "status": "NOT_RUN",
+      "gate": "Requires real Windows/macOS OS-vault and filesystem-permission validation; no result is inferred from an in-memory adapter."
+    },
+    {
+      "id": "t07b-required-schema-and-reference-integrity",
+      "stage": "b",
+      "category": ["schema", "error", "profile-isolation"],
+      "input": "A fresh encrypted database and synthetic rows for local_entities, versions, objects, refs, outbox, sync_meta, import_runs, and the FTS structures required by the local repository.",
+      "action": "Apply schema creation/migrations, then attempt duplicate identities, dangling object references, invalid reference ownership, and malformed migration inputs.",
+      "expected": "A valid migration creates the required structures and constraints. Invalid identities/references fail atomically and cannot link objects across profiles/databases. FTS remains within the encrypted database and does not become a plaintext sidecar.",
+      "observation": "Inspect schema version, constraint outcomes, object/profile ownership, and transaction state using synthetic data only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "t07b-single-writer-record-object-ref-outbox-atomicity",
+      "stage": "b",
+      "category": ["transactions", "capacity", "cancellation", "crash-atomicity"],
+      "input": "One synthetic operation that writes a local entity/version, owned BLOB object, reference, and pending outbox row; injectable failures at each write and immediately before commit.",
+      "action": "Run competing writer requests and inject failure/cancellation at each transaction boundary; separately simulate termination before commit and after commit.",
+      "expected": "The database has one writer. A committed operation makes its entity, object, reference, and outbox state visible together; a pre-commit failure/cancel/crash rolls the whole operation back. No UI-facing success is returned before commit. A post-commit restart reads the complete committed state without duplicates.",
+      "observation": "Compare row/ref/object/outbox counts and durable state before/after restart; assert no partially committed state and no lost or duplicate synthetic operation.",
+      "status": "NOT_RUN",
+      "specLinks": ["03-data-sync-and-security.md §10 S11", "limits.v1.json#/concurrency/databaseWriters"]
+    },
+    {
+      "id": "t07b-disk-full-and-write-failure-rollback",
+      "stage": "b-c",
+      "category": ["capacity", "error", "crash-atomicity", "permissions"],
+      "input": "An isolated test volume or deterministic storage adapter that fails during object, reference, index, WAL, and commit writes.",
+      "action": "Force storage exhaustion and access-denied failures at each write boundary while creating a synthetic record with an object and outbox entry.",
+      "expected": "Return an explicit local storage/budget error and preserve the prior committed database state. No partial record, orphaned owned object, success event, protected-item deletion, or fallback to plaintext/ordinary SQLite occurs.",
+      "observation": "Compare durable rows, refs, object bytes, WAL state, and emitted result before/after reopening the isolated profile.",
+      "status": "NOT_RUN",
+      "gate": "Requires isolated disk or equivalent storage-failure injection; no live disk-full test is permitted."
+    },
+    {
+      "id": "t07b-consistent-backup-and-isolated-restore",
+      "stage": "a-c",
+      "category": ["persistence", "crash-atomicity", "profile-isolation", "preservation", "error"],
+      "input": "A synthetic same-machine SQLCipher source profile with committed entities, BLOB objects, refs, outbox, sync metadata, active WAL, and its matching vault key mapping.",
+      "action": "Create a consistent backup using the database backup/export mechanism or after closing the database and handling WAL. Restore a rehearsal copy into a distinct destination file path while reusing the source profileId/localDbId and corresponding vault key mapping. Inject interruption during backup and restore.",
+      "expected": "A successful restore exposes exactly the committed source state, including object/ref/outbox relationships, without partial rows or duplicate writes; the destination is not treated as cloud-synced and does not auto-upload. The destination files remain path-isolated from the source even though the rehearsal copy reuses its profileId/localDbId and vault mapping. An interrupted backup or restore returns an explicit non-success result; the source database, WAL/SHM, objects, and vault entry remain unchanged. A partial backup cannot be unlocked or marked available and cannot replace the destination. An interrupted restore never marks the destination available. Raw copying a live main database without WAL handling, or treating a copied SQLCipher file/OS-vault package as portable recovery, is not a successful restore.",
+      "observation": "Compare source pre/post hashes and destination/partial-backup state; record destination committed row/object/ref/outbox state, that source/destination profileId and localDbId match while file paths differ, the matching vault mapping, WAL handling, whether partial backup/restore artifacts can unlock or become available, and upload state without recording key material or content.",
+      "status": "NOT_RUN",
+      "gate": "Requires an isolated native SQLCipher profile and a documented supported same-machine restore procedure. T29 portable export/import is outside T07; do not infer portability from this fixture."
+    },
+    {
+      "id": "t07b-backup-restore-vault-missing-or-mismatched",
+      "stage": "a-c",
+      "category": ["persistence", "profile-isolation", "preservation", "permissions", "error"],
+      "input": "A consistent synthetic backup at a destination path with either no matching vault entry or a deliberately mismatched profileId/localDbId-to-key mapping; keep the source profile and source vault entry intact.",
+      "action": "Attempt to unlock and restore the destination once with the mapping absent and once with a wrong mapping.",
+      "expected": "Return the appropriate missing-key/unavailable/unlock error, keep the destination unavailable, and do not create a usable empty database, replace the key mapping, or rewrite source or destination evidence. Do not conflate a failed same-machine restore with T29 portable import.",
+      "observation": "Record stable error code, destination availability, and pre/post source and destination file/vault metadata hashes without recording key material or content.",
+      "status": "NOT_RUN",
+      "gate": "Requires isolated native SQLCipher and vault adapters; no live user vault or profile."
+    },
+    {
+      "id": "t07b-canary-absence-from-disk-and-diagnostics",
+      "stage": "b",
+      "category": ["privacy", "encryption", "disk-gate"],
+      "input": "Synthetic plaintext text/image canaries and synthetic key material generated in memory while writing and reading SQLCipher BLOB objects.",
+      "action": "Exercise commit, rollback, WAL activity, temporary query/decode work, wrong-key failure, cancellation, and crash recovery; scan protected database/WAL/SHM/temp files, SQL trace, logs, error payloads, and crash artifacts for the runtime-generated canary and key bytes.",
+      "expected": "The canary and key are absent from on-disk database side files and diagnostics. Main database, WAL, and temporary files remain unreadable with a wrong key. No key-setting statement or parameter is logged.",
+      "observation": "Run byte-level absence checks in an isolated synthetic profile; store only pass/fail counts and file categories, never the matched value or content.",
+      "status": "NOT_RUN",
+      "gate": "Requires a real linked SQLCipher build and isolated filesystem/WAL/temp inspection; NOT_RUN until performed."
+    },
+    {
+      "id": "t07c-local-total-budget-and-protected-content",
+      "stage": "c",
+      "category": ["capacity", "protected-data", "error"],
+      "input": "Synthetic records at, below, and one byte above the canonical limits.local.totalBytes boundary, including evictable history/cache plus saved/favorited, pending-mutation, and unuploaded-object data.",
+      "action": "Insert records at the boundary, trigger budget pressure, then attempt one additional local-only and one additional protected write.",
+      "expected": "Do not infer or invent a durable-byte accounting formula from this fixture. After the formula is frozen as a measurable spec with explicit components and shared-reference accounting, only evictable history/cache may be evicted. If reclaimable data is insufficient, reject the new write with an explicit local budget error; preserve saved/favorited, pending, and unuploaded data and never silently change scope.",
+      "observation": "After the formula gate closes, record each frozen charged-byte component, before/after protected-item identities, eviction set, and returned result. Until then this boundary and acceptance remain NOT_RUN.",
+      "status": "NOT_RUN",
+      "specLinks": ["02-architecture.md §6", "03-data-sync-and-security.md §6", "limits.v1.json#/local/totalBytes"],
+      "gate": "Blocked until the canonical spec freezes a verifiable local.totalBytes formula, including all charged components and shared-reference/double-count rules. The fixture does not choose the formula."
+    },
+    {
+      "id": "t07c-local-outbox-and-wal-accounting",
+      "stage": "c",
+      "category": ["capacity", "transactions", "crash-atomicity"],
+      "input": "Synthetic pending mutation and owned object bytes, plus database/WAL growth around a transaction and checkpoint boundary.",
+      "action": "Using only limits.v1.json values, arrange the post-enqueue candidate aggregate pending total at outboxSoftWarnBytes−1, =, +1 and outboxHardLimitBytes−1, =, +1. For soft-warning cases, commit totals at each point and inspect the visible pending-warning UI state. For hard-limit cases, attempt the enqueue that would produce each candidate total. Separately measure local/WAL storage around enqueue, commit, rollback, checkpoint, and restart only after the local.totalBytes formula gate is closed.",
+      "expected": "Cloud pending-byte accounting includes immutable wire bytes plus newly-owned pending blob bytes, without double-counting reusable cloud-ready blobs. Totals at hardLimit−1 and exactly hardLimit may commit; a candidate total at hardLimit+1 returns OUTBOX_FULL atomically, retains already-committed outbox/source objects, and does not silently change mutation scope. The soft-warning UI is absent at softWarnBytes−1 and exactly softWarnBytes, and visibly reports pending bytes/reason at softWarnBytes+1. Local-only writes use the independent local budget. Local/WAL accounting is NOT_RUN until the local.totalBytes formula is frozen; do not infer it here. All thresholds come from canonical limits, not fixture-local numeric constants.",
+      "observation": "Record limit keys and derived threshold cases, pending byte components, UI warning state, returned error/success, mutation scope, and outbox/source-object state before and after restart. Local/WAL charge measurements remain NOT_RUN until the formula prerequisite is satisfied.",
+      "status": "NOT_RUN",
+      "specLinks": ["03-data-sync-and-security.md §6", "limits.v1.json#/local/totalBytes", "limits.v1.json#/cloud/outboxSoftWarnBytes", "limits.v1.json#/cloud/outboxHardLimitBytes"],
+      "gate": "Outbox boundaries remain planned until T06 is accepted. Local/WAL charge assertions additionally require the canonical local.totalBytes formula gate; the outbox wire-plus-newly-owned-pending-blob rule comes from 03 §6."
+    },
+    {
+      "id": "t07c-reference-count-and-safe-object-gc",
+      "stage": "c",
+      "category": ["protected-data", "transactions", "error"],
+      "input": "Synthetic BLOB objects with zero, one, or multiple refs, including saved/favorited, pending mutation, and unuploaded source references.",
+      "action": "Remove one reference at a time, retry a failed removal, and request garbage collection for objects with zero refs while separately retaining objects with live/protected refs.",
+      "expected": "An object remains while any protected/live ref exists; removing one of multiple refs does not remove shared bytes. Only unreferenced reclaimable objects can be collected. A transaction failure leaves refs and objects consistent; GC never silently deletes saved/favorited, pending, or unuploaded data.",
+      "observation": "Compare the reference graph, object presence, transaction result, and pre/post ref/object state after each committed or failed operation; durable byte accounting is covered only by the separately gated budget fixtures.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "t07c-summary-pagination-and-incremental-events",
+      "stage": "c",
+      "category": ["pagination", "capacity", "profile-isolation", "privacy"],
+      "input": "A fixed-seed synthetic local dataset with tied timestamps, multiple profiles, long summaries, and page sizes that reach both item and byte limits.",
+      "action": "Read successive pages, resume from a cursor, mutate the dataset between requests, change query generation, and subscribe to incremental changes.",
+      "expected": "Pages are stable by the specified timestamp/ID ordering, contain no gaps or duplicates, and stop before limits.transport.summaryPageItems (50) or summaryPageBytes (131072) without truncating an item. Cursor/query-generation mismatch is rejected or restarted explicitly. Events carry entity IDs/change kind or a small patch, not full content; profile switch invalidates old query/event state.",
+      "observation": "Compare ordered synthetic IDs, cursor behavior, encoded response bytes, preview limits, and event fields; no body, DataURL, or key enters summaries/events.",
+      "status": "NOT_RUN",
+      "specLinks": ["02-architecture.md §4-5", "limits.v1.json#/transport/summaryPageItems", "limits.v1.json#/transport/summaryPageBytes"]
+    },
+    {
+      "id": "t07c-cancel-paginated-query-worker",
+      "stage": "c",
+      "category": ["cancellation", "permissions", "privacy"],
+      "input": "A synthetic paginated query held at an injectable database-worker barrier, plus a lightweight UI/event-loop heartbeat/request and two query generations.",
+      "action": "Start a query and hold the worker before page completion. While the worker remains held, cancel the request or start a newer generation, and dispatch an independent lightweight request/heartbeat before releasing the worker.",
+      "expected": "The database query runs off the UI/event-loop thread. The heartbeat/lightweight request completes before the database worker is released. Canceled or old-generation work emits no success, stale page, or stale-profile result; it does not change durable state and eventually releases bounded worker resources. Summaries/events contain no full object content.",
+      "observation": "Record an ordered timeline proving the independent UI/event-loop request completed while the DB worker was still blocked; assert cancellation/stale-generation outcome, durable state equality, request generation/profile identity, and summary/event field bounds.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "t07c-cancel-image-decode-worker",
+      "stage": "c",
+      "category": ["cancellation", "permissions", "privacy", "capacity"],
+      "input": "A synthetic owned image object held at an injectable decode-worker barrier, plus a lightweight UI/event-loop heartbeat/request and an active query/profile generation.",
+      "action": "Start image read/decode and hold the worker before completion. While the worker remains held, cancel the decode or switch profile/start a newer generation, and dispatch an independent lightweight request/heartbeat before releasing the worker.",
+      "expected": "Object read/decode runs off the UI/event-loop thread. The heartbeat/lightweight request completes before the decode worker is released. Canceled or stale-profile/generation decode emits no success or stale result, does not delete/rewrite committed object state, and eventually releases bounded worker resources. This checks repository/worker boundaries only; it does not compare decoder choices, image quality, or latency targets from T04.",
+      "observation": "Record an ordered timeline proving the independent UI/event-loop request completed while the decode worker was still blocked; assert cancellation/stale-generation outcome, durable object/ref state equality, generation/profile identity, and absence of image bytes in summaries/events.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "t07c-image-admission-and-decoded-cache-boundaries",
+      "stage": "c",
+      "category": ["capacity", "error", "cancellation", "privacy", "persistence"],
+      "input": "Synthetic valid image sources at and over limits.content.maxImageBytes and limits.content.maxDecodedPixels, bounded-header-detectable malformed/truncated sources, and decoded cache entries totaling limits.local.decodedImageCacheBytes.",
+      "action": "Exercise exact-limit and one-unit-over compressed-byte and decoded-pixel cases using values read from limits.v1.json; exercise a malformed/truncated source detectable during bounded header admission; fill the decoded cache to its configured byte cap, then request a further decode and observe cache eviction/non-retention behavior.",
+      "expected": "Otherwise-valid sources exactly at maxImageBytes and maxDecodedPixels pass admission; sources one unit above either limit and preflight-detectable malformed/truncated sources fail explicitly before allocating the corresponding large input/decode buffer or writing a DB object. Rejection leaves records, objects, refs, and outbox state unchanged. The decoded cache never exceeds decodedImageCacheBytes; cache eviction/non-retention affects only volatile decoded entries and decoded cache bytes are not charged to durable local.totalBytes. This is a narrow repository/worker admission/cache check, not a T04 decoder-selection or performance test.",
+      "observation": "Record canonical limit keys and boundary inputs, rejection point relative to large-buffer allocation and object transaction, pre/post durable row/object/ref/outbox state, and cache byte occupancy/evictions without storing content. Keep this fixture NOT_RUN until its limits and storage-accounting gates are satisfied.",
+      "status": "NOT_RUN",
+      "specLinks": ["02-architecture.md §6", "03-data-sync-and-security.md §4.2, §5.4 and §6", "limits.v1.json#/content/maxImageBytes", "limits.v1.json#/content/maxDecodedPixels", "limits.v1.json#/local/decodedImageCacheBytes"],
+      "gate": "Requires T06 acceptance, a bounded image-admission/decode-worker test seam, and the local.totalBytes formula gate before asserting durable storage charges. Do not repeat T04 decoder selection or performance acceptance."
+    }
+  ],
+  "requiredNotRunGates": [
+    {
+      "id": "sqlcipher-native-link-and-wrong-key",
+      "status": "NOT_RUN",
+      "reason": "Must prove the actual desktop native build links SQLCipher, cipher_version is non-empty, wrong-key cannot read, and no ordinary SQLite fallback occurs."
+    },
+    {
+      "id": "encrypted-main-wal-shm-temp-and-canary-scan",
+      "status": "NOT_RUN",
+      "reason": "Requires an isolated on-disk synthetic profile and byte-level checks of database, WAL/SHM, temporary files, SQL trace, logs, errors, and crash artifacts."
+    },
+    {
+      "id": "os-vault-and-acl-platform-matrix",
+      "status": "NOT_RUN",
+      "reason": "Windows user-scope DPAPI/private ACL and macOS non-synchronizing Keychain behavior require actual platform validation; adapter fixtures do not substitute."
+    },
+    {
+      "id": "crash-disk-full-and-consistent-backup-restore",
+      "status": "NOT_RUN",
+      "reason": "Requires fault-injected isolated disk/native database runs and restore into a distinct destination file path reusing the source profileId/localDbId and matching vault mapping; never overwrite the source path. Missing/mismatched vault mapping is a separate failure case."
+    },
+    {
+      "id": "local-total-bytes-formula-frozen-and-reviewed",
+      "status": "NOT_RUN",
+      "reason": "03 §6 does not freeze a verifiable local.totalBytes formula. Before measuring or accepting local budget/WAL charge behavior, freeze and independently review exact measurable components and shared-reference/double-count rules in the canonical spec; this fixture must not invent them."
+    },
+    {
+      "id": "s27-mobile-uninstall-and-system-backup",
+      "status": "NOT_RUN",
+      "reason": "T07 owns only the desktop portion of S27. iOS/Android vault, uninstall, and OS backup behavior belongs to platform tasks and cannot be inferred here."
+    }
+  ],
+  "plannedValidationCommands": [
+    {
+      "command": "cargo test -p clipnest-core repository",
+      "executionStatus": "NOT_RUN",
+      "gate": "T06 accepted; repository implementation and workspace test target exist."
+    },
+    {
+      "command": "cargo test -p clipnest-core vault",
+      "executionStatus": "NOT_RUN",
+      "gate": "T06 accepted; vault implementation and workspace test target exist."
+    }
+  ],
+  "executionSafety": {
+    "productionFilesChanged": false,
+    "productionDependenciesChanged": false,
+    "progressOrSharedEvidenceChanged": false,
+    "liveProfile": false,
+    "liveOSVault": false,
+    "liveDisk": false,
+    "networkServices": false,
+    "productionAccounts": false,
+    "realUserContent": false,
+    "canaryLiteralStored": false
+  },
+  "acceptanceReminder": "This plan is preparation only. Do not mark T07 behavior PASS or accept T07 from JSON parsing or fixture definitions. Run the gated synthetic behavior checks after T06 acceptance; record actual platform, disk, SQLCipher, crash, and OS-vault results separately, with every unavailable/live gate left NOT_RUN."
+}

@@ -1,0 +1,364 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "artifact": "desktop-web-dependency-research",
+  "checkedOn": "2026-10-04",
+  "scope": "桌面/Web React、TypeScript、Vite、TanStack Virtual、Tauri 2 JavaScript API/CLI；仅做元数据和锁文件只读调查。",
+  "localInputs": [
+    {
+      "path": "docs/spec/02-architecture.md",
+      "basis": "§1 规定 Tauri 2（T11 PoC gate）、React/TypeScript/Vite、TanStack Virtual、Node 24 LTS；versions.snapshot.json 是候选而非批准。"
+    },
+    {
+      "path": "docs/spec/versions.snapshot.json",
+      "basis": "检查日期 2026-10-02；记录 Node 24、pnpm 11.19.0、Tauri major 2、React 19.3.0、Vite 8.3.2、TypeScript 7.0.2、TanStack Virtual 3.14.13 为未安装候选。"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "basis": "当前 root importer 已锁定 React 18.3.1、React DOM 18.3.1、@types/react 18.3.31、@types/react-dom 18.3.7、TypeScript 5.9.3、Vite 6.4.3、@vitejs/plugin-react 4.7.0、@tanstack/react-virtual 3.14.9、@types/node 22.20.1；Tauri API/CLI 不在锁中。"
+    },
+    {
+      "path": "../electron-l0/docs/evidence/T04/verification.json",
+      "basis": "记录 Windows x64、Node v24.16.0、pnpm 11.19.0；L0 pnpm lint 及指定单元测试 PASS。此证据只覆盖 L0 的现锁依赖和列出的检查，不证明 v2/Tauri 构建。"
+    }
+  ],
+  "recommendation": {
+    "status": "只读研究结果；未选择新候选、未安装依赖、未修改 manifests 或 lockfile。",
+    "preferredForT06InitialFreeze": "复用 v2 当前 pnpm-lock.yaml 中已由 Electron L0 锁定的前端精确版本；Tauri 2 JS API/CLI 在 Tauri PoC 需要时再单独锁定。",
+    "reusePins": {
+      "react": "18.3.1",
+      "react-dom": "18.3.1",
+      "@types/react": "18.3.31",
+      "@types/react-dom": "18.3.7",
+      "typescript": "5.9.3",
+      "vite": "6.4.3",
+      "@vitejs/plugin-react": "4.7.0",
+      "@tanstack/react-virtual": "3.14.9",
+      "@types/node": "22.20.1"
+    },
+    "whyReuse": "这些精确解析已存在于当前 v2 lockfile，相关 engines/peer ranges 接受 Node 24 与当前 React 18/Vite 6 组合；L0 Node 24.16.0 的 lint 与指定测试已有证据。没有因架构文档而必须升级到候选最新版的功能要求。复用减少 React/TypeScript/Vite 主版本变更和新建锁依赖的风险。",
+    "coherentNewerSetIfARequirementAppears": {
+      "react": "19.3.0",
+      "react-dom": "19.3.0",
+      "@types/react": "19.3.0",
+      "@types/react-dom": "19.3.0",
+      "typescript": "5.9.3",
+      "vite": "8.3.2",
+      "@vitejs/plugin-react": "6.1.1",
+      "@tanstack/react-virtual": "3.14.13",
+      "@tauri-apps/api": "2.12.1",
+      "@tauri-apps/cli": "2.12.1"
+    },
+    "updateReasonsAndRisks": [
+      "React 19 可与当前 TanStack Virtual peer range 配合，但 React 主版本及其类型定义变化仍需 UI 行为和 typecheck 回归。",
+      "TypeScript 7.0.2 的 Node engine 允许 Node 24，但它是新主版本；@types/react/@types/react-dom 当前 NPM tags 最高只列到 ts6.0，没有 TS7 配套证据。保留已锁定 TypeScript 5.9.3；该版本落在 React 类型包公开的 ts5.9 tag 范围。",
+      "Vite 8.3.2 使用 Rolldown 构建；已锁 plugin-react 4.7.0 的 peer range 最高到 Vite 7，不能与 Vite 8 共用。要采用 Vite 8，需至少同步到 plugin-react 6.1.1（peer Vite ^8.0.0），并检查其他 Vite 插件/配置的 Rolldown 兼容。",
+      "TanStack Virtual 3.14.13 是与 React 19 相容的 patch 更新，但锁定 3.14.9 已覆盖 React 18/19 peer range；没有为 latest 单独升级的兼容必要。",
+      "Tauri API/CLI 2.12.1 不在现锁文件，Node engines/peer 元数据静态匹配不能替代与 Rust Tauri 版本、Windows x64 CLI binary、目标构建工具链的实际验证；应由 T11 PoC 一并验证。"
+    ]
+  },
+  "packages": [
+    {
+      "name": "react",
+      "lockedVersion": "18.3.1",
+      "latestStableCandidate": "19.3.0",
+      "license": {
+        "locked": "MIT",
+        "candidate": "MIT"
+      },
+      "nodeEngine": {
+        "locked": ">=0.10.0",
+        "candidate": ">=0.10.0",
+        "node24MetadataFit": "yes"
+      },
+      "peerDependencies": {
+        "locked": {},
+        "candidate": {}
+      },
+      "reuseCurrentLockExactVersion": true,
+      "releaseMaintenance": "19.3.0 为截至检查日的 latest；React 官方 release 页面列出 2026-09-09 发布。18.3.1 与 19.3.0 均在当前 lock resolution/官方 package metadata 中核对。",
+      "sources": [
+        "https://registry.npmjs.org/react/latest",
+        "https://raw.githubusercontent.com/facebook/react/v18.3.1/packages/react/package.json",
+        "https://github.com/react/react/releases"
+      ]
+    },
+    {
+      "name": "react-dom",
+      "lockedVersion": "18.3.1",
+      "latestStableCandidate": "19.3.0",
+      "license": {
+        "locked": "MIT",
+        "candidate": "MIT"
+      },
+      "nodeEngine": {
+        "locked": "未声明",
+        "candidate": "未声明",
+        "node24MetadataFit": "未声明 Node engine；桌面/Web renderer 使用场景不由此元数据判定"
+      },
+      "peerDependencies": {
+        "locked": {
+          "react": "^18.3.1"
+        },
+        "candidate": {
+          "react": "^19.3.0"
+        }
+      },
+      "reuseCurrentLockExactVersion": true,
+      "releaseMaintenance": "19.3.0 是截至检查日 NPM latest；上游 package manifest 与 NPM versions 页面均列该稳定版本。",
+      "sources": [
+        "https://raw.githubusercontent.com/facebook/react/v18.3.1/packages/react-dom/package.json",
+        "https://raw.githubusercontent.com/facebook/react/v19.3.0/packages/react-dom/package.json",
+        "https://www.npmjs.com/package/react-dom?activeTab=versions"
+      ]
+    },
+    {
+      "name": "@types/react",
+      "lockedVersion": "18.3.31",
+      "latestStableCandidate": "19.3.0",
+      "license": {
+        "locked": "MIT",
+        "candidate": "MIT"
+      },
+      "nodeEngine": {
+        "locked": "未声明",
+        "candidate": "未声明",
+        "node24MetadataFit": "类型包；没有 Node engine 要求"
+      },
+      "peerDependencies": {
+        "locked": {},
+        "candidate": {}
+      },
+      "reuseCurrentLockExactVersion": true,
+      "releaseMaintenance": "NPM latest 19.3.0 有 ts5.6、ts5.7、ts5.8、ts5.9、ts6.0 dist-tags；未见 ts7 tag。与 TypeScript 5.9.3 的公开标签相符。",
+      "sources": [
+        "https://www.npmjs.com/package/%40types/react?activeTab=versions",
+        "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/master/types/react/package.json"
+      ]
+    },
+    {
+      "name": "@types/react-dom",
+      "lockedVersion": "18.3.7",
+      "latestStableCandidate": "19.3.0",
+      "license": {
+        "locked": "MIT",
+        "candidate": "MIT"
+      },
+      "nodeEngine": {
+        "locked": "未声明",
+        "candidate": "未声明",
+        "node24MetadataFit": "类型包；没有 Node engine 要求"
+      },
+      "peerDependencies": {
+        "locked": {
+          "@types/react": "^18.0.0"
+        },
+        "candidate": {
+          "@types/react": "^19.3.0"
+        }
+      },
+      "reuseCurrentLockExactVersion": true,
+      "releaseMaintenance": "NPM latest 19.3.0 的 TypeScript dist-tags 包含 ts5.9 与 ts6.0，不含 ts7；React DOM 类型包与 React 类型需保持同一主版本。",
+      "sources": [
+        "https://www.npmjs.com/package/%40types/react-dom?activeTab=versions",
+        "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/master/types/react-dom/package.json"
+      ]
+    },
+    {
+      "name": "typescript",
+      "lockedVersion": "5.9.3",
+      "latestStableCandidate": "7.0.2",
+      "license": {
+        "locked": "Apache-2.0",
+        "candidate": "Apache-2.0"
+      },
+      "nodeEngine": {
+        "locked": ">=14.17",
+        "candidate": ">=16.20.0",
+        "node24MetadataFit": "yes"
+      },
+      "peerDependencies": {
+        "locked": {},
+        "candidate": {}
+      },
+      "reuseCurrentLockExactVersion": true,
+      "releaseMaintenance": "7.0.2 为截至检查日的 NPM latest；Microsoft/TypeScript GitHub release 页面记录 2026-08-20 发布。新主版本应单独跑全 workspace typecheck/build。",
+      "sources": [
+        "https://registry.npmjs.org/typescript/latest",
+        "https://raw.githubusercontent.com/microsoft/TypeScript/v5.9.3/package.json",
+        "https://github.com/microsoft/TypeScript/releases"
+      ]
+    },
+    {
+      "name": "vite",
+      "lockedVersion": "6.4.3",
+      "latestStableCandidate": "8.3.2",
+      "license": {
+        "locked": "MIT",
+        "candidate": "MIT"
+      },
+      "nodeEngine": {
+        "locked": "^18.0.0 || ^20.0.0 || >=22.0.0",
+        "candidate": "^20.19.0 || >=22.12.0",
+        "node24MetadataFit": "yes；已锁 @types/node 22.20.1 也满足 candidate 可选 peer >=22.12.0"
+      },
+      "peerDependencies": {
+        "locked": {
+          "@types/node": "^18.0.0 || ^20.0.0 || >=22.0.0",
+          "otherPeers": "jiti、less、lightningcss、sass、sass-embedded、stylus、sugarss、terser、tsx、yaml；均为可选"
+        },
+        "candidate": {
+          "@types/node": "^20.19.0 || >=22.12.0",
+          "otherPeers": "@vitejs/devtools ^0.7.1、esbuild ^0.27.0 || ^0.28.0、jiti >=1.21.0、less ^4.0.0、sass/sass-embedded ^1.70.0、stylus >=0.54.8、sugarss ^5.0.0、terser ^5.16.0、tsx ^4.8.1、yaml ^2.4.2；均为可选"
+        }
+      },
+      "reuseCurrentLockExactVersion": true,
+      "releaseMaintenance": "NPM latest 为 8.3.2；Vite 官方 GitHub release 页面列出 v8.3.2 于 2026-10-01 发布。8.x package manifest 将 build bundle 指向 Rolldown。",
+      "sources": [
+        "https://www.npmjs.com/package/vite?activeTab=versions",
+        "https://raw.githubusercontent.com/vitejs/vite/v6.4.3/packages/vite/package.json",
+        "https://raw.githubusercontent.com/vitejs/vite/v8.3.2/packages/vite/package.json",
+        "https://github.com/vitejs/vite/releases"
+      ]
+    },
+    {
+      "name": "@vitejs/plugin-react",
+      "lockedVersion": "4.7.0",
+      "latestStableCandidate": "6.1.1",
+      "license": {
+        "locked": "MIT",
+        "candidate": "MIT"
+      },
+      "nodeEngine": {
+        "locked": "^14.18.0 || >=16.0.0",
+        "candidate": "^20.19.0 || >=22.12.0",
+        "node24MetadataFit": "yes"
+      },
+      "peerDependencies": {
+        "locked": {
+          "vite": "^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0"
+        },
+        "candidate": {
+          "vite": "^8.0.0",
+          "optional": {
+            "@rolldown/plugin-babel": "^0.1.7 || ^0.2.0",
+            "babel-plugin-react-compiler": "^1.0.0",
+            "oxc-transform-react": "^0.145.0"
+          }
+        }
+      },
+      "reuseCurrentLockExactVersion": true,
+      "releaseMaintenance": "6.1.1 是截至检查日 NPM latest；其 manifest 明确要求 Vite 8，且注明对 Rollup API 不兼容。不得把锁定的 4.7.0 与 Vite 8 配对。",
+      "sources": [
+        "https://www.npmjs.com/package/%40vitejs/plugin-react",
+        "https://raw.githubusercontent.com/vitejs/vite-plugin-react/plugin-react%404.7.0/packages/plugin-react/package.json",
+        "https://raw.githubusercontent.com/vitejs/vite-plugin-react/plugin-react%406.1.1/packages/plugin-react/package.json"
+      ]
+    },
+    {
+      "name": "@tanstack/react-virtual",
+      "lockedVersion": "3.14.9",
+      "latestStableCandidate": "3.14.13",
+      "license": {
+        "locked": "MIT",
+        "candidate": "MIT"
+      },
+      "nodeEngine": {
+        "locked": "未声明",
+        "candidate": "未声明",
+        "node24MetadataFit": "浏览器库；无 Node engine 限制"
+      },
+      "peerDependencies": {
+        "locked": {
+          "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
+          "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
+        },
+        "candidate": {
+          "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
+          "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
+        }
+      },
+      "reuseCurrentLockExactVersion": true,
+      "releaseMaintenance": "3.14.13 为截至检查日 NPM latest，NPM 页面显示近期发布；3.14.9 上游 changelog 显示是 patch 更新并带 virtual-core 3.17.7。",
+      "sources": [
+        "https://www.npmjs.com/package/%40tanstack/react-virtual",
+        "https://github.com/TanStack/virtual/blob/main/packages/react-virtual/package.json",
+        "https://github.com/TanStack/virtual/blob/main/packages/react-virtual/CHANGELOG.md"
+      ]
+    },
+    {
+      "name": "@tauri-apps/api",
+      "lockedVersion": null,
+      "latestStableCandidate": "2.12.1",
+      "license": {
+        "candidate": "Apache-2.0 OR MIT"
+      },
+      "nodeEngine": {
+        "candidate": "未声明",
+        "node24MetadataFit": "WebView API 包没有 Node engine/peer 声明；对 renderer 元数据无阻断，实际 Tauri bridge 未验证"
+      },
+      "peerDependencies": {
+        "candidate": {}
+      },
+      "reuseCurrentLockExactVersion": false,
+      "releaseMaintenance": "截至检查日 NPM latest 与 Tauri 上游 packages/api manifest 均为 2.12.1。",
+      "sources": [
+        "https://www.npmjs.com/package/%40tauri-apps/api?activeTab=versions",
+        "https://raw.githubusercontent.com/tauri-apps/tauri/dev/packages/api/package.json"
+      ]
+    },
+    {
+      "name": "@tauri-apps/cli",
+      "lockedVersion": null,
+      "latestStableCandidate": "2.12.1",
+      "license": {
+        "candidate": "Apache-2.0 OR MIT"
+      },
+      "nodeEngine": {
+        "candidate": ">= 10",
+        "node24MetadataFit": "yes；上游 NAPI targets 包含 x86_64-pc-windows-msvc；实际安装、平台包解析和 CLI 启动未验证"
+      },
+      "peerDependencies": {
+        "candidate": {}
+      },
+      "reuseCurrentLockExactVersion": false,
+      "releaseMaintenance": "截至检查日 NPM Tauri organization 页面列 API/CLI 2.12.1；上游 packages/cli manifest 同为 2.12.1，提供 Windows MSVC x64 target。",
+      "sources": [
+        "https://www.npmjs.com/org/tauri-apps",
+        "https://raw.githubusercontent.com/tauri-apps/tauri/dev/packages/cli/package.json",
+        "https://www.npmjs.com/package/%40tauri-apps/cli"
+      ]
+    }
+  ],
+  "crossPackageChecks": [
+    "React DOM 19.3.0 的 peer 为 react ^19.3.0；与 React 19.3.0 匹配。",
+    "@types/react-dom 19.3.0 的 peer 为 @types/react ^19.3.0；两套 React 类型需同版本主线。",
+    "TanStack Virtual 3.14.13 的 React/React DOM peers 含 ^18 与 ^19，兼容已锁 React 18，也兼容候选 React 19。",
+    "Vite 8.3.2 的 Node engine 和 @types/node optional peer 均接受 Node 24 / 当前锁定 @types/node 22.20.1；plugin-react 必须从锁定 4.7.0 升到 peer Vite ^8 的 6.1.1。",
+    "@types/react 与 @types/react-dom 19.3.0 的 NPM tags 包含 ts5.9；TypeScript 5.9.3 可沿用。tags 当前最高到 ts6.0，故 TS7 与 React 19 类型配合未由官方 tag 证明。",
+    "Tauri API 2.12.1 无 Node engine/peer；CLI 2.12.1 声明 Node >=10、无 peer，且列出 Windows x64 MSVC target。两者属于未锁入项目的独立 Tauri 路径，不能据此宣布 T11 PoC 已通过。"
+  ],
+  "directPackageLicenseCoverage": {
+    "checkedDirectPackages": [
+      "react",
+      "react-dom",
+      "@types/react",
+      "@types/react-dom",
+      "typescript",
+      "vite",
+      "@vitejs/plugin-react",
+      "@tanstack/react-virtual",
+      "@tauri-apps/api",
+      "@tauri-apps/cli"
+    ],
+    "result": "表内逐包记录所查版本 package metadata 的 SPDX license。",
+    "limit": "未审计这些包的完整 transitive dependency/license graph、TypeScript 7 的按平台 optional packages 或 Tauri CLI 安装时的 Windows binary subpackage；此文件不是 SBOM，也不能替代发行前的 license scanner。"
+  },
+  "notVerified": [
+    "未安装任一新候选，未改 package.json、pnpm-lock.yaml、Cargo.toml 或 Cargo.lock；没有执行新的 pnpm resolve/build/typecheck。",
+    "Node engine/peer 匹配是静态 package metadata 判断，不证明候选最新版在实际 Windows Node 24 环境运行正常。",
+    "没有验证 Vite 8 / plugin-react 6 与未来 v2 各插件、配置、contracts build 的集成。",
+    "没有在 Windows x64 安装或启动 @tauri-apps/cli，也没有将 JS API/CLI 与 Tauri Rust crate/SDK 版本一起执行 T11 PoC。",
+    "未对所有传递依赖做完整 license/SBOM 审核。"
+  ]
+}

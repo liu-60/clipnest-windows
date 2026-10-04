@@ -1,0 +1,513 @@
+{
+  "schemaVersion": 1,
+  "task": "T19",
+  "status": "not_started",
+  "executionStatus": "NOT_RUN",
+  "planType": "synthetic_fixture_planning_only",
+  "dependencies": [
+    {
+      "task": "T16",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN"
+    },
+    {
+      "task": "T18",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN"
+    }
+  ],
+  "source": {
+    "taskCard": "docs/spec/tasks/T19.md",
+    "specifications": [
+      "docs/spec/03-data-sync-and-security.md §3.2",
+      "docs/spec/03-data-sync-and-security.md §5.3",
+      "docs/spec/03-data-sync-and-security.md §7.2",
+      "docs/spec/03-data-sync-and-security.md §7.3",
+      "docs/spec/03-data-sync-and-security.md §8.2",
+      "docs/spec/03-data-sync-and-security.md §8.3",
+      "docs/spec/03-data-sync-and-security.md §9",
+      "docs/spec/03-data-sync-and-security.md §10 scenarios S09/S10/S17/S18/S24/S25",
+      "docs/spec/03-data-sync-and-security.md §11",
+      "docs/spec/limits.v1.json"
+    ],
+    "interpretation": "The limits file contains planning/experiment budgets; listing a value here is not evidence that it was measured or achieved."
+  },
+  "dataAndServiceBoundary": {
+    "fixtureData": "Synthetic workspace IDs, entity IDs, revisions, sequences, encrypted-manifest byte shapes, attachment references, object-version identities, usage-ledger rows, device leases, snapshots, and recovery metadata only.",
+    "futureDatabaseHarness": "Any later behavior run requires a disposable isolated PostgreSQL database/schema with synthetic rows and no production credentials; none was provisioned or contacted for this plan.",
+    "futureObjectStoreHarness": "Any later provider behavior run requires a disposable isolated versioned object-store bucket containing synthetic objects; no provider, bucket, endpoint, or service was contacted for this plan.",
+    "userDataRead": false,
+    "databaseOrObjectStoreContacted": false,
+    "buildOrBehaviorExecuted": false
+  },
+  "fixtures": [
+    {
+      "id": "T19-F01",
+      "references": [
+        "03 §7.3",
+        "03 §3.2 snapshots/snapshot_rows/snapshot_attachment_refs"
+      ],
+      "setup": "Use synthetic live entities and immutable manifest DTOs in a disposable workspace; introduce a concurrent entity write while the snapshot worker is waiting to acquire the workspace lock.",
+      "action": "Plan a bounded READ COMMITTED materialization transaction that takes the workspace lock first, reads epoch and high-water H after the lock, inserts snapshot rows and attachment refs, then persists rowCount and ready state.",
+      "assertions": [
+        "The snapshot records the epoch and H read after acquiring the workspace lock, and its rows represent that fixed state.",
+        "snapshot_rows and snapshot_attachment_refs become visible with the ready snapshot in the same transaction; a failed materialization does not publish a partial ready snapshot.",
+        "The materialization transaction is bounded, does not retain a transaction handle for later pages, and performs no S3 or other network call while holding the workspace lock."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T19-OQ05"
+      ]
+    },
+    {
+      "id": "T19-F02",
+      "references": [
+        "03 §7.3",
+        "03 §10 S09"
+      ],
+      "setup": "A synthetic ready snapshot contains multiple entity IDs; additional synthetic creates, updates, and deletes occur after H while the client requests multiple pages.",
+      "action": "Plan page reads with the same snapshotId, epoch, and H using an entityId keyset, then plan catchup from H with a fixed upper sequence.",
+      "assertions": [
+        "Every page comes from the same materialized snapshot and does not fall through to current heads or OFFSET pagination.",
+        "Writes with seq greater than H appear in catchup rather than changing already materialized snapshot rows.",
+        "Page requests do not keep a database connection or lock open across requests; drafts remain separate until validation and atomic namespace swap."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": []
+    },
+    {
+      "id": "T19-F03",
+      "references": [
+        "03 §7.2",
+        "03 §7.3",
+        "03 §10 S09"
+      ],
+      "setup": "Synthetic active device leases, a valid ready snapshot at H, change-log entries above H, and immutable versions/attachments are arranged around the permitted GC prefix.",
+      "action": "Plan log/version/attachment GC while paging and catchup remain outstanding; repeat after snapshot expiry and after a lease becomes expired.",
+      "assertions": [
+        "A valid snapshot pins its attachment refs and all catchup change-log entries with seq greater than H and their corresponding versions until expiry.",
+        "The safe log-GC prefix does not pass the minimum of active lease appliedSeq values and valid ready snapshot H values; when the protected set is empty, the specified bound is lastSeq.",
+        "An expired device is moved to snapshot_required and no longer blocks GC through its stale appliedSeq; changing only a sequence number cannot restore it to active."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": []
+    },
+    {
+      "id": "T19-F04",
+      "references": [
+        "03 §7.3",
+        "03 §9",
+        "03 §10 S09"
+      ],
+      "setup": "Synthetic snapshot requests cover building, ready, expired, and epoch-changed states; page requests are attempted before ready and after expiry/epoch change.",
+      "action": "Plan page access and client restart decisions for each lifecycle state.",
+      "assertions": [
+        "Snapshot pages are unavailable before ready.",
+        "An expired snapshot maps to the specified SNAPSHOT_EXPIRED result and an epoch change maps to EPOCH_MISMATCH; the client starts a new snapshot rather than continuing the old page stream.",
+        "The fixture asserts no other snapshot failure code or retry mapping until that mapping is frozen."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T19-OQ01"
+      ]
+    },
+    {
+      "id": "T19-F05",
+      "references": [
+        "03 §7.3",
+        "03 §11",
+        "03 §10 S09"
+      ],
+      "setup": "Prepare synthetic workspaces at the configured 50,000 live-entity limit, including history, saved, collection, and collection_entry entities; create a separate injected 50,001-row over-limit fixture. Include a manifest payload at the configured 16,384-byte inline boundary and record its snapshot DTO size separately.",
+      "action": "Plan pre-count, bounded snapshot materialization, and the experiment against snapshotStatementTimeoutMs without increasing configured limits.",
+      "assertions": [
+        "The snapshot row count includes live history, saved, collection, and collection_entry entities; retired tombstones and old versions do not count as snapshot rows.",
+        "The 50,000-row maximum fixture is measured against the 2,000 ms snapshot statement budget; if the limit cannot be met, the specified response is to stop new workspace cloud writes or optimize materialization, not to remove the lock or use unbounded selection.",
+        "The 50,001-row injected over-limit fixture is counted and rejected before unbounded materialization; its exact external error/job mapping remains OPEN_QUESTION.",
+        "The configured 16,384-byte inline manifest boundary and the serialized snapshot-row DTO are recorded as separate quantities until their exact size-accounting relationship is specified."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T19-OQ01",
+        "T19-OQ02"
+      ]
+    },
+    {
+      "id": "T19-F06",
+      "references": [
+        "03 §7.2",
+        "03 §7.3",
+        "03 §11",
+        "03 §10 S10"
+      ],
+      "setup": "Synthetic device state is placed just before and at the configured 90-day offline lease expiry. In the reused-snapshot branch, priorSeenHighWater=120 and valid reused snapshot H=90 for the same epoch; appliedSeq is lower than server high-water.",
+      "action": "Plan expiry handling, reuse/download of snapshot H=90, fixed-H catchup through seq 120, and bootstrap acknowledgement tied to that snapshot; keep the old namespace active until catchup validation completes.",
+      "assertions": [
+        "An expired device enters snapshot_required; an ordinary ACK or a manually increased appliedSeq cannot activate it or extend its lease.",
+        "An authorized device can reactivate only after validating every snapshot page and catchup through at least H, then submitting a bootstrap ACK tied to the snapshot; the server validates snapshot ownership, epoch, H, and the ACK floor before marking active and establishing a new lease.",
+        "Unsent drafts and old outbox state remain separate from the recovery namespace until validation and atomic swap; a stale outbox is not blindly replayed.",
+        "For the explicit priorSeenHighWater=120 and reused snapshot H=90 branch, the old namespace remains published and no swap occurs at H=90; swap is allowed only after catchup reaches at least seq 120 and the recovery namespace validates."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T19-OQ03"
+      ]
+    },
+    {
+      "id": "T19-F07",
+      "references": [
+        "03 §3.2",
+        "03 §8.3",
+        "03 §10 S17/S18"
+      ],
+      "setup": "Synthetic versions and an attachment are referenced by combinations of current heads, valid change_log rows, retained old versions, trash heads, saved items, and snapshot pins.",
+      "action": "Plan candidate selection and reference recheck immediately before GC marks an attachment deleting.",
+      "assertions": [
+        "The protected reference set includes current versions, still-valid change_log references, retained old versions, recycle-bin/trash references, and valid snapshot pins.",
+        "A current head is never removed by version TTL, and a shared blob remains protected while any saved item, retained version, trash head, log, or snapshot references it.",
+        "Only versions whose reference and retention conditions have all cleared become GC candidates; the fixture does not invent an unreferenced-version selection order."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": []
+    },
+    {
+      "id": "T19-F08",
+      "references": [
+        "03 §3.2",
+        "03 §8.3",
+        "03 §11",
+        "03 §10 S18"
+      ],
+      "setup": "Synthetic entity versions include an old current head, a deleted head older than versionHistoryDays, and a shared blob still referenced by a saved item.",
+      "action": "Plan history expiry, deletion into trash, trash TTL expiry, and reference-aware GC at the configured 30-day boundaries.",
+      "assertions": [
+        "History/version expiry does not remove a current head, and deleting an entity moves its last head to trash_head_version_id with trash_expires_at equal to deleted_at plus trashDays.",
+        "A head older than versionHistoryDays remains protected through trashDays; after trash expiry, any remaining log, retained-version, saved-item, or snapshot reference still prevents deletion.",
+        "Removing a collection relationship does not delete its saved target, and a later repin uses a new relationship ID."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": []
+    },
+    {
+      "id": "T19-F09",
+      "references": [
+        "03 §2.2",
+        "03 §3.2",
+        "03 §11",
+        "03 §10 S10/S18"
+      ],
+      "setup": "Use synthetic counts liveEntities=49,999 and retiredIds=950,000 (sum 999,999 of maxRetiredIdsPerWorkspace=1,000,000), with maxLiveEntitiesPerWorkspace=50,000; one create can reserve the final retirement slot.",
+      "action": "Plan one create that reserves the last slot, deletion of a different live entity converting its already-reserved slot to retired, a subsequent extra create attempt at the full lifetime budget, and replay/recreation of a retired ID.",
+      "assertions": [
+        "Maintain liveEntities <= maxLiveEntitiesPerWorkspace and liveEntities + retiredIds <= maxRetiredIdsPerWorkspace; a create is admitted only when liveEntities + retiredIds + 1 <= maxRetiredIdsPerWorkspace and the live cap also permits it.",
+        "The in-budget create reserves one future retirement slot. Deleting a live entity decreases liveEntities and converts its already-reserved slot into retiredIds, so the sum stays constant; deletion does not request a new slot and is never refused because the fence is full.",
+        "At the full lifetime ID budget, further create is blocked and the export or explicit new-workspace migration entry point is offered; fences are not compacted/deleted and history clearing does not reset identity.",
+        "Live and retired counts remain separately tracked under the single combined lifetime-ID budget; retired IDs and old versions are not snapshot rows.",
+        "A retired entity ID is never reused."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T19-OQ04"
+      ]
+    },
+    {
+      "id": "T19-F10",
+      "references": [
+        "03 §8.2",
+        "03 §8.3",
+        "03 §9",
+        "03 §10 S17/S24"
+      ],
+      "setup": "Synthetic ready attachment has zero references; include one remaining physical object version, a concurrent attempted new reference, and variants where provider deletion fails or only a delete marker is returned.",
+      "action": "Plan GC state transition, business outbox write, out-of-transaction physical-version deletion, confirmation, and ledger reconciliation.",
+      "assertions": [
+        "GC follows workspace then ledger then attachment lock order, verifies zero references, marks ready to deleting and writes its outbox event transactionally before external deletion.",
+        "External deletion occurs outside PostgreSQL locks; logical/object usage is decremented and the attachment becomes deleted only after the required physical object versions are confirmed absent.",
+        "A delete marker alone or a failed VersionId deletion does not release usage, and a new reference to a deleting attachment receives ATTACHMENT_NOT_READY rather than reviving the object.",
+        "The same usage event/source/phase replay does not apply a second ledger delta."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T19-OQ06"
+      ]
+    },
+    {
+      "id": "T19-F11",
+      "references": [
+        "03 §8.2",
+        "03 §8.3",
+        "03 §9",
+        "03 §10 S14/S16/S24"
+      ],
+      "setup": "Synthetic ledger and versioned-object inventory include reserved uploads, observed staging objects, a copying candidate, ready objects, an unreferenced ready attachment, and an unregistered provider object.",
+      "action": "Plan reconciliation after reserve expiry, copy/worker crash, provider timeout, quota decrease, and repeated pg-boss delivery.",
+      "assertions": [
+        "Ledger byte and object counters remain nonnegative and account for reserved, staging, pending-final, and live objects until each corresponding physical cleanup is confirmed.",
+        "An expired reservation alone does not zero staging or candidate usage; an unknown copy result retains its reserved/pending accounting until reconciled.",
+        "A repeated worker event is idempotent by its source/phase key; unregistered objects enter only a restricted cleanup quarantine and are neither exposed to clients nor immediately released from accounting.",
+        "Storage failure or reduced entitlement blocks positive-delta uploads while reads, deletes, and export remain available; local saved data is not silently deleted."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T19-OQ06"
+      ]
+    },
+    {
+      "id": "T19-F12",
+      "references": [
+        "03 §8.2",
+        "03 §8.3",
+        "03 §11",
+        "03 §10 S14/S15"
+      ],
+      "setup": "Synthetic staging/candidate objects have signed URL and reservation timestamps around the configured 300-second upload URL and 600-second reservation lifetimes.",
+      "action": "Plan cleanup before URL expiry, after URL expiry, and after an uncertain provider delete; repeat HEAD/delete confirmation before reconciling usage.",
+      "assertions": [
+        "Staging is not finally released before signed_until; deleting it earlier would permit an old still-valid conditional URL to recreate it.",
+        "URL expiry closes new signed writes/finalization as specified but does not by itself release staging/candidate accounting.",
+        "After expiry, cleanup rechecks physical versions and decrements usage only after deletion is confirmed; the plan does not infer provider semantics before T18's provider gate."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T19-OQ06"
+      ]
+    },
+    {
+      "id": "T19-F13",
+      "references": [
+        "03 §5.3",
+        "03 §7.3",
+        "03 §8.3",
+        "03 §10 S25",
+        "03 §11"
+      ],
+      "setup": "Construct synthetic backup manifests, entity snapshots, object-version inventories, post-backup delete records, device cursors, drafts, and ledgers in a disposable isolated recovery scenario. The stale backup carries deletion-watermark marker 25 while durable post-backup evidence carries marker 41; the marker encoding itself is not specified.",
+      "action": "Plan recovery while normal writes/downloads remain isolated; replay the stale backup marker 25, reconcile the external durable marker 41 and deletion records, then exercise complete-evidence and missing-evidence branches.",
+      "assertions": [
+        "PostgreSQL and object backups are not presumed consistent; normal writes/downloads stay isolated until object/version and ledger reconciliation plus post-restore deletion checks are complete.",
+        "If deletion evidence cannot be proven complete, the recovered workspace remains isolated; backup presence alone is not a recovery pass.",
+        "Only after reconciliation and deletion-fence checks does the planned flow increase epoch and reopen clients through a fresh snapshot/bootstrap; old-epoch cursors cannot resume as current state.",
+        "A client recovers into a new namespace, catches up and validates before atomic swap; old unsent drafts and recovery copies stay local, and old draft/outbox data is not automatically uploaded around deletion fences.",
+        "Synthetic S25 isolation checks do not claim the production-equivalent operational rehearsal assigned to T29/T30.",
+        "With synthetic stale marker 25 and durable marker 41, recovered deletion watermark must not fall below 41 after backup replay; reapply post-backup deletions before reopening writes/downloads. The exact evidence source, completeness proof, and marker encoding remain OPEN_QUESTION."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T19-OQ07",
+        "T19-OQ08"
+      ]
+    },
+    {
+      "id": "T19-F14",
+      "references": [
+        "03 §7.3",
+        "03 §9",
+        "T19-OQ05"
+      ],
+      "setup": "A synthetic snapshot build is in progress with no ready publication; request cancellation at controlled points before materialization commit and during a simulated worker interruption.",
+      "action": "Plan cancellation/worker-interruption probes against an isolated harness; do not assume a provider or successful backend result.",
+      "assertions": [
+        "A canceled or interrupted build never exposes partial snapshot rows or pins as a ready snapshot; readiness is atomic with materialization.",
+        "Exact cancel acknowledgement, terminal job state, cleanup/retry timing, and cancellation race behavior remain OPEN_QUESTION."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T19-OQ05",
+        "T19-OQ08"
+      ]
+    },
+    {
+      "id": "T19-F15",
+      "references": [
+        "03 §3.1 RLS/workspace scope",
+        "03 §9 RESOURCE_NOT_FOUND"
+      ],
+      "setup": "Create two synthetic workspaces and a principal authorized only for workspace A; seed distinguishable synthetic rows, snapshot rows/pins, and ledger entries in workspace B.",
+      "action": "Plan cross-workspace read and write attempts using B identifiers while each request is scoped to A.",
+      "assertions": [
+        "Workspace B data and existence are not disclosed to the A-scoped principal; unauthorized business objects map to the specified RESOURCE_NOT_FOUND behavior.",
+        "No write, snapshot, pin, ledger, or object reference is created in workspace B by an A-scoped request.",
+        "No global hash lookup or worker scope bypass is used; the fixture asserts only the frozen isolation outcome."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T19-OQ08"
+      ]
+    },
+    {
+      "id": "T19-F16",
+      "references": [
+        "03 §8.2",
+        "03 §8.3",
+        "03 §9",
+        "03 §11",
+        "docs/spec/limits.v1.json"
+      ],
+      "setup": "Prepare a synthetic entity at maxVersionsPerEntity=20 with eligible and current/log/trash/snapshot-protected versions. Independently seed object counts live=199997, staging=1, pending-final=1, reserved=1, totaling maxStoredObjectsPerWorkspace=200000.",
+      "action": "Plan a new version at the version cap, an upload reserve requiring two object slots against the full object budget, the expired-but-unconfirmed cleanup candidate, and the eligible-version cleanup branch; model accounting only without calling an object-store provider.",
+      "assertions": [
+        "An eligible unreferenced old version may be reclaimed only after all log, trash, snapshot, retention, and current-head protections clear; if the version cap remains full, reject the new version rather than silently deleting a protected version.",
+        "Stored-object accounting includes live, staging, pending-final, and reserved objects; an expired object remains counted until physical deletion is confirmed.",
+        "A reserve that would exceed the 200,000 stored-object cap is rejected before provider API work; live/staging/pending-final/reserved counters and usage ledger remain unchanged. The exact capacity code/details remain OPEN_QUESTION."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T19-OQ09"
+      ]
+    },
+    {
+      "id": "T19-F17",
+      "references": [
+        "03 §3.2 snapshots partial UNIQUE(wid) WHERE status IN (building,ready)",
+        "03 §7.3",
+        "T19-OQ01",
+        "T19-OQ08"
+      ],
+      "setup": "Use synthetic workspace A with one still-valid ready snapshot and workspace B with one building snapshot; keep the two workspaces independent.",
+      "action": "For A, request a snapshot while the ready snapshot remains valid. For B, issue a second snapshot request while the first remains building.",
+      "assertions": [
+        "Each workspace has at most one snapshot in building or ready state at a time.",
+        "A request in workspace A reuses the existing still-valid ready snapshot identity rather than creating a duplicate active snapshot.",
+        "A second request in workspace B cannot create another building/ready snapshot while one is building; exact external response/job mapping for this request remains OPEN_QUESTION."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T19-OQ01",
+        "T19-OQ08"
+      ]
+    }
+  ],
+  "resourceGates": [
+    {
+      "id": "T19-G01",
+      "scope": "Maximum legal snapshot dataset: 50,000 live entities including collection relationships, with retired IDs and old versions excluded from rowCount.",
+      "budget": "cloud.snapshotMaxRows = 50,000 and cloud.maxLiveEntitiesPerWorkspace = 50,000.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T19-G02",
+      "scope": "Maximum-row snapshot statement and workspace lock contention under the recorded isolated PostgreSQL plan.",
+      "budget": "server.snapshotStatementTimeoutMs = 2,000 ms; server.lockTimeoutMs = 250 ms.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T19-G03",
+      "scope": "Snapshot pin lifetime and end-to-end fixed paging, catchup through priorSeenHighWater, and bootstrap ACK within the 1,800-second TTL; measure elapsed time with a monotonic clock.",
+      "budget": "cloud.snapshotTtlSeconds = 1,800 seconds; the complete page + catchup + bootstrap path must finish within TTL; monotonic elapsed-time gate is NOT_RUN; no paging connection/transaction is held between requests.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T19-G04",
+      "scope": "Retired-ID, 20-version-per-entity, and 200,000 stored-object capacity boundaries, including protected-version and pending/reserved physical-object accounting.",
+      "budget": "cloud.maxRetiredIdsPerWorkspace = 1,000,000; cloud.maxVersionsPerEntity = 20; cloud.maxStoredObjectsPerWorkspace = 200,000.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T19-G05",
+      "scope": "S25 synthetic isolated recovery core and deletion-fence reconciliation.",
+      "budget": "No numeric pass threshold beyond the frozen limits; missing deletion evidence keeps the workspace isolated.",
+      "status": "NOT_RUN",
+      "evidence": []
+    }
+  ],
+  "commands": [
+    {
+      "id": "T19-C01",
+      "command": "pnpm --filter @clipnest/server test recovery",
+      "status": "NOT_RUN",
+      "blockedBy": [
+        "T16 accepted",
+        "T18 accepted",
+        "corresponding recovery implementation and isolated test harness"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "T19-C02",
+      "command": "pnpm test:integration -- --suite snapshots-gc",
+      "status": "NOT_RUN",
+      "blockedBy": [
+        "T16 accepted",
+        "T18 accepted",
+        "corresponding snapshot/GC implementation and disposable PostgreSQL/object-store harness"
+      ],
+      "evidence": []
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "T19-OQ01",
+      "topic": "Exact snapshot over-row-limit, timeout, and failed-build externally visible result/worker terminal mapping; do not invent a code or retry policy.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T19-OQ02",
+      "topic": "Fixed hardware/PostgreSQL plan and the precise 2,000 ms experiment measurement boundary for the maximum-row snapshot; record actual plan and timing when the gate is authorized.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T19-OQ03",
+      "topic": "Exact worker cadence/retry and lease-expiry scheduling interface, plus any snapshot-TTL clock start boundary not stated by the accepted interface; frozen 90-day expiry and snapshot-required/bootstrap semantics are not open questions.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T19-OQ04",
+      "topic": "Exact external error/result mapping for a create rejected at the lifetime ID budget. The policy is frozen: reserve a retirement slot at create, never refuse delete, block further creates at the budget, offer export/explicit new-workspace migration, and never compact/delete fences.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T19-OQ05",
+      "topic": "Exact pg-boss job cancellation/retry/result mapping and cleanup semantics for a crash during building; only no-half-snapshot and frozen states are asserted.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T19-OQ06",
+      "topic": "T18 is not accepted: selected object-store provider/SDK exact immutable version, HEAD, conditional-delete, and delete-confirmation behavior remains a provider gate.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T19-OQ07",
+      "topic": "Durable post-backup deletion-evidence source/format and how its completeness is proved during disaster recovery are not defined; if unknown, remain isolated.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T19-OQ08",
+      "topic": "T16/T18 canonical worker, snapshot, ledger, and restore interfaces are not accepted; fixtures state only the already frozen externally observable semantics and add no DTO fields.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T19-OQ09",
+      "topic": "Exact endpoint-to-code/details allocation within the frozen 507 capacity error family for a still-full protected-version or stored-object boundary; do not invent a mapping.",
+      "status": "OPEN_QUESTION"
+    }
+  ],
+  "limitations": [
+    "This is a synthetic fixture/interface plan only; no fixture behavior, benchmark, PostgreSQL operation, object-store call, package command, build, or service was executed.",
+    "T16 and T18 are not accepted, so production behavior and provider equivalence cannot be inferred from these fixtures.",
+    "All 2-second/50,000-row, TTL, lease, ledger, and recovery gates remain NOT_RUN; configured planning budgets are not performance results.",
+    "Production-equivalent disaster-recovery rehearsal and account-delete UI remain assigned to T29/T30."
+  ]
+}

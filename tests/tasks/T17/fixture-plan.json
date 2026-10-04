@@ -1,0 +1,930 @@
+{
+  "schemaVersion": 1,
+  "task": "T17",
+  "taskStatus": "not_started",
+  "planStatus": "preflight_only",
+  "executionStatus": "NOT_RUN",
+  "sourceOfExpectedBehavior": [
+    "docs/spec/tasks/T17.md",
+    "docs/spec/03-data-sync-and-security.md §6, §7.1-7.3, §9, §10 S03-S12/S26, §11",
+    "docs/spec/limits.v1.json local.totalBytes, cloud.outboxSoftWarnBytes/outboxHardLimitBytes/syncRetryMaxSeconds/offlineDeviceLeaseDays/operationReceiptRetentionDays, transport.summaryPageItems/summaryPageBytes",
+    "docs/spec/06-model-runbook.md §1-2, §5-8",
+    "docs/spec/08-acceptance-matrix.md §3"
+  ],
+  "dependencyGate": {
+    "dependsOn": [
+      "T07",
+      "T15",
+      "T16"
+    ],
+    "requiredStatus": "accepted",
+    "currentStatusAtPlanPreparation": {
+      "T07": "not_started",
+      "T15": "not_started",
+      "T16": "not_started",
+      "T06": "in_progress",
+      "T14": "not_started"
+    },
+    "state": "wait_for_T07_T15_T16_accepted",
+    "transitiveGate": "T07 requires accepted T06; T15 requires accepted T06 and T14; T16 requires accepted T14/T15 and T06 canonical DTO/migration foundations.",
+    "beforeGate": "Only synthetic fixture/interface planning is prepared. Do not implement Rust outbox/repository/sync behavior, connect a fake-success backend, run tests/builds, or claim SQLCipher, crypto, DTO, PostgreSQL, ACK, cursor, or snapshot acceptance before dependencies and required contracts are accepted."
+  },
+  "harnessBoundary": {
+    "syntheticInputs": "Use only symbolic profiles A/B, workspaces WA/WB, devices D1/D2, entities E1/E2, opaque wire/body/blob canaries, synthetic revisions/sequences/epochs, and synthetic receipts. Canaries are storage bytes only, not valid AEAD, crypto vectors, user content, or server success evidence.",
+    "plannedHarnesses": [
+      "After T07 acceptance, use disposable SQLCipher databases and the T07 local repository/object fixtures to inject transaction failures and inspect durable rows/refcounts without live profiles or plaintext reports.",
+      "After T06/T15/T16 acceptance, use frozen DTOs and the real T16 isolated sync integration harness; no success-shaped fake server may stand in for a receipt, push, pull, ACK, or lease result.",
+      "For snapshot recovery, use only a frozen snapshot-page/catchup contract and isolated disposable namespaces. T19/server snapshot integration is separately gated; this plan does not assume a snapshot endpoint or provider result exists."
+    ],
+    "forbidden": [
+      "Live profiles, real accounts/workspaces/devices, production/shared services, user data, credentials, key material, valid crypto vectors, or clipboard/input interaction.",
+      "Running implementation, behavior tests, builds, migrations, database/services, or measurements before T07/T15/T16 acceptance.",
+      "Treating cancellation, a missing receipt, an HTTP response, a mock transport, or a static plan as proof that a cloud mutation did or did not commit.",
+      "Changing immutable wire bytes/opId/baseRevision/nonce after possible delivery; auto-rebasing a sent op; dropping drafts/outbox on conflict, epoch/lease failure, budget pressure, or account switch.",
+      "Inventing DTO encoding/hash, ACKED row lifetime, conflict/merge policy, local byte accounting, or retry timing where the specification leaves it open."
+    ],
+    "acceptanceStatus": {
+      "sqlCipherLocalAtomicity": "NOT_RUN",
+      "outboxDependencyAndReplay": "NOT_RUN",
+      "pushReceiptAckAndConflict": "NOT_RUN",
+      "pullCursorEpochAndWatermark": "NOT_RUN",
+      "snapshotRecoveryAndAtomicPublish": "NOT_RUN",
+      "permissionCancellationCapacityAndErrorPaths": "NOT_RUN",
+      "requiredIndependentCriticalReview": "NOT_RUN"
+    }
+  },
+  "syntheticActors": {
+    "accountA": "A",
+    "accountB": "B",
+    "workspaceA": "WA",
+    "workspaceB": "WB",
+    "deviceA1": "D1",
+    "deviceA2": "D2",
+    "entityOne": "E1",
+    "entityTwo": "E2",
+    "wireBytes": "SYNTHETIC_OPAQUE_WIRE_BYTES_NOT_A_DTO_OR_CRYPTO_VECTOR",
+    "blobBytes": "SYNTHETIC_OPAQUE_PENDING_BLOB_BYTES",
+    "note": "Actors and bytes are symbolic test inputs only. No real identity, secret, valid encryption output, server receipt, or user content is embedded."
+  },
+  "cases": [
+    {
+      "id": "T17-LOCAL-MUTATION-ATOMIC-01",
+      "references": [
+        "T17.a",
+        "03 §6 steps 1-8",
+        "T07 local repository transaction"
+      ],
+      "harness": "future_sqlcipher_transaction_failpoints",
+      "executionStatus": "NOT_RUN",
+      "setup": "Use WA/D1 with a synthetic cloud-scope mutation, opaque prepared wire bytes, and an isolated local database. Exercise a failure before commit and a restart after commit.",
+      "action": "Inspect the materialized record/draft, outbox row, ownership counters, and emitted success signal on both sides of the commit boundary.",
+      "assert": [
+        "Before commit, the mutation has no durable partial record/outbox/counter effect and no success signal.",
+        "After commit, the record/draft and outbox are all durable together; UI success is emitted only after commit.",
+        "This fixture checks database transaction all-or-none behavior only; it does not claim power-loss/fsync guarantees until T07 freezes the database durability profile."
+      ],
+      "acceptanceGateIds": [
+        "localTransactionObjectOutboxAndNamespaceAtomicity",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-OBJECT-REFERENCE-OUTBOX-ATOMIC-01",
+      "references": [
+        "T17.a",
+        "03 §6 steps 3-8, §6 BLOB/object reference rules",
+        "T07 objects/outbox"
+      ],
+      "harness": "future_sqlcipher_object_reference_failpoints",
+      "executionStatus": "NOT_RUN",
+      "setup": "Prepare a synthetic record with newly owned body/original/thumbnail BLOBs and object references; inject a database failure while writing references, record, and outbox.",
+      "action": "Restart and inspect object ownership, references, pending byte counters, record, and outbox.",
+      "assert": [
+        "A committed record cannot lack its owned BLOB/reference or matching outbox mutation.",
+        "A rolled-back mutation cannot leave a durable success record or an unreferenced pending source BLOB that appears committed.",
+        "No plaintext staging file is introduced; cloud staging remains a rebuildable cache from committed local bytes."
+      ],
+      "acceptanceGateIds": [
+        "localTransactionObjectOutboxAndNamespaceAtomicity",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-NAMESPACE-ACCOUNT-ISOLATION-01",
+      "references": [
+        "T17.a",
+        "03 §6 namespace isolation",
+        "03 §5.4 local profile boundary"
+      ],
+      "harness": "future_sqlcipher_profile_namespace_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "Create synthetic anonymous, A/WA, A/other-workspace, and B/WB namespaces with distinct records, drafts, and outbox rows.",
+      "action": "Switch active profile/account and request pending mutations and local keys for each namespace.",
+      "assert": [
+        "A namespace switch cannot read, send, adopt, or acknowledge another namespace's outbox or key.",
+        "Anonymous local-only data remains separate from cloud-scoped data; account B cannot inherit A's pending mutations.",
+        "No namespace is deleted or merged as a side effect of switching."
+      ],
+      "acceptanceGateIds": [
+        "localTransactionObjectOutboxAndNamespaceAtomicity",
+        "permissionCancellationCapacityAndErrorPaths",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-DRAFT-WAIT-DEPENDENCY-01",
+      "references": [
+        "T17.a",
+        "03 §6 outbox minimum columns and dependency rule"
+      ],
+      "harness": "future_repository_dependency_state_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "Create a synthetic saved draft whose referenced attachment dependency is not uploaded/ready, then expose a committed-ready dependency in an isolated fixture.",
+      "action": "Inspect outbox state and eligible sync operations before and after the dependency becomes ready.",
+      "assert": [
+        "The blocked mutation is WAIT_DEPENDENCY while its dependency is not ready and does not claim a ready attachment reference.",
+        "Resolving the dependency can make the mutation eligible for preparation using the confirmed base revision; this does not exercise T18 upload behavior.",
+        "A failed dependency leaves the source draft and pending bytes available for recovery."
+      ],
+      "acceptanceGateIds": [
+        "dependencyDraftChainAndImmutableRetry",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-ONE-SENT-OP-PER-ENTITY-01",
+      "references": [
+        "T17.a-b",
+        "03 §6 one in-flight wire op and draft chain"
+      ],
+      "harness": "future_repository_draft_chain_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "Prepare two offline edits to E1 while its first wire op is eligible and then possibly delivered; keep a separate E2 mutation eligible.",
+      "action": "Ask the sync engine to prepare/schedule eligible operations before and after E1's first receipt is confirmed.",
+      "assert": [
+        "At most one possibly delivered wire operation for E1 exists at a time; later edits remain a persisted draft chain.",
+        "E2 can progress independently; E1's later operation is formed only after the prior operation is confirmed and a real revision is available.",
+        "A sent E1 operation is never merged into a later draft or silently replaced."
+      ],
+      "acceptanceGateIds": [
+        "dependencyDraftChainAndImmutableRetry",
+        "pushReceiptPartialResultAckAndConflict",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-SENDING-CRASH-REPLAY-01",
+      "references": [
+        "T17.a-b",
+        "03 §6 SENDING recovery"
+      ],
+      "harness": "future_sqlcipher_restart_replay_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "Persist a READY operation, mark it SENDING, simulate process termination before a result is durably acknowledged, then reopen the same isolated database.",
+      "action": "Read the recovered operation and make one retry request using the frozen DTO when available.",
+      "assert": [
+        "A recovered SENDING operation returns to READY after restart.",
+        "Its opId, wire_bytes, wire_sha256, wire_size, epoch, and base_revision remain unchanged.",
+        "This local recovery does not infer whether the prior network request committed."
+      ],
+      "acceptanceGateIds": [
+        "dependencyDraftChainAndImmutableRetry",
+        "localTransactionObjectOutboxAndNamespaceAtomicity",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-WIRE-IMMUTABLE-AFTER-SEND-01",
+      "references": [
+        "T17.a-b",
+        "03 §6 immutable sent wire"
+      ],
+      "harness": "future_outbox_mutation_guard_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "Mark a synthetic E1 operation as possibly delivered and retain its original opaque bytes and digest.",
+      "action": "Change a local draft, cursor, base revision, or request metadata and attempt to reuse the sent operation identity.",
+      "assert": [
+        "The original operation bytes and identity are not edited to reflect a newer draft or revision.",
+        "A new wire operation requires the prior result/revision and a new operation identity; merge of a possibly sent operation is rejected.",
+        "The plan does not assert a specific local error code for the attempted edit."
+      ],
+      "acceptanceGateIds": [
+        "dependencyDraftChainAndImmutableRetry",
+        "pushReceiptPartialResultAckAndConflict",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-PUSH-RESPONSE-LOSS-EXACT-RETRY-01",
+      "references": [
+        "T17.a-b",
+        "03 §7.1 push receipt and exact retry",
+        "T16 S03"
+      ],
+      "harness": "future_T16_isolated_sync_receipt_integration",
+      "executionStatus": "NOT_RUN",
+      "setup": "Use a frozen T06/T16 synthetic create operation and active synthetic D1 lease; let the isolated server commit, then drop its response before the client persists the receipt.",
+      "action": "Restart the client and retry the same operation using the original serialized bytes.",
+      "assert": [
+        "The retry reuses the same opId and exact bytes; the server receipt resolves to the original result/seq without a second version.",
+        "The client keeps the outbox row and draft until it durably records the receipt and confirmed revision/seq.",
+        "No receipt lookup result or absence is treated as proof that an ambiguous prior request failed."
+      ],
+      "acceptanceGateIds": [
+        "dependencyDraftChainAndImmutableRetry",
+        "pushReceiptPartialResultAckAndConflict",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-PUSH-PARTIAL-RESULT-01",
+      "references": [
+        "T17.b",
+        "03 §7.1 push operation granularity and response order",
+        "T16 push DTO"
+      ],
+      "harness": "future_T16_isolated_partial_push_integration",
+      "executionStatus": "NOT_RUN",
+      "setup": "Prepare independent synthetic operations for E1 and E2 in one batch; make one commit and one terminal rejection in the isolated T16 service.",
+      "action": "Deliver the response, interrupt local application between per-operation outcomes, and restart.",
+      "assert": [
+        "Each operation outcome is reconciled independently; the batch is not treated as all-or-nothing.",
+        "A committed operation is not regenerated or resent as a new operation when another item fails.",
+        "An unconfirmed operation remains in durable local state with its original bytes."
+      ],
+      "acceptanceGateIds": [
+        "pushReceiptPartialResultAckAndConflict",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-RETRY-TRANSIENT-ERROR-PRESERVES-01",
+      "references": [
+        "T17.b",
+        "03 §6 client retry",
+        "03 §9 retryable error family",
+        "limits.v1.json cloud.syncRetryMaxSeconds"
+      ],
+      "harness": "future_sync_error_trace_with_synthetic_clock",
+      "executionStatus": "NOT_RUN",
+      "setup": "Use synthetic network/5xx/429/TIMEOUT responses and a frozen retry policy; set maximum retry delay from syncRetryMaxSeconds=300 seconds.",
+      "action": "Advance the synthetic clock across retry attempts, including a response carrying Retry-After.",
+      "assert": [
+        "Transient errors preserve the operation and exact bytes; retries do not mint new operation identities.",
+        "Retry-After is a lower bound where present, and retry delay does not exceed the configured maximum.",
+        "No immediate unbounded retry loop occurs; exact jitter distribution/attempt schedule is not asserted until frozen."
+      ],
+      "acceptanceGateIds": [
+        "pushReceiptPartialResultAckAndConflict",
+        "permissionCancellationCapacityAndErrorPaths",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-AUTH-LOCK-REVOKE-QUOTA-RETENTION-01",
+      "references": [
+        "T17.b",
+        "03 §6 client retry",
+        "03 §9 local/cloud error actions"
+      ],
+      "harness": "future_sync_permission_and_error_mapping_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "Seed one synthetic READY operation and deliver AUTH_REQUIRED, DEVICE_REVOKED, KEY_LOCKED, and QUOTA_EXCEEDED outcomes in separate runs.",
+      "action": "Resume the client after each outcome and inspect the operation, draft, and next eligible action.",
+      "assert": [
+        "AUTH_REQUIRED retains the outbox while session recovery is required; DEVICE_REVOKED stops cloud sends; KEY_LOCKED waits for unlock.",
+        "Quota failure preserves the operation and does not silently switch its scope or discard local material.",
+        "No fixture claims a UI copy or unspecified local error code beyond the frozen protocol mapping."
+      ],
+      "acceptanceGateIds": [
+        "pushReceiptPartialResultAckAndConflict",
+        "permissionCancellationCapacityAndErrorPaths",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-CAS-CONFLICT-RETAIN-DRAFT-01",
+      "references": [
+        "T17.b",
+        "03 §7.1 CAS conflict behavior",
+        "03 §9 REVISION_CONFLICT"
+      ],
+      "harness": "future_T16_two_device_conflict_integration",
+      "executionStatus": "NOT_RUN",
+      "setup": "Start E1 at confirmed revision r. D1 and D2 create distinct offline edits from r; let D2 commit before D1's push.",
+      "action": "Deliver D1's stale operation and inspect the server receipt, remote head, and D1 local draft/outbox.",
+      "assert": [
+        "The stale operation receives the frozen terminal conflict outcome and does not overwrite the remote head.",
+        "D1 retains its draft for resolution; it does not silently rebase or replace the already-sent wire operation.",
+        "A later user-approved resolution, if any, uses a new operation based on a confirmed revision."
+      ],
+      "acceptanceGateIds": [
+        "pushReceiptPartialResultAckAndConflict",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-DELETE-CONFLICT-RECONFIRM-01",
+      "references": [
+        "T17.b",
+        "03 §7.1 delete/update conflict"
+      ],
+      "harness": "future_T16_delete_conflict_integration",
+      "executionStatus": "NOT_RUN",
+      "setup": "Prepare a D1 delete at revision r while D2 updates the same synthetic entity to r+1 first.",
+      "action": "Deliver D1's stale delete and restart after its response.",
+      "assert": [
+        "The stale delete cannot automatically advance to r+1 or delete the newer remote revision.",
+        "The local pending intent/draft remains available for explicit user confirmation; no new delete is emitted automatically.",
+        "The precise local mapping for ITEM_DELETED versus REVISION_CONFLICT remains governed by the frozen T16 DTO."
+      ],
+      "acceptanceGateIds": [
+        "pushReceiptPartialResultAckAndConflict",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-CONFLICT-COPY-EXPLICIT-NEW-ID-01",
+      "references": [
+        "T17.b",
+        "03 §7.1 conflict handling"
+      ],
+      "harness": "future_conflict_resolution_domain_and_repository_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "Retain one synthetic saved-item draft after a confirmed remote revision conflict; do not invoke any merge UI automatically.",
+      "action": "Observe the unresolved state, then separately exercise an explicit user-approved save-as-conflict-copy action after the resolution contract is frozen.",
+      "assert": [
+        "The unresolved draft is not overwritten or dropped while awaiting a user decision.",
+        "If the user explicitly creates the spec's conflict copy, it uses a fresh entity/version identity and newly prepared encryption rather than copying server ciphertext under a changed ID.",
+        "Automatic merge rules, user prompts, and exact action/result mapping remain OPEN_QUESTION."
+      ],
+      "fixtureStatus": "PARTIALLY_GATED_OPEN_QUESTION",
+      "acceptanceGateIds": [
+        "pushReceiptPartialResultAckAndConflict",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-EPOCH-MISMATCH-HOLD-OUTBOX-01",
+      "references": [
+        "T17.b-c",
+        "03 §7.1 epoch check",
+        "03 §7.2 epoch recovery"
+      ],
+      "harness": "future_T16_epoch_recovery_integration",
+      "executionStatus": "NOT_RUN",
+      "setup": "Persist an old-epoch synthetic outbox item and provide an isolated server state with a clearly newer workspace epoch.",
+      "action": "Attempt normal send and let the client process the epoch mismatch.",
+      "assert": [
+        "The old operation is not automatically replayed into the new epoch or rewritten with a new epoch.",
+        "The draft/outbox source remains preserved for snapshot/recovery and explicit resolution.",
+        "No rollback or recovery result is inferred from a stale response alone."
+      ],
+      "acceptanceGateIds": [
+        "pushReceiptPartialResultAckAndConflict",
+        "pullCursorEpochLeaseAndWatermark",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-EXPIRED-LEASE-OLD-OUTBOX-01",
+      "references": [
+        "T17.b-c",
+        "03 §7.1 receipt/lease recovery",
+        "03 §7.2 snapshot_required"
+      ],
+      "harness": "future_T16_expired_device_lease_integration",
+      "executionStatus": "NOT_RUN",
+      "setup": "Seed a clearly expired synthetic D1 lease, an old pending wire operation, and a server snapshot_required state.",
+      "action": "Attempt push with the old seenSeq and then follow the allowed snapshot-recovery entry path.",
+      "assert": [
+        "Changing only seenSeq or blindly replaying the old outbox cannot reactivate the device or bypass snapshot recovery.",
+        "The old operation and its draft remain available while receipt/entity status is reconciled; absence of an old receipt is not proof of failure.",
+        "No lease equality/renewal timing is tested here; the fixture uses an unambiguously expired state."
+      ],
+      "acceptanceGateIds": [
+        "pushReceiptPartialResultAckAndConflict",
+        "pullCursorEpochLeaseAndWatermark",
+        "snapshotCatchupAndAtomicNamespacePublish",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-CURSOR-EXPIRED-SNAPSHOT-RECOVERY-PRESERVE-01",
+      "references": [
+        "T17.b-c",
+        "03 §7.2 min_retained_seq/CURSOR_EXPIRED",
+        "03 §7.2 ACK/lease recovery",
+        "03 §7.3 fixed snapshot recovery",
+        "03 §9 CURSOR_EXPIRED"
+      ],
+      "harness": "future_T16_cursor_expired_plus_frozen_snapshot_contract",
+      "executionStatus": "NOT_RUN",
+      "setup": "Keep the active namespace at cursor afterSeq=80 with min_retained_seq=90, priorSeenHighWater=120, and a pending outbox operation for the same workspace epoch. Return the frozen 409 CURSOR_EXPIRED response; provide a valid snapshot H=90 and catchup changes through at least 120.",
+      "action": "Process CURSOR_EXPIRED, attempt recovery while observing sends, apply snapshot pages and catchup in a fresh namespace, then complete validation and publish.",
+      "assert": [
+        "CURSOR_EXPIRED selects snapshot recovery; the active namespace, priorSeenHighWater=120, draft, and old outbox bytes remain preserved during recovery.",
+        "The old pending operation is not blindly replayed while cursor recovery is required; receipt/entity reconciliation remains necessary before any explicit retry or resolution.",
+        "Snapshot H=90 is not treated as rollback during baseline load; catchup reaches at least 120 before namespace and published cursor switch atomically.",
+        "Bootstrap ACK occurs only after the recovered namespace/cursor is committed and is bound to the matching snapshot state.",
+        "The exact local status mapping for CURSOR_EXPIRED remains OPEN_QUESTION under T17-OQ-04; this fixture asserts the frozen recovery action only."
+      ],
+      "fixtureStatus": "GATED_OPEN_QUESTION",
+      "acceptanceGateIds": [
+        "pushReceiptPartialResultAckAndConflict",
+        "pullCursorEpochLeaseAndWatermark",
+        "snapshotCatchupAndAtomicNamespacePublish",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-OUTBOX-HARD-LIMIT-PENDING-BYTES-01",
+      "references": [
+        "T17.a",
+        "03 §6 pending byte accounting",
+        "limits.v1.json cloud.outboxSoftWarnBytes/outboxHardLimitBytes"
+      ],
+      "harness": "future_T07_outbox_budget_fixture",
+      "executionStatus": "NOT_RUN",
+      "setup": "After T07 freezes durable byte accounting, seed pendingBytes around outboxHardLimitBytes=209715200 and outboxSoftWarnBytes=52428800; include wire bytes and newly owned pending blob bytes.",
+      "action": "Attempt a new cloud mutation that falls under and over the hard cap while an existing operation is pending.",
+      "assert": [
+        "The accounting input includes exact wire bytes plus newly owned pending BLOB bytes; already cloud-ready re-downloadable shared blobs are not charged twice as pending uploads.",
+        "Above the hard limit, a new cloud mutation is blocked without deleting or changing prior committed operations; at/below it, capacity handling follows the frozen limits/config contract.",
+        "The exact database/WAL/shared-reference durable charge formula remains gated by T07 and is not invented here."
+      ],
+      "fixtureStatus": "GATED_OPEN_QUESTION",
+      "acceptanceGateIds": [
+        "localTransactionObjectOutboxAndNamespaceAtomicity",
+        "permissionCancellationCapacityAndErrorPaths",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-LOCAL-ONLY-AND-CLOUD-BUDGET-SCOPE-01",
+      "references": [
+        "T17.a",
+        "03 §6 local-only and cloud budget separation",
+        "limits.v1.json local.totalBytes"
+      ],
+      "harness": "future_T07_local_budget_fixture",
+      "executionStatus": "NOT_RUN",
+      "setup": "Use an isolated synthetic profile with local-only capacity and cloud outbox capacity varied independently around local.totalBytes=524288000.",
+      "action": "Fill one budget at a time and attempt local-only and personal-cloud mutations without deleting protected saved items or pending operations.",
+      "assert": [
+        "A cloud outbox hard-limit condition does not silently convert a personal-cloud edit to local-only or drop existing work.",
+        "Local-only mutations are governed by their own total local budget and do not create cloud outbox work.",
+        "Exact durable local.totalBytes charge components and WAL/shared-reference formula remain OPEN_QUESTION under T07."
+      ],
+      "fixtureStatus": "GATED_OPEN_QUESTION",
+      "acceptanceGateIds": [
+        "localTransactionObjectOutboxAndNamespaceAtomicity",
+        "permissionCancellationCapacityAndErrorPaths",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-LOCAL-TTL-NOT-CLOUD-DELETE-01",
+      "references": [
+        "T17.a-b",
+        "03 §2.2 local cache eviction and cloud tombstones",
+        "03 §6 scope separation"
+      ],
+      "harness": "future_repository_expiry_policy_fixture",
+      "executionStatus": "NOT_RUN",
+      "setup": "Seed one synthetic local cache/history copy eligible for local eviction and a separate cloud entity/outbox with no user delete action.",
+      "action": "Run local-only cache eviction/expiry and inspect generated cloud operations and the cloud tombstone state.",
+      "assert": [
+        "Local LRU/history cache eviction removes only the local copy and does not create a cloud delete/tombstone operation.",
+        "The fixture does not confuse local cache expiry with the separately specified account history retention or explicit user deletion path.",
+        "No cloud deletion is inferred from a local TTL or local cache cleanup event."
+      ],
+      "acceptanceGateIds": [
+        "localTransactionObjectOutboxAndNamespaceAtomicity",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-CANCEL-AMBIGUOUS-PUSH-PRESERVE-01",
+      "references": [
+        "T17.b",
+        "03 §6 immutable wire and retry",
+        "06 §8 unknown outcomes"
+      ],
+      "harness": "future_recording_transport_with_delivery_barrier",
+      "executionStatus": "NOT_RUN",
+      "setup": "Pause a synthetic push at a barrier after request bytes may have left the client but before any receipt is durably stored; cancel the client wait and restart.",
+      "action": "Inspect local state and reconcile through the frozen receipt/retry protocol without asserting whether the server received the request.",
+      "assert": [
+        "Cancellation of the wait does not mutate/delete the possibly sent operation or claim remote cancellation.",
+        "The operation remains recoverable with its original identity/bytes until a receipt or other frozen resolution is recorded.",
+        "Exact cancellation API, user-visible result, and whether cancellation may abort only pre-send preparation remain OPEN_QUESTION."
+      ],
+      "fixtureStatus": "OPEN_QUESTION",
+      "acceptanceGateIds": [
+        "dependencyDraftChainAndImmutableRetry",
+        "pushReceiptPartialResultAckAndConflict",
+        "permissionCancellationCapacityAndErrorPaths",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-PULL-FROZEN-UPPER-PAGE-BOUNDS-01",
+      "references": [
+        "T17.c",
+        "03 §7.2 PullRequestV1/PullResponseV1",
+        "T16 pull fixtures",
+        "limits.v1.json transport.summaryPageItems/summaryPageBytes"
+      ],
+      "harness": "future_T16_pull_wire_integration",
+      "executionStatus": "NOT_RUN",
+      "setup": "Use a frozen synthetic pull DTO and a workspace with more than 50 changes; add a separate page that reaches 131072 exact response bytes first.",
+      "action": "Freeze upperSeq on the first page, commit an additional change during traversal, and fetch remaining pages using the same upperSeq.",
+      "assert": [
+        "Pages obey the 50-item and 131072-byte configured limits; each toSeq is the final emitted change unless no changes remain through upperSeq.",
+        "The existing traversal does not include a later sequence beyond its frozen upperSeq; a new traversal can observe it.",
+        "A single summary too large to fit is excluded from behavior assertions until T16 freezes its policy."
+      ],
+      "acceptanceGateIds": [
+        "pullCursorEpochLeaseAndWatermark",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-PULL-APPLY-CURSOR-ATOMIC-REPLAY-01",
+      "references": [
+        "T17.c",
+        "03 §7.2 client apply/cursor transaction"
+      ],
+      "harness": "future_sqlcipher_pull_page_failpoints",
+      "executionStatus": "NOT_RUN",
+      "setup": "Prepare one synthetic response page and an existing cursor; inject failure before local page/cursor commit and restart, then apply successfully and replay the same page.",
+      "action": "Inspect the entity projection and stored cursor after each path.",
+      "assert": [
+        "A page and its cursor commit in one local transaction; failure cannot publish the new cursor without the page or the page without the cursor.",
+        "A replay after rollback is safe; a replay after commit is idempotent by the frozen entity/revision/seq rules.",
+        "No ACK is generated merely because an HTTP page was received."
+      ],
+      "acceptanceGateIds": [
+        "localTransactionObjectOutboxAndNamespaceAtomicity",
+        "pullCursorEpochLeaseAndWatermark",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-PULL-OLD-CHANGE-NO-HEAD-REGRESSION-01",
+      "references": [
+        "T17.c",
+        "03 §7.2 old change handling"
+      ],
+      "harness": "future_repository_out_of_order_change_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "Seed E1 with a locally confirmed newer revision while the durable cursor still precedes an older change for E1.",
+      "action": "Apply the older change page and then a current change page.",
+      "assert": [
+        "The old change advances the processed sequence as allowed but does not overwrite the newer confirmed head or report rollback.",
+        "Same versionId with conflicting ciphertext is treated as a protocol anomaly and does not replace local content.",
+        "A missing entity alone is not treated as proof of malicious rollback."
+      ],
+      "acceptanceGateIds": [
+        "pullCursorEpochLeaseAndWatermark",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-HIGH-WATER-OLD-RESPONSE-ORDER-01",
+      "references": [
+        "T17.c",
+        "03 §7.2 request-send-time watermark and network reordering"
+      ],
+      "harness": "future_sync_response_ordering_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "Start requests at observed watermarks 98 and 99; deliver the newer response first and the older in-flight response second.",
+      "action": "Process both responses while recording each request's send-time watermark and the client's maximum observed watermark.",
+      "assert": [
+        "A delayed response to an older request may be below the current watermark and does not trigger a false rollback alarm.",
+        "The stored maximum watermark never decreases when the delayed response arrives.",
+        "Rollback comparison uses the watermark captured when the corresponding current-state probe was sent."
+      ],
+      "acceptanceGateIds": [
+        "pullCursorEpochLeaseAndWatermark",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-REMOTE-ROLLBACK-NEW-PROBE-ISOLATE-01",
+      "references": [
+        "T17.c",
+        "03 §7.2 REMOTE_ROLLBACK_DETECTED"
+      ],
+      "harness": "future_sync_rollback_detection_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "Record a known same-epoch high watermark of 120, then issue a new current-state probe after that watermark is known.",
+      "action": "Return a server highWaterSeq below 120 for the newly issued probe.",
+      "assert": [
+        "The client isolates/reports the specified remote rollback condition instead of lowering the known watermark or publishing older state.",
+        "This fixture is distinct from replaying a legitimate old snapshot or processing a delayed old response."
+      ],
+      "acceptanceGateIds": [
+        "pullCursorEpochLeaseAndWatermark",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-ACK-COMMITTED-CURSOR-ONLY-01",
+      "references": [
+        "T17.c",
+        "03 §7.2 ACK applied_seq semantics",
+        "T16 ACK/lease fixture"
+      ],
+      "harness": "future_T16_ack_integration_with_local_commit_barrier",
+      "executionStatus": "NOT_RUN",
+      "setup": "Prepare one page whose local transaction can be paused before commit and an isolated active device with appliedSeq=q.",
+      "action": "Attempt ACK before page commit, then commit the page/cursor and submit the resulting applied sequence; also try a same-epoch regression and a value above server lastSeq.",
+      "assert": [
+        "Client ACK progress comes only from a locally committed cursor, not the time an HTTP response arrived.",
+        "Server ACK is monotonic within the same epoch and cannot exceed lastSeq; invalid ACK has no state effect.",
+        "A snapshot_required device cannot be activated by an ordinary ACK."
+      ],
+      "acceptanceGateIds": [
+        "pullCursorEpochLeaseAndWatermark",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-ACK-RECEIPT-REMOVE-ATOMIC-01",
+      "references": [
+        "T17.a-b",
+        "03 §6 ACKED/outbox removal rule",
+        "03 §7.1 operation receipt"
+      ],
+      "harness": "future_sqlcipher_receipt_ack_failpoints",
+      "executionStatus": "NOT_RUN",
+      "setup": "Persist one synthetic SENDING operation and provide a frozen successful receipt with committed revision/seq; inject local failure immediately before and after the receipt-confirmation transaction.",
+      "action": "Restart and inspect outbox row, receipt, confirmed revision/seq, and pending byte accounting.",
+      "assert": [
+        "Before the local ACK transaction commits, the operation remains recoverable and its pending bytes are not released.",
+        "After commit, receipt plus confirmed revision/seq are durable before or atomically with clearing the queue item and releasing its pending accounting.",
+        "The test does not require ACKED to remain as a durable intermediate row; that row lifetime is OPEN_QUESTION."
+      ],
+      "acceptanceGateIds": [
+        "localTransactionObjectOutboxAndNamespaceAtomicity",
+        "pushReceiptPartialResultAckAndConflict",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-SNAPSHOT-CATCHUP-BEFORE-PUBLISH-01",
+      "references": [
+        "T17.c",
+        "03 §7.2 snapshot_required",
+        "03 §7.3 fixed snapshot recovery"
+      ],
+      "harness": "future_frozen_snapshot_page_contract_and_isolated_namespaces",
+      "executionStatus": "NOT_RUN",
+      "setup": "Keep the current namespace at priorSeenHighWater=120; provide a synthetic reused snapshot at H=90 and catchup changes through at least 120.",
+      "action": "Write snapshot pages to a fresh recovery namespace, apply catchup after H, validate, and only then request namespace publish/bootstrap ACK.",
+      "assert": [
+        "The current UI namespace and unsent drafts remain intact until snapshot pages and catchup reach at least priorSeenHighWater.",
+        "A legal older snapshot H=90 is not called rollback during baseline loading; versions are checked against prior seen state after catchup.",
+        "Namespace publication and published cursor are atomic, followed by bootstrap ACK tied to the matching snapshot/epoch/H."
+      ],
+      "acceptanceGateIds": [
+        "pullCursorEpochLeaseAndWatermark",
+        "snapshotCatchupAndAtomicNamespacePublish",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-SNAPSHOT-INTERRUPT-ATOMIC-PUBLISH-01",
+      "references": [
+        "T17.c",
+        "03 §7.3 recovery namespace and atomic swap"
+      ],
+      "harness": "future_sqlcipher_namespace_publish_failpoints",
+      "executionStatus": "NOT_RUN",
+      "setup": "Build a complete synthetic recovery namespace while retaining the old active namespace and pending outbox; inject failure immediately before and immediately after the publish transaction.",
+      "action": "Restart and inspect active namespace, published cursor, existing drafts/outbox, and recovery namespace lifecycle.",
+      "assert": [
+        "Before the publish commit, readers continue using the old namespace and cursor; pending drafts/outbox are preserved.",
+        "After commit, namespace selection and published cursor agree on one recovered state; there is no mixed half-published view.",
+        "Recovery namespace resumability/cleanup details must follow a frozen T07/T19 interface and are not inferred by this case."
+      ],
+      "acceptanceGateIds": [
+        "localTransactionObjectOutboxAndNamespaceAtomicity",
+        "snapshotCatchupAndAtomicNamespacePublish",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-SNAPSHOT-EXPIRED-OR-EPOCH-CHANGE-PRESERVE-01",
+      "references": [
+        "T17.c",
+        "03 §7.2 snapshot/epoch errors",
+        "03 §7.3 expired baseline"
+      ],
+      "harness": "future_frozen_snapshot_contract_with_synthetic_clock",
+      "executionStatus": "NOT_RUN",
+      "setup": "Create an unpublished recovery namespace with pending drafts/outbox, then independently expire its snapshot or change workspace epoch before publication.",
+      "action": "Attempt to continue/publish the old recovery baseline.",
+      "assert": [
+        "The expired or wrong-epoch baseline is not published as current state.",
+        "Only the unpublished recovery baseline may be discarded/restarted; existing drafts and outbox are retained.",
+        "No exact cancellation/cleanup timing beyond the frozen snapshot contract is assumed."
+      ],
+      "acceptanceGateIds": [
+        "localTransactionObjectOutboxAndNamespaceAtomicity",
+        "snapshotCatchupAndAtomicNamespacePublish",
+        "requiredIndependentCriticalReview"
+      ]
+    },
+    {
+      "id": "T17-DECIMAL-WATERMARK-EXACTNESS-01",
+      "references": [
+        "T17.c",
+        "03 §2.1 Decimal",
+        "03 §7.1-7.2",
+        "03 §10 S26"
+      ],
+      "harness": "future_frozen_contract_and_rust_integer_roundtrip",
+      "executionStatus": "NOT_RUN",
+      "setup": "Use synthetic epoch/revision/seq values 0, 1, 2^53, signed BIGINT max, and out-of-range/malformed strings after T06 freezes DTO rules.",
+      "action": "Round-trip values through outbox persistence, pull cursor, appliedSeq, and ACK representation.",
+      "assert": [
+        "Valid Decimal values preserve exact digits without floating-point conversion; invalid or out-of-range input is rejected under the frozen DTO mapping.",
+        "The client never lowers a cursor/watermark as a side effect of parse failure.",
+        "No exact invalid-input error is asserted before T06/T16 contracts are frozen."
+      ],
+      "acceptanceGateIds": [
+        "pullCursorEpochLeaseAndWatermark",
+        "pushReceiptPartialResultAckAndConflict",
+        "requiredIndependentCriticalReview"
+      ]
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "T17-OQ-01",
+      "question": "T06/T16 must freeze the exact PushOperationV1 canonical serialization, request hash scope, DTO versioning, and the bytes counted by wire_size before exact-byte/hash or transport compatibility assertions execute.",
+      "impact": "The plan can require byte immutability across retry, but cannot invent canonical encoding or a hash-input set."
+    },
+    {
+      "id": "T17-OQ-02",
+      "question": "T07 must freeze the concrete SQLCipher schema/transaction and crash-durability test boundary for object refs, drafts, outbox, pendingBytes, and namespace/cursor publication; local.totalBytes durable charge components (including database/WAL/shared references) are also not frozen.",
+      "impact": "Fixtures assert same-database transaction all-or-none where specified, but do not claim a particular fsync/power-loss guarantee or invent local byte arithmetic."
+    },
+    {
+      "id": "T17-OQ-03",
+      "question": "The spec lists ACKED as an outbox state and says the operation is cleared only after receipt plus confirmed revision/seq are recorded locally, but does not define whether ACKED persists as a row/journal or is transient within the same transaction that removes it.",
+      "impact": "Assert atomic receipt/confirmed-state persistence before removal; do not require a particular intermediate ACKED row lifetime."
+    },
+    {
+      "id": "T17-OQ-04",
+      "question": "T16 must freeze operation receipt/push/pull/ACK DTO mappings and the client mapping of every terminal result (including ITEM_DELETED, COLLECTION_ENTRY_EXISTS, epoch/cursor/lease errors) to CONFLICT, BLOCKED, or recoverable draft state.",
+      "impact": "Assert only outcomes explicitly frozen in 03; do not invent additional local status/error-code mappings."
+    },
+    {
+      "id": "T17-OQ-05",
+      "question": "The conflict-copy instruction freezes fresh identity and re-encryption for an explicit saved conflict copy, but merge behavior, user confirmation/UI flow, resolution of collection-entry conflicts, and whether/how a draft is discarded after a chosen resolution are not specified.",
+      "impact": "Retain unresolved drafts and prohibit silent overwrite/auto-rebase; mark copy/merge behavior beyond fresh identity and encryption as gated."
+    },
+    {
+      "id": "T17-OQ-06",
+      "question": "Retry policy fixes exponential backoff with random jitter, Retry-After as a lower bound, and syncRetryMaxSeconds=300, but the jitter distribution, attempt schedule, and precise handling of malformed/oversized Retry-After are not frozen.",
+      "impact": "Test identity/byte preservation and configured bounds only; do not assert exact timing until the policy is specified."
+    },
+    {
+      "id": "T17-OQ-07",
+      "question": "T17 requires snapshot recovery, but its direct dependency list does not include T19; exact snapshot request/page/bootstrap DTO ownership and the split between client recovery acceptance and T19 server snapshot acceptance need confirmation.",
+      "impact": "Keep local recovery fixtures synthetic and contract-gated; do not add an implicit server dependency or claim end-to-end snapshot acceptance."
+    },
+    {
+      "id": "T17-OQ-08",
+      "question": "The spec does not fully define whether cancellation can stop only preparation/pre-send work or how an in-flight push cancellation is represented locally when delivery is ambiguous.",
+      "impact": "An ambiguous possibly-sent operation must remain immutable and recoverable; do not claim remote cancellation or assume the request was not committed."
+    }
+  ],
+  "plannedCommands": [
+    {
+      "command": "cargo test -p clipnest-core sync",
+      "status": "NOT_RUN",
+      "gate": "Wait for T07, T15, and T16 accepted; T06/T14 transitive gates and frozen DTO/storage interfaces required."
+    },
+    {
+      "command": "pnpm test:integration -- --suite rust-sync",
+      "status": "NOT_RUN",
+      "gate": "Wait for T07, T15, and T16 accepted; run only with the isolated T16 sync integration harness and frozen snapshot contract."
+    }
+  ],
+  "acceptanceGates": {
+    "localTransactionObjectOutboxAndNamespaceAtomicity": "NOT_RUN",
+    "dependencyDraftChainAndImmutableRetry": "NOT_RUN",
+    "pushReceiptPartialResultAckAndConflict": "NOT_RUN",
+    "pullCursorEpochLeaseAndWatermark": "NOT_RUN",
+    "snapshotCatchupAndAtomicNamespacePublish": "NOT_RUN",
+    "permissionCancellationCapacityAndErrorPaths": "NOT_RUN",
+    "requiredIndependentCriticalReview": "NOT_RUN"
+  },
+  "acceptanceGateCoverage": {
+    "localTransactionObjectOutboxAndNamespaceAtomicity": [
+      "T17-LOCAL-MUTATION-ATOMIC-01",
+      "T17-OBJECT-REFERENCE-OUTBOX-ATOMIC-01",
+      "T17-NAMESPACE-ACCOUNT-ISOLATION-01",
+      "T17-SENDING-CRASH-REPLAY-01",
+      "T17-OUTBOX-HARD-LIMIT-PENDING-BYTES-01",
+      "T17-LOCAL-ONLY-AND-CLOUD-BUDGET-SCOPE-01",
+      "T17-LOCAL-TTL-NOT-CLOUD-DELETE-01",
+      "T17-PULL-APPLY-CURSOR-ATOMIC-REPLAY-01",
+      "T17-ACK-RECEIPT-REMOVE-ATOMIC-01",
+      "T17-SNAPSHOT-INTERRUPT-ATOMIC-PUBLISH-01",
+      "T17-SNAPSHOT-EXPIRED-OR-EPOCH-CHANGE-PRESERVE-01"
+    ],
+    "dependencyDraftChainAndImmutableRetry": [
+      "T17-DRAFT-WAIT-DEPENDENCY-01",
+      "T17-ONE-SENT-OP-PER-ENTITY-01",
+      "T17-SENDING-CRASH-REPLAY-01",
+      "T17-WIRE-IMMUTABLE-AFTER-SEND-01",
+      "T17-PUSH-RESPONSE-LOSS-EXACT-RETRY-01",
+      "T17-CANCEL-AMBIGUOUS-PUSH-PRESERVE-01"
+    ],
+    "pushReceiptPartialResultAckAndConflict": [
+      "T17-ONE-SENT-OP-PER-ENTITY-01",
+      "T17-WIRE-IMMUTABLE-AFTER-SEND-01",
+      "T17-PUSH-RESPONSE-LOSS-EXACT-RETRY-01",
+      "T17-PUSH-PARTIAL-RESULT-01",
+      "T17-RETRY-TRANSIENT-ERROR-PRESERVES-01",
+      "T17-AUTH-LOCK-REVOKE-QUOTA-RETENTION-01",
+      "T17-CAS-CONFLICT-RETAIN-DRAFT-01",
+      "T17-DELETE-CONFLICT-RECONFIRM-01",
+      "T17-CONFLICT-COPY-EXPLICIT-NEW-ID-01",
+      "T17-EPOCH-MISMATCH-HOLD-OUTBOX-01",
+      "T17-EXPIRED-LEASE-OLD-OUTBOX-01",
+      "T17-CURSOR-EXPIRED-SNAPSHOT-RECOVERY-PRESERVE-01",
+      "T17-CANCEL-AMBIGUOUS-PUSH-PRESERVE-01",
+      "T17-ACK-RECEIPT-REMOVE-ATOMIC-01",
+      "T17-DECIMAL-WATERMARK-EXACTNESS-01"
+    ],
+    "pullCursorEpochLeaseAndWatermark": [
+      "T17-EPOCH-MISMATCH-HOLD-OUTBOX-01",
+      "T17-EXPIRED-LEASE-OLD-OUTBOX-01",
+      "T17-CURSOR-EXPIRED-SNAPSHOT-RECOVERY-PRESERVE-01",
+      "T17-PULL-FROZEN-UPPER-PAGE-BOUNDS-01",
+      "T17-PULL-APPLY-CURSOR-ATOMIC-REPLAY-01",
+      "T17-PULL-OLD-CHANGE-NO-HEAD-REGRESSION-01",
+      "T17-HIGH-WATER-OLD-RESPONSE-ORDER-01",
+      "T17-REMOTE-ROLLBACK-NEW-PROBE-ISOLATE-01",
+      "T17-ACK-COMMITTED-CURSOR-ONLY-01",
+      "T17-SNAPSHOT-CATCHUP-BEFORE-PUBLISH-01",
+      "T17-DECIMAL-WATERMARK-EXACTNESS-01"
+    ],
+    "snapshotCatchupAndAtomicNamespacePublish": [
+      "T17-EXPIRED-LEASE-OLD-OUTBOX-01",
+      "T17-CURSOR-EXPIRED-SNAPSHOT-RECOVERY-PRESERVE-01",
+      "T17-SNAPSHOT-CATCHUP-BEFORE-PUBLISH-01",
+      "T17-SNAPSHOT-INTERRUPT-ATOMIC-PUBLISH-01",
+      "T17-SNAPSHOT-EXPIRED-OR-EPOCH-CHANGE-PRESERVE-01"
+    ],
+    "permissionCancellationCapacityAndErrorPaths": [
+      "T17-NAMESPACE-ACCOUNT-ISOLATION-01",
+      "T17-RETRY-TRANSIENT-ERROR-PRESERVES-01",
+      "T17-AUTH-LOCK-REVOKE-QUOTA-RETENTION-01",
+      "T17-OUTBOX-HARD-LIMIT-PENDING-BYTES-01",
+      "T17-LOCAL-ONLY-AND-CLOUD-BUDGET-SCOPE-01",
+      "T17-CANCEL-AMBIGUOUS-PUSH-PRESERVE-01"
+    ],
+    "requiredIndependentCriticalReview": [
+      "T17-LOCAL-MUTATION-ATOMIC-01",
+      "T17-OBJECT-REFERENCE-OUTBOX-ATOMIC-01",
+      "T17-NAMESPACE-ACCOUNT-ISOLATION-01",
+      "T17-DRAFT-WAIT-DEPENDENCY-01",
+      "T17-ONE-SENT-OP-PER-ENTITY-01",
+      "T17-SENDING-CRASH-REPLAY-01",
+      "T17-WIRE-IMMUTABLE-AFTER-SEND-01",
+      "T17-PUSH-RESPONSE-LOSS-EXACT-RETRY-01",
+      "T17-PUSH-PARTIAL-RESULT-01",
+      "T17-RETRY-TRANSIENT-ERROR-PRESERVES-01",
+      "T17-AUTH-LOCK-REVOKE-QUOTA-RETENTION-01",
+      "T17-CAS-CONFLICT-RETAIN-DRAFT-01",
+      "T17-DELETE-CONFLICT-RECONFIRM-01",
+      "T17-CONFLICT-COPY-EXPLICIT-NEW-ID-01",
+      "T17-EPOCH-MISMATCH-HOLD-OUTBOX-01",
+      "T17-EXPIRED-LEASE-OLD-OUTBOX-01",
+      "T17-CURSOR-EXPIRED-SNAPSHOT-RECOVERY-PRESERVE-01",
+      "T17-OUTBOX-HARD-LIMIT-PENDING-BYTES-01",
+      "T17-LOCAL-ONLY-AND-CLOUD-BUDGET-SCOPE-01",
+      "T17-LOCAL-TTL-NOT-CLOUD-DELETE-01",
+      "T17-CANCEL-AMBIGUOUS-PUSH-PRESERVE-01",
+      "T17-PULL-FROZEN-UPPER-PAGE-BOUNDS-01",
+      "T17-PULL-APPLY-CURSOR-ATOMIC-REPLAY-01",
+      "T17-PULL-OLD-CHANGE-NO-HEAD-REGRESSION-01",
+      "T17-HIGH-WATER-OLD-RESPONSE-ORDER-01",
+      "T17-REMOTE-ROLLBACK-NEW-PROBE-ISOLATE-01",
+      "T17-ACK-COMMITTED-CURSOR-ONLY-01",
+      "T17-ACK-RECEIPT-REMOVE-ATOMIC-01",
+      "T17-SNAPSHOT-CATCHUP-BEFORE-PUBLISH-01",
+      "T17-SNAPSHOT-INTERRUPT-ATOMIC-PUBLISH-01",
+      "T17-SNAPSHOT-EXPIRED-OR-EPOCH-CHANGE-PRESERVE-01",
+      "T17-DECIMAL-WATERMARK-EXACTNESS-01"
+    ]
+  }
+}

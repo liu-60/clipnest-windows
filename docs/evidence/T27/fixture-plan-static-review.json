@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "task": "T27",
+  "evidenceType": "STATIC_FIXTURE_PLAN_ONLY",
+  "result": "STATIC_FIXTURE_PLAN_ONLY",
+  "reviewStatus": "AUTHOR_STRUCTURAL_SELF_CHECK",
+  "reviewedAt": "2026-10-04",
+  "executionStatus": "NOT_RUN",
+  "planPath": "tests/tasks/T27/fixture-plan.json",
+  "reviewedSources": [
+    "docs/spec/tasks/T27.md",
+    "docs/spec/tasks/T26.md",
+    "docs/spec/tasks/T28.md",
+    "docs/spec/00-README.md §1-§4, §6, §8",
+    "docs/spec/05-task-index.md T26-T28 and 可并行与禁止",
+    "docs/spec/06-model-runbook.md §1-§3, §5-§8",
+    "docs/spec/07-release-and-commercial.md §2-§3, §5, §7",
+    "docs/spec/08-acceptance-matrix.md §1, §3, §5-§6",
+    "docs/progress.json T01/T06/T26/T27/T28"
+  ],
+  "dependencySnapshot": [
+    {
+      "task": "T26",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T01",
+      "requiredStatus": "test-script/harness-ready",
+      "observedStatus": "in_progress",
+      "accepted": false
+    },
+    {
+      "task": "T06",
+      "requiredStatus": "server/integration-harness-ready",
+      "observedStatus": "in_progress",
+      "accepted": false
+    },
+    {
+      "task": "T28",
+      "requiredStatus": "accepted-for-real-cross-channel-gate",
+      "observedStatus": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T31",
+      "requiredStatus": "release-decision-for-live-merchant-price",
+      "observedStatus": "not_started",
+      "accepted": false
+    }
+  ],
+  "staticChecks": [
+    {
+      "id": "T27-R01",
+      "check": "Plan and evidence JSON parse; plan status is not_started and executionStatus is NOT_RUN.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T27-R02",
+      "check": "31 fixture IDs, 7 gate IDs, 2 command IDs, 21 OQ IDs, and 3 deferred-scenario IDs are unique.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T27-R03",
+      "check": "Every fixture, gate, and command is NOT_RUN with an empty evidence array.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T27-R04",
+      "check": "Every fixture OQ and gate reference resolves; sourceRefs point to existing specification/task files.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T27-R05",
+      "check": "B01-B05, B07-B10 and B12 map to planned fixture IDs; B11 maps only to T27's Stripe sub-scope; B06 is explicitly deferred to T28.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T27-R06",
+      "check": "Checkout URL allowlist, environment price mapping, idempotency, rawBody signature, duplicate/out-of-order/unknown events, contract verification/reconciliation, refund/grace and cross-channel cases are represented.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T27-R07",
+      "check": "Frontend-forged entitlement, expired offline cache, UNKNOWN merchant/live key, redacted logs, provider error/timeout, cancel, capacity and authorization/permission cases are represented.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T27-R08",
+      "check": "Frozen assertions cite 06/07/08/task sources; unspecified URL, idempotency, SDK, error, refund/grace, entitlement, capacity and release rules remain OPEN_QUESTION.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T27-R09",
+      "check": "Synthetic contract planning, isolated database behavior, Stripe test-mode sandbox, T28 cross-channel integration, and production/live qualification have distinct gates.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T27-R10",
+      "check": "Current progress snapshot says T26/T27/T28/T31 not_started and T01/T06 in_progress; plan dependency state matches docs/progress.json.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T27-R11",
+      "check": "The two card commands are recorded as NOT_RUN; no runner availability or test success is inferred from listing the commands.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T27-R12",
+      "check": "No production/shared fixtures/progress/dependency files were changed and no test/build/network/provider/database/sandbox action was run for this plan.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T27-R13",
+      "check": "Repository AGENTS.md was not found in the repository or searched parent workspace roots; no local AGENTS.md rules were invented.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T27-R14",
+      "check": "B12 explicitly includes the actual Stripe test-mode missed-webhook case: omit delivery, fetch the current Stripe contract, repair trusted T26 projection idempotently; F19 links both G03/G04, with redacted 08 §6 evidence required for the actual G04 branch.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T27-R15",
+      "check": "B11 is expressly limited to T27 Stripe merchant/price/checkout-entry planning; store purchase entry and target-region policy validation are deferred to T28/T31, so complete B11 is not claimed.",
+      "status": "CHECKED_STATICALLY"
+    }
+  ],
+  "counts": {
+    "fixtureCount": 31,
+    "uniqueFixtureIdCount": 31,
+    "acceptanceGateCount": 7,
+    "uniqueAcceptanceGateIdCount": 7,
+    "commandCount": 2,
+    "uniqueCommandIdCount": 2,
+    "openQuestionCount": 21,
+    "uniqueOpenQuestionIdCount": 21,
+    "deferredScenarioCount": 3,
+    "uniqueDeferredScenarioIdCount": 3,
+    "allFixturesNotRun": true,
+    "allGatesNotRun": true,
+    "allCommandsNotRun": true,
+    "allExecutionEvidenceEmpty": true
+  },
+  "coverageSnapshot": {
+    "acceptanceMatrixIds": [
+      "B01",
+      "B02",
+      "B03",
+      "B04",
+      "B05",
+      "B06",
+      "B07",
+      "B08",
+      "B09",
+      "B10",
+      "B11",
+      "B12"
+    ],
+    "plannedFixtureCounts": {
+      "B01": 2,
+      "B02": 3,
+      "B03": 2,
+      "B04": 2,
+      "B05": 2,
+      "B06": 0,
+      "B07": 3,
+      "B08": 2,
+      "B09": 1,
+      "B10": 1,
+      "B11": 3,
+      "B12": 1
+    },
+    "B11Scope": "T27 Stripe merchant/price configuration and Stripe checkout entry only",
+    "B11Complete": false,
+    "B11DeferredScenarioIds": [
+      "T27-D03"
+    ],
+    "B12ExecutionGateIds": [
+      "T27-G01",
+      "T27-G03",
+      "T27-G04"
+    ],
+    "B06DeferredTo": "T28",
+    "deferredScenarioIds": [
+      "T27-D01",
+      "T27-D02",
+      "T27-D03"
+    ],
+    "crossCuttingFixtureIds": [
+      "T27-F23",
+      "T27-F25",
+      "T27-F26",
+      "T27-F29",
+      "T27-F30",
+      "T27-F31"
+    ]
+  },
+  "limitations": [
+    "This artifact is only an author structural self-check, not an independent critical review or task acceptance.",
+    "T26 is not accepted; all T27 behavior and provider-facing work remains blocked. All planned fixture/gate/command execution is NOT_RUN.",
+    "B12 actual Stripe missed-webhook reconciliation remains part of T27-G04 and is NOT_RUN; no provider or database was contacted.",
+    "T27 covers only the Stripe sub-scope of B11. Platform store purchase entry and target-region store-policy validation are deferred to T28/T31; full B11 is not claimed.",
+    "The Stripe test-mode sandbox, T28 cross-channel implementation, and T00/T31 merchant/live-price decisions remain separate open gates.",
+    "The repository AGENTS.md was absent. The named apps/server billing module, shared billing fixtures, and T27 server test scripts were not found in the current workspace layout; card commands are listed as future checks only.",
+    "Production/live merchant eligibility and formal pricing are UNKNOWN; no live key, price, provider account, credentials, or customer data was inspected."
+  ],
+  "independentCriticalReview": {
+    "reviewer": "T04 independent reviewer",
+    "reviewType": "READ_ONLY_CRITICAL_PLAN_REVIEW",
+    "result": "PASS_WITH_LIMITATIONS",
+    "reviewedAt": "2026-10-04",
+    "reviewedFiles": [
+      "tests/tasks/T27/fixture-plan.json",
+      "docs/evidence/T27/fixture-plan-static-review.json"
+    ],
+    "findingsClosed": [
+      "F19 and B12 coverage both include G04 reconciliation after a missed webhook by reading the current Stripe test-mode contract and idempotently repairing the projection.",
+      "B11 is explicitly limited to T27 Stripe scope; store entry and region policy are deferred to T28/T31 and full B11 is not claimed.",
+      "31 fixtures, 7 gates, 2 commands, 21 OQs, and 3 deferred items have consistent counts and references.",
+      "All fixtures, gates, and commands remain NOT_RUN with empty execution evidence."
+    ],
+    "noNewProtocolOrPlatformSemantics": true,
+    "behaviorAcceptance": false,
+    "remainingLimitations": [
+      "Plan-only independent review; no Stripe provider, PostgreSQL, sandbox, merchant, test, build, or behavior operation was run.",
+      "T26 remains unaccepted; the actual reconciliation and all task behavior are NOT_RUN.",
+      "T27 covers only Stripe sub-scope of B11; cross-channel store and region-policy evidence remains deferred."
+    ]
+  }
+}

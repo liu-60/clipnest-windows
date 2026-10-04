@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "task": "T11",
+  "evidenceType": "independent_fixture_plan_adversarial_review",
+  "reviewDate": "2026-10-04",
+  "reviewedArtifacts": [
+    "tests/tasks/T11/fixture-plan.json",
+    "docs/spec/tasks/T11.md",
+    "docs/spec/02-architecture.md",
+    "docs/spec/04-desktop-performance.md",
+    "docs/spec/08-acceptance-matrix.md",
+    "docs/spec/limits.v1.json",
+    "docs/progress.json"
+  ],
+  "result": "PASS_WITH_LIMITATIONS",
+  "reviewScope": "Static adversarial review of synthetic fixture preparation, coverage, frozen assertions, and progress consistency only. This is not T11 behavior acceptance.",
+  "coverage": {
+    "fixturePlanCaseCount": 40,
+    "p01ThroughP28": "Each P fixture is referenced once; all remain NOT_RUN.",
+    "controlledTextAndImage": "Dedicated disposable receivers and synthetic payloads are planned; target observation is required, and image format/receiver specifics remain OPEN_QUESTION.",
+    "trayAndMultiMonitor": "Hide/show and warm wake, plus a controlled two-monitor layout, are planned; activation and topology policies remain OPEN_QUESTION.",
+    "permissionsAndCopyOnly": "Capability-driven copy fallback and higher-integrity/focus failure safety are covered; exact Windows reason/result mapping and wording remain OPEN_QUESTION.",
+    "backgroundLifecycle": "A synthetic clipboard capture and bounded repository operation while the WebView is hidden/detached are planned; no crash-durability claim is made before T07.",
+    "shutdownLifecycle": "The fixture now limits its stated shutdown cases to the idle-worker and cancellable pre-commit states it actually supplies.",
+    "performance": "Wake, normal text, and full-process L0 comparison fixtures use fixed-environment inputs, at least 100 normal samples, requestId correlation, per-process monotonic timing, and the frozen 08 §4 summary reporting rules."
+  },
+  "reviewFindings": [
+    {
+      "id": "limits-single-source",
+      "result": "CLOSED",
+      "detail": "Paste modifier, focus, cancellation, and opening-guard assertions reference docs/spec/limits.v1.json fields instead of shadowing their numeric values in fixture text."
+    },
+    {
+      "id": "background-capture-hidden-panel",
+      "result": "CLOSED",
+      "detail": "The hidden-panel lifecycle case now includes synthetic clipboard capture and repository work independent of WebView visibility."
+    },
+    {
+      "id": "image-worker-peak-accounting",
+      "result": "OPEN_QUESTION",
+      "detail": "T09 has not frozen imageWorkerPeakBytes allocation categories or measurement method. P17 keeps numeric peak acceptance NOT_RUN and explicitly gates it on that decision."
+    },
+    {
+      "id": "performance-reporting",
+      "result": "CLOSED_WITH_LIMITATIONS",
+      "detail": "The plan follows 08 §4 for at least 100 normal samples and p50/p95/max/failure reporting. Full-process numeric thresholds, exact physical-memory metric/attribution, and sampling duration remain OPEN_QUESTION."
+    }
+  ],
+  "openQuestions": [
+    "tauri-host-capability-and-msvc-build-scope",
+    "tray-hotkey-and-close-activation-policy",
+    "monitor-selection-and-topology-coverage",
+    "windows-permission-reason-and-result-mapping",
+    "windows-image-clipboard-representation-and-receiver",
+    "exact-terminal-enums-and-copy-only-wording",
+    "image-worker-peak-memory-accounting",
+    "full-process-memory-and-idle-cpu-thresholds",
+    "tauri-gate-stability-criteria"
+  ],
+  "taskState": {
+    "progressStatus": "not_started",
+    "fixturePlanStatus": "planned-not-executed",
+    "behaviorAndPerformanceCases": "NOT_RUN",
+    "dependencies": {
+      "T05": "not_started",
+      "T06": "in_progress",
+      "T07": "not_started",
+      "T10": "not_started"
+    }
+  },
+  "notPerformed": [
+    "Production implementation or generated contract changes",
+    "Behavior tests, fake-platform execution, packaging, or builds",
+    "Windows desktop, clipboard, tray, monitor, permission, or input operations",
+    "Performance measurements",
+    "Live profile or user-content access"
+  ],
+  "limitations": [
+    "All T11 behavior and performance results remain NOT_RUN; dependencies are not accepted.",
+    "The image worker peak-memory measurement method is gated on T09.",
+    "This independent review validates fixture-plan preparation only and does not accept T11."
+  ]
+}

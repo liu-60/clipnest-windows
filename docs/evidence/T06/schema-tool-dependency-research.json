@@ -1,0 +1,296 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "b-schema-tool-dependency-research",
+  "checkedDate": "2026-10-04",
+  "status": "research-only; no dependency selected, installed, frozen, or compatibility-tested",
+  "scope": {
+    "request": "Official-source candidate research for Zod strict schemas, JSON Schema generation/validation, and quicktype Rust CLI/core.",
+    "changedFiles": [
+      "docs/evidence/T06/schema-tool-dependency-research.json"
+    ],
+    "notDone": [
+      "No package install, generator, build, or tests.",
+      "No manifests, lockfiles, progress records, or generated files changed.",
+      "Full transitive license audit not done."
+    ]
+  },
+  "specification": {
+    "canonicalFlow": "packages/contracts/src/*.schema.ts Zod -> generated/committed JSON Schema -> locked quicktype Rust DTO generation; generated files are not hand-edited.",
+    "validation": "Architecture requires Ajv and fixed cross-language fixtures for JSON Schema, plus Rust serde boundary checks for size, range, scope, and business rules.",
+    "strictness": "Unknown fields must be rejected; canonical counters/revisions/IDs use decimal strings to preserve values beyond JavaScript's exact integer range.",
+    "localEvidence": [
+      {
+        "file": "docs/spec/tasks/T06.md",
+        "section": "subtask b and dependency freeze rules",
+        "finding": "Requires Zod strict -> JSON Schema -> quicktype Rust; compatibility and license evidence precede freeze."
+      },
+      {
+        "file": "docs/spec/02-architecture.md",
+        "lines": [
+          57,
+          60
+        ],
+        "finding": "Defines canonical Zod schemas, quicktype JSON Schema path, Ajv fixtures, and Rust serde boundary checks."
+      },
+      {
+        "file": "docs/spec/versions.snapshot.json",
+        "lines": [
+          4,
+          5,
+          8,
+          11,
+          26,
+          28,
+          31
+        ],
+        "finding": "Node 24 LTS, Zod 4.6.5, and quicktype 26.0.0 are uninstalled candidates. Recheck license and compatibility before freeze."
+      },
+      {
+        "file": "pnpm-lock.yaml",
+        "line": 671,
+        "finding": "An existing Ajv 6.15.0 resolution is present; this is not treated as an approved T06 direct dependency or Draft 2020-12 validator."
+      }
+    ]
+  },
+  "generationPath": {
+    "zod": {
+      "candidateVersion": "4.6.5",
+      "api": "Zod 4 includes z.toJSONSchema().",
+      "defaultDialect": "Draft 2020-12",
+      "strictness": "Use z.strictObject() and default output mode: the docs state ordinary z.object() strips unknown keys at runtime, while strictObject rejects them and emits additionalProperties:false. Input-mode conversion omits additionalProperties.",
+      "limits": [
+        "Conversion throws by default for types without JSON Schema equivalents, including bigint, int64, transform, date, map, set, symbol, undefined, and custom schemas.",
+        "Do not use unrepresentable:any as a blanket workaround; it emits {} and drops unrepresentable checks.",
+        "Represent protocol numeric IDs/revisions as decimal strings per architecture; fixtures must confirm exported patterns and limits.",
+        "Registry-based multi-schema output ignores schemas without registered IDs."
+      ]
+    },
+    "quicktype": {
+      "input": "Reviewed, committed JSON Schema.",
+      "output": "Rust model/serializer source through CLI or quicktype-core JSONSchemaInput API.",
+      "role": "Generates strongly typed models and serializers; it does not replace Ajv or explicit Rust boundary validation.",
+      "reproducibility": "Pin exact tool version/options and check generated diffs and fixtures. v26 changes Rust defaults to derive Debug, Clone, Serialize, Deserialize and make fields public."
+    }
+  },
+  "candidates": [
+    {
+      "package": "zod",
+      "version": "4.6.5",
+      "versionEvidence": "versions.snapshot.json and npm version listing checked 2026-10-04.",
+      "directLicense": "MIT",
+      "directDependencies": 0,
+      "engines": "The consulted package manifest has no engines field; npm documentation says Node.js and modern browsers are supported.",
+      "peerDependencies": "No peerDependencies field in consulted package manifest.",
+      "maintenance": "Official v4.6.5 release dated 2026-09-13; local snapshot records upstream activity 2026-09-30.",
+      "node24": "No package engine floor is declared; documented Node support is consistent, but no local Node 24 execution was run.",
+      "sourceIds": [
+        "zod-npm",
+        "zod-manifest",
+        "zod-release",
+        "zod-json-schema"
+      ]
+    },
+    {
+      "package": "quicktype",
+      "version": "26.0.0",
+      "versionEvidence": "npm metadata/release and versions.snapshot.json.",
+      "directLicense": "Apache-2.0",
+      "directDependencies": "npm package page lists 16 direct dependencies.",
+      "engines": "The v26 release says Node >=20.19.0 and published packages are built/tested on Node 20, 22, and 24. The source manifest at tag v26.0.0 reports package version 24.0.0 and engines.node >=20.19.0; reconcile against the exact published tarball.",
+      "peerDependencies": "The inspected tag manifest has no peerDependencies, but its internal version is 24.0.0, so exact npm 26.0.0 tarball peer metadata remains unverified.",
+      "maintenance": "Official 26.0.0 release dated 2026-07-20; versions.snapshot.json records upstream activity 2026-10-01.",
+      "node24": "Release notes explicitly include Node 24 among tested package runtimes; no local install or execution was run.",
+      "sourceIds": [
+        "quicktype-npm",
+        "quicktype-release",
+        "quicktype-readme",
+        "quicktype-tag-manifest",
+        "quicktype-issue"
+      ]
+    },
+    {
+      "package": "quicktype-core",
+      "version": "26.0.0",
+      "versionEvidence": "npm metadata; upstream README documents core API.",
+      "directLicense": "Apache-2.0",
+      "directDependencies": "npm package page lists 13 direct dependencies.",
+      "engines": "Release notes state Node >=20.19.0 for core embedders and Node 20/22/24 package support. Tag manifest reports internal version 24.0.0 and engines.node >=20.0.0; reconcile against exact npm tarball.",
+      "peerDependencies": "No field in inspected source manifest; exact published 26.0.0 metadata is unverified due to the version discrepancy.",
+      "maintenance": "Same v26.0.0 release and 2026-10-01 upstream activity evidence as quicktype CLI.",
+      "node24": "Node 24 is listed as a tested runtime in release notes; no local install or execution was run.",
+      "moduleNote": "Upstream documents CJS and ESM builds. Its README warns that esbuild Node ESM bundling can fail on dynamic require of process unless createRequire is injected.",
+      "sourceIds": [
+        "quicktype-core-npm",
+        "quicktype-release",
+        "quicktype-readme",
+        "quicktype-core-tag-manifest"
+      ]
+    },
+    {
+      "package": "ajv",
+      "version": "8.20.0",
+      "versionEvidence": "npm metadata checked 2026-10-04; included because architecture requires Ajv.",
+      "directLicense": "MIT",
+      "directDependencies": 4,
+      "engines": "The consulted v8.20.0 source manifest has no engines field; official release notes explicitly add Node 22/24 support.",
+      "peerDependencies": "No peerDependencies field in consulted source manifest.",
+      "maintenance": "Official v8.20.0 release dated 2026-04-24.",
+      "node24": "Release explicitly adds Node 24 support; no local install or execution was run.",
+      "schemaDialect": "Ajv docs require a distinct export/class for Draft 2019-09/2020-12. If Zod's default dialect is retained, verify Ajv's 2020 export. Existing locked Ajv 6.15.0 is not approved for this route.",
+      "formatNote": "Ajv 7+ provides JSON Schema format validators through separate ajv-formats; its version/license and regex safety have not been researched here.",
+      "sourceIds": [
+        "ajv-npm",
+        "ajv-manifest",
+        "ajv-release",
+        "ajv-dialect-docs",
+        "ajv-format-docs"
+      ]
+    }
+  ],
+  "compatibilityPathsForLaterValidation": [
+    {
+      "path": "Zod Draft 2020-12 -> Ajv 8.20.0 2020 export -> quicktype 26.0.0 Rust",
+      "status": "candidate only; not selected or tested",
+      "gates": [
+        "Generate all canonical schemas without unrepresentable:any.",
+        "Compile with explicit Ajv 2020 export and validate positive/negative fixtures.",
+        "Exercise Rust generation for string/numeric/boolean const, unions, additionalProperties:false, refs, decimal strings, and limits.",
+        "Verify Rust rejects unknown fields and separately enforces size/range/scope; do not infer runtime validation from DTO generation.",
+        "Run contracts:check twice and verify no working tree changes."
+      ]
+    },
+    {
+      "path": "Zod explicit Draft-07 -> compatible Ajv path",
+      "status": "alternative only; not selected or tested",
+      "gates": [
+        "Confirm all required keywords, refs, fixtures, and quicktype behavior are preserved; this does not bypass T06 compatibility review."
+      ]
+    }
+  ],
+  "generatorRiskNotes": [
+    {
+      "issue": "quicktype issue #2856 reports Rust generation crashing on non-string JSON Schema const values, especially booleans, with quicktype-core 23.2.6.",
+      "limit": "Historical evidence only; it does not establish whether the issue remains in 26.0.0.",
+      "gate": "Include boolean and numeric const fixtures against the exact candidate version."
+    },
+    {
+      "issue": "quicktype 26 changes Rust derives and field visibility by default.",
+      "limit": "Confirmed release change; no output was generated in this research.",
+      "gate": "Review generated DTOs and exact serde/Cargo needs before freezing options or lock entries."
+    },
+    {
+      "issue": "Generated types do not discharge cross-language semantic validation requirements.",
+      "limit": "Ajv fixtures and Rust boundary checks remain required by architecture.",
+      "gate": "Test unknown fields, >2^53 decimal round-trip, limits, scope, ranges, refs, and errors across TS/Ajv and Rust."
+    }
+  ],
+  "licenseAudit": {
+    "observedDirectLicenses": {
+      "zod": "MIT",
+      "quicktype": "Apache-2.0",
+      "quicktypeCore": "Apache-2.0",
+      "ajv": "MIT"
+    },
+    "fullTransitiveAuditComplete": false,
+    "note": "npm pages report 16 direct quicktype dependencies and 13 quicktype-core dependencies. No transitive inventory/license review was performed. ajv-formats has not been selected or reviewed."
+  },
+  "metadataCaveat": {
+    "finding": "quicktype release/npm pages report 26.0.0, while raw source manifests at Git tag v26.0.0 report internal version 24.0.0. The manifests also disagree on the Node engine floor.",
+    "observedManifestEngines": {
+      "quicktype": ">=20.19.0",
+      "quicktypeCore": ">=20.0.0"
+    },
+    "implication": "Release notes support Node 24, but verify engine/peer metadata, package contents, and integrity against exact npm 26.0.0 tarballs before dependency freeze."
+  },
+  "notVerified": [
+    "No package install, lock resolution, generator, compilation, or tests.",
+    "No execution using the project's exact Node 24 patch version.",
+    "No exact quicktype 26.0.0 npm tarball inspection; peer/package fields remain unverified.",
+    "No proof that quicktype 26 handles every schema keyword in eventual contracts.",
+    "No transitive license audit or security/advisory scan.",
+    "No dependency, JSON Schema dialect, or format-plugin selection."
+  ],
+  "sources": [
+    {
+      "id": "zod-json-schema",
+      "url": "https://zod.dev/json-schema",
+      "supports": "Zod 4 export API, default Draft 2020-12, unsupported types, input/output modes, strictObject and registry IDs."
+    },
+    {
+      "id": "zod-manifest",
+      "url": "https://raw.githubusercontent.com/colinhacks/zod/v4.6.5/packages/zod/package.json",
+      "supports": "Version 4.6.5, MIT license and package manifest metadata."
+    },
+    {
+      "id": "zod-npm",
+      "url": "https://www.npmjs.com/package/zod?activeTab=versions",
+      "supports": "Published version listing and Node/browser runtime statement."
+    },
+    {
+      "id": "zod-release",
+      "url": "https://github.com/colinhacks/zod/releases/tag/v4.6.5",
+      "supports": "Official release date and maintenance evidence."
+    },
+    {
+      "id": "quicktype-readme",
+      "url": "https://github.com/glideapps/quicktype",
+      "supports": "JSON Schema input, Rust target, committed-schema workflow, CLI/core API, Node requirement, CJS/ESM caveat."
+    },
+    {
+      "id": "quicktype-release",
+      "url": "https://github.com/glideapps/quicktype/releases/tag/v26.0.0",
+      "supports": "Release date, Node >=20.19 and Node 20/22/24 support, Rust output defaults."
+    },
+    {
+      "id": "quicktype-npm",
+      "url": "https://www.npmjs.com/package/quicktype",
+      "supports": "npm candidate version, Apache-2.0 and displayed direct dependency count."
+    },
+    {
+      "id": "quicktype-core-npm",
+      "url": "https://www.npmjs.com/package/quicktype-core",
+      "supports": "npm candidate version, Apache-2.0 and displayed direct dependency count."
+    },
+    {
+      "id": "quicktype-tag-manifest",
+      "url": "https://raw.githubusercontent.com/glideapps/quicktype/v26.0.0/package.json",
+      "supports": "Source manifest reports internal version 24.0.0, Apache-2.0, and Node >=20.19."
+    },
+    {
+      "id": "quicktype-core-tag-manifest",
+      "url": "https://raw.githubusercontent.com/glideapps/quicktype/v26.0.0/packages/quicktype-core/package.json",
+      "supports": "Source core manifest reports internal version 24.0.0, Apache-2.0, and Node >=20.0."
+    },
+    {
+      "id": "quicktype-issue",
+      "url": "https://github.com/glideapps/quicktype/issues/2856",
+      "supports": "Historical 23.2.6 Rust renderer bug for non-string const; does not establish v26 status."
+    },
+    {
+      "id": "ajv-npm",
+      "url": "https://www.npmjs.com/package/ajv?activeTab=versions",
+      "supports": "Published candidate 8.20.0 and advertised JSON Schema dialect support."
+    },
+    {
+      "id": "ajv-manifest",
+      "url": "https://raw.githubusercontent.com/ajv-validator/ajv/v8.20.0/package.json",
+      "supports": "Ajv 8.20.0 version, MIT license and direct dependency metadata."
+    },
+    {
+      "id": "ajv-release",
+      "url": "https://github.com/ajv-validator/ajv/releases/tag/v8.20.0",
+      "supports": "Release date and explicit Node 22/24 support."
+    },
+    {
+      "id": "ajv-dialect-docs",
+      "url": "https://ajv.js.org/guide/schema-language.html",
+      "supports": "Draft 2019-09/2020-12 support through a distinct export/class."
+    },
+    {
+      "id": "ajv-format-docs",
+      "url": "https://ajv.js.org/guide/formats.html",
+      "supports": "Separate ajv-formats plugin and format safety considerations."
+    }
+  ]
+}

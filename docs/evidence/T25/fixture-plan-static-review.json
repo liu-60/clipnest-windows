@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 1,
+  "task": "T25",
+  "evidenceType": "STATIC_FIXTURE_PLAN_ONLY",
+  "result": "STATIC_FIXTURE_PLAN_ONLY",
+  "reviewStatus": "AUTHOR_STRUCTURAL_SELF_CHECK",
+  "reviewedAt": "2026-10-04",
+  "executionStatus": "NOT_RUN",
+  "planPath": "tests/tasks/T25/fixture-plan.json",
+  "reviewedSources": [
+    "docs/spec/tasks/T25.md",
+    "docs/spec/03-data-sync-and-security.md §10-§11",
+    "docs/spec/08-acceptance-matrix.md §1-§6",
+    "docs/spec/04-desktop-performance.md §8",
+    "docs/spec/01-product-and-ux.md §2-§7",
+    "docs/spec/limits.v1.json",
+    "docs/progress.json T13/T19/T21/T24/T25"
+  ],
+  "dependencySnapshot": [
+    {
+      "task": "T13",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T19",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T21",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T24",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false
+    }
+  ],
+  "staticChecks": [
+    {
+      "id": "T25-R01",
+      "check": "Fixture/gate/command/measurement/OQ/deferred counts match.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T25-R02",
+      "check": "All IDs unique; desktop 04-P and product 01-P namespaces distinct.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T25-R03",
+      "check": "All fixtures/gates/commands/measurements NOT_RUN, empty evidence.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T25-R04",
+      "check": "T13/T19/T21/T24 and T25 status match current progress.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T25-R05",
+      "check": "S01-S23/S26, separate S24 subscenarios and T19 S25 core mapped.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T25-R06",
+      "check": "S27 limited to implemented local portions; portable path deferred.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T25-R07",
+      "check": "04 §8 desktop P01-P28, 01 §2-§4 product P01-P11 and 08 §2 U01-U12 separately mapped.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T25-R08",
+      "check": "Real PG/S3/Hermes/iOS/Android/second-device gates separated and NOT_RUN.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T25-R09",
+      "check": ">=100 sample policy, 10k search, budgets/full-process memory and no cross-clock subtraction.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T25-R10",
+      "check": "Only frozen thresholds stated; no measurement results invented.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T25-R11",
+      "check": "S24 provider, S25 ops restore, S27 portable recovery explicitly deferred.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T25-R12",
+      "check": "G1/G2/G3/G4 boundaries explicit; no full S01-S27/G4 pass.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T25-R13",
+      "check": "Independent multi-agent adversarial review required and NOT_RUN.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T25-R14",
+      "check": "No behavior/test/build/service/PG/S3/Hermes/browser/device/crypto executed.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T25-R15",
+      "check": "All fixture sourceRefs use complete docs/spec paths and precise sections; S25/S27 detailed source ownership is explicit.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T25-R16",
+      "check": "S01-S03, S23, S24, S25 and S27 observable assertions state frozen outcomes at actionable granularity.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T25-R17",
+      "check": "Cross-cut error/cancel/capacity/permission fixtures assert frozen outcomes and preserve unresolved mappings as OPEN_QUESTION.",
+      "status": "CHECKED_STATICALLY"
+    }
+  ],
+  "counts": {
+    "fixtureCount": 83,
+    "uniqueFixtureIdCount": 83,
+    "acceptanceGateCount": 13,
+    "uniqueAcceptanceGateIdCount": 13,
+    "commandCount": 3,
+    "uniqueCommandIdCount": 3,
+    "measurementCount": 5,
+    "uniqueMeasurementIdCount": 5,
+    "openQuestionCount": 7,
+    "uniqueOpenQuestionIdCount": 7,
+    "deferredScenarioCount": 3,
+    "allFixturesNotRun": true,
+    "allGatesNotRun": true,
+    "allCommandsNotRun": true,
+    "allMeasurementsNotRun": true
+  },
+  "coverageSnapshot": {
+    "coreSIds": [
+      "S01",
+      "S02",
+      "S03",
+      "S04",
+      "S05",
+      "S06",
+      "S07",
+      "S08",
+      "S09",
+      "S10",
+      "S11",
+      "S12",
+      "S13",
+      "S14",
+      "S15",
+      "S16",
+      "S17",
+      "S18",
+      "S19",
+      "S20",
+      "S21",
+      "S22",
+      "S23",
+      "S26"
+    ],
+    "desktopP04Ids": [
+      "04-P01",
+      "04-P02",
+      "04-P03",
+      "04-P04",
+      "04-P05",
+      "04-P06",
+      "04-P07",
+      "04-P08",
+      "04-P09",
+      "04-P10",
+      "04-P11",
+      "04-P12",
+      "04-P13",
+      "04-P14",
+      "04-P15",
+      "04-P16",
+      "04-P17",
+      "04-P18",
+      "04-P19",
+      "04-P20",
+      "04-P21",
+      "04-P22",
+      "04-P23",
+      "04-P24",
+      "04-P25",
+      "04-P26",
+      "04-P27",
+      "04-P28"
+    ],
+    "productP01Ids": [
+      "01-P01",
+      "01-P02",
+      "01-P03",
+      "01-P04",
+      "01-P05",
+      "01-P06",
+      "01-P07",
+      "01-P08",
+      "01-P09",
+      "01-P10",
+      "01-P11"
+    ],
+    "uxUIds": [
+      "U01",
+      "U02",
+      "U03",
+      "U04",
+      "U05",
+      "U06",
+      "U07",
+      "U08",
+      "U09",
+      "U10",
+      "U11",
+      "U12"
+    ],
+    "s24SubscenarioCount": 2,
+    "s25SyntheticCoreCount": 1,
+    "s27ImplementedLocalCount": 1
+  },
+  "deferredScenarioIds": [
+    "T25-D01",
+    "T25-D02",
+    "T25-D03"
+  ],
+  "limitations": [
+    "This structural self-check alone is not an independent review; the separate T04 read-only critical review is recorded below under independentCriticalReview. Neither is behavior evidence, benchmark evidence, or gate acceptance.",
+    "T13/T19/T21/T24 unaccepted; no test/build/service/PG/S3/Hermes/browser/device/crypto operation performed.",
+    "Later evidence requires actual commit/environment/command/artifact; mock/screenshot cannot close external gates.",
+    "G2/G3 do not enable public cloud or paid release; T26-T30 deferrals remain outstanding."
+  ],
+  "independentCriticalReview": {
+    "reviewer": "T04 independent reviewer",
+    "reviewType": "READ_ONLY_CRITICAL_PLAN_REVIEW",
+    "result": "PASS_WITH_LIMITATIONS",
+    "reviewedAt": "2026-10-04",
+    "reviewedFiles": [
+      "tests/tasks/T25/fixture-plan.json",
+      "docs/evidence/T25/fixture-plan-static-review.json"
+    ],
+    "findingsClosed": [
+      "F001-F003: workspace isolation, RLS and idempotency outcomes are explicit.",
+      "F023: plaintext/key canaries, worker shutdown, account isolation and partial-index labeling are explicit.",
+      "F025-F028: S24 quota/storage, synthetic S25 recovery core and S27 local-only boundaries are explicit.",
+      "F080-F083: frozen error, cancellation, capacity and permission outcomes are explicit; unknown mappings remain OPEN_QUESTION."
+    ],
+    "noNewProtocolOrPlatformSemantics": true,
+    "behaviorAcceptance": false,
+    "remainingLimitations": [
+      "Plan-only review; no behavior tests, build, PG/S3, Hermes, browser, device, crypto, or benchmark was run.",
+      "All fixtures, gates, commands, and measurements remain NOT_RUN; T25 and T13/T19/T21/T24 remain not_started."
+    ]
+  }
+}

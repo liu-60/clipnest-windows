@@ -1,0 +1,216 @@
+{
+  "schemaVersion": 1,
+  "task": "T24",
+  "reviewType": "fixture_plan_static_review",
+  "reviewStatus": "STATIC_REVIEW_RECORDED",
+  "reviewerRole": "author static self-check; not independent critical review",
+  "executionStatus": "NOT_RUN",
+  "result": "PLANNING_ONLY_OPEN_QUESTIONS_REMAIN",
+  "reviewedSources": [
+    "docs/spec/tasks/T24.md",
+    "docs/spec/tasks/T21.md",
+    "docs/spec/tasks/T23.md",
+    "docs/spec/01-product-and-ux.md §3/§5",
+    "docs/spec/02-architecture.md §2/§4/§5/§6/§7",
+    "docs/spec/03-data-sync-and-security.md §2.1/§5.4/§6/§7.1/§7.2/§7.3/§9/§10/§11",
+    "docs/spec/08-acceptance-matrix.md §2/§3/S03-S12/S22-S27",
+    "docs/spec/limits.v1.json (planning defaults; benchmark validation required)",
+    "docs/progress.json status blocks T14/T15/T16/T17/T18/T19/T20/T21/T22/T23/T24",
+    "tests/tasks/T21/fixture-plan.json dependency gate/open questions",
+    "tests/tasks/T23/fixture-plan.json dependency gate/open questions",
+    "docs/spec/tasks/T20.md dependencies",
+    "docs/spec/tasks/T22.md dependencies",
+    "docs/spec/01-product-and-ux.md §2.1/P01; §2.2/P02; §3/P04/P05/P07; §4/P08",
+    "docs/spec/08-acceptance-matrix.md §2/U12",
+    "docs/spec/03-data-sync-and-security.md §2.2 ID lifecycle",
+    "docs/spec/01-product-and-ux.md §4/P09; §4/P10",
+    "docs/spec/08-acceptance-matrix.md §2/U07/U09/U10/U11"
+  ],
+  "dependencySnapshot": [
+    {
+      "task": "T21",
+      "status": "not_started",
+      "accepted": false,
+      "dependencySource": "T24 task card direct"
+    },
+    {
+      "task": "T23",
+      "status": "not_started",
+      "accepted": false,
+      "dependencySource": "T24 task card direct"
+    },
+    {
+      "task": "T16",
+      "status": "not_started",
+      "accepted": false,
+      "dependencySource": "03 §11 T24 upstream"
+    },
+    {
+      "task": "T18",
+      "status": "not_started",
+      "accepted": false,
+      "dependencySource": "03 §11 T24 upstream"
+    },
+    {
+      "task": "T19",
+      "status": "not_started",
+      "accepted": false,
+      "dependencySource": "03 §11 T24 upstream"
+    },
+    {
+      "task": "T14",
+      "status": "not_started",
+      "accepted": false,
+      "dependencySource": "T21 task card transitive"
+    },
+    {
+      "task": "T15",
+      "status": "not_started",
+      "accepted": false,
+      "dependencySource": "T21 card/03 §11 and T23 card; T20 upstream"
+    },
+    {
+      "task": "T17",
+      "status": "not_started",
+      "accepted": false,
+      "dependencySource": "T21 task card transitive"
+    },
+    {
+      "task": "T20",
+      "status": "not_started",
+      "accepted": false,
+      "dependencySource": "T21 card upstream; T20 card upstream T06/T15"
+    },
+    {
+      "task": "T22",
+      "status": "not_started",
+      "accepted": false,
+      "dependencySource": "T23 card upstream; T22 card upstream T06/T07"
+    },
+    {
+      "task": "T06",
+      "status": "in_progress",
+      "accepted": false,
+      "dependencySource": "T20/T22 card upstream (T21→T20→T06; T23→T22→T06)"
+    },
+    {
+      "task": "T07",
+      "status": "not_started",
+      "accepted": false,
+      "dependencySource": "T22 card upstream (T23→T22→T07)"
+    },
+    {
+      "task": "T24",
+      "status": "not_started",
+      "accepted": false,
+      "dependencySource": "current task; progress intentionally untouched"
+    }
+  ],
+  "staticChecks": [
+    {
+      "id": "T24-R01",
+      "check": "Plan/evidence JSON parse; 37 fixture IDs and 12 gate IDs unique; every fixture has valid openQuestionRefs.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T24-R02",
+      "check": "All fixtures/gates/commands are NOT_RUN with empty evidence; T24 remains not_started.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T24-R03",
+      "check": "The explicit T24/T21/T23/T20/T22 dependency frontier includes T20→T06/T15 and T22→T06/T07; all 12 listed task statuses match progress. Deeper recursive closure remains OPEN_QUESTION.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T24-R04",
+      "check": "Coverage includes shared-engine lifecycle and lock/revoke/account, permission/capacity/cancel/error paths; F19/F24→U07/P09, F25/F26→U09/P10, F30/F31/F33→U10, and F21→U11 are explicitly mapped.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T24-R05",
+      "check": "Byte sentinels are non-secret/non-cryptographic; no official vector, behavior result, or cross-platform PASS is claimed.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T24-R06",
+      "check": "Only tests/tasks/T24/** and docs/evidence/T24/** were written; progress/shared fixtures/mobile source remain untouched.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T24-R07",
+      "check": "Full-plan independent T04 critical review is pending; author static checks are not acceptance.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T24-R08",
+      "check": "F37 uses fixed lower-case UUIDv4-format synthetic IDs and Decimal-string revisions; SavedItem content and collection_entry identity/revision are independent per 03 §2.2. Values do not test runtime randomness; fixture remains NOT_RUN.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T24-R09",
+      "check": "T24-G11 and G12 separately require physical iOS and Android completion of bidirectional F37 and specify separate evidence archive paths; both remain NOT_RUN.",
+      "status": "CHECKED_STATICALLY"
+    }
+  ],
+  "counts": {
+    "fixtureCount": 37,
+    "uniqueFixtureIdCount": 37,
+    "acceptanceGateCount": 12,
+    "uniqueAcceptanceGateIdCount": 12,
+    "commandCount": 2,
+    "uniqueCommandIdCount": 2,
+    "openQuestionCount": 13,
+    "dependencyCount": 12,
+    "allFixturesNotRun": true,
+    "allGatesNotRun": true,
+    "allCommandsNotRun": true,
+    "dependencyExpansionPathCount": 4,
+    "platformDeviceLifecycleGateCount": 2
+  },
+  "openQuestionIds": [
+    "T24-OQ01",
+    "T24-OQ02",
+    "T24-OQ03",
+    "T24-OQ04",
+    "T24-OQ05",
+    "T24-OQ06",
+    "T24-OQ07",
+    "T24-OQ08",
+    "T24-OQ09",
+    "T24-OQ10",
+    "T24-OQ11",
+    "T24-OQ12",
+    "T24-OQ13"
+  ],
+  "limitations": [
+    "Author static planning evidence only; not independent adversarial review, behavior acceptance, build result, native test, or protocol PASS.",
+    "No mobile sync/integration/device test, native build, database, provider, service, account, user data, or cryptographic behavior was run.",
+    "All conservative dependency-closure tasks are not_started; T21/T23 are not accepted.",
+    "No shared fixture, mobile source, or docs/progress.json was created or edited.",
+    "Native permission/scheduler mappings, mobile capacity charges, provider behavior, and UI/error details remain OPEN_QUESTION."
+  ],
+    "independentCriticalReview": {
+      "reviewer": "T04 independent reviewer",
+      "reviewType": "READ_ONLY_CRITICAL_PLAN_REVIEW",
+      "result": "PASS_WITH_LIMITATIONS",
+      "reviewedAt": "2026-10-04",
+      "reviewedFiles": [
+        "tests/tasks/T24/fixture-plan.json",
+        "docs/evidence/T24/fixture-plan-static-review.json"
+      ],
+      "findingsClosed": [
+        "F37 uses syntactically valid synthetic UUIDv4 IDs and Decimal revisions; SavedItem identity and collection_entry relation/revision remain separate.",
+        "Separate physical iOS and Android gates require the complete F37 cross-device lifecycle and preserve platform-specific evidence.",
+        "Relevant U07/U09/U10/U11 references are present for lock, permission, capacity and account-switch fixtures.",
+        "37 unique fixtures, 12 gates, 2 commands, 13 OQs; statuses/counts/references and 12 enumerated dependency statuses agree."
+      ],
+      "noNewProtocolOrPlatformSemantics": true,
+      "behaviorAcceptance": false,
+      "remainingLimitations": [
+        "Plan-only review; no tests, builds, database, provider, crypto or physical-device behavior was run.",
+        "All fixtures, gates and commands remain NOT_RUN; T24 and its dependencies remain unaccepted.",
+        "T24-OQ01 deeper recursive dependency closure remains open; G11/G12 physical iOS/Android evidence remains NOT_RUN."
+      ]
+    }
+}

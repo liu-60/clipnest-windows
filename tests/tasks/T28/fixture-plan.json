@@ -1,0 +1,1305 @@
+{
+  "schemaVersion": 1,
+  "task": "T28",
+  "status": "not_started",
+  "executionStatus": "NOT_RUN",
+  "planType": "synthetic_fixture_interface_planning_only",
+  "dependencies": [
+    {
+      "task": "T23",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN"
+    },
+    {
+      "task": "T26",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "executionStatus": "NOT_RUN"
+    }
+  ],
+  "additionalPrerequisiteSnapshot": [
+    {
+      "task": "T06",
+      "relationship": "Cross-cutting package/native dependency selection; use a reviewed T06 dependency slice before choosing or locking the official RevenueCat React Native SDK.",
+      "observedStatus": "in_progress",
+      "executionStatus": "NOT_RUN"
+    }
+  ],
+  "source": {
+    "taskCard": "docs/spec/tasks/T28.md",
+    "specifications": [
+      "docs/spec/06-model-runbook.md §1-§3/§5-§8",
+      "docs/spec/07-release-and-commercial.md §1-§3/§5/§7",
+      "docs/spec/08-acceptance-matrix.md §3",
+      "docs/spec/08-acceptance-matrix.md §5-§6",
+      "docs/spec/03-data-sync-and-security.md §1/§6/§11",
+      "docs/spec/00-README.md §1-§4/§6-§8",
+      "docs/progress.json T06/T23/T26/T28"
+    ],
+    "interpretation": "Only frozen observable boundaries are asserted. This is synthetic planning, not an implementation contract, SDK verification, behavior result, store approval, or acceptance. T23 and T26 must be accepted before implementation or behavior execution."
+  },
+  "repositorySnapshot": {
+    "observedAt": "2026-10-04",
+    "billingModulesPresent": false,
+    "mobileWorkspacePresent": false,
+    "serverBillingWorkspacePresent": false,
+    "revenueCatSdkPresent": false,
+    "billingFixturesPresent": false,
+    "basis": "Read-only inspection of the current v2 source tree, workspace manifests, and lockfile; no package install or runtime invocation.",
+    "implication": "The two task-card validation commands are recorded but cannot be treated as available or executed from the present workspace."
+  },
+  "dataBoundary": {
+    "fixtureData": "Synthetic internal account IDs, store/customer/contract/event labels, product-code labels, entitlement snapshots, error classes, and injected capacity counters only.",
+    "secrets": "No receipt, signed transaction, webhook secret, API key, purchase token, personal information, or real store account is generated or stored.",
+    "provider": "No RevenueCat SDK, App Store, Google Play, provider API, webhook, sandbox, live purchase, refund, or network is called.",
+    "execution": "No tests, build, package install, app launch, database, billing service, or device action is performed.",
+    "userDataRead": false,
+    "behaviorExecuted": false
+  },
+  "interfaceSketch": {
+    "status": "planning_only_not_canonical",
+    "mobileBoundary": [
+      "The authenticated application session supplies the internal account identity used to bind the official RevenueCat React Native SDK; arbitrary caller-supplied accountId/appUserID or client purchase callbacks are not proof of ownership.",
+      "Purchase and restore intents are sent through the planned billing adapter. UI may display store state, but only server-verified provider state can change trusted entitlement.",
+      "The restore endpoint is the 07 §3 POST /v1/billing/restore boundary; its authenticated server session determines account scope. Exact request/response DTO and SDK identity transition remain open until T06/T26/T23 contracts are accepted."
+    ],
+    "serverBoundary": [
+      "Verify RevenueCat events from the unmodified provider payload and headers before projection; reject invalid signatures without granting or changing entitlement.",
+      "Reconcile event/contract against provider state and internal account binding; duplicate or out-of-order notifications must not double grant or roll trusted state backward.",
+      "Project only verified contracts through the T26 entitlement/ledger authority. Provider network calls remain outside database row-lock transactions as specified in 03 §6.",
+      "For POST /v1/webhooks/revenuecat, capture and pass the original rawBody bytes and signature-bearing headers to verifyWebhook before JSON parsing, normalization, reserialization, or any projection; the verifier must receive the same body bytes that arrived at ingress."
+    ],
+    "notFrozen": [
+      "Concrete SDK calls/version/configuration, appUserID alias/reset lifecycle, event DTO, signature algorithm/header format, product mapping, restore result codes, conflict UX, retry rules, and billing error presentation are OPEN_QUESTION and must not be inferred from this sketch."
+    ]
+  },
+  "coverageMap": [
+    {
+      "acceptanceIds": [
+        "B01"
+      ],
+      "fixtureIds": [
+        "T28-F01",
+        "T28-F05",
+        "T28-F06",
+        "T28-F31"
+      ]
+    },
+    {
+      "acceptanceIds": [
+        "B02"
+      ],
+      "fixtureIds": [
+        "T28-F02",
+        "T28-F03",
+        "T28-F04"
+      ]
+    },
+    {
+      "acceptanceIds": [
+        "B03"
+      ],
+      "fixtureIds": [
+        "T28-F07",
+        "T28-F08"
+      ]
+    },
+    {
+      "acceptanceIds": [
+        "B04"
+      ],
+      "fixtureIds": [
+        "T28-F23",
+        "T28-F24",
+        "T28-F29",
+        "T28-F30"
+      ]
+    },
+    {
+      "acceptanceIds": [
+        "B05"
+      ],
+      "fixtureIds": [
+        "T28-F25"
+      ]
+    },
+    {
+      "acceptanceIds": [
+        "B06"
+      ],
+      "fixtureIds": [
+        "T28-F10",
+        "T28-F11",
+        "T28-F12"
+      ]
+    },
+    {
+      "acceptanceIds": [
+        "B07"
+      ],
+      "fixtureIds": [
+        "T28-F21",
+        "T28-F22"
+      ]
+    },
+    {
+      "acceptanceIds": [
+        "B08"
+      ],
+      "fixtureIds": [
+        "T28-F09"
+      ]
+    },
+    {
+      "acceptanceIds": [
+        "B09"
+      ],
+      "fixtureIds": [
+        "T28-F19",
+        "T28-F20"
+      ]
+    },
+    {
+      "acceptanceIds": [
+        "B10"
+      ],
+      "fixtureIds": [
+        "T28-F24",
+        "T28-F26",
+        "T28-F29",
+        "T28-F30"
+      ]
+    },
+    {
+      "acceptanceIds": [
+        "B11"
+      ],
+      "fixtureIds": [
+        "T28-F27",
+        "T28-F28",
+        "T28-F29",
+        "T28-F30"
+      ]
+    },
+    {
+      "acceptanceIds": [
+        "B12"
+      ],
+      "fixtureIds": [
+        "T28-F04",
+        "T28-F05"
+      ]
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "T28-F01",
+      "platform": "server-synthetic",
+      "sourceRefs": [
+        "docs/spec/tasks/T28.md §子任务顺序/b; 完成标准",
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B01"
+      ],
+      "acceptanceIds": [
+        "B01"
+      ],
+      "setup": "Supply a synthetic RevenueCat event envelope with an invalid signature marker and a pre-existing trusted entitlement snapshot.",
+      "action": "Plan delivery to the provider adapter and observe the projected entitlement and event disposition.",
+      "assertions": [
+        "Invalid signature is rejected; it grants no entitlement and does not alter the prior trusted projection.",
+        "No payload or secret is copied into user-facing evidence."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ03",
+        "T28-OQ05"
+      ]
+    },
+    {
+      "id": "T28-F02",
+      "platform": "server-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2-§3",
+        "docs/spec/08-acceptance-matrix.md §5 B02"
+      ],
+      "acceptanceIds": [
+        "B02"
+      ],
+      "setup": "Use one synthetic verified provider event ID and an unchanged verified contract snapshot.",
+      "action": "Plan repeated delivery of the same event and inspect trusted projection and capacity ledger deltas.",
+      "assertions": [
+        "Repeated delivery does not grant twice, duplicate a contract, or count the same entitlement capacity more than once.",
+        "Event ID uniqueness scope and exact duplicate response are not inferred here."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ03",
+        "T28-OQ04"
+      ]
+    },
+    {
+      "id": "T28-F03",
+      "platform": "server-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2-§3",
+        "docs/spec/08-acceptance-matrix.md §5 B02/B04/B05"
+      ],
+      "acceptanceIds": [
+        "B02",
+        "B04",
+        "B05"
+      ],
+      "setup": "Prepare synthetic renewal, expiration, and refund notifications whose delivery order differs from current provider contract state.",
+      "action": "Plan processing in delivery order, then compare the resulting projection with the current verified provider contract.",
+      "assertions": [
+        "A stale/out-of-order event cannot by itself roll the trusted entitlement backward or restore a revoked contract.",
+        "Current verified provider state, rather than last-arrival order, determines projection."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ03",
+        "T28-OQ04",
+        "T28-OQ06"
+      ]
+    },
+    {
+      "id": "T28-F04",
+      "platform": "server-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2-§3",
+        "docs/spec/08-acceptance-matrix.md §5 B02/B12"
+      ],
+      "acceptanceIds": [
+        "B02",
+        "B12"
+      ],
+      "setup": "Seed a synthetic active store contract and omit its latest provider event from the local event history.",
+      "action": "Plan a reconciliation pass that fetches the current provider contract and compares it with the trusted projection.",
+      "assertions": [
+        "A missed notification is repaired from provider-verified current state; event absence alone neither grants nor revokes entitlement.",
+        "Reconciliation leaves unrelated contracts and accounts unchanged."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ03",
+        "T28-OQ04"
+      ]
+    },
+    {
+      "id": "T28-F05",
+      "platform": "server-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2-§3",
+        "docs/spec/08-acceptance-matrix.md §5 B01/B03/B12"
+      ],
+      "acceptanceIds": [
+        "B01",
+        "B03",
+        "B12"
+      ],
+      "setup": "Provide a verified event label with an unknown event type or unmapped product code.",
+      "action": "Plan adapter processing and record provider fetch/quarantine disposition without assigning an entitlement.",
+      "assertions": [
+        "Unknown event/product is isolated for review and does not grant permissions or capacity.",
+        "The fixture does not invent a user-visible error code or retry schedule."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ03",
+        "T28-OQ04",
+        "T28-OQ05"
+      ]
+    },
+    {
+      "id": "T28-F06",
+      "platform": "server-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2-§3",
+        "docs/spec/08-acceptance-matrix.md §5 B01/B08"
+      ],
+      "acceptanceIds": [
+        "B01",
+        "B08"
+      ],
+      "setup": "Use a synthetic client callback claiming purchase success without a corresponding verified provider contract/event.",
+      "action": "Plan submission through the mobile-facing boundary and inspect the server entitlement response.",
+      "assertions": [
+        "A client callback, local purchase flag, or submitted appUserID cannot grant trusted entitlement without server/provider verification.",
+        "No real receipt or transaction credential is used."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ02",
+        "T28-OQ04"
+      ]
+    },
+    {
+      "id": "T28-F07",
+      "platform": "server-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2-§3",
+        "docs/spec/08-acceptance-matrix.md §5 B03"
+      ],
+      "acceptanceIds": [
+        "B03"
+      ],
+      "setup": "Use an authenticated synthetic internal account and a provider-confirmed store contract mapped to an approved internal product label.",
+      "action": "Plan successful server reconciliation after the store purchase flow reports a result.",
+      "assertions": [
+        "Only the verified contract associated with the authenticated internal account changes its trusted entitlement.",
+        "Store SDK success UI alone is not represented as entitlement acceptance."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ02",
+        "T28-OQ04"
+      ]
+    },
+    {
+      "id": "T28-F08",
+      "platform": "mobile-synthetic",
+      "sourceRefs": [
+        "docs/spec/tasks/T28.md §子任务顺序/a",
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B03/B06"
+      ],
+      "acceptanceIds": [
+        "B03",
+        "B06"
+      ],
+      "setup": "Use a synthetic authenticated session for internal account A and a planned official RevenueCat React Native SDK adapter boundary.",
+      "action": "Inspect the planned authenticated identity binding used for purchase and restore; do not invoke an SDK.",
+      "assertions": [
+        "The identity source is the authenticated internal ClipNest account, not a caller-selected appUserID or store display name.",
+        "The adapter does not present a client-reported transaction as server verification."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ01",
+        "T28-OQ02",
+        "T28-OQ09"
+      ]
+    },
+    {
+      "id": "T28-F09",
+      "platform": "server-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2-§3",
+        "docs/spec/08-acceptance-matrix.md §5 B08"
+      ],
+      "acceptanceIds": [
+        "B08"
+      ],
+      "setup": "Prepare forged client fields such as isPro=true, an arbitrary accountId, an arbitrary appUserID, and a plan label while the trusted server entitlement is inactive.",
+      "action": "Plan authenticated requests that include the forged fields and inspect server-authorized results.",
+      "assertions": [
+        "Client-forged plan, account, appUserID, or isPro fields do not change entitlement, cloud-write access, or capacity.",
+        "The authenticated server context and verified contract remain authoritative."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ02",
+        "T28-OQ04"
+      ]
+    },
+    {
+      "id": "T28-F10",
+      "platform": "mobile-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §1/§3",
+        "docs/spec/08-acceptance-matrix.md §5 B06"
+      ],
+      "acceptanceIds": [
+        "B06"
+      ],
+      "setup": "Create a synthetic store contract already mapped to authenticated internal account A.",
+      "action": "Plan restore while authenticated as account A and compare the returned server entitlement with A's verified contract.",
+      "assertions": [
+        "Restore resolves to the existing owning internal account and does not create a second contract or duplicate capacity.",
+        "Local database/key unlock is not inferred from a successful billing restore."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ02",
+        "T28-OQ04"
+      ]
+    },
+    {
+      "id": "T28-F11",
+      "platform": "mobile-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §1/§3",
+        "docs/spec/08-acceptance-matrix.md §5 B06"
+      ],
+      "acceptanceIds": [
+        "B06"
+      ],
+      "setup": "Bind a synthetic store contract to account A, then create a separate authenticated account B with no such contract.",
+      "action": "Plan restore as account B and observe conflict handling, server authorization, and both account projections.",
+      "assertions": [
+        "The contract is not silently reassigned to B; neither account receives entitlement inconsistent with verified ownership.",
+        "A conflict offers a safe support path without disclosing another account's private details or automatically canceling a contract."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ02",
+        "T28-OQ07"
+      ]
+    },
+    {
+      "id": "T28-F12",
+      "platform": "mobile-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B06"
+      ],
+      "acceptanceIds": [
+        "B06"
+      ],
+      "setup": "Provide an authenticated account with no provider-owned purchase in the synthetic store customer snapshot.",
+      "action": "Plan restore and observe the empty/no-purchase outcome and existing local content state.",
+      "assertions": [
+        "No entitlement is created when no verified contract exists; local-only content remains accessible according to local authorization.",
+        "Exact empty-result wording and error code remain unresolved."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ05",
+        "T28-OQ09"
+      ]
+    },
+    {
+      "id": "T28-F13",
+      "platform": "mobile-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §1/§3",
+        "docs/spec/03-data-sync-and-security.md §1",
+        "docs/spec/08-acceptance-matrix.md §5 B06"
+      ],
+      "acceptanceIds": [
+        "B06"
+      ],
+      "setup": "Start a synthetic restore for account A, then switch the authenticated app scope to account B before the response arrives.",
+      "action": "Plan delivery of the late A response after the scope change and inspect visible entitlement, local namespace, and later B requests.",
+      "assertions": [
+        "The late result cannot grant UI/cloud access in B's scope or expose A's account data.",
+        "Account switching stops old-scope work and does not reuse the old account's entitlement as B's state."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ02",
+        "T28-OQ09"
+      ]
+    },
+    {
+      "id": "T28-F14",
+      "platform": "mobile-synthetic",
+      "sourceRefs": [
+        "docs/spec/tasks/T28.md §子任务顺序/c",
+        "docs/spec/07-release-and-commercial.md §1/§3",
+        "docs/spec/08-acceptance-matrix.md §5 B06"
+      ],
+      "acceptanceIds": [
+        "B06"
+      ],
+      "setup": "Begin a synthetic restore or purchase intent and then sign out before the provider result is delivered.",
+      "action": "Plan delivery of the completion after logout and inspect session scope and server authorization.",
+      "assertions": [
+        "A logged-out or stale session cannot attach the result to another account or grant server entitlement.",
+        "The store contract is not automatically canceled or erased by app logout."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ02",
+        "T28-OQ07",
+        "T28-OQ09"
+      ]
+    },
+    {
+      "id": "T28-F15",
+      "platform": "mobile-synthetic",
+      "sourceRefs": [
+        "docs/spec/tasks/T28.md §完成标准与行为测试",
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B03/B06"
+      ],
+      "acceptanceIds": [
+        "B03",
+        "B06"
+      ],
+      "setup": "Prepare a synthetic store-sheet user-cancel result with no verified new/renewed contract.",
+      "action": "Plan cancellation during purchase and restore; observe local access and subsequent retry affordance without invoking a store.",
+      "assertions": [
+        "User cancellation is not presented as a successful purchase and does not grant entitlement.",
+        "Existing verified entitlement and local content are not erased by canceling the current flow."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ05",
+        "T28-OQ09"
+      ]
+    },
+    {
+      "id": "T28-F16",
+      "platform": "mobile-synthetic",
+      "sourceRefs": [
+        "docs/spec/tasks/T28.md §完成标准与行为测试",
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B03/B06"
+      ],
+      "acceptanceIds": [
+        "B03",
+        "B06"
+      ],
+      "setup": "Inject synthetic billing permission denied, payment unavailable, and provider unavailable categories independently.",
+      "action": "Plan the user-visible outcome and then inspect entitlement, capacity, and local content state.",
+      "assertions": [
+        "Failure/permission denial is not converted to success or entitlement; existing local content remains available.",
+        "No exact OS error-to-copy or retry mapping is invented."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ05",
+        "T28-OQ08"
+      ]
+    },
+    {
+      "id": "T28-F17",
+      "platform": "server-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B01/B06/B12"
+      ],
+      "acceptanceIds": [
+        "B01",
+        "B06",
+        "B12"
+      ],
+      "setup": "Inject provider timeout after the store flow reports completion, with no confirmed server contract yet.",
+      "action": "Plan timeout and later reconciliation outcomes using synthetic contract state only.",
+      "assertions": [
+        "A timeout does not become trusted success; a later grant requires provider-verified current state.",
+        "No blind retry may create a second purchase or second entitlement; exact safe retry/idempotency behavior remains open."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ03",
+        "T28-OQ04",
+        "T28-OQ05",
+        "T28-OQ09"
+      ]
+    },
+    {
+      "id": "T28-F18",
+      "platform": "mobile-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2-§3",
+        "docs/spec/08-acceptance-matrix.md §5 B09"
+      ],
+      "acceptanceIds": [
+        "B09"
+      ],
+      "setup": "Prepare a synthetic signed entitlement cache that is still within its server-issued validity boundary; disconnect provider connectivity.",
+      "action": "Plan an offline app reopen and observe entitlement display versus local-only actions.",
+      "assertions": [
+        "A valid signed cache may be displayed offline; it is not represented as a fresh provider verification.",
+        "Local content remains available independently of cloud entitlement display."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ10"
+      ]
+    },
+    {
+      "id": "T28-F19",
+      "platform": "mobile-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2-§3",
+        "docs/spec/08-acceptance-matrix.md §5 B09"
+      ],
+      "acceptanceIds": [
+        "B09"
+      ],
+      "setup": "Prepare an expired synthetic signed entitlement cache with no online provider verification available.",
+      "action": "Plan an attempted cloud write and local read/export while offline.",
+      "assertions": [
+        "Expired offline entitlement is not presented as current cloud authorization and cannot authorize new cloud writes.",
+        "Local content remains readable/exportable under local policy; no data is silently deleted."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ04",
+        "T28-OQ10",
+        "T28-OQ11"
+      ]
+    },
+    {
+      "id": "T28-F20",
+      "platform": "mobile-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2-§3",
+        "docs/spec/08-acceptance-matrix.md §5 B09"
+      ],
+      "acceptanceIds": [
+        "B09"
+      ],
+      "setup": "Use an offline cache at validUntil/graceUntil boundaries with the duration and status projection supplied by an accepted T26 fixture contract.",
+      "action": "Plan before, at, and after the accepted boundary without selecting a new grace duration.",
+      "assertions": [
+        "The client does not extend signed server validity or invent grace beyond the accepted server-issued boundary.",
+        "Exact boundary inclusivity and offline presentation remain OPEN_QUESTION until T26 freezes them."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ04",
+        "T28-OQ06",
+        "T28-OQ10"
+      ]
+    },
+    {
+      "id": "T28-F21",
+      "platform": "mobile-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2-§3",
+        "docs/spec/08-acceptance-matrix.md §5 B07"
+      ],
+      "acceptanceIds": [
+        "B07"
+      ],
+      "setup": "Seed an authenticated account with an active synthetic Stripe/Web contract and no mobile-store contract.",
+      "action": "Plan opening the mobile purchase entry and inspect existing entitlement messaging and purchase affordance.",
+      "assertions": [
+        "The existing verified cross-channel entitlement is shown before offering a duplicate purchase.",
+        "The app does not claim it can automatically cancel the Web contract."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ04",
+        "T28-OQ07",
+        "T28-OQ08"
+      ]
+    },
+    {
+      "id": "T28-F22",
+      "platform": "server-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2-§3/§5",
+        "docs/spec/08-acceptance-matrix.md §5 B07"
+      ],
+      "acceptanceIds": [
+        "B07"
+      ],
+      "setup": "Seed the same synthetic internal account with one verified Web contract and one verified store contract describing the same effective plan.",
+      "action": "Plan entitlement projection and inspect effective capacity values and contract identities.",
+      "assertions": [
+        "The effective entitlement/capacity is not added twice for overlapping channel contracts.",
+        "Both provider contracts remain independently represented; the system does not automatically cancel either one."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ04",
+        "T28-OQ07"
+      ]
+    },
+    {
+      "id": "T28-F23",
+      "platform": "server-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2-§3",
+        "docs/spec/08-acceptance-matrix.md §5 B04"
+      ],
+      "acceptanceIds": [
+        "B04"
+      ],
+      "setup": "Create two synthetic store contracts on separate accounts, then prepare a provider-verified refund/revoke for only account A's contract.",
+      "action": "Plan provider reconciliation and compare both accounts' contract projections.",
+      "assertions": [
+        "Refund/revoke affects only the matching verified contract and account; unrelated contracts and account B remain unchanged.",
+        "No provider refund is inferred from a client request or local cancellation display."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ03",
+        "T28-OQ04"
+      ]
+    },
+    {
+      "id": "T28-F24",
+      "platform": "server-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2-§3/§5",
+        "docs/spec/08-acceptance-matrix.md §5 B04/B10"
+      ],
+      "acceptanceIds": [
+        "B04",
+        "B10"
+      ],
+      "setup": "Give account A an active store contract and a separate active Web contract, then refund only the store contract and retain synthetic usage above the remaining entitlement limit.",
+      "action": "Plan trusted projection followed by read, delete, export, and positive-delta write attempts.",
+      "assertions": [
+        "Only the store contract is revoked; the still-valid Web contract continues to contribute once to entitlement.",
+        "If effective limits are exceeded, new positive usage is blocked while reads, delete, export, and existing local content are retained."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ04",
+        "T28-OQ11"
+      ]
+    },
+    {
+      "id": "T28-F25",
+      "platform": "server-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2-§3",
+        "docs/spec/08-acceptance-matrix.md §5 B05"
+      ],
+      "acceptanceIds": [
+        "B05"
+      ],
+      "setup": "Use synthetic provider contract states trial, active, grace, expired, and revoked with the status/validity boundaries supplied by accepted T26 policy fixtures.",
+      "action": "Plan projection for each state and inspect status, validUntil, graceUntil, and sourceChannels without injecting chosen durations.",
+      "assertions": [
+        "Projection follows provider-verified contract state and the accepted T26 entitlement policy.",
+        "No trial, grace period, or expiry duration is hardcoded or inferred by T28."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ04",
+        "T28-OQ06"
+      ]
+    },
+    {
+      "id": "T28-F26",
+      "platform": "server-synthetic",
+      "sourceRefs": [
+        "docs/spec/07-release-and-commercial.md §2-§3/§5",
+        "docs/spec/08-acceptance-matrix.md §5 B10"
+      ],
+      "acceptanceIds": [
+        "B10"
+      ],
+      "setup": "Reduce a synthetic verified entitlement limit below current usage while retaining local content and account access.",
+      "action": "Plan positive-delta upload, pull/read, delete, and export attempts after the limit change.",
+      "assertions": [
+        "New positive cloud usage is blocked under the reduced trusted limit while pull/read/delete/export remain available as specified.",
+        "No local or cloud content is silently removed merely because the entitlement changed."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ04",
+        "T28-OQ11"
+      ]
+    },
+    {
+      "id": "T28-F27",
+      "platform": "mobile-synthetic",
+      "sourceRefs": [
+        "docs/spec/tasks/T28.md §完成标准与行为测试",
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B11"
+      ],
+      "acceptanceIds": [
+        "B11"
+      ],
+      "setup": "Use a synthetic unsupported/unknown store billing availability or account restriction outcome on one platform.",
+      "action": "Plan opening purchase entry and record entry availability, explanatory state, and local access.",
+      "assertions": [
+        "Unavailable or restricted billing cannot produce a purchase success or entitlement; local functions remain available.",
+        "Exact platform error mapping and legal handling are not guessed."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ05",
+        "T28-OQ08"
+      ]
+    },
+    {
+      "id": "T28-F28",
+      "platform": "shared-static",
+      "sourceRefs": [
+        "docs/spec/tasks/T28.md §子任务顺序/c",
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B11"
+      ],
+      "acceptanceIds": [
+        "B11"
+      ],
+      "setup": "Represent target market, storefront, app distribution channel, merchant eligibility, and policy review date as unknown synthetic metadata.",
+      "action": "Plan the pre-release policy/merchant gate without opening an external storefront or inferring current rules.",
+      "assertions": [
+        "No live purchase entry, external purchase link, or price claim is considered approved while target-market policy and merchant eligibility are unknown.",
+        "T28 planning does not select T31's eventual release route."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ08"
+      ]
+    },
+    {
+      "id": "T28-F29",
+      "platform": "ios-synthetic",
+      "sourceRefs": [
+        "docs/spec/tasks/T28.md §子任务顺序/a/c; 完成标准与行为测试",
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B03/B04/B06/B07/B10/B11"
+      ],
+      "acceptanceIds": [
+        "B03",
+        "B04",
+        "B06",
+        "B07",
+        "B10",
+        "B11"
+      ],
+      "setup": "Prepare an iOS App Store sandbox purchase and restore scenario bound to one synthetic authenticated internal account, then an iOS sandbox refund/revoke for that same store contract; include one synthetic local content item and a cloud quota that becomes exceeded after revocation.",
+      "action": "Plan the complete iOS native sandbox sequence: purchase, server/provider verification and entitlement projection, restore to the same account, sandbox refund, receipt of the RevenueCat provider refund event, server verification of current provider state, then client entitlement refresh and local/cloud access checks. No SDK, store, device, or provider is invoked by this synthetic plan.",
+      "assertions": [
+        "The future iOS gate must exercise purchase and restore in an eligible iOS development build against the iOS store sandbox, then trigger an actual sandbox refund/revoke for the same contract.",
+        "A client callback does not grant/refund entitlement; the provider refund event and current contract state are verified server-side before the trusted entitlement is downgraded.",
+        "After the refund removes the only eligible contract, the client shows the server-derived downgraded state; existing local content remains accessible and is not silently deleted.",
+        "If usage exceeds the resulting cloud limit, new positive-delta cloud writes are rejected while cloud reads, delete, export, and local content remain available as specified.",
+        "The iOS evidence cannot be substituted by Android, Web, mock, screenshot, or Expo Go results."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ01",
+        "T28-OQ03",
+        "T28-OQ04",
+        "T28-OQ05",
+        "T28-OQ06",
+        "T28-OQ08",
+        "T28-OQ11",
+        "T28-OQ12"
+      ]
+    },
+    {
+      "id": "T28-F30",
+      "platform": "android-synthetic",
+      "sourceRefs": [
+        "docs/spec/tasks/T28.md §子任务顺序/a/c; 完成标准与行为测试",
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B03/B04/B06/B07/B10/B11"
+      ],
+      "acceptanceIds": [
+        "B03",
+        "B04",
+        "B06",
+        "B07",
+        "B10",
+        "B11"
+      ],
+      "setup": "Prepare an Android Google Play sandbox purchase and restore scenario bound to one synthetic authenticated internal account, then an Android sandbox refund/revoke for that same store contract; include one synthetic local content item and a cloud quota that becomes exceeded after revocation.",
+      "action": "Plan the complete Android native sandbox sequence: purchase, server/provider verification and entitlement projection, restore to the same account, sandbox refund, receipt of the RevenueCat provider refund event, server verification of current provider state, then client entitlement refresh and local/cloud access checks. No SDK, store, device, or provider is invoked by this synthetic plan.",
+      "assertions": [
+        "The future Android gate must exercise purchase and restore in an eligible Android development build against the Android store sandbox, then trigger an actual sandbox refund/revoke for the same contract.",
+        "A client callback does not grant/refund entitlement; the provider refund event and current contract state are verified server-side before the trusted entitlement is downgraded.",
+        "After the refund removes the only eligible contract, the client shows the server-derived downgraded state; existing local content remains accessible and is not silently deleted.",
+        "If usage exceeds the resulting cloud limit, new positive-delta cloud writes are rejected while cloud reads, delete, export, and local content remain available as specified.",
+        "The Android evidence cannot be substituted by iOS, Web, mock, screenshot, or Expo Go results."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ01",
+        "T28-OQ03",
+        "T28-OQ04",
+        "T28-OQ05",
+        "T28-OQ06",
+        "T28-OQ08",
+        "T28-OQ11",
+        "T28-OQ12"
+      ]
+    },
+    {
+      "id": "T28-F31",
+      "platform": "server-synthetic",
+      "sourceRefs": [
+        "docs/spec/tasks/T28.md §完成标准与行为测试",
+        "docs/spec/07-release-and-commercial.md §3",
+        "docs/spec/08-acceptance-matrix.md §5 B01"
+      ],
+      "acceptanceIds": [
+        "B01"
+      ],
+      "setup": "Prepare a synthetic webhook rawBody byte sequence whose whitespace, JSON property order, and UTF-8 encoding are fixed, plus synthetic signature-bearing header names/values and an opaque verifier marker. No real secret or provider payload is included.",
+      "action": "Plan the ingress boundary so the exact original byte sequence and signature-bearing headers are passed to verifyWebhook before parsing or transforming the body; inspect bytes and header values at the verifier boundary.",
+      "assertions": [
+        "Before any parsing or reserialization, the verifier receives byte-for-byte identical rawBody bytes to those captured at ingress; no JSON parse/stringify, property reordering, whitespace normalization, character re-encoding, or other body rewrite happens first.",
+        "The signature-bearing header field/value reaches the verifier without application-side trimming, coercion, replacement, or rewrite before validation.",
+        "Only after verification may event parsing/projection proceed; invalid signature produces no entitlement or ledger mutation.",
+        "Exact HTTP-runtime header-name casing and raw-header capture mechanism remain OPEN_QUESTION; do not claim a runtime behavior from this fixture."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ03",
+        "T28-OQ05"
+      ]
+    },
+    {
+      "id": "T28-F32",
+      "platform": "cross-platform-synthetic",
+      "sourceRefs": [
+        "docs/spec/tasks/T28.md §验证命令/回滚与交付",
+        "docs/spec/06-model-runbook.md §2/§5/§8",
+        "docs/spec/07-release-and-commercial.md §3/§7",
+        "docs/spec/08-acceptance-matrix.md §3",
+        "docs/spec/08-acceptance-matrix.md §5-§6"
+      ],
+      "acceptanceIds": [
+        "B01",
+        "B03",
+        "B04",
+        "B06",
+        "B08"
+      ],
+      "setup": "Seed clearly synthetic canary markers standing for a purchase receipt/body, signature-header value, account identifier, content body/title/URL/source, token, key, and payment detail into isolated fake billing success, failure, refund, and restore paths. All markers are inert strings; no real secret, receipt, user data, or payment detail is used.",
+      "action": "Plan inspection of the telemetry event, crash report, structured error, and diagnostic/error bundle generated by each synthetic path; search for whole canary markers and recognizable fragments.",
+      "assertions": [
+        "The synthetic account-identifier canary is absent from telemetry events, crash reports, structured errors, and diagnostic/error bundles.",
+        "No synthetic content, URL, title, source, image marker, token, key, receipt/body, signature-header value, or payment-detail marker appears in telemetry, crash output, structured errors, or an error bundle.",
+        "Permitted operational reporting is limited to non-sensitive event type/count/duration/error-code information; it does not include the provider body or transaction material.",
+        "The fixture evidence reports only which data classes were inspected and whether canary matches occurred; it never embeds the canary strings or protected payload.",
+        "No production telemetry/crash service or real user data is used."
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T28-OQ03",
+        "T28-OQ05"
+      ]
+    }
+  ],
+  "acceptanceGates": [
+    {
+      "id": "T28-G01",
+      "name": "Verified RevenueCat event and contract projection",
+      "fixtures": [
+        "T28-F01",
+        "T28-F02",
+        "T28-F03",
+        "T28-F04",
+        "T28-F05",
+        "T28-F06",
+        "T28-F07",
+        "T28-F09",
+        "T28-F17",
+        "T28-F23",
+        "T28-F25",
+        "T28-F31",
+        "T28-F32"
+      ],
+      "requires": [
+        "T23 accepted",
+        "T26 accepted",
+        "isolated server/provider test harness",
+        "no client success shortcut"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T28-G02",
+      "name": "Authenticated account binding and restore conflict behavior",
+      "fixtures": [
+        "T28-F08",
+        "T28-F09",
+        "T28-F10",
+        "T28-F11",
+        "T28-F12",
+        "T28-F13",
+        "T28-F14"
+      ],
+      "requires": [
+        "T23 accepted",
+        "T26 accepted",
+        "frozen account/restore contract",
+        "privacy-safe support path"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T28-G03",
+      "name": "iOS store-sandbox purchase, restore, server-verified refund, and local/cloud downgrade",
+      "fixtures": [
+        "T28-F15",
+        "T28-F16",
+        "T28-F18",
+        "T28-F19",
+        "T28-F20",
+        "T28-F21",
+        "T28-F23",
+        "T28-F24",
+        "T28-F29"
+      ],
+      "requires": [
+        "T23 accepted",
+        "T26 accepted",
+        "T06 reviewed SDK/native dependency selection",
+        "eligible iOS development build and real iOS store sandbox account",
+        "complete sandbox purchase and restore followed by sandbox refund/revoke",
+        "RevenueCat refund event and current contract verified by isolated server before projection",
+        "iOS policy/market gate reviewed",
+        "evidence omits receipts, signed transactions, headers, and credentials"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T28-G04",
+      "name": "Android store-sandbox purchase, restore, server-verified refund, and local/cloud downgrade",
+      "fixtures": [
+        "T28-F15",
+        "T28-F16",
+        "T28-F18",
+        "T28-F19",
+        "T28-F20",
+        "T28-F21",
+        "T28-F23",
+        "T28-F24",
+        "T28-F30"
+      ],
+      "requires": [
+        "T23 accepted",
+        "T26 accepted",
+        "T06 reviewed SDK/native dependency selection",
+        "eligible Android development build and real Android store sandbox account",
+        "complete sandbox purchase and restore followed by sandbox refund/revoke",
+        "RevenueCat refund event and current contract verified by isolated server before projection",
+        "Android policy/market gate reviewed",
+        "evidence omits receipts, signed transactions, headers, and credentials"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T28-G05",
+      "name": "Cross-channel entitlement and capacity counted once",
+      "fixtures": [
+        "T28-F21",
+        "T28-F22",
+        "T28-F23",
+        "T28-F24",
+        "T28-F26"
+      ],
+      "requires": [
+        "T26 accepted",
+        "isolated ledger/provider integration evidence",
+        "verified independent contracts"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T28-G06",
+      "name": "Offline, expiry, cancel, permission, and capacity failure outcomes",
+      "fixtures": [
+        "T28-F12",
+        "T28-F15",
+        "T28-F16",
+        "T28-F17",
+        "T28-F18",
+        "T28-F19",
+        "T28-F20",
+        "T28-F24",
+        "T28-F26",
+        "T28-F27"
+      ],
+      "requires": [
+        "T23 accepted",
+        "T26 accepted",
+        "frozen error/grace/capacity semantics",
+        "local content remains available"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T28-G07",
+      "name": "Current platform policy and merchant eligibility review",
+      "fixtures": [
+        "T28-F27",
+        "T28-F28",
+        "T28-F29",
+        "T28-F30"
+      ],
+      "requires": [
+        "target markets and distribution channels known",
+        "dated Apple and Google policy review",
+        "merchant/store eligibility confirmed by release owner"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T28-G08",
+      "name": "Independent critical adversarial review after behavior implementation",
+      "fixtures": [
+        "T28-F01",
+        "T28-F03",
+        "T28-F09",
+        "T28-F11",
+        "T28-F13",
+        "T28-F19",
+        "T28-F22",
+        "T28-F24",
+        "T28-F29",
+        "T28-F30",
+        "T28-F31",
+        "T28-F32"
+      ],
+      "requires": [
+        "implementation diff",
+        "sandbox and server evidence",
+        "T23/T26 dependency gates closed"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T28-G09",
+      "name": "Synthetic canary redaction across billing telemetry, crash, and error bundle",
+      "fixtures": [
+        "T28-F32"
+      ],
+      "requires": [
+        "isolated fake telemetry/crash/error sinks",
+        "synthetic inert canary markers only",
+        "no production observability account or real transaction material"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    }
+  ],
+  "commands": [
+    {
+      "id": "T28-CMD01",
+      "command": "pnpm --filter @clipnest/mobile test billing",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "prerequisite": "Mobile package and billing test script do not exist in the observed workspace; T06/native package setup and T23/T26 acceptance are prerequisites."
+    },
+    {
+      "id": "T28-CMD02",
+      "command": "pnpm --filter @clipnest/server test revenuecat",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "prerequisite": "Server billing module and RevenueCat test script do not exist in the observed workspace; T26 acceptance and the isolated provider contract are prerequisites."
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "T28-OQ01",
+      "topic": "Official RevenueCat React Native SDK version, license/transitive review, Expo/native compatibility, and eligible development-build configuration.",
+      "owner": "T06 dependency slice / T28 implementation owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T28-OQ02",
+      "topic": "Exact SDK identity lifecycle binding to authenticated internal accountId across login, anonymous state, restore, logout, and account switch; conflict/transfer policy must not trust client self-assertion.",
+      "owner": "T23/T26 module owners with T28",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T28-OQ03",
+      "topic": "RevenueCat webhook event DTO, signature header/verification contract, provider API fetch shape, environment/product mapping, unknown-event quarantine, and reconciliation cadence.",
+      "owner": "T28 provider adapter owner; align with T26",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T28-OQ04",
+      "topic": "Canonical T26 entitlement and ledger projection, multi-contract aggregation/tie-breaks, exact capacity fields, and trusted restore response DTO.",
+      "owner": "T26",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T28-OQ05",
+      "topic": "Frozen user-visible result/error/retry mapping for empty restore, store cancel, permission denial, provider timeout, and unavailable billing.",
+      "owner": "T28 with product/API contract owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T28-OQ06",
+      "topic": "Store-specific trial, billing retry/grace, expiration boundary, refund/revoke and renewal mapping to canonical trial/active/grace/expired/revoked status; no duration is selected here.",
+      "owner": "T26 with T28 provider adapter owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T28-OQ07",
+      "topic": "Restore ownership conflict support flow, proof requirements, privacy-safe messaging, and whether/how a deliberate account transfer could ever be supported.",
+      "owner": "Product/support and billing module owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T28-OQ08",
+      "topic": "Approved purchase entry, external-link behavior, refund language, merchant eligibility, target regions, and dated App Store/Google Play policy review; T31 owns actual release route.",
+      "owner": "Release owner / T31 with legal and merchant input",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T28-OQ09",
+      "topic": "Purchase/restore idempotency and safe retry after timeout, in-flight account-switch/logout cancellation semantics, and SDK callback lifecycle.",
+      "owner": "T28 mobile/server contract owners",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T28-OQ10",
+      "topic": "Signed entitlement cache format, refresh policy, validUntil/graceUntil boundary inclusivity, and offline presentation while preserving local-only access.",
+      "owner": "T26 entitlement owner with T28 mobile owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T28-OQ11",
+      "topic": "Exact user-visible handling when verified refund/expiry reduces capacity below usage; frozen boundary preserves reads, deletes, export, and local content without silent deletion.",
+      "owner": "T26 with T28 UI owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T28-OQ12",
+      "topic": "Available iOS/Android sandbox accounts, physical/native build matrix, test storefront eligibility, and secure evidence collection without receipts or credentials.",
+      "owner": "T28 QA / platform test owner",
+      "status": "OPEN_QUESTION"
+    }
+  ],
+  "limitations": [
+    "All 32 fixtures, all 9 gates, and both task-card commands remain NOT_RUN with empty evidence.",
+    "T23 and T26 are not accepted. No implementation, server/provider integration, test execution, SDK call, package install, build, network, sandbox, or store action is authorized or performed by this plan.",
+    "iOS and Android sandbox gates are separate and cannot satisfy one another; mocks, Expo Go, screenshots, or a Web subscription are not platform acceptance.",
+    "A successful billing restore does not unlock a local encrypted library or prove that local-only data was restored.",
+    "Policy, merchant, product, prices, grace duration, error copy, and unresolved SDK/API semantics remain open and must not be represented as approved or implemented.",
+    "The author structural self-check is not the independent critical review required by the T28 task card.",
+    "The real iOS and Android store-sandbox gates each include purchase, restore, sandbox refund/revoke, RevenueCat provider-event delivery, server verification, and post-refund local/cloud downgrade checks; neither platform has been exercised.",
+    "Webhook rawBody byte preservation, signature-bearing header handling, and synthetic telemetry/crash/structured-error/error-bundle canary checks, including account-identifier redaction across all four sinks, are planned only and remain NOT_RUN."
+  ]
+}

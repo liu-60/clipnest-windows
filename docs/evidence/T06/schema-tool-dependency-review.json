@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "T06-b dependency research",
+  "result": "PASS_WITH_LIMITATIONS",
+  "reviewDate": "2026-10-04",
+  "reviewer": "Independent read-only T06 dependency reviewer",
+  "scope": [
+    "docs/evidence/T06/schema-tool-dependency-research.json",
+    "official upstream metadata and documentation links listed in the research record"
+  ],
+  "findings": [
+    "Zod 4.6.5's z.toJSONSchema() path and default Draft 2020-12 dialect are consistent with the official documentation; strict-object and additionalProperties distinctions are not overstated.",
+    "quicktype 26.0.0 release notes claim Node >=20.19 and package build/test on Node 20/22/24, while the v26.0.0 Git-tag package manifests report internal version 24.0.0. This is a real metadata discrepancy requiring inspection of the exact npm tarball before pinning, but it does not prove the npm package itself is incorrect.",
+    "Ajv Draft 2020-12 has a separate entry point/class, and formats are provided separately through ajv-formats; exact plugin version, format coverage, and regex safety remain open.",
+    "The researched MIT/Apache-2.0 values are direct package declarations only. The record correctly leaves transitive licenses/security review and Node 24 local execution unverified."
+  ],
+  "notVerified": [
+    "No npm tarball was downloaded or inspected; quicktype published package fields remain unresolved.",
+    "No dependency was installed, no generator was run, and no contracts were generated or compiled.",
+    "No T06 dependency, schema dialect, format plugin, or generator selection is approved by this research review."
+  ],
+  "primarySources": [
+    "https://github.com/glideapps/quicktype/releases/tag/v26.0.0",
+    "https://raw.githubusercontent.com/glideapps/quicktype/v26.0.0/packages/quicktype/package.json",
+    "https://raw.githubusercontent.com/glideapps/quicktype/v26.0.0/packages/quicktype-core/package.json",
+    "https://zod.dev/json-schema",
+    "https://raw.githubusercontent.com/colinhacks/zod/v4.6.5/packages/zod/package.json",
+    "https://ajv.js.org/packages/ajv-cli.html",
+    "https://ajv.js.org/guide/formats.html",
+    "https://github.com/ajv-validator/ajv/releases/tag/v8.20.0",
+    "https://nodejs.org/en/blog/release/v24.0.0"
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "task": "T22",
+  "evidenceType": "STATIC_FIXTURE_PLAN_ONLY",
+  "result": "STATIC_FIXTURE_PLAN_ONLY",
+  "reviewedAt": "2026-10-04",
+  "reviewRole": "author structural self-check; not independent adversarial review",
+  "planPath": "tests/tasks/T22/fixture-plan.json",
+  "sourcesDeclared": [
+    "docs/spec/tasks/T22.md",
+    "docs/spec/02-architecture.md §1/5/6/7/8",
+    "docs/spec/03-data-sync-and-security.md §5.4-§5.5/§6/§9/§10-S27/§11",
+    "docs/spec/01-product-and-ux.md §2.3/§5/§7",
+    "docs/spec/limits.v1.json"
+  ],
+  "staticChecks": {
+    "planJsonParses": true,
+    "fixtureCaseCount": 20,
+    "declaredCountMatches": true,
+    "fixtureIdsUnique": true,
+    "sourceLabelsPresent": true,
+    "allFixtureStatuses": "NOT_RUN",
+    "allAcceptanceStatuses": "NOT_RUN",
+    "allRequiredGateStatuses": "NOT_RUN",
+    "allCommandStatuses": "NOT_RUN",
+    "dependencyStatusesObserved": {
+      "T06": "in_progress",
+      "T07": "not_started"
+    },
+    "dependencyStatusesMatchProgress": true,
+    "T22Status": "not_started",
+    "sharedProgressModified": false,
+    "cipherVersionKeySchemaOrderPresent": true,
+    "localKeyMetadataPresent": true,
+    "frozenLocalKeyUnavailableCategoryPresent": true,
+    "androidBackupExcludesSecureStoreAndNonportableData": true,
+    "querySortAndCursorInvalidationPresent": true,
+    "case3FrozenVaultErrorCategoryPresent": true
+  },
+  "conclusion": "Self-check records plan JSON structure, identifiers/status labels, dependency consistency, and the requested static metadata/order details. It does not establish implementation behavior or independent closure of the latest review findings.",
+  "limitations": [
+    "No tests, build, typecheck, Expo dependency check, browser, service, database, provider, native build, device or user data operation was performed.",
+    "T22 remains not_started because T06 is in_progress and T07 is not_started.",
+    "T07 local.totalBytes formula and durable-byte treatment of database/WAL/SHM/temp/shared references remain OPEN_QUESTION; fixture counters are injected.",
+    "Android backup exclusions and iOS/Android SQLCipher linkage, OS vault, backup/reinstall and permission outcomes require separate real development-build/device evidence.",
+    "LOCAL_KEY_UNAVAILABLE is the frozen category for vault unavailability; only raw OS reason and user-facing copy remain OPEN_QUESTION in the applicable cases.",
+    "This evidence does not claim SQLCipher, wrong-key, WAL canary, restore, or repository behavior has passed."
+  ]
+}

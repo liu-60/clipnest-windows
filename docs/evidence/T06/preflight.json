@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "result": "preflight-prepared-only",
+  "recordedDate": "2026-10-04",
+  "worktree": {
+    "path": "D:/ClipNest-work/v2",
+    "branch": "codex/v2-clipboard",
+    "head": "91cafd765b9480e011647c9d8cd2976269f12aef",
+    "rootAgentInstructions": "未发现仓库根或父目录 AGENTS.md；本次遵循用户提供的 AGENTS.md 指令。",
+    "dirtyBeforeThisPreparation": [
+      ".test-data/",
+      "docs/adr/",
+      "docs/evidence/",
+      "docs/progress.json"
+    ],
+    "preservedExistingChanges": true
+  },
+  "treeSnapshot": {
+    "currentRootManifest": {
+      "name": "clipnest",
+      "version": "1.1.4",
+      "description": "Windows Electron L0 application manifest; not yet converted to the v2 workspace root",
+      "scripts": ["dev", "build:main", "dev:renderer", "build:renderer", "build", "lint", "package:windows"]
+    },
+    "pnpmWorkspace": "File exists but has only allowBuilds; no packages globs are configured.",
+    "existingDirectoriesRelevantToV2": ["server/", "src/"],
+    "missingV2ScaffoldAtPreflight": ["apps/", "packages/", "crates/", "scripts/", "tests/", "Cargo.toml", "rust-toolchain.toml", "node_modules/"],
+    "lockfiles": ["pnpm-lock.yaml exists; its current contents were not changed or refreshed.", "Cargo.lock absent."]
+  },
+  "dependencyGate": {
+    "requiredTaskDependencies": ["T00"],
+    "progressSnapshot": {
+      "T00": "accepted",
+      "T01": "in_progress; separate electron-l0 worktree and not a T06 dependency",
+      "T06": "not_started"
+    },
+    "dependencySatisfied": true,
+    "implementationGates": [
+      "Before installing or freezing any candidate, refresh compatibility, runtime support, stable release, repository activity, and license evidence.",
+      "versions.snapshot.json says candidates-not-yet-installed-or-compatibility-tested; its checkedDate is 2026-10-02 and planningDate is 2026-10-03, so its candidate list is not current approval.",
+      "Expo must select compatible React and React Native versions through Expo's supported install flow; do not force desktop React into mobile."
+    ],
+    "candidateVersionsFromSnapshotOnly": {
+      "runtime": {"node": "24 LTS", "pnpm": "11.19.0", "postgresql": "17", "tauriMajor": 2},
+      "npm": {
+        "react": "19.3.0",
+        "vite": "8.3.2",
+        "typescript": "7.0.2",
+        "zod": "4.6.5",
+        "fastify": "5.12.5",
+        "dexie": "4.4.6",
+        "better-auth": "1.7.7",
+        "expo": "57.0.26",
+        "react-native": "0.87.1",
+        "@tanstack/react-virtual": "3.14.13",
+        "pg-boss": "12.35.1",
+        "node-pg-migrate": "9.0.0",
+        "quicktype": "26.0.0"
+      },
+      "approvalStatus": "candidates-only; none rechecked or selected in this prep"
+    },
+    "t00EvidenceRead": [
+      "docs/evidence/T00/baseline.json",
+      "docs/evidence/T00/windows-helper-benchmark.json",
+      "docs/evidence/T00/verification.json"
+    ],
+    "t00EvidenceLimits": "T00 verifies planning integrity and isolated synthetic fixtures, not application behavior. It records no live clipboard read or profile-content read/hash; its deferred T06 gate requires version compatibility and license evidence before install/freeze."
+  },
+  "stageBoundaries": [
+    {
+      "stage": "a1 workspace identity",
+      "allowedFocus": "pnpm/Cargo workspace boundaries and fixed package/crate names; split into increments of at most five hand-written production/config files.",
+      "mustNotClaim": "No feature is implemented by an empty shell. Any unimplemented app entry must explicitly report FEATURE_NOT_ENABLED and must not return fake success.",
+      "entryGate": "Refresh candidate/toolchain evidence before pinning or installing dependencies."
+    },
+    {
+      "stage": "a2 buildable skeletons",
+      "allowedFocus": "Buildable app/crate entries, Tauri and Expo configuration, module registration, and truthful disabled-feature results.",
+      "mustNotClaim": "A skeleton is not product behavior or platform acceptance."
+    },
+    {
+      "stage": "b contracts",
+      "allowedFocus": "Canonical strict Zod schemas, JSON Schema generation, quicktype Rust DTOs, limits-reference checks, protocol-family fixtures, and Rust boundary validation.",
+      "mustNotClaim": "Generated files are not hand-edited; independent TS/Rust DTOs are not accepted as equivalent without generator and fixture evidence."
+    },
+    {
+      "stage": "c scripts and CI",
+      "allowedFocus": "Root scripts, deterministic contracts:check, typecheck/lint/test commands, integration/e2e entry points, secret-free environment template, and CI checks that reject generated drift.",
+      "mustNotClaim": "A command name in a manifest is not a passing check; unavailable toolchains or real-platform/service gates stay NOT_RUN."
+    },
+    {
+      "stage": "acceptance",
+      "allowedFocus": "Prove Decimal values above 2^53 round-trip, unknown fields and size limits fail, generated checks leave the worktree clean, provenance/license records exist, and required independent review is resolved.",
+      "mustNotClaim": "No T06 accepted status until the task card's full DoD and evidence pass; this prep does not edit docs/progress.json."
+    }
+  ],
+  "firstIncrementRecommendation": {
+    "subcard": "T06-a1",
+    "maximumHandWrittenProductionFiles": 5,
+    "files": [
+      {"path": "package.json", "intent": "Convert the v2 root manifest to a private workspace root and add only scripts that have real implementations; keep dependency versions out until their review gate passes."},
+      {"path": "pnpm-workspace.yaml", "intent": "Declare the planned apps/* and packages/* workspace globs."},
+      {"path": "Cargo.toml", "intent": "Declare the Cargo workspace and fixed crate names; do not reference members that are not part of the staged increment."},
+      {"path": "rust-toolchain.toml", "intent": "Pin only a stable toolchain version verified on the available target; do not infer it from the version snapshot."},
+      {"path": "packages/contracts/package.json", "intent": "Establish the fixed @clipnest/contracts package identity without adding unreviewed dependencies or fake feature APIs."}
+    ],
+    "boundary": "Manifest/workspace identity only; subsequent a2/b/c increments add compiling entries, canonical contracts, generation, tests, and CI in separate reviewable slices.",
+    "validationCaveat": "This environment currently lacks Cargo/rustc and has no packages/contracts directory; the proposed increment cannot be declared verified until a compatible Rust toolchain is available and workspace commands actually run."
+  },
+  "validationAvailability": [
+    {
+      "command": "pnpm contracts:check",
+      "status": "unavailable",
+      "evidence": "The root package has no contracts:check script; workspace package globs and contracts package are absent.",
+      "run": false
+    },
+    {
+      "command": "pnpm -r typecheck",
+      "status": "unavailable",
+      "evidence": "No typecheck script is defined and pnpm-workspace.yaml does not declare workspace packages.",
+      "run": false
+    },
+    {
+      "command": "cargo test -p clipnest-contracts",
+      "status": "unavailable",
+      "evidence": "cargo and rustc are not on PATH; Cargo.toml and the contracts crate are absent.",
+      "run": false
+    },
+    {
+      "command": "node docs/spec/verify-plan.cjs",
+      "status": "available-and-passed",
+      "evidence": "Exit 0; planning-integrity only: 33 task cards, acyclic dependency graph, manifest paths consistent, 232 local links checked. This is not an implementation test.",
+      "run": true,
+      "exitCode": 0
+    },
+    {
+      "command": "node --version / pnpm --version",
+      "status": "available",
+      "evidence": "Node v24.16.0 and pnpm 11.19.0 are on PATH; this confirms tool invocation only, not compatibility of snapshot candidates.",
+      "run": true
+    }
+  ],
+  "realUnverifiedItems": [
+    "No candidate dependency compatibility or license evidence has been refreshed; no dependency was installed and no lockfile was frozen.",
+    "No pnpm/Cargo workspace, contracts package/crate, generator, app skeleton, root validation scripts, CI workflow, or generated provenance has been implemented.",
+    "No contract fixture behavior was executed; Decimal >2^53 round-trip and strict unknown-field/size rejection remain unverified.",
+    "No pnpm recursive typecheck/lint, Rust test/clippy, integration, browser, Expo, Tauri, or platform build was run.",
+    "No service, production account, user profile contents, live clipboard, or application launch was accessed for this preparation."
+  ],
+  "filesWrittenByThisPreparation": [
+    "docs/evidence/T06/preflight.json",
+    "tests/tasks/T06/fixture-plan.json"
+  ],
+  "scopeGuarantee": "No progress file, production source, package manifest, lockfile, dependency, configuration, or service was modified by this preparation."
+}

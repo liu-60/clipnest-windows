@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "T06-b quicktype npm tarball metadata audit",
+  "checkedDate": "2026-10-04",
+  "result": "PARTIAL_WITH_VERIFIED_RELEASE_FACTS",
+  "scope": {
+    "changedFiles": [
+      "docs/evidence/T06/quicktype-tarball-audit.json"
+    ],
+    "noInstall": true,
+    "noGeneratorExecution": true,
+    "noLockfileChange": true,
+    "noManifestChange": true,
+    "method": "Read-only official npm package pages and quicktype upstream v26 tag/release notes."
+  },
+  "packages": {
+    "quicktype": {
+      "requestedVersion": "26.0.0",
+      "officialNpmPageReports": {
+        "version": "26.0.0",
+        "license": "Apache-2.0",
+        "directDependencyCount": 16,
+        "directDependencyNames": [
+          "@glideapps/ts-necessities",
+          "@types/readable-stream",
+          "chalk",
+          "collection-utils",
+          "command-line-args",
+          "command-line-usage",
+          "graphql",
+          "lodash",
+          "moment",
+          "quicktype-core",
+          "quicktype-graphql-input",
+          "quicktype-typescript-input",
+          "readable-stream",
+          "stream-json",
+          "string-to-stream",
+          "wordwrap"
+        ]
+      },
+      "nodeEngine": {
+        "releaseRequirement": ">=20.19.0",
+        "sourceTagManifest": ">=20.19.0",
+        "publishedRegistryManifestFieldDirectlyRead": false,
+        "evidence": "v26.0.0 release notes state Node.js >=20.19 for CLI and core embedders; the v26 source root manifest independently declares >=20.19.0."
+      },
+      "v26SourceTagManifest": {
+        "tag": "v26.0.0",
+        "versionField": "24.0.0",
+        "license": "Apache-2.0",
+        "enginesNode": ">=20.19.0",
+        "filesAllowlist": [
+          "dist"
+        ],
+        "bin": "dist/index.js",
+        "dependencySpecificationsAtTag": {
+          "@glideapps/ts-necessities": "^2.2.3",
+          "@types/readable-stream": "4.0.10",
+          "chalk": "^4.1.2",
+          "collection-utils": "^1.0.1",
+          "command-line-args": "^5.2.1",
+          "command-line-usage": "^7.0.1",
+          "graphql": "^16.11.0",
+          "lodash": "^4.18.1",
+          "moment": "^2.30.1",
+          "quicktype-core": "24.0.0",
+          "quicktype-graphql-input": "24.0.0",
+          "quicktype-typescript-input": "24.0.0",
+          "readable-stream": "^4.5.2",
+          "stream-json": "3.5.0",
+          "string-to-stream": "^3.0.1",
+          "wordwrap": "^1.0.0"
+        },
+        "note": "This is the checked-in source manifest before the release workflow stamps publication versions; it is not asserted to be the published tarball manifest."
+      }
+    },
+    "quicktype-core": {
+      "requestedVersion": "26.0.0",
+      "officialNpmPageReports": {
+        "version": "26.0.0",
+        "license": "Apache-2.0",
+        "directDependencyCount": 13,
+        "directDependencyNames": [
+          "@glideapps/ts-necessities",
+          "@types/readable-stream",
+          "@types/urijs",
+          "browser-or-node",
+          "collection-utils",
+          "is-url",
+          "lodash",
+          "pluralize",
+          "readable-stream",
+          "unicode-properties",
+          "urijs",
+          "wordwrap",
+          "yaml"
+        ]
+      },
+      "nodeEngine": {
+        "releaseRequirement": ">=20.19.0",
+        "sourceTagManifest": ">=20.0.0",
+        "publishedRegistryManifestFieldDirectlyRead": false,
+        "evidence": "The v26.0.0 release notes say quicktype-core embedders require Node.js >=20.19.0. The source package manifest at tag v26.0.0 declares >=20.0.0. The exact published engine field could not be read, so this discrepancy is left open; use >=20.19.0 as the documented runtime floor."
+      },
+      "v26SourceTagManifest": {
+        "tag": "v26.0.0",
+        "versionField": "24.0.0",
+        "license": "Apache-2.0",
+        "enginesNode": ">=20.0.0",
+        "filesAllowlist": [
+          "dist"
+        ],
+        "dependencySpecificationsAtTag": {
+          "@glideapps/ts-necessities": "2.2.3",
+          "@types/readable-stream": "4.0.10",
+          "@types/urijs": "^1.19.26",
+          "browser-or-node": "^3.0.0",
+          "collection-utils": "^1.0.1",
+          "is-url": "^1.2.4",
+          "lodash": "^4.18.1",
+          "pluralize": "^8.0.0",
+          "readable-stream": "4.5.2",
+          "unicode-properties": "^1.4.1",
+          "urijs": "^1.19.1",
+          "wordwrap": "^1.0.0",
+          "yaml": "^2.9.0"
+        },
+        "note": "This is the checked-in source manifest before the release workflow stamps publication versions; it is not asserted to be the published tarball manifest."
+      }
+    }
+  },
+  "versionDiscrepancy": {
+    "observation": "The official npm pages identify both requested published packages as 26.0.0, while the corresponding v26.0.0 Git tag source manifests contain version 24.0.0 and internal quicktype package dependency specs at 24.0.0.",
+    "explanation": "The official v24.0.0 release notes say publishing starts from stable GitHub release tags and that release versions are stamped into npm package manifests during CI. Thus the source tag is an input to publication, not proof that the npm tarball retains the source manifest version. This publication process is consistent with and plausibly explains the 24.0.0/26.0.0 version difference. The release notes do not by themselves verify the exact contents of the 26.0.0 tarballs.",
+    "publishedInternalDependencyVersions": "Expected to be stamped to 26.0.0 by the documented publication process; exact tarball dependency specs were not directly retrieved."
+  },
+  "dependencyTree": {
+    "verifiedPublishedDirectPackageNames": true,
+    "publishedDirectVersionRangesRetrieved": false,
+    "expectedPublishedInternalEdgesFromReleaseStamping": [
+      "quicktype -> quicktype-core@26.0.0 (inferred from the v24 release-note stamping process; exact v26 tarball spec not retrieved)",
+      "quicktype -> quicktype-graphql-input@26.0.0 (inferred from the v24 release-note stamping process; exact v26 tarball spec not retrieved)",
+      "quicktype -> quicktype-typescript-input@26.0.0 (inferred from the v24 release-note stamping process; exact v26 tarball spec not retrieved)"
+    ],
+    "transitiveResolvedInventory": null,
+    "transitiveLicenseAuditComplete": false,
+    "limitations": [
+      "npm package pages expose the direct dependency names/counts, but not a fully resolved recursive dependency tree with exact installed versions.",
+      "The checked-in v26 source manifests provide dependency ranges, but their internal package versions are 24.0.0 and are transformed during publication.",
+      "No package resolution/install was run; the complete transitive package inventory, optional/platform-specific dependencies, and per-package license notices remain unaudited.",
+      "The quicktype-graphql-input and quicktype-typescript-input transitive closures were not expanded."
+    ]
+  },
+  "licenses": {
+    "quicktype": "Apache-2.0",
+    "quicktypeCore": "Apache-2.0",
+    "directDependencyLicensesReviewed": false,
+    "transitiveLicensesReviewed": false,
+    "note": "The two package-level Apache-2.0 declarations are visible on the official npm package pages and source manifests. A dependency-count/name listing is not a license audit."
+  },
+  "tarballIntegrityAndFiles": {
+    "quicktype": {
+      "registryIntegritySha512": null,
+      "registryShasumSha1": null,
+      "tarballByteSize": null,
+      "exactTarballFileList": null,
+      "sourceManifestFilesAllowlist": [
+        "dist"
+      ]
+    },
+    "quicktypeCore": {
+      "registryIntegritySha512": null,
+      "registryShasumSha1": null,
+      "tarballByteSize": null,
+      "exactTarballFileList": null,
+      "sourceManifestFilesAllowlist": [
+        "dist"
+      ]
+    },
+    "notVerifiedBecause": "The official npm registry JSON and tarballs were not reachable in this environment (PowerShell registry requests failed TLS; browser registry navigation returned ERR_BLOCKED_BY_CLIENT). Auto-review rejected switching to app.unpkg.com because the task scope authorized the npm registry and upstream v26 tag only. No alternate mirror was used. The source package.json files allowlisting dist do not establish the exact published archive file list or integrity."
+  },
+  "generatorCompatibilityRisks": [
+    {
+      "id": "rust-json-schema-non-string-const",
+      "reportedVersion": "quicktype-core 23.2.6",
+      "observation": "An upstream issue reports Rust generation crashing on a valid JSON Schema boolean const and identifies quicktype-core as affected. The issue page is closed and shows no linked branch or pull request.",
+      "candidateVersionConclusion": "This issue does not establish whether quicktype-core 26.0.0 is affected or fixed. The selected-version boolean/numeric const fixture remains a required compatibility gate; do not infer pass/fail from the issue status.",
+      "status": "UNVERIFIED_FOR_26_0_0",
+      "source": "https://github.com/glideapps/quicktype/issues/2856"
+    }
+  ],
+  "selectionStatus": "Audit only; quicktype 26.0.0 and quicktype-core 26.0.0 remain uninstalled and unselected. Do not freeze until exact tarball metadata, recursive licenses, and generator compatibility are reviewed.",
+  "sources": [
+    {
+      "url": "https://github.com/glideapps/quicktype/issues/2856",
+      "supports": "Upstream issue reports a Rust renderer crash on boolean const with quicktype-core 23.2.6 and shows no linked branch or pull request; it does not verify the candidate v26.0.0 behavior."
+    },
+    {
+      "url": "https://www.npmjs.com/package/quicktype?activeTab=dependencies",
+      "supports": "Official npm package page reports quicktype 26.0.0, Apache-2.0, and its 16 direct dependency names."
+    },
+    {
+      "url": "https://www.npmjs.com/package/quicktype-core?activeTab=dependencies",
+      "supports": "Official npm package page reports quicktype-core 26.0.0, Apache-2.0, and its 13 direct dependency names."
+    },
+    {
+      "url": "https://github.com/glideapps/quicktype/releases/tag/v26.0.0",
+      "supports": "v26 release notes state Node.js >=20.19 for CLI/core embedders and package testing on Node 20, 22, and 24."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/glideapps/quicktype/v26.0.0/package.json",
+      "supports": "Checked-in root manifest fields and dependency specifications at the v26 tag; version field remains 24.0.0."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/glideapps/quicktype/v26.0.0/packages/quicktype-core/package.json",
+      "supports": "Checked-in core manifest fields and dependency specifications at the v26 tag; version field remains 24.0.0."
+    },
+    {
+      "url": "https://github.com/glideapps/quicktype/releases/tag/v24.0.0",
+      "supports": "Official release notes explain publication starts from stable GitHub Release tags and CI stamps release versions into npm package manifests."
+    }
+  ]
+}

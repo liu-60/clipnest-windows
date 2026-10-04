@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "task": "T32",
+  "evidenceType": "INDEPENDENT_CRITICAL_PLAN_REVIEW",
+  "result": "PASS_WITH_LIMITATIONS",
+  "reviewedAt": "2026-10-05",
+  "executionStatus": "NOT_RUN",
+  "planPath": "tests/tasks/T32/fixture-plan.json",
+  "reviewStatus": "INDEPENDENT_RE_REVIEW",
+  "counts": {
+    "fixtures": 28,
+    "gates": 12,
+    "acceptanceCriteria": 12,
+    "openQuestions": 18,
+    "commands": 1,
+    "measurements": 3
+  },
+  "findingsClosed": [
+    "Fixture↔gate and fixture↔acceptance mappings are now bidirectionally consistent, including all findings and additional mismatches found by the author static check.",
+    "R19 checks bidirectional references and the static-check count matches."
+  ],
+  "verifiedInvariants": [
+    "All IDs and references are unique/resolvable; every OPEN_QUESTION is referenced.",
+    "All fixtures, gates, commands and measurements remain NOT_RUN with empty evidence.",
+    "Subtask a/b/c fixture allocation is 7/15/6 with no overlap or omission.",
+    "T31 remains not_started/unaccepted; Team behavior, services, protocols and feature enablement are not implemented.",
+    "Key rotation/re-encryption, revocation of cached keys/old signed URLs, and organization recovery authority remain OPEN_QUESTION."
+  ],
+  "limitations": [
+    "Static plan quality review only; no behavior, customer research, production service, or build/test command ran.",
+    "T32 remains not_started and T31 dependency remains unaccepted."
+  ],
+  "behaviorAcceptance": false
+}

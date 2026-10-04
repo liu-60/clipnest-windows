@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "task": "T12",
+  "evidenceType": "independent_fixture_plan_review",
+  "reviewDate": "2026-10-04",
+  "reviewedArtifacts": [
+    "tests/tasks/T12/fixture-plan.json",
+    "docs/spec/tasks/T12.md",
+    "docs/spec/01-product-and-ux.md",
+    "docs/spec/08-acceptance-matrix.md",
+    "docs/spec/02-architecture.md",
+    "docs/spec/limits.v1.json",
+    "docs/progress.json"
+  ],
+  "result": "PASS_WITH_LIMITATIONS",
+  "reviewScope": "Static adversarial review of synthetic fixture coverage, frozen UI semantics, unresolved policies, and progress consistency. This review does not accept T12 behavior.",
+  "coverage": {
+    "totalCases": 30,
+    "uxFixtures": "U01-U12 each appear exactly once; all 12 remain NOT_RUN.",
+    "supplementaryCases": "18 synthetic cases cover history/SavedItem identity, collection relations, editing/conflicts, filters, summary/detail boundaries, states, settings gates, cleanup, navigation, and privacy.",
+    "capacity": "U08 uses limits.local.anonymousWebSessionBytes; U10 includes independent local/cache/outbox/version budget states while keeping T07/T06 accounting and result mappings OPEN_QUESTION.",
+    "permissions": "The U09 fixture covers automatic-input denial with usable clipboard/search and clipboard-write unavailability with cached search/read remaining available; UI copy/status mapping remains OPEN_QUESTION.",
+    "responsiveAccessibility": "Desktop 640 logical-pixel minimum and web 1024/768 CSS breakpoints are represented; exact narrow-panel transition remains OPEN_QUESTION. Keyboard reachability, visible 2px focus, reduced motion, and non-color-only status are planned; contrast and screen-reader thresholds remain OPEN_QUESTION.",
+    "privacy": "Canaries cover body, URL, title, source, image, key, token, and raw SQL parameters for the frozen 08 §6 telemetry/crash exclusion. User-visible error-content redaction remains OPEN_QUESTION.",
+    "historyAndCollections": "Saving history creates a distinct SavedItem and clearing history preserves it; history is read-only; collection deletion preserves saved content; create/rename and relation-only membership behavior are planned.",
+    "conflicts": "Local/remote comparison, draft retention, and distinct SavedItem identity on save-as-copy are asserted; exact conflict return/merge mapping remains OPEN_QUESTION."
+  },
+  "reviewFindings": [
+    {
+      "id": "capacity-source-and-version-state",
+      "result": "CLOSED_WITH_LIMITATIONS",
+      "detail": "U08 references the configured session-byte field instead of shadowing its value. U10 now includes the version budget and retains T07/T06 accounting and enum gates."
+    },
+    {
+      "id": "permission-matrix",
+      "result": "CLOSED",
+      "detail": "U09 covers both automatic-input-unavailable and clipboard-write-unavailable capability combinations without asserting an unavailable operation succeeds."
+    },
+    {
+      "id": "management-relations-and-conflict-copy",
+      "result": "CLOSED",
+      "detail": "Collection create/rename and relation-only changes are represented, and the save-as-copy conflict path checks for a new SavedItem identity."
+    },
+    {
+      "id": "responsive-threshold-and-export-scope",
+      "result": "CLOSED_WITH_LIMITATIONS",
+      "detail": "The desktop 640 logical-pixel minimum is explicit. T29-gated bulk export is distinguished from U08's required explicit session-only plaintext export. The exact narrow-panel transition remains OPEN_QUESTION."
+    },
+    {
+      "id": "telemetry-versus-ui-error-privacy",
+      "result": "CLOSED_WITH_LIMITATIONS",
+      "detail": "Canary assertions now match 08 §6 telemetry/crash exclusions, including source and unredacted SQL parameters. User-visible error wording/content redaction is left OPEN_QUESTION rather than treated as frozen."
+    }
+  ],
+  "openQuestions": [
+    "canonical-ui-error-and-return-enums",
+    "storage-budget-accounting-and-full-outbox-results",
+    "conflict-resolution-return-and-merge-policy",
+    "responsive-narrow-panel-transition-width",
+    "automated-accessibility-thresholds",
+    "renderer-test-harness-and-dependency-readiness"
+  ],
+  "taskState": {
+    "progressStatus": "not_started",
+    "fixturePlanStatus": "planned-not-executed",
+    "allFixtureCases": "NOT_RUN",
+    "dependencies": {
+      "T08": "not_started",
+      "T10": "not_started",
+      "T11": "not_started"
+    }
+  },
+  "notPerformed": [
+    "Renderer/domain implementation, test, or browser execution",
+    "E2E, typecheck, build, or package commands",
+    "Live profile, database, account, service, or clipboard access",
+    "Responsive visual inspection or accessibility audit",
+    "Behavior, performance, or telemetry collection"
+  ],
+  "limitations": [
+    "All T12 behavior remains NOT_RUN; the dependencies are not accepted.",
+    "Exact user-visible error redaction/copy, storage accounting, conflict result mapping, responsive transition, and automated accessibility thresholds remain OPEN_QUESTION.",
+    "This static fixture review is not implementation validation or T12 acceptance."
+  ]
+}

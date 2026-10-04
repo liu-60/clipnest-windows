@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "task": "T29",
+  "evidenceType": "INDEPENDENT_CRITICAL_PLAN_REVIEW",
+  "result": "PASS_WITH_LIMITATIONS",
+  "reviewedAt": "2026-10-04",
+  "executionStatus": "NOT_RUN",
+  "planPath": "tests/tasks/T29/fixture-plan.json",
+  "reviewStatus": "INDEPENDENT_RE_REVIEW",
+  "counts": {
+    "fixtures": 50,
+    "gates": 12,
+    "commands": 2,
+    "openQuestions": 19,
+    "acceptanceCriteria": 14
+  },
+  "findingsClosed": [
+    "F12/F22 distinguish local SQLCipher localDBKey from workspace-derived cloud content key; cloud encryption uses a fresh nonce/AAD.",
+    "F50 covers export process crash/restart and prevents a partial output from being treated as complete; cleanup/resume remains OQ04.",
+    "F34/A09 separate backup retention from copy-purge and provider deletion; durations remain OQ13.",
+    "F25 sourceRefs contains specification sources only; OQ05/OQ08/OQ09 remain openQuestionRefs."
+  ],
+  "verifiedInvariants": [
+    "IDs and fixture/gate/command/acceptance references are consistent.",
+    "All fixtures, gates, and commands are NOT_RUN with empty evidence; OQs remain OPEN_QUESTION.",
+    "Dependencies remain not_started/unaccepted and task remains not_started."
+  ],
+  "limitations": [
+    "Static plan review only; no export/import, recovery, database, S3, account deletion, or user-data behavior ran.",
+    "This review does not accept T29 behavior or its dependencies."
+  ],
+  "behaviorAcceptance": false
+}

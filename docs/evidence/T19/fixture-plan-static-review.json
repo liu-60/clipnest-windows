@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "task": "T19",
+  "reviewType": "fixture_plan_static_review",
+  "reviewStatus": "STATIC_REVIEW_RECORDED",
+  "executionStatus": "NOT_RUN",
+  "result": "PLANNING_ONLY_OPEN_QUESTIONS_REMAIN",
+  "reviewedSources": [
+    "docs/spec/tasks/T19.md",
+    "docs/spec/03-data-sync-and-security.md §3.2/§5.3/§7.2/§7.3/§8.2/§8.3/§9/§10 S09/S10/S17/S18/S24/S25/§11",
+    "docs/spec/limits.v1.json",
+    "docs/progress.json T16/T18/T19 dependency/status blocks"
+  ],
+  "dependencySnapshot": [
+    {
+      "task": "T16",
+      "status": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T18",
+      "status": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T19",
+      "status": "not_started",
+      "accepted": false
+    }
+  ],
+  "staticChecks": [
+    {
+      "id": "T19-R01",
+      "check": "Fixture IDs and resource-gate/command IDs are unique within their sets.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T19-R02",
+      "check": "Every fixture, planned behavior command, and resource gate is explicitly NOT_RUN with an empty evidence list.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T19-R03",
+      "check": "Fixture data and future harness boundaries are synthetic and isolated; no live user data or production endpoint is part of the plan.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T19-R04",
+      "check": "Plan coverage includes fixed-H paging, explicit priorSeenHighWater=120 over reused snapshot H=90 before namespace swap, snapshot uniqueness/reuse, pins/GC, frozen retirement-fence counts, version/object caps with over-cap reserve side-effect checks, cancel-build, cross-workspace isolation, ledger reconciliation, and S25 deletion-watermark recovery.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T19-R05",
+      "check": "Configured 50,000-row/2,000 ms and related limits are labeled NOT_RUN experiment budgets, not achieved results.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T19-R06",
+      "check": "Unspecified job cancellation/cleanup, provider behavior, performance measurement, exact create/capacity error mappings, and durable deletion-evidence completeness are OPEN_QUESTION; frozen outcomes are asserted only as written in 03.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T19-R07",
+      "check": "T19-F09 explicitly enforces liveEntities <= maxLiveEntities and the combined live+retired lifetime budget with create-time reservation and delete-time conversion; F16 preserves over-cap reserve counters without provider work; F17 asserts one building/ready snapshot per workspace and reuse of a valid ready snapshot; F13 checks synthetic stale watermark 25 against durable 41.",
+      "status": "CHECKED_STATICALLY"
+    }
+  ],
+  "counts": {
+    "fixtureCount": 17,
+    "uniqueFixtureIdCount": 17,
+    "resourceGateCount": 5,
+    "uniqueResourceGateIdCount": 5,
+    "behaviorCommandCount": 2,
+    "uniqueBehaviorCommandIdCount": 2,
+    "openQuestionCount": 9,
+    "allFixturesNotRun": true,
+    "allGatesNotRun": true,
+    "allCommandsNotRun": true
+  },
+  "openQuestionIds": [
+    "T19-OQ01",
+    "T19-OQ02",
+    "T19-OQ03",
+    "T19-OQ04",
+    "T19-OQ05",
+    "T19-OQ06",
+    "T19-OQ07",
+    "T19-OQ08",
+    "T19-OQ09"
+  ],
+  "limitations": [
+    "Static plan review is not behavior verification, independent adversarial acceptance, a PostgreSQL/S3 provider test, or a measured performance result.",
+    "No tests, builds, package commands, database, service, or object store were run or contacted.",
+    "T16/T18 acceptance and all OPEN_QUESTION items remain gating; T19 stays not_started."
+  ]
+}

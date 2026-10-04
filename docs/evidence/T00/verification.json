@@ -1,0 +1,51 @@
+{
+  "task": "T00",
+  "verifiedAt": "2026-10-03",
+  "scope": "workspace and planning integrity only; no app behavior test",
+  "planVerification": {
+    "command": "node docs/spec/verify-plan.cjs",
+    "exitCode": 0,
+    "result": "PASS",
+    "taskCards": 33,
+    "dependencyGraph": "acyclic",
+    "cardManifestPaths": "consistent",
+    "localLinksChecked": 232,
+    "absoluteLocalLinks": "rejected before any filesystem existence check",
+    "relativeLocalLinks": "constrained to the workspace root",
+    "jsonFiles": 3,
+    "applicationImplementation": "not-started"
+  },
+  "workspaces": [
+    {
+      "root": "D:/ClipNest-work/v2",
+      "branch": "codex/v2-clipboard",
+      "commit": "91cafd765b9480e011647c9d8cd2976269f12aef"
+    },
+    {
+      "root": "D:/ClipNest-work/electron-l0",
+      "branch": "codex/m0-latency",
+      "commit": "91cafd765b9480e011647c9d8cd2976269f12aef"
+    }
+  ],
+  "syntheticProfile": {
+    "path": ".test-data/profile",
+    "cloudEnabled": false,
+    "shortcut": "Ctrl+Alt+Shift+V",
+    "fixtures": ["synthetic text", "synthetic link", "synthetic image"],
+    "pngSignatureValid": true
+  },
+  "privacyAndIsolation": {
+    "applicationLaunchedForT00": false,
+    "installationDirectoryUsedAsWorkspace": false,
+    "liveProfileMetadataEnumeratedByPreviousReview": true,
+    "liveProfileFileContentsOpened": false,
+    "liveProfileContentHashed": false,
+    "liveProfileModified": false,
+    "liveClipboardRead": false,
+    "liveProfileHash": "not-collected; migration integrity check deferred to T08 isolated user-selected copy"
+  },
+  "deferredGates": {
+    "T06": "record selected dependency version compatibility and license before first installation or lockfile freeze",
+    "T08": "perform any legacy profile integrity check only on an explicitly user-selected isolated copy"
+  }
+}

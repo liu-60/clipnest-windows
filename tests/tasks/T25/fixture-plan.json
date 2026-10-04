@@ -1,0 +1,1827 @@
+{
+  "schemaVersion": 1,
+  "task": "T25",
+  "status": "not_started",
+  "executionStatus": "NOT_RUN",
+  "planType": "synthetic_fixture_and_acceptance_planning_only",
+  "purpose": "Auditable fixture/acceptance plan while direct dependencies remain unaccepted; not implementation, behavior evidence, benchmark result or gate acceptance.",
+  "dependencyGate": {
+    "requiredTasks": [
+      "T13",
+      "T19",
+      "T21",
+      "T24"
+    ],
+    "requiredStatus": "accepted",
+    "observedProgressStatuses": {
+      "T13": "not_started",
+      "T19": "not_started",
+      "T21": "not_started",
+      "T24": "not_started"
+    },
+    "behaviorAllowed": false,
+    "rule": "Before all four dependencies are accepted, only independent synthetic fixture/interface planning is allowed; no fake-success backend or live services."
+  },
+  "sources": {
+    "taskCard": "docs/spec/tasks/T25.md",
+    "specifications": [
+      "docs/spec/03-data-sync-and-security.md §10-§11",
+      "docs/spec/08-acceptance-matrix.md §1-§6",
+      "docs/spec/04-desktop-performance.md §8",
+      "docs/spec/01-product-and-ux.md §2-§7",
+      "docs/spec/limits.v1.json"
+    ],
+    "progress": "docs/progress.json#/tasks/T13,T19,T21,T24,T25",
+    "interpretation": "G2/G3 are engineering gates. Deferred T26-T30 items are DEFERRED, not PASS."
+  },
+  "allowlist": {
+    "taskCardPaths": [
+      "fixtures/**",
+      "scripts/benchmark/**",
+      "docs/evidence/T25/**",
+      "tests/integration/**",
+      "docs/progress.json",
+      "tests/tasks/T25/**"
+    ],
+    "currentWritePaths": [
+      "tests/tasks/T25/**",
+      "docs/evidence/T25/**"
+    ],
+    "deliverables": [
+      "tests/tasks/T25/fixture-plan.json",
+      "docs/evidence/T25/fixture-plan-static-review.json"
+    ],
+    "note": "No production implementation, shared fixtures, scripts, integration tests or progress are changed."
+  },
+  "syntheticBoundary": {
+    "data": "Synthetic A/B accounts, WA/WB personal workspaces, D1/D2 devices, revisions, object/version labels and canary categories only; no user data/credentials.",
+    "services": "No PG/S3/provider/browser/Hermes/OS/native helper/iOS/Android device/account/service connected during planning.",
+    "crypto": "Later use only already-frozen official vectors; this plan generates no keys/nonces/ciphertext/tag vectors/results and adds no fallback.",
+    "noFakeSuccessBackend": true,
+    "observation": "Every outcome is a planned assertion; later execution records commit, environment, command, synthetic seed and artifact."
+  },
+  "phaseGateBoundary": {
+    "G1": "Local-v2 T11/SQLCipher/capability is separate; no G1 claim.",
+    "G2": "S01-S23/S26 desktop/Web and independent Hermes; S24 quota/storage; T19 synthetic S25 core. Real PG/S3 required; external cloud remains off until core passes.",
+    "G3": "Hermes/SQLCipher/share, separate iOS and Android device evidence, second device/offline.",
+    "G4": "Not claimed; provider refunds, production recovery, portable export deferred.",
+    "stageRule": "T31 aggregates applicable S01-S27/G0-G4; deferred/NOT_RUN prevents full stage claims."
+  },
+  "coverageSummary": {
+    "coreSIds": [
+      "S01",
+      "S02",
+      "S03",
+      "S04",
+      "S05",
+      "S06",
+      "S07",
+      "S08",
+      "S09",
+      "S10",
+      "S11",
+      "S12",
+      "S13",
+      "S14",
+      "S15",
+      "S16",
+      "S17",
+      "S18",
+      "S19",
+      "S20",
+      "S21",
+      "S22",
+      "S23",
+      "S26"
+    ],
+    "s24Subscenarios": [
+      "S24-quota",
+      "S24-storage-failure"
+    ],
+    "s25Scope": "T19 synthetic recovery core only",
+    "s27Scope": "Implemented local pieces only; no portable import/export",
+    "desktopP04Ids": [
+      "04-P01",
+      "04-P02",
+      "04-P03",
+      "04-P04",
+      "04-P05",
+      "04-P06",
+      "04-P07",
+      "04-P08",
+      "04-P09",
+      "04-P10",
+      "04-P11",
+      "04-P12",
+      "04-P13",
+      "04-P14",
+      "04-P15",
+      "04-P16",
+      "04-P17",
+      "04-P18",
+      "04-P19",
+      "04-P20",
+      "04-P21",
+      "04-P22",
+      "04-P23",
+      "04-P24",
+      "04-P25",
+      "04-P26",
+      "04-P27",
+      "04-P28"
+    ],
+    "productP01Ids": [
+      "01-P01",
+      "01-P02",
+      "01-P03",
+      "01-P04",
+      "01-P05",
+      "01-P06",
+      "01-P07",
+      "01-P08",
+      "01-P09",
+      "01-P10",
+      "01-P11"
+    ],
+    "uxUIds": [
+      "U01",
+      "U02",
+      "U03",
+      "U04",
+      "U05",
+      "U06",
+      "U07",
+      "U08",
+      "U09",
+      "U10",
+      "U11",
+      "U12"
+    ],
+    "fixtureCount": 83
+  },
+  "performanceSamplingPolicy": "Each normal scenario >=100 samples. Fix/record machine/OS/display/power/build/seed/cache/network; report p50/p95/max/failure count; failures/cancel/permission/timeouts separate. Correlate cross-process events by requestId and report each process monotonic duration; never subtract uncalibrated clocks across processes. No measurement run.",
+  "fixtures": [
+    {
+      "id": "T25-F001",
+      "coverageId": "S01",
+      "gateGroup": "G2",
+      "platformScope": "server+desktop+web",
+      "syntheticSetup": "Synthetic: A/WA credential targets WB/attachment; substitute bodywid and reuse pooled connection.",
+      "plannedAction": "Send a cross-workspace request using WA-scoped credentials against WB, including a forged body wid; record the response, RLS read/write counters, and signed-URL issuance, then reuse the same pooled connection for a legitimate WA request.",
+      "observableAssertions": [
+        "The cross-workspace or forged-body request returns API 404; RLS read count and write count are both zero; no signed URL is issued.",
+        "The next request on the reused pooled connection uses only its own workspace transaction scope; no WA/WB scope bleeds between requests."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S01",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F002",
+      "coverageId": "S02",
+      "gateGroup": "G2",
+      "platformScope": "server+PG",
+      "syntheticSetup": "Synthetic: Owner/business/worker roles, absent scope, unauthorized insert.",
+      "plannedAction": "Evaluate owner, business, and worker roles with absent and present workspace scope; attempt an unauthorized cross-workspace insert and inspect the database role flags and RLS outcomes.",
+      "observableAssertions": [
+        "Business and worker roles are non-owner and NOBYPASSRLS.",
+        "A request with missing workspace scope reads zero rows.",
+        "An unauthorized insert is rejected by WITH CHECK; do not add an unfrozen error code."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S02",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F003",
+      "coverageId": "S03",
+      "gateGroup": "G2",
+      "platformScope": "server+web",
+      "syntheticSetup": "Synthetic: Committed operation response lost; retry same bytes and same opId with changed hash.",
+      "plannedAction": "Commit one synthetic operation while dropping its response; retry with identical opId and bytes, then retry that opId with a changed payload hash.",
+      "observableAssertions": [
+        "The identical retry resolves to the original committed result and leaves exactly one receipt, version, change, and usage event; its seq is unchanged.",
+        "Reusing the opId with a different payload hash returns IDEMPOTENCY_MISMATCH and creates no second committed mutation."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S03",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F004",
+      "coverageId": "S04",
+      "gateGroup": "G2",
+      "platformScope": "server+desktop+web",
+      "syntheticSetup": "Synthetic: D1/D2 edit same saved base revision and retain drafts.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Submit concurrent saves; resolve conflict to new ID."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S04",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F005",
+      "coverageId": "S05",
+      "gateGroup": "G2",
+      "platformScope": "server+desktop+web",
+      "syntheticSetup": "Synthetic: Offline update races delete; old delete follows newer update.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Apply both orders."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S05",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F006",
+      "coverageId": "S06",
+      "gateGroup": "G2",
+      "platformScope": "server+desktop+web",
+      "syntheticSetup": "Synthetic: Pin relation and body update race; unpin/repin; history body update.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Apply relation/body separately."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S06",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F007",
+      "coverageId": "S07",
+      "gateGroup": "G2",
+      "platformScope": "server+PG+web",
+      "syntheticSetup": "Synthetic: Two seq allocations; first delayed then commit/rollback.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Inspect changes and pull."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S07",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F008",
+      "coverageId": "S08",
+      "gateGroup": "G2",
+      "platformScope": "server+desktop+web",
+      "syntheticSetup": "Synthetic: Pull crosses 50 items/128 KiB; network interrupt and same-page retry.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Page, interrupt, resume."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S08",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F009",
+      "coverageId": "S09",
+      "gateGroup": "G2",
+      "platformScope": "server+PG+web",
+      "syntheticSetup": "Synthetic: Snapshot H races add/update/delete, old ACK and log GC during pagination.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Page snapshot and catch up."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S09",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F010",
+      "coverageId": "S10",
+      "gateGroup": "G2",
+      "platformScope": "server+desktop+web",
+      "syntheticSetup": "Synthetic: Expired cursor/90-day lease/epoch meets old outbox and H below priorSeenHighWater.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Recover namespace."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S10",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F011",
+      "coverageId": "S11",
+      "gateGroup": "G2",
+      "platformScope": "local+server+web",
+      "syntheticSetup": "Synthetic: Object/ref/record/outbox and encrypted staging crash at transaction/rename/file-loss barriers.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Interrupt each side of commit."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S11",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F012",
+      "coverageId": "S12",
+      "gateGroup": "G2",
+      "platformScope": "local+server+web",
+      "syntheticSetup": "Synthetic: Outbox soft/hard and local budget edges with large pending image.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Attempt cloud and local-only mutation."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S12",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F013",
+      "coverageId": "S13",
+      "gateGroup": "G2",
+      "platformScope": "server+PG",
+      "syntheticSetup": "Synthetic: Two reserves fit individually but exceed quota together; same/different-body retries.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Race and retry reserves."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S13",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F014",
+      "coverageId": "S14",
+      "gateGroup": "G2",
+      "platformScope": "server+S3",
+      "syntheticSetup": "Synthetic: Incomplete/oversize/bad-checksum/expired upload finalize.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Finalize and confirm deletion branch."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S14",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F015",
+      "coverageId": "S15",
+      "gateGroup": "G2",
+      "platformScope": "server+S3",
+      "syntheticSetup": "Synthetic: Repeat PUT N times; remove condition or overwrite/delete/recreate staging.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Run later in selected provider sandbox."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S15",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F016",
+      "coverageId": "S16",
+      "gateGroup": "G2",
+      "platformScope": "server+PG+S3",
+      "syntheticSetup": "Synthetic: Crash after copy before DB finalize; two finalizers race.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Retry and inspect ledger/lock."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S16",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F017",
+      "coverageId": "S17",
+      "gateGroup": "G2",
+      "platformScope": "server+PG+S3",
+      "syntheticSetup": "Synthetic: GC races new reference; provider returns delete marker or failure.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Try ref while deleting."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S17",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F018",
+      "coverageId": "S18",
+      "gateGroup": "G2",
+      "platformScope": "server+PG+S3",
+      "syntheticSetup": "Synthetic: Blob has saved/history/trash/snapshot refs as old head is deleted.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Expire each ref and reconcile."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S18",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F019",
+      "coverageId": "S19",
+      "gateGroup": "G2",
+      "platformScope": "Rust+C+Web+Hermes",
+      "syntheticSetup": "Synthetic: Frozen crypto vectors, AAD/nonce/kid/ref/tag tamper, 2-MiB text external blob.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Run same vector set after harness readiness."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S19",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F020",
+      "coverageId": "S20",
+      "gateGroup": "G2",
+      "platformScope": "client+server+Hermes",
+      "syntheticSetup": "Synthetic: Relay changes pair key/grant, replays QR/consume; separate device credential from data key.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Replay/mutate synthetic envelopes."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S20",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F021",
+      "coverageId": "S21",
+      "gateGroup": "G2",
+      "platformScope": "client+server+Hermes",
+      "syntheticSetup": "Synthetic: Wrong recovery key/account reset/replayed challenge/stale recoveryVersion.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Attempt frozen protocol branches."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S21",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F022",
+      "coverageId": "S22",
+      "gateGroup": "G2",
+      "platformScope": "server+desktop+web",
+      "syntheticSetup": "Synthetic: Revoked device has new API request, old signed URL and downloaded plaintext.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Try around configured TTL."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S22",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F023",
+      "coverageId": "S23",
+      "gateGroup": "G2",
+      "platformScope": "Web",
+      "syntheticSetup": "Synthetic: Lock/refresh/account switch/partial index with synthetic telemetry canaries.",
+      "plannedAction": "Exercise Web lock, refresh, account switch, and partial-index branches; inspect only synthetic IndexedDB/persistence, worker state, namespace ownership, telemetry, and crash artifacts.",
+      "observableAssertions": [
+        "No plaintext or key canary appears in persistent storage, logs, or crash artifacts.",
+        "Lock/refresh terminates the in-memory index worker; account B never adopts account A outbox or namespace.",
+        "A partial index is reported as partial and is never represented as a full-library search result."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S23",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F024",
+      "coverageId": "S26",
+      "gateGroup": "G2",
+      "platformScope": "Rust+C+Web+Hermes+server",
+      "syntheticSetup": "Synthetic: Numeric inputs cross 2^53/maxbigint; batch mixes valid/invalid/partial.",
+      "plannedAction": "Exercise branch only after dependencies accepted.",
+      "observableAssertions": [
+        "Round-trip; retry only failed op IDs."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S26",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F025",
+      "coverageId": "S24-quota",
+      "gateGroup": "G2",
+      "platformScope": "server+client",
+      "syntheticSetup": "Synthetic quota decrease/storage limit; exclude refund/provider event.",
+      "plannedAction": "Lower the synthetic trusted cloud allowance without injecting a refund/provider event; attempt positive-delta upload, then perform read, delete, and export operations and inspect local saved data.",
+      "observableAssertions": [
+        "Only new positive-delta upload is frozen; read, delete, and export remain available.",
+        "A client-forged entitlement has no effect; no local saved item is silently deleted."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S24",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F026",
+      "coverageId": "S24-storage-failure",
+      "gateGroup": "G2",
+      "platformScope": "server+S3+client",
+      "syntheticSetup": "Synthetic provider storage failure after quota accounting.",
+      "plannedAction": "Inject a synthetic object-storage failure on a positive-delta upload after quota accounting; then exercise read, delete, and export and compare the pre-existing data/ledger snapshot against frozen S14-S17 invariants.",
+      "observableAssertions": [
+        "The affected positive-delta upload is blocked; read, delete, and export remain available.",
+        "Existing local saved items are not silently deleted and no client-forged entitlement is accepted.",
+        "Record ledger/object state for the frozen upload/GC invariants; leave provider-specific error/result mapping OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S24",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F027",
+      "coverageId": "S25-T19-core",
+      "gateGroup": "G2",
+      "platformScope": "synthetic PG/object descriptors",
+      "syntheticSetup": "Synthetic recovery checkpoint at epoch E and delete watermark D, a deletion committed after the checkpoint at D+1, object-version descriptors, usage ledger, and an old device holding a pre-recovery snapshot.",
+      "plannedAction": "Model the T19 synthetic recovery sequence: keep writes/downloads isolated while comparing checkpoint/object versions and ledger; preserve deletion evidence, raise epoch, reapply post-checkpoint deletes where required, then let the old device bootstrap/catch up.",
+      "observableAssertions": [
+        "Recovery raises epoch so the old device must obtain a fresh snapshot/catch up before normal use.",
+        "Delete fences and external deletion watermarks never move backward; persistent post-checkpoint deletes are reapplied before isolation is lifted.",
+        "Reconcile ledger against physical object-version descriptors; a deleted item cannot reappear.",
+        "This synthetic core is not production-equivalent PG/object restore or an operations runbook."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S25",
+        "docs/spec/03-data-sync-and-security.md §11 T19",
+        "docs/spec/08-acceptance-matrix.md §1 G2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F028",
+      "coverageId": "S27-local-implemented",
+      "gateGroup": "G3",
+      "platformScope": "desktop+iOS+Android-as-implemented",
+      "syntheticSetup": "Synthetic local-profile branches for absent/unavailable vault, wrong key, missing SQLCipher, interrupted initial creation, Android backup exclusion, iOS reinstall boundary, and import; no real key, database, backup, or device is used.",
+      "plannedAction": "Plan independent desktop/iOS/Android local-gate checks for key/open/crash and backup/import boundaries; record only already-implemented local portions, with platform behavior left for each NOT_RUN gate.",
+      "observableAssertions": [
+        "Missing/wrong key, unavailable vault, missing SQLCipher, or interrupted creation never reports the profile ready and never overwrites an existing database with an empty database or replacement key.",
+        "Synthetic canaries are absent from SQLCipher database, WAL/SHM/temp artifacts, and attachments; key material is not emitted to logs.",
+        "Android backup excludes SecureStore and databases/WAL/SHM/attachments without a portable recovery chain; iOS Keychain survival across reinstall is not guaranteed.",
+        "Import does not automatically start upload; CNREC1/T29 restore and portable export are excluded from this T25 fixture."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S27",
+        "docs/spec/03-data-sync-and-security.md §5.4",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/08-acceptance-matrix.md §1 G1/G3"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F029",
+      "coverageId": "04-P01",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: target already foreground before wake",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Plan no-restore wake path."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P01"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F030",
+      "coverageId": "04-P02",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: valid nonforeground target",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Plan restore then verify fixed target."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P02"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F031",
+      "coverageId": "04-P03",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: target minimized",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Plan fixed-target restore."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P03"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F032",
+      "coverageId": "04-P04",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: target maximized",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Plan activation and bounds check."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P04"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F033",
+      "coverageId": "04-P05",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: target identity expired/reused",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Invalidate before input."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P05"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F034",
+      "coverageId": "04-P06",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: Shift held at selection cutoff",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Recheck key state."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P06"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F035",
+      "coverageId": "04-P07",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: cancel before input commit",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Cancel before gate."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P07"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F036",
+      "coverageId": "04-P08",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: cancel while waiting focus/modifier",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Cancel during wait."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P08"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F037",
+      "coverageId": "04-P09",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: cancel after commit",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Cancel after gate."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P09"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F038",
+      "coverageId": "04-P10",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: helper exits before result known",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Drop synthetic helper outcome."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P10"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F039",
+      "coverageId": "04-P11",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: external clipboard sequence changed",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Change baseline before commit."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P11"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F040",
+      "coverageId": "04-P12",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: double-click/repeat Enter",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Burst repeated intent."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P12"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F041",
+      "coverageId": "04-P13",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: old ACK after new generation",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Deliver stale response."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P13"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F042",
+      "coverageId": "04-P14",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: higher-privilege target denies input",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Plan denied branch."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P14"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F043",
+      "coverageId": "04-P15",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: same image sequence across notification/poll",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Repeat sequence events."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P15"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F044",
+      "coverageId": "04-P16",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: image cache miss/delayed worker",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Delay worker result."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P16"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F045",
+      "coverageId": "04-P17",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: queue/memory near limit",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Inject counters."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P17"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F046",
+      "coverageId": "04-P18",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: user switches foreground app",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Change foreground during focus prep."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P18"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F047",
+      "coverageId": "04-P19",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: baseline 41 changes to external 42",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Change seq during preparation."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P19"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F048",
+      "coverageId": "04-P20",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: own seq 42 then external seq 43",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Change seq before input gate."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P20"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F049",
+      "coverageId": "04-P21",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: image miss; key released then re-pressed",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Recheck at original selection 500-ms cutoff."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P21"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F050",
+      "coverageId": "04-P22",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: focus call blocks while cancel arrives",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Cancel control channel during blocked worker."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P22"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F051",
+      "coverageId": "04-P23",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: cancel races input gate",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Exercise before/after commit."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P23"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F052",
+      "coverageId": "04-P24",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: token stale after item/profile/helper changes",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Replay stale authorization."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P24"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F053",
+      "coverageId": "04-P25",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: chunk too large/out of order/missing/bad hash",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Submit invalid envelope."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P25"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F054",
+      "coverageId": "04-P26",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: foreground auth denied/helper identity changes",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Fail auth after preparation."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P26"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F055",
+      "coverageId": "04-P27",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: external app foreground during focus",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Change foreground after focus request."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P27"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F056",
+      "coverageId": "04-P28",
+      "gateGroup": "desktop-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic desktop state: rapid intent plus backpressure",
+      "plannedAction": "Apply only named FakePlatform state transition; fakes cannot close OS behavior.",
+      "observableAssertions": [
+        "Burst intents with slow consumer."
+      ],
+      "sourceRefs": [
+        "docs/spec/04-desktop-performance.md §8 04-P28"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F057",
+      "coverageId": "U01",
+      "gateGroup": "UX-regression",
+      "platformScope": "Web+mobile-as-implemented",
+      "syntheticSetup": "Synthetic UX state: focused search with spaces/caret",
+      "plannedAction": "Exercise after implementation/dependencies.",
+      "observableAssertions": [
+        "Type, Home/End/arrows, Down and non-IME Enter. Typing creates no job; Down navigates; Enter once."
+      ],
+      "sourceRefs": [
+        "docs/spec/08-acceptance-matrix.md §2 U01"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F058",
+      "coverageId": "U02",
+      "gateGroup": "UX-regression",
+      "platformScope": "Web+mobile-as-implemented",
+      "syntheticSetup": "Synthetic UX state: IME composing Enter/Escape",
+      "plannedAction": "Exercise after implementation/dependencies.",
+      "observableAssertions": [
+        "Send composing then separate noncomposing action. Composition neither pastes nor closes; later action follows rules."
+      ],
+      "sourceRefs": [
+        "docs/spec/08-acceptance-matrix.md §2 U02"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F059",
+      "coverageId": "U03",
+      "gateGroup": "UX-regression",
+      "platformScope": "Web+mobile-as-implemented",
+      "syntheticSetup": "Synthetic UX state: single/double click/held Enter",
+      "plannedAction": "Exercise after implementation/dependencies.",
+      "observableAssertions": [
+        "Deliver separately. Single click selects; double-click one job; repeat no extra submit."
+      ],
+      "sourceRefs": [
+        "docs/spec/08-acceptance-matrix.md §2 U03"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F060",
+      "coverageId": "U04",
+      "gateGroup": "UX-regression",
+      "platformScope": "Web+mobile-as-implemented",
+      "syntheticSetup": "Synthetic UX state: slow A, newer B, A returns late",
+      "plannedAction": "Exercise after implementation/dependencies.",
+      "observableAssertions": [
+        "Resolve reverse order. Only B generation and selection render."
+      ],
+      "sourceRefs": [
+        "docs/spec/08-acceptance-matrix.md §2 U04"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F061",
+      "coverageId": "U05",
+      "gateGroup": "UX-regression",
+      "platformScope": "Web+mobile-as-implemented",
+      "syntheticSetup": "Synthetic UX state: two pages; End then next page fails",
+      "plannedAction": "Exercise after implementation/dependencies.",
+      "observableAssertions": [
+        "Fail next page. Select loaded last row; preserve prior results/selection; local retry."
+      ],
+      "sourceRefs": [
+        "docs/spec/08-acceptance-matrix.md §2 U05"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F062",
+      "coverageId": "U06",
+      "gateGroup": "UX-regression",
+      "platformScope": "Web+mobile-as-implemented",
+      "syntheticSetup": "Synthetic UX state: preview open; Escape twice; input control focused",
+      "plannedAction": "Exercise after implementation/dependencies.",
+      "observableAssertions": [
+        "Send Escape twice. First closes preview, second panel; no extra global input."
+      ],
+      "sourceRefs": [
+        "docs/spec/08-acceptance-matrix.md §2 U06"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F063",
+      "coverageId": "U07",
+      "gateGroup": "UX-regression",
+      "platformScope": "Web+mobile-as-implemented",
+      "syntheticSetup": "Synthetic UX state: cloud content visible, lock; anonymous local profile exists",
+      "plannedAction": "Exercise after implementation/dependencies.",
+      "observableAssertions": [
+        "Lock and inspect worker/content/local vault. Hide cloud body/preview/thumb/search, stop worker; local-only follows platform vault/session."
+      ],
+      "sourceRefs": [
+        "docs/spec/08-acceptance-matrix.md §2 U07"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F064",
+      "coverageId": "U08",
+      "gateGroup": "UX-regression",
+      "platformScope": "Web+mobile-as-implemented",
+      "syntheticSetup": "Synthetic UX state: Web anonymous reaches 32 MiB, refresh branch",
+      "plannedAction": "Exercise after implementation/dependencies.",
+      "observableAssertions": [
+        "Try extra import and inspect export/loss notice. Reject extra without deleting old item; explicit export/refresh loss; no plaintext IndexedDB."
+      ],
+      "sourceRefs": [
+        "docs/spec/08-acceptance-matrix.md §2 U08"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F065",
+      "coverageId": "U09",
+      "gateGroup": "UX-regression",
+      "platformScope": "Web+mobile-as-implemented",
+      "syntheticSetup": "Synthetic UX state: paste/photo/share permission denied",
+      "plannedAction": "Exercise after implementation/dependencies.",
+      "observableAssertions": [
+        "Use user-triggered denied path per platform. Safe supported fallback, no fake success/silent retry; unknown reason/copy OQ."
+      ],
+      "sourceRefs": [
+        "docs/spec/08-acceptance-matrix.md §2 U09"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F066",
+      "coverageId": "U10",
+      "gateGroup": "UX-regression",
+      "platformScope": "Web+mobile-as-implemented",
+      "syntheticSetup": "Synthetic UX state: local/outbox/version budget full with protected item/draft",
+      "plannedAction": "Exercise after implementation/dependencies.",
+      "observableAssertions": [
+        "Attempt save and scope change. Frozen category/affordance; preserve item/draft; no silent scope switch."
+      ],
+      "sourceRefs": [
+        "docs/spec/08-acceptance-matrix.md §2 U10"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F067",
+      "coverageId": "U11",
+      "gateGroup": "UX-regression",
+      "platformScope": "Web+mobile-as-implemented",
+      "syntheticSetup": "Synthetic UX state: A has pending op; switch to B",
+      "plannedAction": "Exercise after implementation/dependencies.",
+      "observableAssertions": [
+        "Switch namespace. Stop A worker/subscription/key refs; never send A wire under B."
+      ],
+      "sourceRefs": [
+        "docs/spec/08-acceptance-matrix.md §2 U11"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F068",
+      "coverageId": "U12",
+      "gateGroup": "UX-regression",
+      "platformScope": "Web+mobile-as-implemented",
+      "syntheticSetup": "Synthetic UX state: offline cached rows, empty/no-results/partial-index branches",
+      "plannedAction": "Exercise after implementation/dependencies.",
+      "observableAssertions": [
+        "Query offline. Keep local usability; distinct state/coverage; partial index not full search."
+      ],
+      "sourceRefs": [
+        "docs/spec/08-acceptance-matrix.md §2 U12"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F069",
+      "coverageId": "01-P01",
+      "gateGroup": "product-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic product state: WorkArea/narrow-screen labels, search, results and preview.",
+      "plannedAction": "Plan flow: Plan quick-panel layout.",
+      "observableAssertions": [
+        "Required region order/size guidance and narrow single column; no clipped search/action."
+      ],
+      "sourceRefs": [
+        "docs/spec/01-product-and-ux.md §2.1 01-P01"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F070",
+      "coverageId": "01-P02",
+      "gateGroup": "product-P-regression",
+      "platformScope": "desktop",
+      "syntheticSetup": "Synthetic product state: Synthetic history/favorites/pages and selected-ID set.",
+      "plannedAction": "Plan flow: Plan manager navigation, batch/export.",
+      "observableAssertions": [
+        "Batch only selected IDs; export disabled until T29; management outside card strip."
+      ],
+      "sourceRefs": [
+        "docs/spec/01-product-and-ux.md §2.2 01-P02"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F071",
+      "coverageId": "01-P03",
+      "gateGroup": "product-P-regression",
+      "platformScope": "desktop+mobile",
+      "syntheticSetup": "Synthetic product state: Settings groups and known/unknown source labels.",
+      "plannedAction": "Plan flow: Plan capture/behavior/capacity/privacy/account/device groups.",
+      "observableAssertions": [
+        "Separate local/cache/cloud capacity; source exclusions only where supported; no absolute password detection."
+      ],
+      "sourceRefs": [
+        "docs/spec/01-product-and-ux.md §2.3 01-P03"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F072",
+      "coverageId": "01-P04",
+      "gateGroup": "product-P-regression",
+      "platformScope": "mobile",
+      "syntheticSetup": "Synthetic product state: Recent/library rows and type/favorite chips.",
+      "plannedAction": "Plan flow: Navigate list/detail/search.",
+      "observableAssertions": [
+        "Touch-first detail; no hover and no auto-input to another app."
+      ],
+      "sourceRefs": [
+        "docs/spec/01-product-and-ux.md §3 01-P04"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F073",
+      "coverageId": "01-P05",
+      "gateGroup": "product-P-regression",
+      "platformScope": "mobile",
+      "syntheticSetup": "Synthetic product state: Text/image detail source/time.",
+      "plannedAction": "Plan flow: Activate explicit copy control.",
+      "observableAssertions": [
+        "Copy success means clipboard write only, not paste."
+      ],
+      "sourceRefs": [
+        "docs/spec/01-product-and-ux.md §3 01-P05"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F074",
+      "coverageId": "01-P06",
+      "gateGroup": "product-P-regression",
+      "platformScope": "mobile",
+      "syntheticSetup": "Synthetic product state: User-selected text/image with permission outcomes.",
+      "plannedAction": "Plan flow: System paste/share/photo, preview, choose scope, save.",
+      "observableAssertions": [
+        "Only current active share; Android foreground user read; iOS prompt not bypassed; no history."
+      ],
+      "sourceRefs": [
+        "docs/spec/01-product-and-ux.md §3 01-P06"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F075",
+      "coverageId": "01-P07",
+      "gateGroup": "product-P-regression",
+      "platformScope": "mobile",
+      "syntheticSetup": "Synthetic product state: Saved revision, editor draft, tags and IME.",
+      "plannedAction": "Plan flow: Edit/save/leave/offline/outbox full.",
+      "observableAssertions": [
+        "IME no save; retain draft/warn; offline local/outbox scoped; full outbox blocks sync scope change."
+      ],
+      "sourceRefs": [
+        "docs/spec/01-product-and-ux.md §3 01-P07",
+        "docs/spec/03-data-sync-and-security.md §6 01-P07"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F076",
+      "coverageId": "01-P08",
+      "gateGroup": "product-P-regression",
+      "platformScope": "Web",
+      "syntheticSetup": "Synthetic product state: Viewport at desktop/tablet/mobile breakpoints.",
+      "plannedAction": "Plan flow: Navigate library/detail by keyboard.",
+      "observableAssertions": [
+        ">=1024 sidebar/list/detail; 768-1023 collapsed sidebar; <768 routed list/detail; visible focus/selectable body."
+      ],
+      "sourceRefs": [
+        "docs/spec/01-product-and-ux.md §4 01-P08"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F077",
+      "coverageId": "01-P09",
+      "gateGroup": "product-P-regression",
+      "platformScope": "Web+desktop+mobile",
+      "syntheticSetup": "Synthetic product state: Logged-in cloud-locked state, anonymous local and account-switch draft.",
+      "plannedAction": "Plan flow: Lock/switch and inspect worker/content.",
+      "observableAssertions": [
+        "Login differs from unlock; hide locked content/stop worker; local vault boundary; retain draft/new namespace."
+      ],
+      "sourceRefs": [
+        "docs/spec/01-product-and-ux.md §4 01-P09",
+        "docs/spec/03-data-sync-and-security.md §5.4 01-P09"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F078",
+      "coverageId": "01-P10",
+      "gateGroup": "product-P-regression",
+      "platformScope": "Web",
+      "syntheticSetup": "Synthetic product state: User-clicked import, permission denial, HTTPS and 32-MiB session budget.",
+      "plannedAction": "Plan flow: Import/copy/refresh.",
+      "observableAssertions": [
+        "Denied permission offers textarea; click/HTTPS required; session-only with export/loss notice; no background capture."
+      ],
+      "sourceRefs": [
+        "docs/spec/01-product-and-ux.md §4 01-P10",
+        "docs/spec/limits.v1.json"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F079",
+      "coverageId": "01-P11",
+      "gateGroup": "product-P-regression",
+      "platformScope": "Web+mobile",
+      "syntheticSetup": "Synthetic product state: Account/device list, authorization/sync times, revoke/recovery/private-mode.",
+      "plannedAction": "Plan flow: Inspect actions and cache status.",
+      "observableAssertions": [
+        "Do not promise recall of downloaded plaintext; explain cache limit; online use remains available."
+      ],
+      "sourceRefs": [
+        "docs/spec/01-product-and-ux.md §4 01-P11"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F080",
+      "coverageId": "X-error",
+      "gateGroup": "G2+G3",
+      "platformScope": "all-applicable",
+      "syntheticSetup": "Synthetic matrix of spec-frozen server/local error categories with state snapshots, plus opaque raw OS/provider causes whose category and user copy remain OPEN_QUESTION.",
+      "plannedAction": "Inject each selected frozen error at its named branch and observe the contract-prescribed client action and state preservation; do not assign a category or UI copy to opaque platform/provider causes.",
+      "observableAssertions": [
+        "INVALID_DTO keeps the draft and stops that op; IDEMPOTENCY_MISMATCH stops the op without minting a replacement opId; conflict/delete errors retain the draft for head/conflict handling.",
+        "EPOCH_MISMATCH/CURSOR_EXPIRED triggers snapshot recovery while preserving the draft and not directly replaying old outbox bytes.",
+        "QUOTA_EXCEEDED/TEMP_STORAGE_FULL/OBJECT_LIMIT_EXCEEDED block new positive delta while read/delete/export remain available; STORAGE_UNAVAILABLE/DB_BUSY retries the original opId and bytes and never reports an uncommitted op as committed.",
+        "CIPHER_INTEGRITY_FAILED isolates the copy and never auto-pastes it; local key/vault/SQLCipher failures preserve the original database evidence and never fall back to plaintext SQLite.",
+        "Only frozen retryable distinctions are asserted; unknown raw OS/provider causes and user-facing copy remain OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/08-acceptance-matrix.md §2-§3"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F081",
+      "coverageId": "X-cancel",
+      "gateGroup": "G2+G3",
+      "platformScope": "desktop+web+mobile-as-implemented",
+      "syntheticSetup": "Synthetic cancellation at known pre-commit, in-flight/unknown-result, process interruption while SENDING, and known post-commit boundaries; terminal wording for unfrozen cases is left open.",
+      "plannedAction": "Cancel each controlled branch, snapshot operation bytes/state before and after, query a receipt where commit outcome is unknown, and resume only using the frozen reconciliation path.",
+      "observableAssertions": [
+        "Known pre-commit cancellation produces no committed mutation; a request with unknown commit outcome is reconciled by its original opId/receipt and is never blindly replayed as a new op.",
+        "After process interruption, SENDING returns to READY with identical wire_bytes; committed receipt/revision/seq are retained and cancellation cannot roll back a committed mutation.",
+        "Assert accepted/too-late labels only where a contract freezes them; unspecified cancel result mapping/copy remains OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §9-§10",
+        "docs/spec/08-acceptance-matrix.md §2-§3"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F082",
+      "coverageId": "X-capacity",
+      "gateGroup": "G2+G3",
+      "platformScope": "desktop+web+mobile-as-implemented",
+      "syntheticSetup": "Synthetic local/outbox/cloud/capture/share/decoded-cache counters at below/exact/above boundaries using only limits.v1.json and accepted accounting; local durable-byte formula and native-share cap remain OPEN_QUESTION.",
+      "plannedAction": "Exercise positive-delta writes and protected read/delete/export across frozen budget boundaries; compare accounting snapshots and retry after capacity is freed only where the spec defines that transition.",
+      "observableAssertions": [
+        "Frozen local/cloud/outbox limits block the affected new mutation with only their specified category; reads/deletes/exports remain available where specified.",
+        "Saved, pinned, trash, and draft data remain intact; no silent scope conversion, queue loss, or implicit provider entitlement change occurs.",
+        "Use frozen accounting and limit keys only; do not invent local byte formulas, share caps, or native cache charge categories."
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S12-S18",
+        "docs/spec/08-acceptance-matrix.md §2-§4",
+        "docs/spec/limits.v1.json"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-F083",
+      "coverageId": "X-permission",
+      "gateGroup": "G2+G3",
+      "platformScope": "Win+macOS+iOS+Android+Web",
+      "syntheticSetup": "Synthetic denied/unknown/granted outcomes for Windows UIPI, macOS Accessibility, iOS share/photo access, Android photo access, and Web permissions; no OS prompt or device API is invoked.",
+      "plannedAction": "For each applicable platform matrix row, follow only the documented user-triggered permission path and inspect the documented fallback/available capability after denial; leave raw platform reason and user copy unresolved where not frozen.",
+      "observableAssertions": [
+        "Denied permission never bypasses the platform prompt or claims a privileged action succeeded.",
+        "Windows UIPI and macOS Accessibility denial follow the frozen copy-only/degraded capability behavior; other platform fallbacks are asserted only where their matrix row is frozen.",
+        "Preserve user content and unrelated available capabilities; unknown raw OS result mapping and user-facing copy remain OPEN_QUESTION."
+      ],
+      "sourceRefs": [
+        "docs/spec/01-product-and-ux.md §2-§7",
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/08-acceptance-matrix.md §2-§3"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    }
+  ],
+  "acceptanceGates": [
+    {
+      "id": "T25-AG00",
+      "gate": "dependency",
+      "scope": "T13/T19/T21/T24 accepted before behavior work.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-AG01",
+      "gate": "G2",
+      "scope": "S01-S23/S26, S24 quota/storage and T19 S25 synthetic core; external cloud gated.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-AG02",
+      "gate": "G2-PG",
+      "scope": "Real isolated PG authorization/RLS/transactions/concurrency/seq/snapshot/recovery; mocks cannot close.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-AG03",
+      "gate": "G2-S3",
+      "scope": "Selected provider sandbox conditional writes/final immutability/old URL/finalize/GC/delete; mocks cannot close.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-AG04",
+      "gate": "G2-Hermes",
+      "scope": "Approved Rust/C/Web/Hermes fixed vectors/tamper only; no invented vector/fallback.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-AG05",
+      "gate": "G3-iOS",
+      "scope": "iOS Hermes/SQLCipher/share/vault/permission/local lifecycle on dev build and physical device.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-AG06",
+      "gate": "G3-Android",
+      "scope": "Android Hermes/SQLCipher/share/vault/permission/local lifecycle on dev build and physical device.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-AG07",
+      "gate": "G3-second-device-offline",
+      "scope": "Second-device sync/offline/foreground resume/conflict; per-platform evidence separate.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-AG08",
+      "gate": "S27-local",
+      "scope": "Implemented S27 local portions only; portable import/export/T29 restore excluded.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-AG09",
+      "gate": "desktop-P01-P28",
+      "scope": "docs/spec/04-desktop-performance.md §8 P01-P28; FakePlatform cannot close OS behavior.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-AG10",
+      "gate": "product-P01-P11-U01-U12",
+      "scope": "docs/spec/01-product-and-ux.md §2-§4 P01-P11 and docs/spec/08-acceptance-matrix.md §2 U01-U12.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-AG11",
+      "gate": "performance",
+      "scope": ">=100 normal samples, 10,000-item search, budgets/full-process memory and idle CPU under fixed conditions.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-AG12",
+      "gate": "independent-adversarial-review",
+      "scope": "Independent multi-agent attacks data loss/resurrection/wrong input/unauthorized access/cost inference; serious issues close.",
+      "status": "NOT_RUN",
+      "evidence": []
+    }
+  ],
+  "commands": [
+    {
+      "id": "T25-C01",
+      "command": "pnpm test:integration -- --suite full",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "blockedBy": [
+        "T13/T19/T21/T24 accepted",
+        "T01/T06 integration scripts and isolated harness"
+      ]
+    },
+    {
+      "id": "T25-C02",
+      "command": "cargo test --workspace",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "blockedBy": [
+        "T13/T19/T21/T24 accepted",
+        "T06 Rust/workspace prerequisites"
+      ]
+    },
+    {
+      "id": "T25-C03",
+      "command": "pnpm test:e2e -- --project web",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "blockedBy": [
+        "T13/T19/T21/T24 accepted",
+        "T01/T06 Web E2E scripts"
+      ]
+    }
+  ],
+  "performanceMeasurements": [
+    {
+      "id": "T25-M01",
+      "metric": "Warm wake/actionable and normal small-text selection/inputSubmitted",
+      "plan": "Separate capture/show/first-frame/actionable and selection/write/hide/focus/modifier/inputSubmitted; target display observed separately.",
+      "thresholds": "Only frozen limits: warmWakeActionableP95Ms=100, warmNormalTextInputSubmittedP95Ms=150.",
+      "sampling": "Each normal scenario >=100 samples. Fix/record machine/OS/display/power/build/seed/cache/network; report p50/p95/max/failure count; failures/cancel/permission/timeouts separate. Correlate cross-process events by requestId and report each process monotonic duration; never subtract uncalibrated clocks across processes. No measurement run.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-M02",
+      "metric": "10,000-item first-page synthetic search",
+      "plan": "Chinese 1/2/3-char, substring, filters, matches beyond first page.",
+      "thresholds": "Only frozen limit search10000ItemsFirstPageP95Ms=100.",
+      "sampling": "Each normal scenario >=100 samples. Fix/record machine/OS/display/power/build/seed/cache/network; report p50/p95/max/failure count; failures/cancel/permission/timeouts separate. Correlate cross-process events by requestId and report each process monotonic duration; never subtract uncalibrated clocks across processes. No measurement run.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-M03",
+      "metric": "Unchanged image re-encode count",
+      "plan": "Same sequence across notifications and prior polling periods after initial capture.",
+      "thresholds": "Frozen target zero re-encodes; no result claimed.",
+      "sampling": "Normal cases >=100; failures separate.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-M04",
+      "metric": "Queue/decoded-cache/local/cloud budget peaks",
+      "plan": "Stable, peak, retry and failure paths against accepted accounting and limits.v1.json.",
+      "thresholds": "Use frozen limits; no byte formula/share cap invented.",
+      "sampling": "Each normal scenario >=100 samples. Fix/record machine/OS/display/power/build/seed/cache/network; report p50/p95/max/failure count; failures/cancel/permission/timeouts separate. Correlate cross-process events by requestId and report each process monotonic duration; never subtract uncalibrated clocks across processes. No measurement run.",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T25-M05",
+      "metric": "Whole-app process memory and idle CPU",
+      "plan": "Record host/WebView/helper subprocesses against same-scene L0; don't treat summed RSS as exclusive physical memory.",
+      "thresholds": "Report results/conditions; no numeric threshold absent from spec.",
+      "sampling": "Each normal scenario >=100 samples. Fix/record machine/OS/display/power/build/seed/cache/network; report p50/p95/max/failure count; failures/cancel/permission/timeouts separate. Correlate cross-process events by requestId and report each process monotonic duration; never subtract uncalibrated clocks across processes. No measurement run.",
+      "status": "NOT_RUN",
+      "evidence": []
+    }
+  ],
+  "deferredScenarios": [
+    {
+      "id": "T25-D01",
+      "coverage": "S24 provider refunds and provider-entitlement reconciliation",
+      "result": "DEFERRED",
+      "deferredTo": [
+        "T26",
+        "T27",
+        "T28"
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10",
+        "docs/spec/08-acceptance-matrix.md §1"
+      ],
+      "reason": "T25 covers quota drop/storage failure only; real provider refund/entitlement belongs to T26-T28."
+    },
+    {
+      "id": "T25-D02",
+      "coverage": "S25 production-equivalent operational restore/runbook",
+      "result": "DEFERRED",
+      "deferredTo": [
+        "T29",
+        "T30"
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10 S25"
+      ],
+      "reason": "T25 re-runs T19 synthetic recovery core only; real PG/object restore, deletion evidence and release runbook close in T29/T30."
+    },
+    {
+      "id": "T25-D03",
+      "coverage": "S27 portable import/export and T29 local-only recovery",
+      "result": "DEFERRED",
+      "deferredTo": [
+        "T29",
+        "T30"
+      ],
+      "sourceRefs": [
+        "docs/spec/03-data-sync-and-security.md §10",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/08-acceptance-matrix.md §1"
+      ],
+      "reason": "T25 covers already-implemented local S27 portions only; no portable/local-only recovery claim."
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "T25-OQ01",
+      "topic": "Exact module/API/build readiness from T13/T19/T21/T24; before acceptance only fixture/interface planning.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T25-OQ02",
+      "topic": "T01/T06 integration/Rust/Web E2E script and harness readiness; record missing prerequisites.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T25-OQ03",
+      "topic": "Selected isolated PG/S3 provider environment/provisioning/artifact retention after dependencies; none used in planning.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T25-OQ04",
+      "topic": "Unfrozen raw OS/provider error, cancellation and permission reason-to-category/UI copy mappings.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T25-OQ05",
+      "topic": "Unfrozen local/outbox/native-share durable-byte accounting or share queue cap; do not invent.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T25-OQ06",
+      "topic": "Which desktop 04-P/product 01-P/U cases exist on each delivered platform after dependencies.",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T25-OQ07",
+      "topic": "Benchmark machine/OS/build/power/display/seed/cache/network and script must be fixed before sampling.",
+      "status": "OPEN_QUESTION"
+    }
+  ],
+  "executionSafety": {
+    "productionChanged": false,
+    "sharedFixturesChanged": false,
+    "sharedProgressChanged": false,
+    "dependenciesChanged": false,
+    "testsRun": false,
+    "buildsRun": false,
+    "benchmarksRun": false,
+    "pgS3Connected": false,
+    "hermesRun": false,
+    "browserDeviceUsed": false,
+    "userDataRead": false,
+    "cryptoGenerated": false
+  },
+  "acceptanceReminder": "All fixtures/gates/commands/measurements remain NOT_RUN. T25 requires dependency acceptance, applicable real G2/G3 evidence, performance, serious-issue closure and independent adversarial review; T26-T30 deferrals are not a T25 pass."
+}

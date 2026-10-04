@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "task": "T11",
+  "evidenceType": "fixture_plan_static_validation",
+  "checkedDate": "2026-10-04",
+  "reviewedArtifact": "tests/tasks/T11/fixture-plan.json",
+  "result": "PASS",
+  "checks": {
+    "jsonParse": "PASS",
+    "fixtureCaseCount": 40,
+    "caseNumbersContiguousFrom1To40": true,
+    "fixtureIdsUnique": true,
+    "allFixtureCasesExecutionStatus": "NOT_RUN",
+    "P01ThroughP28ReferencedExactlyOnce": true,
+    "openQuestionsCount": 9,
+    "dependencyStatusesMatchObservedProgress": true
+  },
+  "validationScope": "Static plan structure and status consistency only.",
+  "notPerformed": [
+    "Tauri or Rust implementation",
+    "package installation or package/build checks",
+    "behavior tests or fake-platform tests",
+    "Windows desktop, clipboard, tray, monitor, permission, or input operations",
+    "performance measurements",
+    "live profile or user-content access",
+    "independent adversarial review"
+  ],
+  "limitations": [
+    "All T11 behavior and performance evidence remains NOT_RUN; this static result does not accept T11.",
+    "T05, T06, T07, and T10 are not accepted, so production work and behavior testing remain gated.",
+    "Tray activation policy, monitor selection, exact Windows permission/result mapping, image clipboard format/receiver, and full-process resource thresholds remain OPEN_QUESTION."
+  ]
+}

@@ -1,0 +1,336 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "b-zod-ajv-runtime-license-audit",
+  "checkedDate": "2026-10-04",
+  "status": "candidate-research-only; not selected, installed, resolved, or frozen",
+  "scope": {
+    "request": "Audit Zod 4.6.5, Ajv Draft 2020-12, and ajv-formats candidate versions, recursive runtime dependency/license metadata, Node 24 compatibility evidence, and format-plugin risks.",
+    "changedFiles": [
+      "docs/evidence/T06/zod-ajv-license-audit.json"
+    ],
+    "sourcePolicy": "Official npm package pages/metadata and upstream project documentation, manifests, releases, and security advisories only.",
+    "notDone": [
+      "No package installation, pnpm/npm dependency resolution, manifest/lock edit, runtime test, or build.",
+      "Development dependencies are excluded; this inventory covers the production runtime closure of the named candidates.",
+      "Because semver ranges were deliberately not resolved, this is a recursive manifest-range audit, not a lockfile/SBOM audit of the eventual exact tree. Recheck every resolved package version and license when T06 freezes dependencies."
+    ]
+  },
+  "candidates": {
+    "zod": {
+      "version": "4.6.5",
+      "versionStatus": "Confirmed on npm version listing and upstream v4.6.5 tag.",
+      "license": "MIT",
+      "runtimeDependencies": [],
+      "peerDependencies": [],
+      "engines": "No engines field in the inspected version-tag manifest; npm describes support for Node.js and modern browsers.",
+      "node24": "The inspected manifest declares no engines field and npm states general Node.js/browser support, but this is not an explicit Node 24 guarantee; the candidate was not executed locally.",
+      "schemaNote": "The existing T06 schema-tool research identifies Zod 4's default JSON Schema output as Draft 2020-12; strict unknown-key behavior still needs to be represented with strictObject and verified by generated fixtures.",
+      "sources": [
+        "zod-npm",
+        "zod-manifest",
+        "zod-json-schema"
+      ]
+    },
+    "ajv": {
+      "version": "8.20.0",
+      "versionStatus": "npm latest candidate checked 2026-10-04; existing locked Ajv 6.15.0 is not this candidate and does not supply the reviewed Draft 2020-12 route.",
+      "license": "MIT",
+      "runtimeDependencies": [
+        {
+          "name": "fast-deep-equal",
+          "range": "^3.1.3",
+          "auditedCandidate": "3.1.3",
+          "license": "MIT",
+          "runtimeDependencies": [],
+          "engines": "No engines field in the inspected manifest."
+        },
+        {
+          "name": "fast-uri",
+          "range": "^3.0.1",
+          "auditedCandidate": "3.1.8 (latest listed 3.x candidate on 2026-10-04; not resolved)",
+          "license": "BSD-3-Clause",
+          "runtimeDependencies": [],
+          "engines": "No engines field in the inspected v3.1.8 manifest."
+        },
+        {
+          "name": "json-schema-traverse",
+          "range": "^1.0.0",
+          "auditedCandidate": "1.0.0",
+          "license": "MIT",
+          "runtimeDependencies": [],
+          "engines": "No engines field in the inspected manifest."
+        },
+        {
+          "name": "require-from-string",
+          "range": "^2.0.2",
+          "auditedCandidate": "2.0.2",
+          "license": "MIT",
+          "runtimeDependencies": [],
+          "engines": "node >=0.10.0"
+        }
+      ],
+      "peerDependencies": [],
+      "engines": "No engines field in the inspected v8.20.0 manifest.",
+      "node24": "The official v8.20.0 release notes explicitly add Node 22/24 support. No project-local Node 24 execution was run.",
+      "draft2020_12": {
+        "candidateEntry": "ajv/dist/2020 (Ajv2020 class)",
+        "evidence": "The v8.20.0 source has a distinct 2020 implementation that registers the Draft 2020-12 meta-schema; Ajv's guide says newer-draft support uses a separate export/class.",
+        "constraint": "Use the 2020 export for the Zod default dialect. Do not infer Draft 2020-12 support from Ajv's main/default export or the old Ajv 6 lock entry."
+      },
+      "sources": [
+        "ajv-npm",
+        "ajv-manifest",
+        "ajv-release",
+        "ajv-2020-source",
+        "ajv-dialect-docs"
+      ]
+    },
+    "ajv-formats": {
+      "version": "3.0.1",
+      "versionStatus": "npm latest candidate checked 2026-10-04.",
+      "license": "MIT",
+      "runtimeDependencies": [
+        {
+          "name": "ajv",
+          "range": "^8.0.0",
+          "auditedCandidate": "8.20.0 (same candidate as the direct Ajv dependency; no resolution performed)",
+          "license": "MIT",
+          "runtimeDependencies": "Reuse the Ajv 8.20.0 closure listed above if the package manager deduplicates the compatible range."
+        }
+      ],
+      "peerDependencies": {
+        "ajv": {
+          "range": "^8.0.0",
+          "optional": true
+        }
+      },
+      "metadataNote": "The v3.0.1 upstream manifest declares Ajv both as a runtime dependency and as an optional peer. With a direct Ajv 8 dependency, verify the final lock contains one compatible Ajv instance; this audit did not resolve the graph.",
+      "engines": "No engines field in the inspected v3.0.1 manifest.",
+      "node24": "Pure JavaScript package with documented CommonJS and ESM usage and no declared Node engine restriction; no local Node 24 execution was run.",
+      "sources": [
+        "ajv-formats-npm",
+        "ajv-formats-manifest",
+        "ajv-format-docs",
+        "ajv-security-docs"
+      ]
+    }
+  },
+  "runtimeLicenseSummary": {
+    "directPackages": [
+      {
+        "package": "zod@4.6.5",
+        "license": "MIT"
+      },
+      {
+        "package": "ajv@8.20.0",
+        "license": "MIT"
+      },
+      {
+        "package": "ajv-formats@3.0.1",
+        "license": "MIT"
+      }
+    ],
+    "transitivePackages": [
+      {
+        "package": "fast-deep-equal@3.1.3",
+        "license": "MIT"
+      },
+      {
+        "package": "fast-uri@3.1.8 candidate",
+        "license": "BSD-3-Clause"
+      },
+      {
+        "package": "json-schema-traverse@1.0.0",
+        "license": "MIT"
+      },
+      {
+        "package": "require-from-string@2.0.2",
+        "license": "MIT"
+      }
+    ],
+    "assessment": "The inspected runtime closure is MIT plus one BSD-3-Clause package, fast-uri. Preserve applicable third-party notices in the eventual distribution. This is metadata research, not legal advice or a shipped-artifact notice audit.",
+    "completion": "All direct runtime dependencies and recursively declared runtime edges for the reviewed candidate manifests are enumerated. Exact versions selected by pnpm and their packaged license files remain to be checked at lock freeze."
+  },
+  "formatAndSecurityRisks": [
+    {
+      "risk": "Draft 2020-12 requires the distinct Ajv2020 entry point. The standard Ajv formats are separate from Ajv v7+ and are supplied by ajv-formats.",
+      "mitigationGate": "Import Ajv2020 explicitly, add only formats actually used by canonical schemas, and compile positive/negative fixtures for the exact generated Draft 2020-12 output."
+    },
+    {
+      "risk": "Ajv strict mode throws during schema compilation for unknown formats. ajv-formats does not implement every format: for example, IRI and IDN formats are in the separate ajv-formats-draft2019 package.",
+      "mitigationGate": "Inventory format keywords in generated schemas before choosing a plugin; do not turn off strict validation just to suppress missing-format errors."
+    },
+    {
+      "risk": "Ajv's official guide warns that format implementations can contain unsafe regular expressions and recommends treating formats as potentially unsafe when validating untrusted data. Some patterns can have exponential worst-case time even on relatively short inputs; the plugin's fast mode simplifies several patterns but is not a safety guarantee.",
+      "mitigationGate": "Assess each selected format against the actual input trust boundary, bound string lengths, and test hostile long inputs. Do not enable all formats without need."
+    },
+    {
+      "risk": "Ajv-formats 3.0.1 declares Ajv as both a dependency and an optional peer. Ajv warns that standalone generated validators require ajv-formats to load the same Ajv version and code as the application because of an instanceof check; package managers may retain a second Ajv copy.",
+      "mitigationGate": "After dependency freeze, inspect pnpm why/lock topology and add a standalone-code fixture only if T06 uses standalone validation."
+    },
+    {
+      "risk": "Ajv 8.20.0 allows fast-uri ^3.0.1. That semver range includes releases with published host-confusion/SSRF and authority parsing advisories. The current 3.x candidate 3.1.8 is patched for the latest listed 3.x advisories as of this audit, but an old/stale lock can still select a vulnerable patch.",
+      "mitigationGate": "At lock freeze verify fast-uri >=3.1.8 or an equivalent patched supported release; review its advisories again at that time. Do not assume the broad Ajv range alone forces a patched version."
+    }
+  ],
+  "fastUriAdvisorySnapshot": {
+    "candidate": "fast-uri@3.1.8",
+    "knownPatchEvidence": [
+      {
+        "advisory": "GHSA-qw65-cvwx-89v3",
+        "issue": "Authority injection through an unvalidated port during serialization; 3.x patched in 3.1.7."
+      },
+      {
+        "advisory": "GHSA-58mr-gqgx-xq4g",
+        "issue": "Host confusion from malformed authority brackets; 3.x patched in 3.1.7."
+      },
+      {
+        "advisory": "GHSA-hrr3-gc8f-f4qj",
+        "issue": "Inconsistent host case normalization for percent-encoded octets; 3.x patched in 3.1.8."
+      }
+    ],
+    "scopeNote": "fast-uri is Ajv's URI resolver dependency. The listed application impacts apply when the affected URI parser APIs are used with attacker-controlled URIs; this is not evidence that ClipNest currently exposes those paths.",
+    "sources": [
+      "fast-uri-manifest-318",
+      "fast-uri-release-318",
+      "fast-uri-advisory-port",
+      "fast-uri-advisory-bracket",
+      "fast-uri-advisory-case"
+    ]
+  },
+  "notVerified": [
+    "No packages installed, semver ranges resolved, or lockfile changed.",
+    "No local Node 24.21.0 runtime, Ajv Draft 2020-12 fixture, generated schema, or format validation test was run.",
+    "No exact pnpm-resolved tree, tarball integrity, final license notices, SBOM, or vulnerability scan was produced.",
+    "The eventual contract schemas do not yet exist, so required format names, input trust boundaries, and whether Ajv standalone generation is needed remain undetermined.",
+    "This inventory excludes devDependencies and only audits the production runtime dependency graph of the named candidates."
+  ],
+  "sources": [
+    {
+      "id": "zod-npm",
+      "url": "https://www.npmjs.com/package/zod?activeTab=versions",
+      "supports": "Published 4.6.5 candidate and npm's Node.js/browser runtime statement."
+    },
+    {
+      "id": "zod-manifest",
+      "url": "https://raw.githubusercontent.com/colinhacks/zod/v4.6.5/packages/zod/package.json",
+      "supports": "Exact upstream version, MIT license, exports, and absence of runtime/peer dependencies and engines field."
+    },
+    {
+      "id": "zod-json-schema",
+      "url": "https://zod.dev/json-schema",
+      "supports": "Zod JSON Schema conversion behavior and default dialect; strict-object conversion caveats are also captured in the adjacent T06 schema-tool research."
+    },
+    {
+      "id": "ajv-npm",
+      "url": "https://www.npmjs.com/package/ajv?activeTab=versions",
+      "supports": "Published 8.20.0 candidate and advertised Draft 2020-12 support."
+    },
+    {
+      "id": "ajv-manifest",
+      "url": "https://raw.githubusercontent.com/ajv-validator/ajv/v8.20.0/package.json",
+      "supports": "Exact version, MIT license, four production dependency ranges, and absence of an engines field."
+    },
+    {
+      "id": "ajv-release",
+      "url": "https://github.com/ajv-validator/ajv/releases/tag/v8.20.0",
+      "supports": "Official release notes explicitly adding Node 22/24 support."
+    },
+    {
+      "id": "ajv-2020-source",
+      "url": "https://raw.githubusercontent.com/ajv-validator/ajv/v8.20.0/lib/2020.ts",
+      "supports": "Distinct Ajv2020 implementation and Draft 2020-12 meta-schema registration."
+    },
+    {
+      "id": "ajv-dialect-docs",
+      "url": "https://ajv.js.org/guide/schema-language.html",
+      "supports": "Ajv uses a distinct export/class for newer JSON Schema drafts."
+    },
+    {
+      "id": "ajv-formats-npm",
+      "url": "https://www.npmjs.com/package/ajv-formats?activeTab=versions",
+      "supports": "Published 3.0.1 candidate and MIT license."
+    },
+    {
+      "id": "ajv-formats-manifest",
+      "url": "https://raw.githubusercontent.com/ajv-validator/ajv-formats/v3.0.1/package.json",
+      "supports": "Exact version, MIT license, Ajv dependency and optional peer ranges, and absence of an engines field."
+    },
+    {
+      "id": "ajv-format-docs",
+      "url": "https://ajv.js.org/guide/formats.html",
+      "supports": "Formats are a separate plugin, format coverage, missing-format behavior, regex risk, and same-Ajv-instance caveat for standalone output."
+    },
+    {
+      "id": "ajv-security-docs",
+      "url": "https://ajv.js.org/security.html",
+      "supports": "ReDoS and untrusted-schema/data validation guidance."
+    },
+    {
+      "id": "fast-deep-equal-npm",
+      "url": "https://www.npmjs.com/package/fast-deep-equal",
+      "supports": "Package registry license and dependency metadata."
+    },
+    {
+      "id": "fast-deep-equal-manifest",
+      "url": "https://raw.githubusercontent.com/epoberezkin/fast-deep-equal/v3.1.3/package.json",
+      "supports": "Candidate version, MIT license, and no declared production dependencies."
+    },
+    {
+      "id": "fast-uri-npm",
+      "url": "https://www.npmjs.com/package/fast-uri?activeTab=versions",
+      "supports": "Published fast-uri 3.x version history, including 3.1.8."
+    },
+    {
+      "id": "fast-uri-manifest-318",
+      "url": "https://raw.githubusercontent.com/fastify/fast-uri/v3.1.8/package.json",
+      "supports": "Exact candidate version, BSD-3-Clause license, CommonJS package mode, and no production dependencies or engines field."
+    },
+    {
+      "id": "fast-uri-release-318",
+      "url": "https://github.com/fastify/fast-uri/releases/tag/v3.1.8",
+      "supports": "Upstream security release for the 3.x line and the 3.1.8 patch advisory."
+    },
+    {
+      "id": "fast-uri-advisory-port",
+      "url": "https://github.com/fastify/fast-uri/security/advisories/GHSA-qw65-cvwx-89v3",
+      "supports": "3.x affected and patched fast-uri versions for serialization authority injection."
+    },
+    {
+      "id": "fast-uri-advisory-bracket",
+      "url": "https://github.com/fastify/fast-uri/security/advisories/GHSA-58mr-gqgx-xq4g",
+      "supports": "3.x affected and patched fast-uri versions for malformed authority brackets."
+    },
+    {
+      "id": "fast-uri-advisory-case",
+      "url": "https://github.com/fastify/fast-uri/security/advisories/GHSA-hrr3-gc8f-f4qj",
+      "supports": "3.x affected and patched fast-uri versions for percent-encoded host case normalization."
+    },
+    {
+      "id": "json-schema-traverse-npm",
+      "url": "https://www.npmjs.com/package/json-schema-traverse",
+      "supports": "Registry MIT license and zero-dependency metadata."
+    },
+    {
+      "id": "json-schema-traverse-manifest",
+      "url": "https://raw.githubusercontent.com/epoberezkin/json-schema-traverse/v1.0.0/package.json",
+      "supports": "Candidate version, MIT license, and absence of production dependencies."
+    },
+    {
+      "id": "require-from-string-npm",
+      "url": "https://www.npmjs.com/package/require-from-string",
+      "supports": "Registry version 2.0.2, MIT license, and zero runtime dependency count."
+    },
+    {
+      "id": "require-from-string-manifest",
+      "url": "https://raw.githubusercontent.com/floatdrop/require-from-string/v2.0.2/package.json",
+      "supports": "Exact version, MIT license, Node >=0.10.0 engine, and empty runtime dependencies."
+    },
+    {
+      "id": "node-24-lts",
+      "url": "https://nodejs.org/en/download",
+      "supports": "Official Node.js page lists v24.21.0 as LTS at the audit date."
+    }
+  ]
+}

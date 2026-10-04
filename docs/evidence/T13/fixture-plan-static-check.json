@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "task": "T13",
+  "evidenceType": "fixture_plan_static_validation",
+  "checkedDate": "2026-10-04",
+  "reviewedArtifact": "tests/tasks/T13/fixture-plan.json",
+  "result": "PASS",
+  "checks": {
+    "jsonParse": "PASS",
+    "fixtureCaseCount": 31,
+    "fixtureIdsUnique": true,
+    "allFixtureCasesExecutionStatus": "NOT_RUN",
+    "releaseStaticCheckCount": 5,
+    "allReleaseChecksExecutionStatus": "NOT_RUN",
+    "requiredPlatformAndReleaseCategoriesPresent": true,
+    "windowsSemanticsExplicitlyExcludedAsMacAcceptance": true,
+    "dependencyStatusesMatchObservedProgress": true,
+    "openQuestionsCount": 9,
+    "caseNumbersContiguousFrom1To31": true,
+    "requiredMacNativeGatesPlannedButNotRun": true,
+    "windowsEvidenceCannotCloseMacGates": true,
+    "macosNativeAcceptanceGateCount": 8,
+    "syntheticPrivacyGateCount": 1
+  },
+  "validationScope": "Static plan JSON structure, status, dependency, source, open-question, and coverage consistency only; no fixture or behavior executed.",
+  "notPerformed": [
+    "macOS or Rust production implementation",
+    "native Mac behavior, permission, pasteboard, display, startup, hotkey, or UI tests",
+    "build, sign, notarize, install, update, or rollback",
+    "real profile, clipboard, Apple account, signing credential, or user setting access",
+    "Windows behavior treated as macOS evidence",
+    "independent implementation review"
+  ],
+  "limitations": [
+    "All 31 planned synthetic or future controlled-Mac behavior cases and all five release static checks remain NOT_RUN; this review does not accept T13 or claim macOS support.",
+    "T11 and T12 remain not_started, so implementation, packaging, and native platform tests remain gated.",
+    "Supported macOS versions/architectures, permission/error mapping and user copy, pasteboard retry/coalescing/overflow, native cancellation timing, menu-bar/startup/hotkey policy, display/target rules, signing/notarization/update/rollback thresholds, and image-worker peak accounting remain OPEN_QUESTION."
+  ]
+}

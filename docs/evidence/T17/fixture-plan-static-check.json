@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "task": "T17",
+  "reviewType": "STATIC_FIXTURE_PLAN_SELF_CHECK",
+  "checkedDate": "2026-10-05",
+  "reviewedArtifact": "tests/tasks/T17/fixture-plan.json",
+  "result": "PLANNING_ONLY_OPEN_QUESTIONS_REMAIN",
+  "dependencySnapshot": [
+    {
+      "task": "T06",
+      "status": "in_progress",
+      "accepted": false
+    },
+    {
+      "task": "T07",
+      "status": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T14",
+      "status": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T15",
+      "status": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T16",
+      "status": "not_started",
+      "accepted": false
+    }
+  ],
+  "staticChecks": [
+    {
+      "id": "T17-R01",
+      "check": "Plan JSON parses; all 32 fixture IDs are unique; all fixture, command, and acceptance gate execution states are NOT_RUN.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T17-R02",
+      "check": "Plan taskStatus remains not_started and planStatus is preflight_only; T07/T15/T16 progress dependencies match the plan and are not accepted.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T17-R03",
+      "check": "Fixture references cover T17.a transaction/outbox/draft cases, T17.b push/retry/conflict cases, and T17.c cursor/ACK/snapshot cases; the three subtask reference counts overlap by design.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T17-R04",
+      "check": "Coverage includes atomic object/record/outbox persistence, dependency drafts, crash replay with immutable bytes, receipt-before-removal, partial results, conflict and deletion retention, old epoch/expired lease hold, CURSOR_EXPIRED-to-snapshot recovery that preserves draft/outbox/prior high-water without replaying the old op, no local-TTL cloud delete, budget/permission/error/cancellation paths, page/cursor atomicity, watermark ordering, catchup before atomic namespace/cursor publish, and Decimal precision.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T17-R05",
+      "check": "Eight unresolved questions explicitly gate canonical DTO/hash, SQLCipher durability/byte accounting, ACKED lifecycle, terminal-result mapping, conflict resolution, retry timing, T19 snapshot contract ownership, and ambiguous cancellation semantics.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T17-R06",
+      "check": "Only the task-card-allowed tests/tasks/T17, docs/evidence/T17, and docs/progress.json paths are used for T17 planning artifacts; no production behavior or generated files are introduced.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T17-R07",
+      "check": "Inspected crates/core/src: it contains only the existing lib.rs placeholder; no T17 sync/outbox implementation or behavior was present to validate.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T17-R08",
+      "check": "Every fixture maps forward to one or more declared acceptance gates, and every gate's reverse fixture list equals the set of fixtures that names that gate; no fixture or gate is unmapped.",
+      "status": "CHECKED_STATICALLY"
+    }
+  ],
+  "counts": {
+    "fixtureCount": 32,
+    "uniqueFixtureIdCount": 32,
+    "fixtureGateMappingEdgeCount": 86,
+    "plannedCommandCount": 2,
+    "acceptanceGateCount": 7,
+    "openQuestionCount": 8,
+    "allFixturesNotRun": true,
+    "allCommandsNotRun": true,
+    "allAcceptanceGatesNotRun": true,
+    "bidirectionalFixtureGateMapping": true
+  },
+  "openQuestionIds": [
+    "T17-OQ-01",
+    "T17-OQ-02",
+    "T17-OQ-03",
+    "T17-OQ-04",
+    "T17-OQ-05",
+    "T17-OQ-06",
+    "T17-OQ-07",
+    "T17-OQ-08"
+  ],
+  "limitations": [
+    "This is a static plan self-check, not an independent adversarial review, implementation, behavior verification, or acceptance.",
+    "No cargo/pnpm tests, builds, migrations, database/service connections, crypto vectors, or measurements were run.",
+    "T07/T15/T16 remain unaccepted; T06 is in_progress. Implementation and behavioral execution remain gated.",
+    "The 32 cases are synthetic plans only. CURSOR_EXPIRED recovery is gated on dependencies/frozen contracts; snapshot end-to-end service coverage and all OPEN_QUESTION items remain unresolved."
+  ],
+  "sources": [
+    "docs/spec/tasks/T17.md",
+    "docs/spec/03-data-sync-and-security.md §6, §7.1-7.3, §9-11",
+    "docs/spec/limits.v1.json",
+    "docs/spec/06-model-runbook.md",
+    "docs/progress.json",
+    "crates/core/src/lib.rs"
+  ]
+}

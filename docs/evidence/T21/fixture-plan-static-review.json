@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "task": "T21",
+  "evidenceType": "STATIC_FIXTURE_PLAN_ONLY",
+  "result": "STATIC_FIXTURE_PLAN_ONLY",
+  "reviewedAt": "2026-10-04",
+  "reviewRole": "author structural self-check; not independent adversarial review",
+  "planPath": "tests/tasks/T21/fixture-plan.json",
+  "staticChecks": {
+    "planJsonParses": true,
+    "fixtureCaseCount": 36,
+    "declaredCountMatches": true,
+    "fixtureIdsUnique": true,
+    "sourceLabelsPresent": true,
+    "allFixtureStatuses": "NOT_RUN",
+    "allAcceptanceStatuses": "NOT_RUN",
+    "allRequiredGateStatuses": "NOT_RUN",
+    "allCommandStatuses": "NOT_RUN",
+    "dependencyStatusesObserved": {
+      "T17": "not_started",
+      "T16": "not_started",
+      "T15": "not_started",
+      "T14": "not_started",
+      "T20": "not_started",
+      "T19": "not_started",
+      "T18": "not_started"
+    },
+    "dependencyStatusesMatchProgress": true,
+    "T21Status": "not_started",
+    "sharedProgressModified": true
+  },
+  "sourcesDeclared": [
+    "docs/spec/tasks/T21.md",
+    "docs/spec/01-product-and-ux.md §4/P11; §5-§7",
+    "docs/spec/02-architecture.md §1, §4-§7",
+    "docs/spec/03-data-sync-and-security.md §2.1, §5-§7/§9/§10/§11",
+    "docs/spec/08-acceptance-matrix.md U01-U12; §6",
+    "docs/spec/limits.v1.json"
+  ],
+  "conclusion": "This self-check records plan JSON structure, unique identifiers/count, NOT_RUN labels, declared source-label presence, and observed dependency status only. It does not establish exhaustive per-case source coverage, implementation correctness, or behavior acceptance; the plan is awaiting independent review and no final approval is claimed.",
+  "limitations": [
+    "All 36 synthetic fixtures, acceptance checks, gates and commands remain NOT_RUN.",
+    "T21 remains not_started; T14/T17/T19/T20 card dependencies and the additional T15/T16/T18 dependencies listed by 03 §11 remain unaccepted.",
+    "The task card and 03 §11 dependency lists differ; reconciliation remains OPEN_QUESTION and the plan gates on their union.",
+    "T15 cross-platform crypto vectors, T16 database/CAS/receipt behavior, T18 provider semantics, T19 snapshot/GC behavior, and Web browser/platform behavior were not exercised.",
+    "No independent final review has occurred; this static self-check is not acceptance."
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "id": "T06-tauri-windows-target-research",
+  "researchDate": "2026-10-04",
+  "scope": "核对 Tauri v2 Windows 官方 target 要求、当前官方包版本与仓库 Rust target pin；只做资料和工作树读取，不安装、下载或构建。",
+  "localState": {
+    "rustToolchainFile": "rust-toolchain.toml",
+    "rustChannel": "1.99.0",
+    "rustTargets": [
+      "x86_64-pc-windows-gnu"
+    ],
+    "tauriPins": "当前 Cargo.toml 只有 clipnest-contracts workspace member，没有 tauri 或 tauri-build 依赖；现有 T06 桌面/Web 依赖研究将 @tauri-apps/api 与 @tauri-apps/cli 2.12.1 标为候选、明确不在当前 lockfile。Tauri 应用入口/配置尚未实现，因此仓库当前没有可称为已固定的 Tauri crate/API/CLI 版本。"
+  },
+  "officialVersionsObserved": {
+    "asOf": "2026-10-04",
+    "tauri": {
+      "version": "2.12.1",
+      "source": "https://docs.rs/crate/tauri/latest"
+    },
+    "tauri-build": {
+      "version": "2.7.1",
+      "source": "https://docs.rs/crate/tauri-build/latest"
+    },
+    "tauri-cli": {
+      "version": "2.12.1",
+      "source": "https://docs.rs/crate/tauri-cli/latest"
+    },
+    "tauriJavaScriptApi": {
+      "version": "2.12.1",
+      "source": "https://www.npmjs.com/package/%40tauri-apps/api"
+    },
+    "tauriJavaScriptCli": {
+      "version": "2.12.1",
+      "source": "https://www.npmjs.com/package/%40tauri-apps/cli"
+    },
+    "note": "这些是查询日上游发布页显示的当前 stable 版本，用于版本背景核对，不是本仓库的选型或 pin。官方 Tauri ecosystem release 页面记录 2.12.0 初始发布；patch 发布状态以 docs.rs/NPM 最新包页为准。"
+  },
+  "requirements": {
+    "windowsPrerequisites": [
+      "Tauri 官方 Windows prerequisites 要求 Microsoft C++ Build Tools（Desktop development with C++ workload）以及 Microsoft Edge WebView2。",
+      "官方建议将 MSVC Rust toolchain 设为 default host triple，并列出 x86_64-pc-windows-msvc、i686-pc-windows-msvc、aarch64-pc-windows-msvc。"
+    ],
+    "windowsTargetSupport": "Tauri 官方 Windows installer/cross-compilation 文档明确写明 Tauri officially only supports the MSVC Windows target，并示例 rustup target add x86_64-pc-windows-msvc；Linux/macOS 交叉编译示例也指定 x86_64-pc-windows-msvc。",
+    "rustTargetSupport": "Rust 官方 rustc platform support 将 x86_64-pc-windows-gnu 列为 Rust 自身可用 target（页面标为 Tier 1），支持 std 与 host tools；同页提醒该 target 没有维护者且维护不足，可能降级。Rust target 存在/标准库可用，不等于 Tauri 支持该组合。"
+  },
+  "conclusion": {
+    "gnuPinCompatibleWithOfficialTauriWindowsBuild": false,
+    "reason": "当前唯一安装目标 x86_64-pc-windows-gnu 与 Tauri 官方唯一支持的 Windows target MSVC 不一致。因此该 pin 可用于普通 Rust/GNU 目标验证，但不能作为 Tauri 官方支持的 Windows app build target。",
+    "impact": "T06 后续冻结桌面配置前，应将 Windows Tauri 目标定为 x86_64-pc-windows-msvc；若保留 GNU 用于独立纯 Rust crate，应将其与 Tauri app 的构建 target 明确分离，避免把 Rust target availability 当作 Tauri compatibility。"
+  },
+  "minimumNextStep": [
+    "在 T06-a2/T11 Tauri PoC 前，确认是否将 rust-toolchain.toml 的 Windows target 改为 x86_64-pc-windows-msvc，或为 Tauri workspace/app 明确单独配置 MSVC target。",
+    "锁定 Rust tauri 与 tauri-build、Rust tauri-cli（若使用 cargo tauri）、JS @tauri-apps/api 与 @tauri-apps/cli 的精确版本；现有 2.12.1 API/CLI 记录是候选而非已批准锁定。",
+    "在具备 MSVC C++ Build Tools 与 WebView2 的 Windows 环境执行最小 Tauri PoC 构建，以实际记录 target、Rust/Cargo 版本和构建结果。"
+  ],
+  "notVerified": [
+    "未安装/运行 Tauri CLI 或依赖，也未执行 cargo check/build、pnpm tauri build 或任何桌面行为验证。",
+    "未验证当前 Rust 1.99.0 配合最新 Tauri 2.12.1 的完整依赖图及 Windows 构建；满足 crate MSRV 不能替代目标平台实测。",
+    "未验证任何 x86_64-pc-windows-gnu Tauri app 构建；结论按官方支持范围判断，不声称非官方配置必然无法编译。",
+    "官方文档及 registry/package 页面会更新；本结论对应 2026-10-04 查询快照。"
+  ],
+  "sources": [
+    {
+      "url": "https://v2.tauri.app/start/prerequisites/",
+      "supports": "Windows C++ Build Tools、WebView2 以及 MSVC Rust toolchain 建议。"
+    },
+    {
+      "url": "https://v2.tauri.app/distribute/windows-installer/",
+      "supports": "Tauri 官方仅支持 MSVC Windows target；Windows target 与交叉构建命令示例。"
+    },
+    {
+      "url": "https://doc.rust-lang.org/rustc/platform-support/windows-gnu.html",
+      "supports": "Rust x86_64-pc-windows-gnu target tier、std/host tools 能力，以及维护状态警告。"
+    },
+    {
+      "url": "https://docs.rs/crate/tauri/latest",
+      "supports": "查询时 tauri crate 最新版本 2.12.1。"
+    },
+    {
+      "url": "https://docs.rs/crate/tauri-build/latest",
+      "supports": "查询时 tauri-build crate 最新版本 2.7.1。"
+    },
+    {
+      "url": "https://docs.rs/crate/tauri-cli/latest",
+      "supports": "查询时 Rust tauri-cli 最新版本 2.12.1。"
+    },
+    {
+      "url": "https://www.npmjs.com/package/%40tauri-apps/api",
+      "supports": "查询时 @tauri-apps/api 最新版本 2.12.1。"
+    },
+    {
+      "url": "https://www.npmjs.com/package/%40tauri-apps/cli",
+      "supports": "查询时 @tauri-apps/cli 最新版本 2.12.1。"
+    },
+    {
+      "url": "https://v2.tauri.app/release/",
+      "supports": "Tauri 官方生态发布总览及 Tauri 2.12 系列发布背景。"
+    }
+  ]
+}

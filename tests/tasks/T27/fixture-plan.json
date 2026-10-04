@@ -1,0 +1,776 @@
+{
+  "schemaVersion": 1,
+  "task": "T27",
+  "status": "not_started",
+  "executionStatus": "NOT_RUN",
+  "planType": "synthetic_fixture_planning_only",
+  "dependencies": [
+    {
+      "task": "T26",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false,
+      "executionStatus": "NOT_RUN"
+    }
+  ],
+  "dependencyInterpretation": "T26 has not been accepted. This artifact only defines synthetic inputs and observable assertions; no implementation, fake-success backend, test, build, provider request, database operation, or sandbox action is authorized or claimed. All behavior execution remains blocked until T26 is accepted and the task-specific harness is available.",
+  "source": {
+    "taskCard": "docs/spec/tasks/T27.md",
+    "specifications": [
+      "docs/spec/00-README.md §1-§4, §6, §8",
+      "docs/spec/05-task-index.md T26-T28 and 可并行与禁止",
+      "docs/spec/06-model-runbook.md §1-§3, §5-§8",
+      "docs/spec/07-release-and-commercial.md §2-§3, §5, §7",
+      "docs/spec/08-acceptance-matrix.md §1, §3, §5-§6",
+      "docs/progress.json#/tasks/T01",
+      "docs/progress.json#/tasks/T06",
+      "docs/progress.json#/tasks/T26",
+      "docs/progress.json#/tasks/T27",
+      "docs/progress.json#/tasks/T28"
+    ],
+    "repositoryInstructions": {
+      "path": "AGENTS.md",
+      "status": "NOT_FOUND",
+      "note": "No AGENTS.md was present in the v2 repository or searched D:\\ClipNest and D:\\ClipNest-work roots. The task-specific rules in the user-provided instructions and T27/06/07/08 were followed; no repository-specific AGENTS.md rule is inferred."
+    },
+    "currentCodeSurvey": {
+      "billingModule": "NOT_FOUND",
+      "namedAppsServerBillingPath": "NOT_FOUND",
+      "sharedBillingFixtures": "NOT_FOUND",
+      "serverStripeTestScript": "NOT_FOUND_IN_ROOT_PACKAGE_SCRIPTS",
+      "note": "Only the two T27 planning/evidence files are created. Existing top-level server/ contains deployment artifacts and is not treated as the specified apps/server billing module."
+    },
+    "progressSnapshotDate": "2026-10-04"
+  },
+  "scope": {
+    "allowedNow": [
+      "Define synthetic checkout, webhook, contract-projection, entitlement-boundary, error/cancel/capacity/permission, and security-canary fixtures without connecting them to a backend.",
+      "Specify frozen observable invariants with direct specification references and preserve unfrozen details as OPEN_QUESTION.",
+      "Record separate future execution gates for synthetic behavior, Stripe test-mode sandbox, cross-channel integration, and production/live merchant qualification."
+    ],
+    "blockedUntilT26Accepted": [
+      "Any T27 implementation or behavior execution, including fake-provider substitution presented as a successful purchase.",
+      "Consuming or changing the canonical Entitlement projection, trial/plan configuration, capacity ledger, or channel aggregation owned by T26.",
+      "Any provider/database-backed behavior or Stripe test-mode sandbox request."
+    ],
+    "separateLaterGates": [
+      "Stripe test-mode sandbox remains a distinct external gate after T26 and an isolated test account/credentials are available.",
+      "Real Stripe plus another purchase channel requires the T26 projection and T28 channel implementation/interface; synthetic interface planning does not close B07.",
+      "B11 coverage here is limited to Stripe merchant/price configuration and the Stripe checkout entry. Platform store purchase entry and target-region App Store/Google Play policy validation are deferred to T28/T31.",
+      "Production/live checkout remains closed while merchant eligibility or actual live price configuration is UNKNOWN; sandbox evidence cannot close this release gate."
+    ],
+    "excluded": [
+      "Production or live Stripe credentials, merchant onboarding, payment, refund, or customer data.",
+      "Any real network, Stripe/provider, database, build, test, or browser/device action.",
+      "RevenueCat restore behavior owned by T28 (08 B06).",
+      "Platform store purchase entry and target-region store-policy qualification; these are not claimed as T27 B11 coverage and are deferred to T28/T31.",
+      "Selecting a formal price, merchant jurisdiction, legal entity, SDK version, exact return URL list, or error/UI wording not frozen by specification."
+    ]
+  },
+  "interfacePlanning": {
+    "checkoutInput": "Follow the 07 §3 BillingAdapter shape: internal accountId and productCode, returnUrl, idempotencyKey. The server environment maps an internal productCode to that environment's provider priceId; the client does not supply/derive priceId or decide entitlement.",
+    "verifiedWebhookInput": "Pass the original rawBody bytes and headers to signature verification before parsing/re-serialization; event identity is unique per provider.",
+    "contractProjection": "A verified event is recorded with its projection job transactionally; provider contract lookup occurs outside the database transaction/lock. Project from the verified provider contract plus event, not arrival order alone.",
+    "entitlementBoundary": "Only the T26 trusted channel contract/event projection can change Entitlement. Checkout redirect, browser callback, client isPro flag, and unverified webhook data cannot grant access.",
+    "fixedEntitlementStates": ["trial", "active", "grace", "expired", "revoked"],
+    "fixedMoneyRepresentation": "Integer minor units plus ISO currency; UI renders server-provided displayPrice and does not calculate a price from priceId.",
+    "fixedUnknownHandling": "Unknown product or event enters restricted review/quarantine and grants no entitlement.",
+    "fixedOfflineBoundary": "A valid signed cached entitlement can be displayed for offline use; after expiry the client cannot claim continuing cloud entitlement. Local functionality remains distinct.",
+    "openProtocolDetails": [
+      "Exact Stripe event allowlist, webhook acknowledgement/error codes, signature tolerance, replay retention, retry and quarantine workflow.",
+      "Return URL allowlist values and URL canonicalization rules.",
+      "Stripe SDK/version and provider-specific idempotency semantics.",
+      "Exact T26 projection fields, plan-to-entitlement values, refund/grace mapping, and HTTP error details."
+    ]
+  },
+  "coverage": {
+    "acceptanceMatrix": [
+      { "id": "B01", "plannedFixtureIds": ["T27-F08", "T27-F09"], "status": "NOT_RUN" },
+      { "id": "B02", "plannedFixtureIds": ["T27-F10", "T27-F11", "T27-F12"], "status": "NOT_RUN" },
+      { "id": "B03", "plannedFixtureIds": ["T27-F14", "T27-F15"], "status": "NOT_RUN" },
+      { "id": "B04", "plannedFixtureIds": ["T27-F17", "T27-F18"], "status": "NOT_RUN" },
+      { "id": "B05", "plannedFixtureIds": ["T27-F18", "T27-F19"], "status": "NOT_RUN" },
+      { "id": "B06", "plannedFixtureIds": [], "status": "DEFERRED", "deferredTo": "T28", "reason": "RevenueCat/store purchase restoration to the correct account is T28 scope; T27 does not claim B06." },
+      { "id": "B07", "plannedFixtureIds": ["T27-F17", "T27-F20", "T27-F21"], "status": "NOT_RUN", "executionGateIds": ["T27-G01", "T27-G05"] },
+      { "id": "B08", "plannedFixtureIds": ["T27-F22", "T27-F23"], "status": "NOT_RUN" },
+      { "id": "B09", "plannedFixtureIds": ["T27-F24"], "status": "NOT_RUN" },
+      { "id": "B10", "plannedFixtureIds": ["T27-F25"], "status": "NOT_RUN" },
+      { "id": "B11", "plannedFixtureIds": ["T27-F03", "T27-F04", "T27-F27"], "scopeStatus": "PARTIAL_SCOPE_ONLY", "scope": "T27 Stripe merchant/price configuration and Stripe checkout entry only", "notCovered": ["Platform store purchase entry", "Target-region App Store/Google Play policy validation"], "complete": false, "deferredScenarioIds": ["T27-D03"], "status": "NOT_RUN", "executionGateIds": ["T27-G04", "T27-G06"] },
+      { "id": "B12", "plannedFixtureIds": ["T27-F19"], "status": "NOT_RUN", "executionGateIds": ["T27-G01", "T27-G03", "T27-G04"] }
+    ],
+    "crossCuttingErrorCancelCapacityPermission": ["T27-F23", "T27-F25", "T27-F26", "T27-F29", "T27-F30", "T27-F31"]
+  },
+  "fixtures": [
+    {
+      "id": "T27-F01",
+      "topic": "checkout accepts an explicitly configured return URL",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Provide a synthetic authenticated internal account, known internal productCode, and one return URL supplied by the isolated application configuration as an approved destination.",
+      "plannedAction": "Plan checkout request validation and inspect the createCheckout adapter input before any provider request.",
+      "observableAssertions": [
+        "Only an application-configured allowlisted return URL is forwarded to the provider adapter.",
+        "The exact allowed URL inventory and URI normalization/equivalence rules remain OPEN_QUESTION; the fixture does not invent them."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 子任务顺序 1", "docs/spec/07-release-and-commercial.md §3"],
+      "openQuestionRefs": ["T27-OQ01"],
+      "executionGateIds": ["T27-G01", "T27-G02"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F02",
+      "topic": "reject a return URL outside the configured allowlist",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Use synthetic URLs with a different origin, lookalike host, userinfo, or encoded path variation; no real domain is contacted.",
+      "plannedAction": "Plan validation of each URL against an injected allowlist before adapter invocation.",
+      "observableAssertions": [
+        "A URL not recognized as an explicitly configured approved return destination is not sent to the provider and cannot redirect a checkout completion to an unapproved origin.",
+        "The exact parser, canonicalization, path, and rejection error mapping remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 子任务顺序 1", "docs/spec/07-release-and-commercial.md §1, §3"],
+      "openQuestionRefs": ["T27-OQ01", "T27-OQ06"],
+      "executionGateIds": ["T27-G01", "T27-G02"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F03",
+      "topic": "environment-scoped productCode to provider priceId mapping",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Inject distinct synthetic test and live environment maps from internal productCode to opaque price IDs; no real Stripe identifier is present.",
+      "plannedAction": "Plan checkout for a known productCode under each selected environment and inspect the adapter payload.",
+      "observableAssertions": [
+        "The server chooses the priceId from the active environment map; the request/client supplies productCode rather than a priceId.",
+        "A priceId from the test map is never silently used as a live fallback.",
+        "Actual productCode inventory, mapping format, and any live price remain OPEN_QUESTION until the product and merchant are frozen."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 子任务顺序 1", "docs/spec/07-release-and-commercial.md §2-§3"],
+      "openQuestionRefs": ["T27-OQ02", "T27-OQ20"],
+      "executionGateIds": ["T27-G01", "T27-G02", "T27-G06"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F04",
+      "topic": "unmapped productCode fails closed",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Use a synthetic productCode absent from the injected environment map and an adapter spy that records whether checkout creation was requested.",
+      "plannedAction": "Plan checkout validation for the unmapped product in sandbox and live configuration shapes.",
+      "observableAssertions": [
+        "No provider checkout is created for a product with no mapping in the active environment.",
+        "No client-provided priceId, default test price, or other environment value is substituted.",
+        "The exact HTTP status and error code remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 子任务顺序 1", "docs/spec/07-release-and-commercial.md §2-§3"],
+      "openQuestionRefs": ["T27-OQ02", "T27-OQ06"],
+      "executionGateIds": ["T27-G01", "T27-G02"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F05",
+      "topic": "checkout idempotency for a repeated identical request",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Provide the same synthetic accountId, productCode, approved return URL, and idempotencyKey twice to an isolated fake transport that records adapter calls.",
+      "plannedAction": "Plan two identical checkout submissions and compare logical operation/provider idempotency inputs.",
+      "observableAssertions": [
+        "The idempotencyKey from the API request is carried into the provider checkout operation.",
+        "Repeating an identical logical request does not create a second billable subscription or cause duplicate entitlement projection.",
+        "Key scope, retention period, replayed response identity, and exact Stripe guarantee remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 子任务顺序 1", "docs/spec/07-release-and-commercial.md §3", "docs/spec/06-model-runbook.md §8"],
+      "openQuestionRefs": ["T27-OQ03"],
+      "executionGateIds": ["T27-G01", "T27-G02"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F06",
+      "topic": "idempotency key reuse with changed checkout input",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Replay one synthetic idempotencyKey while changing accountId, productCode, or approved return URL in separate branches.",
+      "plannedAction": "Plan detection of a changed logical payload under a previously used key without guessing provider-specific semantics.",
+      "observableAssertions": [
+        "A changed request cannot silently cause a second charge/subscription under a key that the application treats as the same operation.",
+        "Whether to reject, return a prior response, or require a new operation key and the exact error mapping remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 子任务顺序 1", "docs/spec/07-release-and-commercial.md §3", "docs/spec/06-model-runbook.md §8"],
+      "openQuestionRefs": ["T27-OQ03", "T27-OQ06"],
+      "executionGateIds": ["T27-G01", "T27-G02"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F07",
+      "topic": "customer portal is bound to the authenticated internal account",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Create two synthetic internal accounts with separate verified Stripe customer/contract mappings and submit a portal request in each authenticated session.",
+      "plannedAction": "Plan portal adapter inputs and verify that request-supplied account/customer identifiers cannot select another account's provider record.",
+      "observableAssertions": [
+        "The portal session is created only for the account derived from the authenticated server session and its verified provider mapping.",
+        "A missing or mismatched account mapping causes no portal URL to be issued; exact response/error details remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 子任务顺序 1", "docs/spec/07-release-and-commercial.md §1, §3"],
+      "openQuestionRefs": ["T27-OQ07", "T27-OQ15"],
+      "executionGateIds": ["T27-G01", "T27-G02"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F08",
+      "topic": "verify webhook signature over original rawBody bytes",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Prepare synthetic signed payload bytes with whitespace/key-order variants and matching synthetic headers; no provider secret or real signature is used.",
+      "plannedAction": "Plan signature verification using the byte-for-byte rawBody before JSON parsing, normalization, or reserialization.",
+      "observableAssertions": [
+        "Signature verification receives the exact incoming rawBody bytes and headers.",
+        "The application does not parse and reserialize the JSON before signature verification.",
+        "SDK version, timestamp tolerance, accepted header format, and exact rejection status remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 子任务顺序 2", "docs/spec/07-release-and-commercial.md §3"],
+      "openQuestionRefs": ["T27-OQ04"],
+      "executionGateIds": ["T27-G01", "T27-G02"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F09",
+      "topic": "invalid webhook signature grants no entitlement",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Use synthetic webhook bytes with a missing, malformed, or mismatched signature header and an isolated receipt/projection-job observer.",
+      "plannedAction": "Plan the webhook route's invalid-signature branch before any event persistence or projection.",
+      "observableAssertions": [
+        "An invalid signature is not represented as a VerifiedEvent, does not enqueue an entitlement projection, and cannot grant cloud access.",
+        "Exact HTTP response, retry/acknowledgement behavior, and security event logging remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 完成标准与行为测试", "docs/spec/07-release-and-commercial.md §3", "docs/spec/08-acceptance-matrix.md §5 B01"],
+      "openQuestionRefs": ["T27-OQ04", "T27-OQ05", "T27-OQ17"],
+      "executionGateIds": ["T27-G01", "T27-G02"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F10",
+      "topic": "duplicate Stripe event is idempotent by provider eventID",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Deliver the same synthetic verified eventID and provider twice, including concurrent delivery, against isolated event-receipt and projection-job observers.",
+      "plannedAction": "Plan event ingestion, unique receipt handling, and job creation for repeated deliveries.",
+      "observableAssertions": [
+        "Event identity is unique within the provider namespace; replaying the same provider event does not apply a second entitlement or ledger change.",
+        "The event record and projection job are committed transactionally, so no committed event is left without its corresponding durable job and a failed transaction publishes neither as a partial success.",
+        "The precise duplicate HTTP acknowledgement and retention period remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 完成标准与行为测试", "docs/spec/07-release-and-commercial.md §3", "docs/spec/08-acceptance-matrix.md §5 B02"],
+      "openQuestionRefs": ["T27-OQ05"],
+      "executionGateIds": ["T27-G01", "T27-G03"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F11",
+      "topic": "out-of-order events reconcile against the provider contract",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Deliver synthetic older and newer event timestamps in reverse order while a fake provider contract lookup returns a current verified contract state.",
+      "plannedAction": "Plan projection from the verified event plus current provider contract instead of treating the last arrival as the newest entitlement state.",
+      "observableAssertions": [
+        "An older event delivered later cannot roll the projected contract backward when the provider's current verified contract says otherwise.",
+        "The provider contract lookup is performed outside the database transaction/lock.",
+        "Event ordering fields, stale-event policy, and lookup failure/retry mapping remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 子任务顺序 2", "docs/spec/07-release-and-commercial.md §2-§3", "docs/spec/08-acceptance-matrix.md §5 B02"],
+      "openQuestionRefs": ["T27-OQ05", "T27-OQ10"],
+      "executionGateIds": ["T27-G01", "T27-G03"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F12",
+      "topic": "unknown event type is isolated for review",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Send a synthetically signed event with an event type absent from a future explicit supported-event map.",
+      "plannedAction": "Plan dispatch and inspect entitlement and restricted-review outputs.",
+      "observableAssertions": [
+        "An unknown event enters restricted review/quarantine and does not grant or extend entitlement.",
+        "The exact event allowlist, quarantine schema/retention, operator workflow, acknowledgement and retry policy remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 完成标准与行为测试", "docs/spec/07-release-and-commercial.md §3"],
+      "openQuestionRefs": ["T27-OQ05", "T27-OQ11"],
+      "executionGateIds": ["T27-G01", "T27-G03"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F13",
+      "topic": "unknown provider product does not grant entitlement",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Use a synthetic verified Stripe event/contract whose price identifier is not in the selected environment mapping.",
+      "plannedAction": "Plan the known/unknown product branch and inspect the projected channel contract and restricted-review record.",
+      "observableAssertions": [
+        "An unknown product is isolated for review and does not create an entitlement, capacity increase, or display claim.",
+        "No fallback to a client-selected productCode or another environment map occurs.",
+        "Exact quarantine disposition and error response remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 完成标准与行为测试", "docs/spec/07-release-and-commercial.md §2-§3"],
+      "openQuestionRefs": ["T27-OQ02", "T27-OQ11"],
+      "executionGateIds": ["T27-G01", "T27-G03"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F14",
+      "topic": "checkout redirect is not proof of purchase",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Return a synthetic browser from a checkout success URL while the fake provider contract remains absent, pending, or unverified.",
+      "plannedAction": "Plan the completion route and a subsequent trusted provider verification separately.",
+      "observableAssertions": [
+        "A client redirect, query parameter, or success callback cannot mark a contract paid or grant an entitlement.",
+        "Only trusted server-side provider contract/event verification can reach the T26 entitlement projection.",
+        "Exact pending UI, polling, and completion error mapping remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 完成标准与行为测试", "docs/spec/07-release-and-commercial.md §2-§3", "docs/spec/08-acceptance-matrix.md §5 B03, B08"],
+      "openQuestionRefs": ["T27-OQ06", "T27-OQ08"],
+      "executionGateIds": ["T27-G01", "T27-G02"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F15",
+      "topic": "verified contract must match a server-owned account mapping",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Arrange synthetic verified contracts for account A and account B, then supply a mismatched request account/customer association and an unknown provider contract identifier.",
+      "plannedAction": "Plan provider contract fetch and account mapping before projecting any subscription state.",
+      "observableAssertions": [
+        "For a known mapped product and verified active contract, the trusted T26 projection updates only the account linked by the server-owned mapping.",
+        "The internal account association comes from a server-owned verified mapping and cannot be selected by a client-submitted accountId.",
+        "An unknown or conflicting contract/account mapping grants no entitlement and is isolated for review/support rather than reassigned silently.",
+        "The canonical mapping source, conflict resolution workflow, and exact result codes remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 子任务顺序 2", "docs/spec/07-release-and-commercial.md §3"],
+      "openQuestionRefs": ["T27-OQ07", "T27-OQ11"],
+      "executionGateIds": ["T27-G01", "T27-G03"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F16",
+      "topic": "provider network lookup stays outside the database transaction",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Use an instrumented fake provider fetch and isolated transaction observer around a verified synthetic event and projection job.",
+      "plannedAction": "Plan event/job persistence followed by contract lookup and a later projection transaction.",
+      "observableAssertions": [
+        "The durable event and projection job are written transactionally.",
+        "No external provider call is made while holding a PostgreSQL transaction or row/workspace lock.",
+        "The worker/retry ownership and exact transaction boundaries beyond this invariant remain OPEN_QUESTION until T26 interfaces and implementation are accepted."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 子任务顺序 2", "docs/spec/07-release-and-commercial.md §3-§4"],
+      "openQuestionRefs": ["T27-OQ10", "T27-OQ18"],
+      "executionGateIds": ["T27-G01", "T27-G03"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F17",
+      "topic": "refund or revocation affects only its verified Stripe contract",
+      "executionClass": "cross_task_synthetic_interface",
+      "syntheticSetup": "Create synthetic Stripe contract A and another-channel contract B for the same internal account; apply a verified refund/revocation event only to A.",
+      "plannedAction": "Plan channel-contract update and trusted aggregate entitlement recomputation through the T26 projection interface.",
+      "observableAssertions": [
+        "A refund/revocation changes only the associated valid Stripe contract; it does not cancel or erase a separate channel contract.",
+        "The final unified entitlement is recomputed from verified channels under the T26 aggregation policy, not by adding capacity twice or trusting event arrival order.",
+        "Partial-refund mapping and exact resulting aggregate fields remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T26.md 子任务顺序 2", "docs/spec/tasks/T27.md 子任务顺序 2", "docs/spec/07-release-and-commercial.md §2-§3", "docs/spec/08-acceptance-matrix.md §5 B04, B07"],
+      "openQuestionRefs": ["T27-OQ08", "T27-OQ12"],
+      "executionGateIds": ["T27-G01", "T27-G05"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F18",
+      "topic": "verified Stripe status maps within the frozen entitlement-state vocabulary",
+      "executionClass": "cross_task_synthetic_interface",
+      "syntheticSetup": "Prepare synthetic provider contracts representing active, refunded/revoked, end-of-term, and verified grace-like states without assigning a duration or inventing provider event semantics.",
+      "plannedAction": "Plan contract-state transitions through T26 projection and inspect state names/status timestamps only.",
+      "observableAssertions": [
+        "Projected status uses only the specified trial, active, grace, expired, or revoked vocabulary.",
+        "A state transition follows verified contract/event evidence and does not use webhook arrival order alone.",
+        "Refund/chargeback mapping, grace duration/start/end semantics, cancellation-at-period-end, and exact transition rules remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T26.md 完成标准与行为测试", "docs/spec/tasks/T27.md 子任务顺序 2", "docs/spec/07-release-and-commercial.md §2-§3", "docs/spec/08-acceptance-matrix.md §5 B04-B05"],
+      "openQuestionRefs": ["T27-OQ08", "T27-OQ09"],
+      "executionGateIds": ["T27-G01", "T27-G03"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F19",
+      "topic": "missed webhook is repaired by provider reconciliation",
+      "executionClass": "synthetic_and_stripe_sandbox_reconciliation",
+      "syntheticSetup": "For the no-network branch, set a synthetic server channel contract behind a fake provider contract to model a missed event, then plan reconciliation through the fake adapter.",
+      "sandboxSetup": "For the separate G04 branch after T26 acceptance, use an isolated Stripe test-mode subscription and test account; deliberately omit/withhold delivery of one webhook event while retaining the real test-mode contract, then run reconciliation against Stripe's current contract state. Never use live credentials or a real customer.",
+      "plannedAction": "Plan both the isolated fake-provider branch and the later Stripe test-mode branch: detect the absent webhook receipt, call fetchContract for the known providerContractId outside a database transaction/lock, validate its account mapping, and project the verified current contract through T26. Repeat reconciliation to inspect idempotency; do not fabricate a webhook receipt or use a browser redirect as purchase evidence.",
+      "observableAssertions": [
+        "In the actual Stripe test-mode branch, a deliberately missed webhook is repaired by fetching the current Stripe contract and applying that verified state through the trusted T26 projection.",
+        "The repaired projection is linked only to the server-verified internal account and is idempotent when reconciliation is repeated.",
+        "No webhook receipt is fabricated to imply that an event was received; the absent delivery remains distinguishable from an observed event.",
+        "Sandbox evidence identifies Stripe test mode, fixture T27-F19, the actual command/build, result and a redacted artifact as required by 08 §6; it contains no key, token, customer data, or raw payload.",
+        "Reconciliation cadence, selection/lease policy, retry/backoff, and exact evidence retention remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 子任务顺序 2", "docs/spec/07-release-and-commercial.md §2-§4", "docs/spec/08-acceptance-matrix.md §5 B12"],
+      "requiredEvidenceFields": ["task", "gate", "fixture", "result", "environment=isolated Stripe test mode", "buildCommit", "profileSeed", "actual command", "redacted artifact path", "limitations"],
+      "openQuestionRefs": ["T27-OQ10", "T27-OQ19"],
+      "executionGateIds": ["T27-G01", "T27-G03", "T27-G04"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F20",
+      "topic": "Stripe contract coexists with a verified other-channel entitlement",
+      "executionClass": "cross_task_synthetic_interface",
+      "syntheticSetup": "Use synthetic verified Stripe and RevenueCat-like channel contracts for one account; the non-Stripe record is an interface fixture only, not a T28 implementation claim.",
+      "plannedAction": "Plan unified entitlement projection and inspect sourceChannels and effective feature/limit values without invoking either provider.",
+      "observableAssertions": [
+        "The unified Entitlement records verified sourceChannels and is projected by the server; the UI only displays it.",
+        "A Stripe checkout is not offered as an automatic replacement/cancellation for an existing other-channel contract.",
+        "The exact max/priority aggregation and actual cross-channel proof await T26 and T28; the synthetic fixture does not close B07."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T26.md 子任务顺序 2", "docs/spec/tasks/T27.md 子任务顺序 3", "docs/spec/tasks/T28.md 子任务顺序 2", "docs/spec/07-release-and-commercial.md §2-§3", "docs/spec/08-acceptance-matrix.md §5 B07"],
+      "openQuestionRefs": ["T27-OQ12"],
+      "executionGateIds": ["T27-G01", "T27-G05"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F21",
+      "topic": "existing entitlement prevents a misleading duplicate-purchase prompt",
+      "executionClass": "cross_task_synthetic_interface",
+      "syntheticSetup": "Start with a synthetic active contract from one channel and render the planned server Entitlement DTO before attempting a Stripe checkout entry point.",
+      "plannedAction": "Plan UI selection from the trusted entitlement response and inspect that it does not claim to cancel another channel.",
+      "observableAssertions": [
+        "A verified existing entitlement is shown as such and the flow does not imply that a second checkout will automatically cancel the existing contract.",
+        "The UI does not synthesize subscription state from a local isPro flag.",
+        "Exact page copy and whether a user may intentionally hold multiple contracts remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 子任务顺序 3", "docs/spec/tasks/T28.md 完成标准与行为测试", "docs/spec/07-release-and-commercial.md §2-§3", "docs/spec/08-acceptance-matrix.md §5 B07"],
+      "openQuestionRefs": ["T27-OQ12", "T27-OQ16"],
+      "executionGateIds": ["T27-G01", "T27-G05"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F22",
+      "topic": "frontend-forged isPro or entitlement cannot authorize a server operation",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Set synthetic client state isPro=true and forge a feature/limit DTO while the authenticated server-side entitlement has no such feature.",
+      "plannedAction": "Plan a server-enforced cloud operation and a UI-only rendering path under the forged client state.",
+      "observableAssertions": [
+        "The server denies a cloud capability absent from its verified entitlement regardless of client isPro, checkout redirect, or edited DTO.",
+        "The frontend only renders the server Entitlement DTO; it does not write isPro as an authorization source.",
+        "Exact API error detail and UI copy remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T26.md 完成标准与行为测试", "docs/spec/tasks/T27.md 完成标准与行为测试", "docs/spec/07-release-and-commercial.md §2-§3", "docs/spec/08-acceptance-matrix.md §5 B08"],
+      "openQuestionRefs": ["T27-OQ14", "T27-OQ15"],
+      "executionGateIds": ["T27-G01", "T27-G03"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F23",
+      "topic": "checkout success and cancellation do not directly mutate entitlement",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Return synthetic browser flows through success, user-cancel, and provider-abandon routes while keeping the verified provider contract unchanged.",
+      "plannedAction": "Plan each return route independently from webhook/provider contract verification.",
+      "observableAssertions": [
+        "Neither a success redirect nor a cancel/abandon redirect directly grants, revokes, or extends an entitlement.",
+        "Cancellation preserves any pre-existing verified entitlement and local content; it does not imply that a contract was canceled unless provider state confirms it.",
+        "Exact route state, retry action, user-facing copy, and HTTP/error mapping remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 完成标准与行为测试", "docs/spec/07-release-and-commercial.md §2-§3", "docs/spec/tasks/T27.md 回滚与交付", "docs/spec/08-acceptance-matrix.md §5 B03-B05"],
+      "openQuestionRefs": ["T27-OQ06", "T27-OQ16"],
+      "executionGateIds": ["T27-G01", "T27-G02"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F24",
+      "topic": "expired offline entitlement does not claim continuing cloud access",
+      "executionClass": "cross_task_synthetic_interface",
+      "syntheticSetup": "Use a synthetic signed entitlement cache with valid, expired, and untrusted states; no signing key or crypto vector is generated.",
+      "plannedAction": "Plan offline display and one cloud operation at and after the supplied validUntil/graceUntil boundary.",
+      "observableAssertions": [
+        "A valid signed cache can be shown offline, but an expired cache cannot cause the client to claim cloud entitlement remains valid.",
+        "Local functionality is not removed solely because cloud entitlement expired.",
+        "Cache signing format, clock-skew policy, exact boundary inclusivity, and refresh/error mapping remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 完成标准与行为测试", "docs/spec/07-release-and-commercial.md §2", "docs/spec/08-acceptance-matrix.md §5 B09"],
+      "openQuestionRefs": ["T27-OQ13", "T27-OQ15"],
+      "executionGateIds": ["T27-G01", "T27-G03"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F25",
+      "topic": "capacity downgrade blocks positive cloud writes but preserves read/delete/export",
+      "executionClass": "cross_task_synthetic_interface",
+      "syntheticSetup": "Use a synthetic account whose T26-projected entitlement is below current cloud usage and whose local data is still available.",
+      "plannedAction": "Plan positive-delta cloud create/upload, read, delete, and export operations under the same downgraded entitlement.",
+      "observableAssertions": [
+        "Over-limit state freezes new positive-delta cloud uploads/operations as specified; reads, deletes, export, and existing local access remain available.",
+        "No saved/local content is silently deleted to force the account under limit.",
+        "Exact capacity errors, limit keys, quota accounting, and T26 effective entitlement are not inferred by this fixture."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T26.md 子任务顺序 3", "docs/spec/tasks/T27.md 完成标准与行为测试", "docs/spec/07-release-and-commercial.md §3, §5", "docs/spec/08-acceptance-matrix.md §5 B10"],
+      "openQuestionRefs": ["T27-OQ09", "T27-OQ14"],
+      "executionGateIds": ["T27-G01", "T27-G03"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F26",
+      "topic": "unknown provider request outcome is reconciled without a fresh duplicate operation",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Have an isolated fake transport time out after recording the request, leaving its outcome unknown; retain the original synthetic idempotencyKey.",
+      "plannedAction": "Plan recovery through idempotent status/contract reconciliation rather than issuing an unrelated new checkout operation.",
+      "observableAssertions": [
+        "An unknown outcome is checked idempotently; automatic retry does not create duplicate billing or subscription effects.",
+        "The system does not report success or entitlement until trusted provider state is verified.",
+        "Provider timeout classification, reconciliation endpoint, retry timing, and user-visible error/cancel copy remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 完成标准与行为测试", "docs/spec/06-model-runbook.md §8", "docs/spec/07-release-and-commercial.md §3"],
+      "openQuestionRefs": ["T27-OQ03", "T27-OQ10", "T27-OQ16"],
+      "executionGateIds": ["T27-G01", "T27-G02"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F27",
+      "topic": "UNKNOWN merchant eligibility keeps production/live billing closed",
+      "executionClass": "release_configuration_gate",
+      "syntheticSetup": "Set merchant qualification to UNKNOWN and provide separate synthetic test-mode and live-mode configuration records without secrets.",
+      "plannedAction": "Plan release configuration validation for checkout entry points and provider key/price selection.",
+      "observableAssertions": [
+        "While merchant eligibility is UNKNOWN, production/live checkout and live-key exposure remain disabled; the implementation does not infer a country/entity or select an alternative processor.",
+        "Sandbox configuration is visibly isolated from live configuration and a test priceId is never published or used as a live price.",
+        "The actual merchant, supported country, legal entity, production key custody, and formal live price remain release decisions; no sandbox pass closes them."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 子任务顺序 1", "docs/spec/00-README.md §1, §8", "docs/spec/07-release-and-commercial.md opening, §3, §7", "docs/spec/08-acceptance-matrix.md §5 B11"],
+      "openQuestionRefs": ["T27-OQ02", "T27-OQ20"],
+      "executionGateIds": ["T27-G04", "T27-G06"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F28",
+      "topic": "display price is supplied by server and uses integer minor units plus currency",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Prepare synthetic server displayPrice values paired with integer minor-unit amounts and currency codes, without selecting a formal product price.",
+      "plannedAction": "Plan UI display from the response without deriving amount/currency from a provider priceId or client plan label.",
+      "observableAssertions": [
+        "The client presents server-provided displayPrice and does not derive price, currency, or entitlement from priceId or isPro.",
+        "Internal monetary amounts remain integer minor units plus currency.",
+        "Localization, rounding presentation, tax disclosure, and copy remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 子任务顺序 1", "docs/spec/07-release-and-commercial.md §2-§3"],
+      "openQuestionRefs": ["T27-OQ21"],
+      "executionGateIds": ["T27-G01", "T27-G02"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F29",
+      "topic": "missing or wrong-account session cannot start checkout or portal",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Submit synthetic checkout and portal requests with no authenticated session, a forged accountId, and a valid session for a different account.",
+      "plannedAction": "Plan request authorization and verify the adapter receives no cross-account request.",
+      "observableAssertions": [
+        "A request without valid server authentication cannot create checkout/portal state for a caller-selected account.",
+        "An authenticated account cannot select another account's provider customer or contract by changing request fields.",
+        "Exact authentication/authorization error codes, status, and UI permission wording remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 完成标准与行为测试", "docs/spec/07-release-and-commercial.md §1, §3", "docs/spec/06-model-runbook.md §8"],
+      "openQuestionRefs": ["T27-OQ07", "T27-OQ15"],
+      "executionGateIds": ["T27-G01", "T27-G02"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F30",
+      "topic": "provider error and permission denial remain truthful and side-effect bounded",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Inject synthetic provider unavailable, session permission denied, and request cancellation outcomes using an isolated fake transport and session adapter.",
+      "plannedAction": "Plan each failure path and inspect entitlement, provider request count, retained local data, and displayed state.",
+      "observableAssertions": [
+        "A failed, denied, or canceled operation is never shown as a successful purchase and does not grant a new entitlement.",
+        "Existing entitlement and local data are preserved; retries do not silently create a second billable request.",
+        "Exact retryability, error category/code, HTTP status, and user-visible copy are OPEN_QUESTION where the specs do not freeze them."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 完成标准与行为测试", "docs/spec/06-model-runbook.md §2, §8", "docs/spec/07-release-and-commercial.md §2-§3", "docs/spec/08-acceptance-matrix.md §2, §5"],
+      "openQuestionRefs": ["T27-OQ06", "T27-OQ15", "T27-OQ16"],
+      "executionGateIds": ["T27-G01", "T27-G02"],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T27-F31",
+      "topic": "logs and error artifacts exclude provider secrets, card data, tokens, and raw body",
+      "executionClass": "synthetic_contract",
+      "syntheticSetup": "Pass synthetic canary strings representing a secret key, card data, bearer token, raw webhook body, and private URL through planned checkout/webhook success and error branches.",
+      "plannedAction": "Plan inspection of captured application logs, trace/error metadata, and evidence artifact fields using only synthetic canaries.",
+      "observableAssertions": [
+        "No key, token, card data, user content, full private URL, or raw webhook body is written to logs/traces/crash artifacts.",
+        "Evidence records only redacted environment labels, command/build metadata, fixture IDs, outcome, and limitations; no secret value is stored.",
+        "Exact permitted provider diagnostic fields, retention, and masking policy remain OPEN_QUESTION."
+      ],
+      "sourceRefs": ["docs/spec/tasks/T27.md 完成标准与行为测试", "docs/spec/07-release-and-commercial.md §7", "docs/spec/08-acceptance-matrix.md §3, §6"],
+      "openQuestionRefs": ["T27-OQ17"],
+      "executionGateIds": ["T27-G01", "T27-G03", "T27-G07"],
+      "status": "NOT_RUN",
+      "evidence": []
+    }
+  ],
+  "acceptanceGates": [
+    {
+      "id": "T27-G01",
+      "gate": "dependency-and-canonical-entitlement",
+      "scope": "T26 is accepted; its canonical Entitlement projection, account/channel mapping, plan/configuration, and relevant error/capacity interfaces are frozen before T27 behavior execution.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "blockedBy": ["T26 accepted"],
+      "gateClass": "precondition"
+    },
+    {
+      "id": "T27-G02",
+      "gate": "synthetic-server-and-UI-behavior",
+      "scope": "Run the T27 synthetic checkout, rawBody/signature, frontend-trust, cancellation, error, permission, and logging fixtures in an isolated harness; no provider network is used.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "blockedBy": ["T27-G01", "T01/T06 test scripts and isolated harness"],
+      "gateClass": "synthetic_behavior"
+    },
+    {
+      "id": "T27-G03",
+      "gate": "isolated-database-event-projection",
+      "scope": "Verify event receipt/job atomicity, duplicate and ordered delivery, verified contract/account mapping, and network-outside-transaction behavior with a disposable isolated database and synthetic provider adapter.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "blockedBy": ["T27-G01", "T01/T06 integration harness", "disposable isolated PostgreSQL readiness"],
+      "gateClass": "isolated_integration"
+    },
+    {
+      "id": "T27-G04",
+      "gate": "stripe-test-mode-sandbox",
+      "scope": "Separate actual Stripe test-mode checkout, signed webhook, contract fetch, duplicate/reordered delivery, refund/grace evidence, and B12 missed-webhook reconciliation from synthetic tests. For B12, deliberately omit one webhook delivery, fetch the current Stripe test-mode contract, and verify the trusted T26 projection is repaired idempotently; retain redacted 08 §6 evidence. No live customer/payment/credential is used.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "blockedBy": ["T27-G01", "T01/T06 stripe-sandbox harness", "isolated Stripe test-mode account and credentials", "sandbox procedure and artifact retention plan"],
+      "gateClass": "external_sandbox"
+    },
+    {
+      "id": "T27-G05",
+      "gate": "cross-channel-entitlement",
+      "scope": "Verify a Stripe contract alongside an implemented other channel under the T26 unified projection; separate fake-interface fixtures from real RevenueCat/store evidence.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "blockedBy": ["T27-G01", "T28 accepted for actual RevenueCat/store integration"],
+      "gateClass": "cross_task_integration"
+    },
+    {
+      "id": "T27-G06",
+      "gate": "merchant-and-live-price-release-qualification",
+      "scope": "Keep production/live checkout closed until T00/T31 confirms eligible merchant entity/country, approved live products/prices, and isolated live-key custody/configuration. UNKNOWN remains a closed gate.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "blockedBy": ["merchant eligibility and live price are UNKNOWN", "T31 release decision"],
+      "gateClass": "production_release"
+    },
+    {
+      "id": "T27-G07",
+      "gate": "independent-critical-review",
+      "scope": "Independent adversarial review after implementation and evidence; close severe findings before T27 acceptance. This plan author self-check is not the required independent review.",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "blockedBy": ["T27 implementation and reviewable behavior evidence"],
+      "gateClass": "independent_review"
+    }
+  ],
+  "commands": [
+    {
+      "id": "T27-C01",
+      "command": "pnpm --filter @clipnest/server test stripe",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "blockedBy": ["T27-G01", "T01/T06 server test script and harness", "server billing module implementation"]
+    },
+    {
+      "id": "T27-C02",
+      "command": "pnpm test:integration -- --suite stripe-sandbox",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "blockedBy": ["T27-G01", "T01/T06 integration script and harness", "isolated Stripe test-mode account/credentials", "T27-G04"]
+    }
+  ],
+  "openQuestions": [
+    { "id": "T27-OQ01", "topic": "Exact application-owned checkout/portal return URL allowlist, origin/path inventory, URL parsing/canonicalization and matching rules.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ02", "topic": "Canonical productCode inventory, test-mode price mappings, live mapping ownership, and required behavior for missing or stale environment configuration.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ03", "topic": "Idempotency key scope, retention, same-key/different-payload behavior, response replay, and exact provider SDK semantics.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ04", "topic": "Selected Stripe Node SDK version, signature tolerance, accepted header details, rawBody adapter contract, and exact invalid-signature response.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ05", "topic": "Supported webhook event-type allowlist, acknowledgement/retry policy, event receipt retention, and out-of-order provider-fetch strategy.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ06", "topic": "Checkout/portal success and cancel route states, HTTP errors, pending-state behavior, retry action, and user-visible error copy.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ07", "topic": "Server-owned Stripe customer/contract to internal account mapping source, creation policy, repair and conflict/support workflow.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ08", "topic": "Full and partial refund, dispute/chargeback, cancellation timing and Stripe status-to-revoked/expired/grace mapping.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ09", "topic": "T26 canonical trial duration, plan entitlements, capacity values, grace interval and time-boundary inclusivity; 07 candidate values are not grants or final policy.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ10", "topic": "Provider reconciliation cadence, work selection, backoff, failed-fetch retry/dead-letter behavior and evidence retention.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ11", "topic": "Unknown product/event quarantine schema, retention, operator workflow, acknowledgement and eventual resolution policy.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ12", "topic": "Exact unified multi-channel aggregation/priority fields and the T26/T28 canonical interface for existing entitlements.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ13", "topic": "Signed offline entitlement cache format, key trust, clock skew, expiry boundary, refresh behavior and error mapping.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ14", "topic": "Capacity error details, limit keys, and exact server operation gates after T26 projection; no limits are inferred from candidate values.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ15", "topic": "Authentication/permission denial codes, status, retry policy, recovery support entry point and user-facing wording.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ16", "topic": "Provider timeout/unknown-result and user-cancel state machine, reconciliation decision, and safe retry semantics.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ17", "topic": "Allowed provider diagnostic fields, secret/card/token/rawBody masking rules, and log/trace/crash retention.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ18", "topic": "Actual billing module location, T01/T06 script/harness availability, isolated PostgreSQL readiness and migration/test ownership.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ19", "topic": "Stripe test-mode account setup, sandbox product/event procedure, credential injection and redacted evidence artifact retention.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ20", "topic": "Merchant jurisdiction/entity eligibility, production/live price, and key custody remain UNKNOWN until the release decision; no provider/platform substitution is inferred.", "status": "OPEN_QUESTION" },
+    { "id": "T27-OQ21", "topic": "Display-price localization, rounding presentation, tax disclosure and product copy; amount representation itself remains integer minor units plus currency.", "status": "OPEN_QUESTION" }
+  ],
+  "deferredScenarios": [
+    {
+      "id": "T27-D01",
+      "coverage": "B06 store purchase restoration to the correct account",
+      "result": "DEFERRED",
+      "deferredTo": ["T28"],
+      "sourceRefs": ["docs/spec/tasks/T28.md 子任务顺序 1", "docs/spec/08-acceptance-matrix.md §5 B06"],
+      "reason": "T27 plans Stripe checkout and trusted Stripe events; RevenueCat/store restore belongs to T28 and is not counted as T27 coverage."
+    },
+    {
+      "id": "T27-D02",
+      "coverage": "Production/live purchase and formal pricing",
+      "result": "DEFERRED",
+      "deferredTo": ["T00", "T31"],
+      "sourceRefs": ["docs/spec/00-README.md §1, §8", "docs/spec/07-release-and-commercial.md opening, §3, §7", "docs/spec/05-task-index.md T31"],
+      "reason": "Merchant and live price are UNKNOWN. Stripe test-mode success cannot authorize production checkout, expose a live key, or close the release gate."
+    },
+    {
+      "id": "T27-D03",
+      "coverage": "B11 platform store purchase entry and target-region App Store/Google Play policy validation",
+      "result": "DEFERRED",
+      "deferredTo": ["T28", "T31"],
+      "sourceRefs": ["docs/spec/tasks/T28.md 子任务顺序 3", "docs/spec/tasks/T28.md 完成标准与行为测试", "docs/spec/tasks/T31.md", "docs/spec/07-release-and-commercial.md §3", "docs/spec/08-acceptance-matrix.md §5 B11"],
+      "reason": "T27 only plans Stripe merchant/price configuration and the Stripe checkout entry. Platform store purchase entry and target-region policy validation require T28/T31 evidence; therefore T27 does not claim complete B11 coverage."
+    }
+  ],
+  "executionSafety": {
+    "productionChanged": false,
+    "sharedFixturesChanged": false,
+    "sharedProgressChanged": false,
+    "dependenciesChanged": false,
+    "testsRun": false,
+    "buildsRun": false,
+    "networkUsed": false,
+    "stripeOrProviderContacted": false,
+    "sandboxUsed": false,
+    "databaseContacted": false,
+    "secretsRead": false,
+    "userDataRead": false
+  },
+  "acceptanceReminder": "All 31 fixtures, 7 gates, and 2 listed commands remain NOT_RUN with empty evidence. T26 is not accepted, so only this synthetic/interface plan exists; no implementation or behavior gate is open for execution. B12 real Stripe missed-webhook reconciliation is part of the separate T27-G04 test-mode sandbox gate. T27 covers only the Stripe sub-scope of B11; platform store purchase entry and target-region policy validation are deferred to T28/T31, so full B11 is not claimed. T28 cross-channel behavior and T00/T31 merchant/live-price qualification are separate gates. Author structural self-check is not an independent critical review, behavior evidence, sandbox evidence, or task acceptance."
+}

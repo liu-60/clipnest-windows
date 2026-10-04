@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "task": "T30",
+  "evidenceType": "STATIC_FIXTURE_PLAN_ONLY",
+  "result": "STATIC_FIXTURE_PLAN_ONLY",
+  "reviewStatus": "AUTHOR_STRUCTURAL_SELF_CHECK_WITH_INDEPENDENT_REVIEW",
+  "reviewedAt": "2026-10-04",
+  "executionStatus": "NOT_RUN",
+  "planPath": "tests/tasks/T30/fixture-plan.json",
+  "reviewedSources": [
+    "docs/spec/tasks/T30.md",
+    "docs/spec/06-model-runbook.md §1-§3/§5-§8",
+    "docs/spec/07-release-and-commercial.md §4-§7",
+    "docs/spec/08-acceptance-matrix.md §3/§5-§6",
+    "docs/spec/00-README.md §1/§3-§8",
+    "docs/spec/tasks/T25.md",
+    "docs/spec/tasks/T27.md",
+    "docs/spec/tasks/T28.md",
+    "docs/spec/tasks/T29.md",
+    "docs/spec/tasks/T31.md",
+    "docs/progress.json T00/T01/T06/T25/T27/T28/T29/T30/T31",
+    "tests/tasks/T25/fixture-plan.json",
+    "tests/tasks/T27/fixture-plan.json",
+    "tests/tasks/T28/fixture-plan.json",
+    "tests/tasks/T29/fixture-plan.json",
+    "package.json scripts",
+    ".github/workflows/release.yml (presence only; not executed)"
+  ],
+  "repositoryInstructions": {
+    "path": "AGENTS.md",
+    "status": "NOT_FOUND",
+    "searched": [
+      "D:\\ClipNest-work\\v2",
+      "D:\\ClipNest-work",
+      "D:\\ClipNest"
+    ],
+    "note": "遵循用户在本轮提供的AGENTS.md、T30任务卡和06执行手册；未推断仓库额外规则。"
+  },
+  "dependencySnapshot": [
+    {
+      "task": "T25",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T27",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T28",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T29",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false
+    }
+  ],
+  "additionalPrerequisiteSnapshot": [
+    {
+      "task": "T00",
+      "relationship": "release decisions only",
+      "observedStatus": "accepted",
+      "accepted": true,
+      "note": "No production region/merchant/domain/price or release authorization inferred."
+    },
+    {
+      "task": "T01",
+      "relationship": "shared command and test harness",
+      "observedStatus": "in_progress",
+      "accepted": false
+    },
+    {
+      "task": "T06",
+      "relationship": "shared workspace/module/build harness",
+      "observedStatus": "in_progress",
+      "accepted": false
+    },
+    {
+      "task": "T31",
+      "relationship": "production launch inputs and decision",
+      "observedStatus": "not_started",
+      "accepted": false
+    }
+  ],
+  "staticChecks": [
+    {
+      "id": "T30-R01",
+      "check": "Plan/evidence JSON parses; task is T30, status not_started, executionStatus NOT_RUN.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R02",
+      "check": "36 fixture, 16 gate, 3 command, 5 measurement, 24 OQ and 3 deferred IDs are unique.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R03",
+      "check": "All fixtures/gates/commands/measurements are NOT_RUN and their evidence arrays are empty.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R04",
+      "check": "Every fixture acceptance/OQ reference, gate fixture reference and source path resolves to a declared ID or existing file.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R05",
+      "check": "T30-A01–A17 each map to planned fixtures; process-only A18 maps to the independent review gate T30-G16.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R06",
+      "check": "Fixture membership agrees with the card's ordered a/b/c slices; a=11, b=14, c=11, with F036 assigned to b.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R07",
+      "check": "Direct dependencies are exactly T25/T27/T28/T29 and current progress statuses are all not_started/unaccepted.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R08",
+      "check": "T00/T01/T06/T31 are recorded only as additional decision/harness prerequisites; T31 is not misrepresented as a direct dependency.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R09",
+      "check": "dev/staging/prod role/resource separation and plan-only IaC no-apply/no-cost boundary are explicit; local S3-compatible success cannot close AWS gates.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R10",
+      "check": "07 candidate AWS/ECS/Fargate/RDS PostgreSQL 17/private S3/CloudFront/Secret Manager is labeled a candidate; region remains undecided and no resources are provisioned.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R11",
+      "check": "Separate API/worker, single-writer topology, per-service pool cap 10, aggregate connection-budget OQ, liveness/readiness, expand/contract, pg-boss idempotency and no network call under DB row lock are represented.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R12",
+      "check": "Private S3 authorization, pending/deleted-version ledger charging, physical confirmation and no cross-account content dedupe are represented without choosing a provider contract.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R13",
+      "check": "Windows, macOS, iOS and Android artifact/signing gates are separate; synthetic manifests are not labeled signature evidence.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R14",
+      "check": "Update tamper rejection, version/schema matrix, cancellation and rollback preserve data; no automatic reverse migration is asserted.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R15",
+      "check": "Frozen channel order and cloud/autoPaste/purchase flags are represented; cohort thresholds remain OQ and no production auto-promotion exists.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R16",
+      "check": "Secret canary evidence stores only hit categories/counts; no secret, signing material, receipt or token is planned for evidence.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R17",
+      "check": "Content-free telemetry covers body/URL/title/source/image/token/key/credential/signature/SQL parameters; unknown field allow-list/retention remains OQ.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R18",
+      "check": "Worker lag, pending upload, ledger drift, snapshot fail, RLS refusal, input failure and sync error alert categories are present; thresholds/routing remain OQ.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R19",
+      "check": "S25 restore plan requires T29-G07 acceptance and later isolated evidence; incomplete deletion/ledger evidence keeps service isolated and outputs only count/head/checksum.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R20",
+      "check": "T25-D03/S27 remains T29-owned; T30 diagnostics/runbook fixtures do not claim portable import/export acceptance.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R21",
+      "check": "Cost report includes every 07 §5 category and cipher overhead; 10GiB is only a candidate sensitivity dimension, with no invented price or grant.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R22",
+      "check": "Error/cancel/capacity/permission/update/migration/IaC failure fixtures assert no false success while unspecified codes and UI mappings stay OPEN_QUESTION.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R23",
+      "check": "The three card commands are listed as NOT_RUN; root package does not declare pnpm -r typecheck or pnpm release:check, and no substitute command was run.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R24",
+      "check": "No test/build/typecheck/clippy/release/IaC/cloud/database/S3/provider/store/signing/telemetry/support/recovery operation was performed; no progress or production file was edited.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T30-R25",
+      "check": "This author structural review is distinguished from the required independent critical review and from behavior/task acceptance.",
+      "status": "CHECKED_STATICALLY"
+    }
+  ],
+  "counts": {
+    "fixtureCount": 36,
+    "uniqueFixtureIdCount": 36,
+    "acceptanceGateCount": 16,
+    "uniqueAcceptanceGateIdCount": 16,
+    "commandCount": 3,
+    "uniqueCommandIdCount": 3,
+    "measurementCount": 5,
+    "uniqueMeasurementIdCount": 5,
+    "openQuestionCount": 24,
+    "uniqueOpenQuestionIdCount": 24,
+    "deferredScenarioCount": 3,
+    "uniqueDeferredScenarioIdCount": 3,
+    "acceptanceCriterionCount": 18,
+    "staticCheckCount": 25,
+    "uniqueStaticCheckIdCount": 25,
+    "subtaskFixtureCounts": {
+      "a": 11,
+      "b": 14,
+      "c": 11
+    },
+    "allFixturesNotRun": true,
+    "allGatesNotRun": true,
+    "allCommandsNotRun": true,
+    "allMeasurementsNotRun": true,
+    "allEvidenceEmpty": true,
+    "allDirectDependenciesUnaccepted": true
+  },
+  "limitations": [
+    "This file records only an author structural self-check. It is not an independent critical review, platform proof, signing proof, operational rehearsal, benchmark, cost result, or acceptance.",
+    "All 36 fixtures, 16 gates, 3 commands and 5 measurement plans remain NOT_RUN; all evidence arrays are empty. T30 remains not_started.",
+    "T25/T27/T28/T29 remain not_started/unaccepted. No behavior/build/CI/IaC/cloud/service/database/object-store/provider/store/account/secret/signing/telemetry/restore action was executed.",
+    "The task-owned infra, update, release tooling and operations directories were not present at snapshot; IaC framework, release trust contract, region and secret provider were not inferred.",
+    "S25 remains open pending T29-G07 and later isolated T30-G13 evidence. S27 remains T29 scope; this plan does not close either deferred outcome.",
+    "Unfrozen rollout thresholds, version policy, telemetry/support fields, alert thresholds, recovery RPO/RTO and commercial cost inputs remain OPEN_QUESTION."
+  ],
+  "independentCriticalReview": {
+    "reviewer": "T14 independent reviewer",
+    "reviewType": "READ_ONLY_CRITICAL_PLAN_REVIEW",
+    "result": "PASS_WITH_LIMITATIONS",
+    "reviewedAt": "2026-10-04",
+    "reviewedFiles": [
+      "tests/tasks/T30/fixture-plan.json",
+      "docs/evidence/T30/fixture-plan-static-review.json",
+      "docs/progress.json"
+    ],
+    "findingsClosed": [
+      "a/b/c subtask sequence and allowed-scope boundaries map to the T30 card.",
+      "Signed-artifact plans separate Windows/macOS/iOS/Android metadata cases from future real signature evidence; update compatibility, binary rollback, manually authorized canary rollout, secret handling, no-content telemetry, privacy canary, operations support and cost reporting are represented in fixtures/gates/OQs.",
+      "S25 production-equivalent recovery and S27 portable export/recovery stay with T29; deferred cross-task boundaries are explicit.",
+      "36 fixtures, 16 gates, 3 commands, 5 measurement plans, 24 OQs, 3 deferred scenarios, 18 acceptance criteria, and 25 static checks have consistent unique IDs and counts; all execution items remain NOT_RUN with empty evidence.",
+      "Live dependency snapshot agrees with T25/T27/T28/T29 and additional T00/T01/T06/T31 prerequisites."
+    ],
+    "noNewReleaseOrPlatformSemantics": true,
+    "behaviorAcceptance": false,
+    "remainingLimitations": [
+      "Plan-only review; no signing, builds, CI, IaC, deployment, release, rollback, support drill, cost measurement, or platform behavior ran.",
+      "T25/T27/T28/T29 remain not_started and unaccepted; T30 stays not_started and its OQs remain open."
+    ]
+  }
+}

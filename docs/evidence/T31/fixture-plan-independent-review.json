@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "task": "T31",
+  "evidenceType": "INDEPENDENT_CRITICAL_PLAN_REVIEW",
+  "result": "PASS_WITH_LIMITATIONS",
+  "reviewedAt": "2026-10-04",
+  "executionStatus": "NOT_RUN",
+  "planPath": "tests/tasks/T31/fixture-plan.json",
+  "reviewStatus": "INDEPENDENT_RE_REVIEW",
+  "counts": {
+    "fixtures": 34,
+    "gates": 13,
+    "commands": 2,
+    "openQuestions": 18,
+    "acceptanceCriteria": 11
+  },
+  "findingClosed": "F11/G04/A04 revoke semantics narrowed to denial of new sync/download API requests; TTL-valid old signed URLs and downloaded/decrypted local copies are explicitly outside remote-erasure claims, consistent with 03 §S22.",
+  "verifiedInvariants": [
+    "Fixture/gate/command/OQ/acceptance IDs are unique and references resolve.",
+    "All behavior fixtures, gates and commands remain NOT_RUN with empty evidence.",
+    "Five direct dependencies remain not_started/unaccepted; commercial and deployment inputs remain UNKNOWN.",
+    "A reviewer finding was fixed and re-reviewed."
+  ],
+  "limitations": [
+    "Static plan review only; no merchant, payment, platform, device, provider or release behavior ran.",
+    "T31 remains not_started; 18 OQs and dependency gates remain open."
+  ],
+  "behaviorAcceptance": false
+}

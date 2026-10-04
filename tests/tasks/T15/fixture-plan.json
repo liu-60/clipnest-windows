@@ -1,0 +1,418 @@
+{
+  "schemaVersion": 1,
+  "task": "T15",
+  "status": "preflight_only",
+  "executionStatus": "NOT_RUN",
+  "sourceOfExpectedBehavior": [
+    "docs/spec/tasks/T15.md",
+    "docs/spec/03-data-sync-and-security.md §4.1-4.3 and §5.1-5.5",
+    "docs/spec/03-data-sync-and-security.md §7.2, §9 and §10 S20-S22",
+    "docs/spec/limits.v1.json cloud.keyProtocolChallengeSeconds and inlineEncryptedPayloadBytes",
+    "docs/spec/08-acceptance-matrix.md §3 and §6"
+  ],
+  "specCandidateSnapshot": {
+    "libsodiumC": "1.0.22",
+    "libsodiumWrappers": "0.8.4",
+    "libsodiumWasm": "0.8.4",
+    "rustBinding": "bindgen-generated thin FFI to official libsodium C",
+    "mobileBinding": "Expo native module to official libsodium C",
+    "freezeStatus": "candidates_not_installed_or_compatibility_tested_per_03_§4.1"
+  },
+  "dependencyGate": {
+    "dependsOn": ["T06", "T14"],
+    "requiredStatus": "accepted",
+    "currentStatusAtPlanPreparation": {
+      "T06": "in_progress",
+      "T14": "not_started"
+    },
+    "state": "wait_for_T06_and_T14_accepted",
+    "beforeGate": "仅准备合成fixture清单；不实现算法/协议，不安装或冻结依赖，不执行测试，不构造官方跨端known-answer vector，不连接假成功后端。"
+  },
+  "harnessBoundary": {
+    "syntheticInputs": "只使用固定合成UUID、无真实账户的workspace/device状态和短synthetic plaintext canary。测试key/nonce仅由未来隔离测试harness内部产生或载入；报告不写key、nonce、recovery secret、device credential、明文、ciphertext或tag。",
+    "plannedHarnesses": [
+      "future_official_libsodium_harness：同一冻结的synthetic known-answer artifact分别交给C、Chromium Web WASM、Rust FFI、iOS Hermes与Android Hermes真实绑定；当前计划不包含向量字节或预期ciphertext/tag，fake adapter不能作为密码互操作证据。",
+      "future_isolated_key_protocol_harness：T14接受后，在可丢弃隔离存储中测试pair/recovery challenge一次性、过期及device撤销；不用mock RLS或假成功后端宣称验收。",
+      "future_platform_vault_harness：按Windows DPAPI、macOS Keychain、iOS SecureStore/Keychain、Android Keystore和Web会话边界分别验收；一个平台或Node模拟不能代替其它平台。"
+    ],
+    "vectorPolicy": "本计划只冻结未来向量测试的输入类别和可观察结果；没有创建官方libsodium向量、固定key/nonce/ciphertext/tag或跨端通过结果。测试专用确定性向量材料不得进入runtime。",
+    "forbidden": [
+      "真实用户/账号/设备/恢复凭证、真实workspace key、生产或共享服务/数据库",
+      "将workspace root、recovery secret、localDBKey、device credential、明文或完整keyring写入网络请求、持久记录、日志、报告或fixture输出",
+      "把mock/fake crypto、单一平台roundtrip、静态计划或沙箱运行称作Rust/Web/iOS/Android Hermes跨端验收",
+      "自行替换加密套件/库、使用未冻结的third-party RN crypto包、运行时固定随机种子或明文fallback",
+      "把device revoke描述成擦除已解密副本，或把有效AEAD密文的重复解密误判为密码层必须拒绝"
+    ],
+    "acceptanceStatus": {
+      "officialCrossPlatformKnownAnswerVectors": "NOT_RUN",
+      "aeadAndAadMutation": "NOT_RUN",
+      "decodedLengthAndHeaderValidation": "NOT_RUN",
+      "kdfAndKeySeparation": "NOT_RUN",
+      "pairingAndGrantHash": "NOT_RUN",
+      "replayExpiryAndDeviceRevocation": "NOT_RUN",
+      "recoveryPackageAndChallenge": "NOT_RUN",
+      "platformVaultAndWebLock": "NOT_RUN",
+      "secretCanaryLogReview": "NOT_RUN",
+      "independentSecurityReview": "NOT_RUN"
+    }
+  },
+  "syntheticIdentities": {
+    "workspaceA": "00000000-0000-4000-8000-000000000001",
+    "workspaceB": "00000000-0000-4000-8000-000000000002",
+    "entitySaved": "00000000-0000-4000-8000-000000000011",
+    "entityCollection": "00000000-0000-4000-8000-000000000012",
+    "versionA": "00000000-0000-4000-8000-000000000021",
+    "attachmentA": "00000000-0000-4000-8000-000000000031",
+    "attachmentB": "00000000-0000-4000-8000-000000000032",
+    "kidA": "00000000-0000-4000-8000-000000000041",
+    "deviceD1": "00000000-0000-4000-8000-000000000051",
+    "deviceD2": "00000000-0000-4000-8000-000000000052"
+  },
+  "cases": [
+    {
+      "id": "T15-AAD-01",
+      "references": ["T15.a", "03 §4.2"],
+      "harness": "future_official_libsodium_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "构造仅含合成ID的saved manifest；attachments输入顺序故意不按ASCII排序，UUID为小写，revision/keyVersion为canonical decimal字符串。",
+      "action": "在各官方绑定中调用同一冻结canonical AAD编码入口并加密、解密合成manifest。",
+      "assert": [
+        "AAD输出为无空白紧凑UTF-8 ASCII数组，字段顺序与03 §4.2完全一致，attachments按ASCII排序且不重复；可选routing字段缺省位置编码为空字符串",
+        "成功解密后外部可观察manifest字段与输入逐项一致；本计划不规定ciphertext/tag known-answer值"
+      ]
+    },
+    {
+      "id": "T15-AAD-02",
+      "references": ["T15.a", "03 §4.2"],
+      "harness": "future_official_libsodium_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "对同一合成有效封装分别只改workspaceId、entityKind、entityId、versionId、revision、kid或keyVersion一个字段。",
+      "action": "用修改后的header/AAD尝试解密原ciphertext。",
+      "assert": [
+        "每个字段单独被改动时认证均失败且不返回plaintext、不创建或覆盖本地记录",
+        "拒绝结果不得回退到不含该字段的旧AAD或明文兼容路径"
+      ]
+    },
+    {
+      "id": "T15-AAD-03",
+      "references": ["T15.a", "03 §4.2"],
+      "harness": "future_official_libsodium_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "准备含collectionId、targetItemId和两个attachment ID的合成manifest，并准备分别替换每个routing值、重复attachment ID及不同输入排列。",
+      "action": "序列化AAD后尝试原封装解密，并比较相同attachment集合不同排列的canonical输出。",
+      "assert": [
+        "替换collectionId、targetItemId或attachment ID使原封装认证失败",
+        "相同attachment集合的不同输入排列产生相同排序后的AAD；重复attachment ID被拒绝为INVALID_ENVELOPE，不生成持久记录"
+      ]
+    },
+    {
+      "id": "T15-AEAD-01",
+      "references": ["T15.a", "03 §4.2"],
+      "harness": "future_official_libsodium_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "准备一份合成有效封装及其仅供隔离harness使用的nonce、ciphertext和16-byte tag。",
+      "action": "分别翻转nonce、ciphertext和tag中的一个bit后尝试解密。",
+      "assert": [
+        "三种篡改均认证失败，不向调用方返回部分plaintext，也不写入manifest或附件引用",
+        "认证失败不触发明文fallback或自动重加密后继续导入"
+      ]
+    },
+    {
+      "id": "T15-ENVELOPE-01",
+      "references": ["T15.a", "03 §2.2, §4.2, §9"],
+      "harness": "future_official_libsodium_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "分别准备未知envelopeVersion、未知suite、未知entityKind类型、非法purpose类型、错误workspace和错误kid的合成header。",
+      "action": "将每个header提交到对应manifest/blob解密入口。",
+      "assert": [
+        "未知或错误类型/header在读取plaintext前被拒绝，结构错误返回INVALID_DTO或INVALID_ENVELOPE；workspace/kid不匹配时不返回plaintext",
+        "不把错误kid改写为当前kid、不把未知类型降级为默认类型"
+      ]
+    },
+    {
+      "id": "T15-ENVELOPE-02",
+      "references": ["T15.a", "03 §4.2"],
+      "harness": "future_official_libsodium_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "准备nonce解码长度为23与25 byte、key长度为31与33 byte、缺少完整16-byte tag的ciphertext，以及非法Base64URL字符/填充形式。",
+      "action": "逐项提交解码和加解密边界。",
+      "assert": [
+        "nonce必须解码为24 bytes；AEAD key长度必须符合固定suite；缺tag、错误长度或非法编码在解密前失败且不返回plaintext",
+        "所有拒绝均保持原持久记录不变，不尝试替代suite或截断输入"
+      ]
+    },
+    {
+      "id": "T15-ENVELOPE-03",
+      "references": ["T15.a", "03 §4.2, §9", "limits.v1.json inlineEncryptedPayloadBytes"],
+      "harness": "future_official_libsodium_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "以limits.v1.json inlineEncryptedPayloadBytes生成合成ciphertext边界输入，解码后长度分别恰为16384 byte和16385 byte。",
+      "action": "分别提交manifest envelope并读取稳定错误响应与持久化状态。",
+      "assert": [
+        "按Base64URL解码后的ciphertext字节计量；恰为配置上限可继续suite验证，超1 byte返回413 REQUEST_TOO_LARGE或CONTENT_TOO_LARGE且details.limitKey为inlineEncryptedPayloadBytes；details.limitBytes为可选字段，若返回则必须等于配置值，未冻结是否必须返回时记录OPEN_QUESTION",
+        "超限输入不解密、不持久化、不改变既有记录；fixture不把Base64字符数当作ciphertext字节数"
+      ]
+    },
+    {
+      "id": "T15-ENVELOPE-04",
+      "references": ["T15.a", "03 §4.2"],
+      "harness": "future_official_libsodium_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "构造一份密码学认证成功、但解密plaintext中的entityId/versionId/revision与已认证header不同的synthetic envelope。",
+      "action": "完成AEAD解密并提交到manifest验证入口。",
+      "assert": [
+        "解密后的身份字段与header不一致时拒绝导入，不创建version、attachment reference或可见内容",
+        "仅AEAD tag有效不能替代plaintext/header身份一致性检查"
+      ]
+    },
+    {
+      "id": "T15-BLOB-01",
+      "references": ["T15.a", "03 §4.2"],
+      "harness": "future_official_libsodium_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "准备按03 §4.2格式封装的合成blob及workspaceId、attachmentId、purpose、kid、keyVersion。",
+      "action": "分别替换上述AAD字段，或将manifest密钥误用于blob解密。",
+      "assert": [
+        "每个错字段和跨域密钥替代均无法认证，调用方不收到明文附件",
+        "上传体仅含ciphertext与tag；nonce、kid、purpose来自绑定的封装元数据，不由服务端改写"
+      ]
+    },
+    {
+      "id": "T15-KDF-01",
+      "references": ["T15.a", "03 §4.2"],
+      "harness": "future_official_libsodium_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "使用隔离测试harness内部生成的32-byte workspace root，按CNDataV1及subkey_id=1生成合成数据封装；另备错root、错context、错subkey_id和31/33-byte root。",
+      "action": "用正确及替代派生输入尝试解密同一封装。",
+      "assert": [
+        "正确workspace root/context/subkey可恢复合成plaintext；错root、context或subkey不能解密",
+        "root长度错误在加密调用前被拒绝；测试报告不输出root或派生key"
+      ]
+    },
+    {
+      "id": "T15-KDF-02",
+      "references": ["T15.a-b", "03 §4.2, §5.3-5.4"],
+      "harness": "future_official_libsodium_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "分别准备独立32-byte recovery secret、workspace root、auth/session canary、device credential和localDBKey canary。",
+      "action": "用CNRecov1的subkey_id=1和2分别处理恢复包与签名seed路径，再以其他秘密/context/subkey交叉替代。",
+      "assert": [
+        "恢复包密钥仅由recovery secret/CNRecov1/subkey_id=1路径得到；Ed25519 seed仅由subkey_id=2路径得到，二者与workspace root和其他凭据不能互换",
+        "错误秘密不能恢复key ring；任何秘密或派生key均不进入服务端请求、持久字段或输出"
+      ]
+    },
+    {
+      "id": "T15-KAT-01",
+      "references": ["T15.a", "03 §4.1, §4.3"],
+      "harness": "future_official_libsodium_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "依赖冻结后载入由官方libsodium路线独立核验并存档的synthetic known-answer artifact；本fixture plan不含该artifact或任何预期ciphertext/tag。",
+      "action": "在C、Chromium Web WASM、Rust FFI、iOS Hermes和Android Hermes上分别执行同一AEAD、KDF、sealed-box和签名用例，并交叉解密各端输出。",
+      "assert": [
+        "各真实绑定对同一固定测试artifact产出字节一致的输出并能交叉解密；任一平台缺失或不一致时该跨端gate失败",
+        "Node或fake adapter结果不能代替Chromium WASM或iOS/Android Hermes；当前fixture只定义验收，不代表vector已构造或通过"
+      ]
+    },
+    {
+      "id": "T15-RNG-01",
+      "references": ["T15.a", "03 §4.2, §5.1, §5.4"],
+      "harness": "future_platform_crypto_harnesses",
+      "executionStatus": "NOT_RUN",
+      "setup": "在各目标平台分别请求新workspace root、recovery secret、device credential及新AEAD封装；另准备同一已提交封装的精确网络重试。",
+      "action": "通过不暴露随机值的测试诊断记录熵源调用类别/长度，并比较新封装与精确重试的wire bytes。",
+      "assert": [
+        "新root/secret/device credential各为32 bytes，新nonce为24 bytes并来自批准的系统/libsodium CSPRNG；runtime不读取fixture seed或硬编码随机值",
+        "精确重试复用原ciphertext与nonce bytes；修改正文或目标身份必须创建新封装和新nonce；报告只记录调用结果和长度，不记录随机内容"
+      ]
+    },
+    {
+      "id": "T15-REPLAY-01",
+      "references": ["T15.a", "03 §4.2, §4.3, §7.2"],
+      "harness": "future_client_crypto_and_sync_protocol_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "使用两个独立合成client snapshot：A已记录priorSeenHighWater=2，并持有该水位前冻结的合法旧upperSeq分页或在途响应（toSeq=1）；B保留revision=2已提交封装用于精确重试。为A准备在记录该水位后新发起且不复用旧upperSeq的current-state probe，返回workspace head/highWater=1。",
+      "action": "在B精确重试revision=2原请求；在A先交付旧upperSeq分页/旧在途响应toSeq=1，再于记录priorSeenHighWater=2后新发起current-state probe并读取head/highWater=1响应。",
+      "assert": [
+        "同一版本重试保留完全相同的已提交envelope bytes，不因重试产生第二份密文或新version",
+        "低于priorSeenHighWater的合法旧upperSeq分页或已在途响应不能仅因toSeq=1而触发rollback，也不能覆盖较新本地head；只有水位记录后新发起的current-state probe返回head/highWater=1时才报REMOTE_ROLLBACK_DETECTED并保留本地状态。有效旧AEAD可仍然解密，不把防重放错误归因于AEAD本身"
+      ]
+    },
+    {
+      "id": "T15-RECOVERY-PKG-01",
+      "references": ["T15.b", "03 §4.2, §5.1, §5.3"],
+      "harness": "future_isolated_recovery_protocol_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "为合成workspace准备一份仅含keyRing canary的恢复包和其workspaceId/packageId/recoveryVersion AAD；准备wrong recovery secret及逐字段篡改包。",
+      "action": "使用正确与错误恢复secret读取恢复包；再分别修改workspaceId、packageId或recoveryVersion后尝试解密。",
+      "assert": [
+        "正确恢复secret和完整匹配AAD才能恢复合成keyRing；wrong secret或任一身份字段变更均失败且不覆盖已有keyRing",
+        "服务端可观察记录可包含恢复包标识/版本、nonce、ciphertext、创建时间和公开recovery公钥；不得包含CNREC1 secret、workspace root或明文keyRing"
+      ]
+    },
+    {
+      "id": "T15-RECOVERY-CHALLENGE-01",
+      "references": ["T15.b", "03 §5.3, §9, §10 S21"],
+      "harness": "future_T14_integrated_recovery_challenge_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "为pending合成设备创建未过期recovery_activate challenge，签名消息使用03 §5.3冻结字段及recoveryVersion；签名key仅从测试recovery secret的CNRecov1/subkey_id=2派生。",
+      "action": "提交一次字段完全匹配的签名激活请求，再用重建的adapter重放同一challenge。",
+      "assert": [
+        "首次有效签名只激活绑定的pending device并原子消费challenge；重建adapter后的重放拒绝且不二次更新credential/设备状态",
+        "账号session只证明登录，不能替代恢复签名；恢复secret和签名私钥不发给服务端"
+      ]
+    },
+    {
+      "id": "T15-RECOVERY-CHALLENGE-02",
+      "references": ["T15.b", "03 §5.3, §9", "limits.v1.json cloud.keyProtocolChallengeSeconds"],
+      "harness": "future_T14_integrated_recovery_challenge_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "从limits读取challenge有效期；对每种workspaceId、recoveryVersion、challengeId、nonce、deviceId、device public key、credential hash或expiresAt错配分别使用独立challenge快照，同时准备过期challenge、错误签名和对应正确签名。",
+      "action": "提交过期签名和每个单字段不匹配签名；对一个未过期challenge再原样重放同一错误签名，并从新adapter读取设备与credential状态。",
+      "assert": [
+        "过期或跨workspace/device/字段不匹配的签名请求均拒绝且不激活设备、不写credential hash；同一错误签名重放仍然失败",
+        "错误响应和日志不回显签名或secret；不断言失败签名是否消费challenge，也不断言失败后正确签名是否可重用，后者记录OPEN_QUESTION"
+      ]
+    },
+    {
+      "id": "T15-RECOVERY-REPLACE-01",
+      "references": ["T15.b-c", "03 §5.3, §9, §10 S21"],
+      "harness": "future_T14_integrated_recovery_replace_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "合成workspace已有有效恢复包和active unlocked device；准备缺少近期验证、未明确确认、新凭证验证失败及完整授权四种replace分支。",
+      "action": "依次请求recovery_replace，检查持久恢复包、公钥、recoveryVersion和旧恢复记录。",
+      "assert": [
+        "缺少active unlocked device、近期账号验证或明确用户确认时拒绝且旧记录不变；新凭证验证失败也不能提前撤销旧记录",
+        "完整授权并验证新凭证后recoveryVersion仅增1，持久化新包/公钥，然后按规格撤销旧恢复记录；普通账号密码重置不能替代此流程"
+      ]
+    },
+    {
+      "id": "T15-PAIR-SEALED-01",
+      "references": ["T15.b", "03 §5.2, §10 S20"],
+      "harness": "future_T14_integrated_pairing_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "D2生成合成crypto_box keypair并展示QR recipient public key；准备一个被relay替换的服务器public key及仅供测试的grant canary。",
+      "action": "D1分别用原QR key和替换key封装grant；D2尝试以自己的secret key打开两份grant。",
+      "assert": [
+        "有效grant只由QR中recipient key封装并可由对应D2打开；用服务器替换key封装的grant在D2处不能打开且不激活设备",
+        "grant内workspaceId、pairId、pairNonce、recipientDeviceId和newDeviceCredential绑定一致；sealed box本身不被描述为认证发送者"
+      ]
+    },
+    {
+      "id": "T15-PAIR-HASH-01",
+      "references": ["T15.b", "03 §5.2, §10 S20"],
+      "harness": "future_T14_integrated_pairing_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "准备D1批准的grant及第二QR中的完整SHA-256(grant)；另准备单字节错误hash、短码相同但完整hash不同、workspace/device/nonce错配输入。",
+      "action": "D2分别提交匹配完整hash和各不匹配变体完成grant核验/激活。",
+      "assert": [
+        "只有完整grant hash及包内身份/nonce全部匹配才可继续激活；错误hash或身份字段不匹配不签发active credential、不开放下载",
+        "短码单独匹配不能代替完整grant hash，错误尝试不泄露grant plaintext"
+      ]
+    },
+    {
+      "id": "T15-PAIR-STATE-01",
+      "references": ["T15.b", "03 §5.2, §9, §10 S20", "limits.v1.json cloud.keyProtocolChallengeSeconds"],
+      "harness": "future_T14_integrated_pairing_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "在隔离持久存储准备pending pair、已消费pair和按配置有效期已过期pair；各case使用独立快照。",
+      "action": "消费有效pair一次后在重建adapter上重放；分别消费过期pair及已取消pair。",
+      "assert": [
+        "有效pair只成功消费一次；已消费、过期或账号切换已取消pair重放不再次激活设备、不签发新的下载授权",
+        "只断言规格定义的pair状态；未冻结的终态映射或pending名额释放继续标OPEN_QUESTION，不发明新状态"
+      ]
+    },
+    {
+      "id": "T15-DEVICE-REVOKE-01",
+      "references": ["T15.b-c", "03 §5.2, §5.4, §9, §10 S22"],
+      "harness": "future_T14_integrated_device_revocation_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "合成workspace下D2为active并持有合成device credential；D1按近期账号验证撤销D2。",
+      "action": "撤销后使用D2旧credential请求API、pair/grant和新的download lease，并检查已有短期signed URL的TTL边界。",
+      "assert": [
+        "撤销后D2的新API、grant和download lease请求返回403 DEVICE_REVOKED；旧credential不能靠deviceId/body重新激活",
+        "已有signed URL只按配置TTL描述仍可能有效；不声称撤销能远程擦除已解密副本或立即收回已下载密文"
+      ]
+    },
+    {
+      "id": "T15-KEY-SEPARATION-01",
+      "references": ["T15.b-c", "03 §4.2, §5.1, §5.4", "03 §10 S21-S22"],
+      "harness": "future_platform_key_and_auth_boundary_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "为合成auth password/session、device credential、workspace root、recovery secret、localDBKey分别分配不同canary标识；仅在隔离进程内提供值。",
+      "action": "逐个将其他类型canary替代登录、设备鉴权、数据解密、恢复、SQLCipher解锁和本机vault key。",
+      "assert": [
+        "各凭据不可互换；deviceId本身不是credential，server设备持久层只保存32-byte SHA-256(deviceCredential)而不保存credential原文",
+        "账号密码重置不派生/轮换cloud或local key；服务端响应、持久字段和日志中不出现workspace root、recovery secret、localDBKey或明文device credential"
+      ]
+    },
+    {
+      "id": "T15-VAULT-01",
+      "references": ["T15.c", "03 §5.4-5.5", "08 §3"],
+      "harness": "future_per_platform_os_vault_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "在隔离profile已有合成SQLCipher库与对应localDBKey条目；分别模拟OS vault暂不可用、条目缺失和wrong key。",
+      "action": "打开既有库并尝试一次新profile创建/恢复入口，再检查原库、WAL/SHM和key条目状态。",
+      "assert": [
+        "vault不可用时暂停并报告LOCAL_KEY_UNAVAILABLE；key缺失/wrong key不生成替代key、不创建空库覆盖同路径、不删除原库证据",
+        "Windows/macOS/iOS/Android分别用其指定vault验收；fake vault或Node不能代替OS行为"
+      ]
+    },
+    {
+      "id": "T15-WEB-LOCK-01",
+      "references": ["T15.c", "03 §5.4, §5.5", "08 §3, §6", "S23"],
+      "harness": "future_browser_session_and_worker_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "准备合成Web local_only内存内容、云端密文和加密draft；IndexedDB/worker/log均使用可扫描canary。",
+      "action": "锁定、刷新及切换账号后检查worker生命周期、IndexedDB内容和另一账号请求路由。",
+      "assert": [
+        "Web锁定终止明文索引worker并清理可达引用；IndexedDB仅含云密文和加密draft，不含key或plaintext canary",
+        "A的订阅/worker/outbox不被B接管或发送；不把JS GC描述为可验证安全擦除"
+      ]
+    },
+    {
+      "id": "T15-CANCEL-01",
+      "references": ["T15.c", "03 §5.3-5.5", "docs/spec/tasks/T15.md completion criteria"],
+      "harness": "future_platform_vault_and_recovery_ui_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "在合成recovery_replace和vault解锁流程中分别准备用户取消、OS权限/保护存储暂不可用及重试情形；已有key/database作为基线。",
+      "action": "在提交新恢复包前取消或因vault不可用退出，再用新adapter/重启后的测试进程读取旧状态。",
+      "assert": [
+        "取消/权限不可用形成可见失败或等待结果，不假报解锁/恢复成功；不写半成品新包、不增加recoveryVersion、不提前撤销旧恢复记录",
+        "已有库、WAL/SHM和旧vault条目保留；用户恢复可用后可显式重试"
+      ]
+    },
+    {
+      "id": "T15-LOG-CANARY-01",
+      "references": ["T15.a-c", "03 §4.3, §5.4", "08 §3, §6"],
+      "harness": "future_synthetic_log_capture_harness",
+      "executionStatus": "NOT_RUN",
+      "setup": "给auth token、workspace root、recovery secret、device credential、localDBKey、明文、URL及恢复签名分配独立合成canary。",
+      "action": "触发AEAD失败、wrong key、恢复challenge拒绝、pair replay、vault不可用及设备撤销，扫描应用日志、crash、telemetry、错误对象和SQL trace。",
+      "assert": [
+        "任何输出均不含密钥/token/签名/正文/URL/标题/来源canary；密钥设置调用和敏感SQL参数不进入trace",
+        "错误保留requestId与稳定错误类别，不回显credential、challenge signature或跨workspace对象是否存在"
+      ]
+    }
+  ],
+  "openQuestions": [
+    {"questionId": "T15-OQ-01", "case": "T15-ENVELOPE-03", "status": "OPEN_QUESTION", "question": "ApiErrorV1.details.limitBytes is optional; the fixture requires limitKey and validates limitBytes only when present. Whether the exact response policy should always include limitBytes is not frozen."},
+    {"questionId": "T15-OQ-02", "case": "T15-RECOVERY-CHALLENGE-02", "status": "OPEN_QUESTION", "question": "03 §5.3 does not state whether a rejected invalid-signature attempt consumes the challenge; do not infer whether a correct signature remains reusable after such a failure."}
+  ],
+  "plannedCommands": [
+    {"command": "cargo test -p clipnest-core crypto", "status": "NOT_RUN", "gate": "wait_for_T06_and_T14_accepted; future Rust implementation"},
+    {"command": "pnpm --filter @clipnest/crypto-native test vectors", "status": "NOT_RUN", "gate": "wait_for_T06_and_T14_accepted; official dependencies and native harness not frozen"},
+    {"command": "pnpm test:integration -- --suite keys", "status": "NOT_RUN", "gate": "wait_for_T06_and_T14_accepted; isolated protocol store required"}
+  ],
+  "acceptanceGates": {
+    "officialCLibsodiumAndWebWasmVectors": "NOT_RUN",
+    "rustWebIosHermesAndroidHermesInterop": "NOT_RUN",
+    "aadAllFieldMutationAndHeaderLengths": "NOT_RUN",
+    "workspaceAndRecoveryKdfSeparation": "NOT_RUN",
+    "pairingGrantHashAndReplay": "NOT_RUN",
+    "recoveryChallengeExpiryReplayAndReplace": "NOT_RUN",
+    "deviceRevocationBoundary": "NOT_RUN",
+    "osVaultAndWebLock": "NOT_RUN",
+    "secretCanaryLogReview": "NOT_RUN",
+    "independentSecurityReview": "NOT_RUN"
+  }
+}

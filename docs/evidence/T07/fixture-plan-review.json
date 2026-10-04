@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "task": "T07",
+  "reviewType": "independent_read_only_fixture_plan_review",
+  "reviewedDate": "2026-10-04",
+  "reviewedArtifact": "tests/tasks/T07/fixture-plan.json",
+  "result": "PASS_WITH_LIMITATIONS",
+  "verified": {
+    "fixtureCount": 18,
+    "requiredNotRunGateCount": 6,
+    "allFixturesAndGates": "NOT_RUN",
+    "backupRestore": "The rehearsal clone uses separate file paths while reusing source profileId/localDbId and matching vault mapping; missing/wrong mapping is a separate failure. Interrupted backup/restore preserves the source and never exposes/replaces a partial destination. Portable recovery is not inferred.",
+    "outbox": "Soft and hard limits each cover −1, exact, and +1; soft warning appears only above the threshold, hard-limit equality may commit, and +1 returns OUTBOX_FULL while preserving prior committed state.",
+    "workerAndImage": "DB query and image decode cancellation are separate. A lightweight event-loop request must complete before the held worker is released. Image byte/pixel admission and volatile decoded-cache limits use canonical limits and explicitly exclude T04 decoder choice/quality/performance.",
+    "objectGc": "GC checks reference graph, object presence, and transaction consistency without depending on the unfrozen durable-byte accounting formula.",
+    "sourceTraceability": "Image admission references 03 §4.2 and its canonical limit keys."
+  },
+  "reviewChecks": {
+    "jsonParse": "PASS",
+    "independentReviewer": "PASS_WITH_LIMITATIONS",
+    "noTestsOrBuild": true,
+    "noProductionImplementation": true,
+    "noLiveProfileOrService": true
+  },
+  "limitations": [
+    "The current specification does not freeze a measurable local.totalBytes formula, including database/WAL and shared-reference charging. Budget/WAL charge fixtures remain NOT_RUN until exact components and double-count rules are specified and reviewed.",
+    "T06 is not accepted. SQLCipher native linkage, OS vault behavior, crash/disk-full recovery, and actual backup/restore remain NOT_RUN."
+  ],
+  "sources": [
+    "docs/spec/tasks/T07.md",
+    "docs/spec/02-architecture.md §6",
+    "docs/spec/03-data-sync-and-security.md §4.2, §5.4-5.5, §6",
+    "docs/spec/limits.v1.json",
+    "tests/tasks/T07/fixture-plan.json",
+    "independent agent review in this task"
+  ]
+}

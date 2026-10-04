@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "task": "T15",
+  "reviewType": "STATIC_FIXTURE_PLAN_ONLY",
+  "reviewedDate": "2026-10-04",
+  "reviewedArtifact": "tests/tasks/T15/fixture-plan.json",
+  "result": "STATIC_FIXTURE_PLAN_ONLY",
+  "verified": {
+    "caseCount": 27,
+    "allCasesExecutionStatus": "NOT_RUN",
+    "allUniqueIds": true,
+    "syntheticOnly": true,
+    "dependencies": {
+      "T06": "in_progress",
+      "T14": "not_started",
+      "requiredStatus": "accepted"
+    },
+    "coverage": [
+      "AAD canonical fields and routing, nonce/tag mutation, wrong workspace/kid/type, malformed lengths, decoded ciphertext limit, and plaintext/header identity consistency.",
+      "Separate workspace/recovery KDF domains, planned C/Web WASM/Rust/iOS Hermes/Android Hermes known-answer and cross-decrypt gate, without constructing any vector bytes or claiming interoperability.",
+      "Pair recipient-key and full grant-hash checks; T15-REPLAY-01 follows 03 §7.2: old upperSeq snapshots/in-flight responses below the recorded high-water are allowed, and rollback is asserted only for a new post-watermark current-state probe returning head=1.",
+      "OS vault and Web lock, cancellation/permission, credential separation, and synthetic secret-canary log checks."
+    ]
+  },
+  "reviewChecks": {
+    "jsonParse": "PASS",
+    "caseIdsUnique": true,
+    "allFixturesNOT_RUN": true,
+    "noBehaviorTestsOrBuild": true,
+    "noProductionImplementation": true,
+    "noRealAccountsSecretsServicesOrDatabases": true,
+    "officialVectorsConstructed": false,
+    "crossPlatformCryptoClaimedPassed": false,
+    "protocolOpenQuestionsExplicit": true
+  },
+  "limitations": [
+    "This is a static fixture-plan record, not an independent security review or implementation acceptance; all behavior remains NOT_RUN.",
+    "T06 is in_progress and T14 is not_started; implementation and execution remain gated on both being accepted, and their open gates remain in their own progress entries.",
+    "The 03 §4.1 library versions are candidates not installed or compatibility-tested. No key, nonce, ciphertext, tag, or official cross-platform known-answer vector was generated or executed.",
+    "The planned production paths packages/crypto-native, crates/core/src/crypto, apps/server/src/modules/keys, and packages/domain/src/keys were absent at plan preparation; no implementation path was exercised.",
+    "Real C/Web WASM/Rust/iOS Hermes/Android Hermes interoperability, OS vault behavior, isolated protocol persistence, logs/crash inspection, and independent critical-task adversarial review remain NOT_RUN.",
+    "03 §9 leaves details.limitBytes optional: T15-ENVELOPE-03 requires limitKey and checks limitBytes only if returned; whether it must always be present remains OPEN_QUESTION.",
+    "03 §5.3 does not define whether an invalid-signature attempt consumes its challenge; T15-RECOVERY-CHALLENGE-02 only asserts that replaying the same bad signature still fails, and valid-signature reuse after a failed attempt remains OPEN_QUESTION."
+  ],
+  "sources": [
+    "docs/spec/tasks/T15.md",
+    "docs/spec/03-data-sync-and-security.md §4.1-4.3 and §5.1-5.5",
+    "docs/spec/03-data-sync-and-security.md §7.2, §9 and §10 S20-S22",
+    "docs/spec/limits.v1.json",
+    "docs/spec/08-acceptance-matrix.md §3 and §6",
+    "tests/tasks/T15/fixture-plan.json"
+  ]
+}

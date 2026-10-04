@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "task": "T18",
+  "reviewType": "STATIC_FIXTURE_PLAN_ONLY",
+  "reviewedDate": "2026-10-04",
+  "reviewedArtifact": "tests/tasks/T18/fixture-plan.json",
+  "result": "STATIC_FIXTURE_PLAN_ONLY",
+  "verified": {
+    "caseCount": 27,
+    "allCasesExecutionStatus": "NOT_RUN",
+    "allUniqueIds": true,
+    "syntheticOnly": true,
+    "taskStatus": "not_started",
+    "planStatus": "preflight_only",
+    "dependencyGate": "wait_for_T16_accepted",
+    "s14IncompleteFinalizeCase": true,
+    "s18SharedReferenceRetentionCase": true,
+    "providerSemanticsAssumed": false
+  },
+  "reviewChecks": {
+    "jsonParse": "PASS",
+    "caseIdsUnique": true,
+    "allCasesNOT_RUN": true,
+    "taskCardAllowlist": true,
+    "dependencyMatchesProgress": true,
+    "noBehaviorTestsOrBuild": true,
+    "noDatabaseOrS3Connections": true,
+    "noProductionImplementation": true
+  },
+  "findings": [
+    "Added an independent unexpired incomplete-upload finalize case; it asserts no ready object and retained possible occupancy without inventing an exact error code.",
+    "Added S18 coverage for shared current/history/trash/snapshot/change-log references, a 100-day old head retained for trashDays, and collection removal without deleting its saved target.",
+    "Narrowed OQ-03: HTTP 507 family is frozen; the exact maxPendingUploadsPerWorkspace code and details.limitKey mapping remain unresolved.",
+    "T18 card S09-S15 numbering differs from current 03 §10 upload/GC cases S13-S18; the plan records this as OPEN_QUESTION."
+  ],
+  "limitations": [
+    "This is a static fixture-plan review, not implementation, behavior, PostgreSQL/RLS, or provider acceptance.",
+    "T16 is not accepted; implementation, test execution, database migrations, and S3 connections remain gated.",
+    "Real provider proof is still required for conditional staging PUT/COPY, immutable versions, embedded-error parsing, and exact-version deletion."
+  ],
+  "sources": [
+    "docs/spec/tasks/T18.md",
+    "docs/spec/03-data-sync-and-security.md §8.1-8.3, §9, §10 S13-S18",
+    "docs/spec/limits.v1.json",
+    "tests/tasks/T18/fixture-plan.json",
+    "docs/progress.json"
+  ]
+}

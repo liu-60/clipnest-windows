@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "task": "T31",
+  "evidenceType": "STATIC_FIXTURE_PLAN_ONLY",
+  "result": "STATIC_FIXTURE_PLAN_ONLY",
+  "reviewStatus": "AUTHOR_STRUCTURAL_SELF_CHECK_WITH_INDEPENDENT_REVIEW",
+  "reviewedAt": "2026-10-04",
+  "executionStatus": "NOT_RUN",
+  "planPath": "tests/tasks/T31/fixture-plan.json",
+  "reviewedSources": [
+    "docs/spec/tasks/T31.md",
+    "docs/spec/06-model-runbook.md §1-§3/§5-§8",
+    "docs/spec/00-README.md §1/§3-§8",
+    "docs/spec/07-release-and-commercial.md §1-§7",
+    "docs/spec/08-acceptance-matrix.md §1-§6",
+    "docs/spec/tasks/T25.md",
+    "docs/spec/tasks/T27.md",
+    "docs/spec/tasks/T28.md",
+    "docs/spec/tasks/T29.md",
+    "docs/spec/tasks/T30.md",
+    "docs/progress.json T00/T01/T06/T25/T26/T27/T28/T29/T30/T31",
+    "tests/tasks/T25/fixture-plan.json",
+    "tests/tasks/T27/fixture-plan.json",
+    "tests/tasks/T28/fixture-plan.json",
+    "tests/tasks/T29/fixture-plan.json",
+    "tests/tasks/T30/fixture-plan.json"
+  ],
+  "repositoryInstructions": {
+    "path": "AGENTS.md",
+    "status": "NOT_FOUND",
+    "searched": [
+      "D:\\ClipNest-work\\v2",
+      "D:\\ClipNest-work",
+      "D:\\ClipNest"
+    ],
+    "note": "遵循本轮用户提供的AGENTS.md、T31任务卡和06执行手册；未推断额外规则。"
+  },
+  "dependencySnapshot": [
+    {
+      "task": "T25",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T27",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T28",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T29",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false
+    },
+    {
+      "task": "T30",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false
+    }
+  ],
+  "staticChecks": [
+    {
+      "id": "T31-R01",
+      "check": "Plan/evidence JSON parses; task is T31, status not_started, and executionStatus NOT_RUN.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R02",
+      "check": "34 fixture IDs, 13 gate IDs, 2 command IDs, 18 OQ IDs and 11 acceptance IDs are unique.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R03",
+      "check": "All fixtures, gates, commands and acceptance criteria are NOT_RUN with empty evidence arrays where applicable.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R04",
+      "check": "Every fixture gate/acceptance/OQ reference resolves to a declared item; each gate and acceptance criterion references declared fixtures.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R05",
+      "check": "The 34 fixtures map to card subtask order a/b/c and cover all three slices without adding production implementation scope.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R06",
+      "check": "Five direct dependencies match T31 card and current progress snapshot; each is not_started/unaccepted.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R07",
+      "check": "T00/T01/T06 readiness and transitive T26 status are not misrepresented as T31 direct dependencies or accepted execution prerequisites.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R08",
+      "check": "Merchant, market, region, domain/TLS/callback, real price, purchase channel, restore/support and retention inputs remain UNKNOWN and block the affected sales claims.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R09",
+      "check": "G0-G4 aggregation follows 08 failure actions and names owner tasks, per-platform proof boundaries and failure-safe release states.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R10",
+      "check": "Second-device success requires observed find/authorize-or-unlock/reuse/copy; the revoked-device assertion is limited to rejection of new API requests and explicitly does not promise immediate invalidation of a TTL-valid old signed URL or remote erasure of downloaded/local decrypted copies.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R11",
+      "check": "B01-B12 evidence and provider refund/reconciliation are required; test price, mock billing, forged Pro or HTTP success cannot close G4.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R12",
+      "check": "S24 provider refund, S25 production-equivalent restore and S27 portable export remain with their owning T26-T30 tasks; DEFERRED is not silently treated as release acceptance.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R13",
+      "check": "Privacy canary coverage includes telemetry/crash/structured error/support paths, and only content-free event categories are permitted.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R14",
+      "check": "Capacity/cost plans include bytes, object/request/download, DB/API/worker, pending/trash/version, backup/log, payment/support and cipher overhead; 10GiB remains a candidate.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R15",
+      "check": "Win/macOS/iOS/Android artifact/signing and device evidence remain distinct; synthetic metadata or one platform cannot substitute for another.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R16",
+      "check": "Rollout preserves internal→closed beta→public beta→paid stable, manual approval, per-feature flags, schema compatibility and no automatic reverse migration.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R17",
+      "check": "The two T31 card commands are recorded NOT_RUN; missing command/harness is a prerequisite gap with no substitute execution.",
+      "status": "CHECKED_STATICALLY"
+    },
+    {
+      "id": "T31-R18",
+      "check": "Scope excludes progress.json, product code, production/staging, providers/stores, credentials, signing material, costs and publication; author self-check is not independent review or acceptance.",
+      "status": "CHECKED_STATICALLY"
+    }
+  ],
+  "counts": {
+    "fixtureCount": 34,
+    "uniqueFixtureIdCount": 34,
+    "acceptanceGateCount": 13,
+    "uniqueAcceptanceGateIdCount": 13,
+    "commandCount": 2,
+    "uniqueCommandIdCount": 2,
+    "openQuestionCount": 18,
+    "uniqueOpenQuestionIdCount": 18,
+    "acceptanceCriterionCount": 11,
+    "uniqueAcceptanceCriterionIdCount": 11,
+    "staticCheckCount": 18,
+    "uniqueStaticCheckIdCount": 18,
+    "subtaskFixtureCounts": {
+      "a": 8,
+      "b": 21,
+      "c": 5
+    },
+    "allFixturesNotRun": true,
+    "allGatesNotRun": true,
+    "allCommandsNotRun": true,
+    "allEvidenceEmpty": true,
+    "allDirectDependenciesUnaccepted": true
+  },
+  "limitations": [
+    "This is an author structural self-check only; no independent critical review, behavior evidence, platform proof, provider/store check, release decision or task acceptance is represented.",
+    "All 34 fixtures, 13 gates and 2 commands remain NOT_RUN. T31 remains not_started and all evidence arrays are empty.",
+    "T25/T27/T28/T29/T30 were observed not_started/unaccepted; no production/staging/provider/store/device/database/S3/signing/support/recovery/telemetry/cost operation occurred.",
+    "Launch inputs are UNKNOWN and any unresolved required input blocks the relevant paid/public scope. Current T00 acceptance does not make those launch decisions.",
+    "T31 has no publication authorization. A future authorized release requires a concrete candidate and separate verified evidence; this plan does not authorize or perform it."
+  ],
+  "independentReviewStatus": "PASS_WITH_LIMITATIONS",
+  "note": "Author structural self-check and independent critical re-review passed with limitations. All behavior items remain NOT_RUN, all OQs remain open, and dependencies remain unaccepted."
+}

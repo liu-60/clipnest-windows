@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "task": "T14",
+  "reviewType": "independent_read_only_fixture_plan_review",
+  "reviewedDate": "2026-10-04",
+  "reviewedArtifact": "tests/tasks/T14/fixture-plan.json",
+  "result": "PASS_WITH_LIMITATIONS",
+  "verified": {
+    "caseCount": 16,
+    "allCasesExecutionStatus": "NOT_RUN",
+    "syntheticOnly": true,
+    "dependencyGate": "T06 must be accepted before implementation or execution",
+    "coverage": [
+      "AUTH-03 observes session revocation across a new adapter connected to the same persistent store.",
+      "AUTH-04 covers provider access_denied, browser close, late callback, and no code exchange after denial.",
+      "CAPACITY-01 tests the configured pending-pair upper bound without inventing terminal cleanup rules.",
+      "CAPACITY-02 separates first initialization and recovery_replace; both cover exact 16 KiB acceptance while over-limit replace preserves prior state. Initial setup follows 03 §5.1/§9: the personal workspace and pending device already exist; an over-limit initialization leaves the workspace uninitialized, does not persist the recovery package, and does not activate the device. Capacity limits are sourced from limits.v1.json and interpreted per 03 §11.",
+      "CAPACITY-03/04 separate expiry replay and account switch; B cannot consume A's pair and the undefined persisted terminal-state mapping is left open.",
+      "KEY-01 scopes credential storage checks to device/recovery fields and checks SHA-256(deviceCredential) without constraining Better Auth's own session/password store."
+    ]
+  },
+  "reviewChecks": {
+    "jsonParse": "PASS",
+    "independentReviewer": "PASS_WITH_LIMITATIONS",
+    "noTestsOrBuild": true,
+    "noRealOAuthOrDatabase": true,
+    "noProductionImplementation": true
+  },
+  "limitations": [
+    "The specification does not define the persisted status mapping or immediate pending-slot release behavior after account-switch cancellation; these remain OPEN QUESTION rather than invented fixture expectations.",
+    "All T14 behavior remains unexecuted. Real OAuth provider behavior, isolated PostgreSQL RLS, cross-tenant acceptance, and adversarial acceptance review remain NOT_RUN."
+  ],
+  "sources": [
+    "docs/spec/tasks/T14.md",
+    "docs/spec/03-data-sync-and-security.md",
+    "docs/spec/03-data-sync-and-security.md §11 (capacity limits)",
+    "tests/tasks/T14/fixture-plan.json",
+    "independent agent review in this task"
+  ]
+}

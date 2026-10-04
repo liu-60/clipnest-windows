@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 1,
+  "task": "T10",
+  "status": "planned-not-executed",
+  "purpose": "Specify synthetic local-query correctness, cursor, summary, page-budget, coverage, and performance scenarios before T10 implementation.",
+  "dependencyGate": "wait_for_T07_and_T09_accepted",
+  "dependencyGateDetails": {
+    "requiredTasks": ["T07", "T09"],
+    "requiredStatus": "accepted",
+    "observedProgressStatuses": {
+      "T07": "not_started",
+      "T09": "not_started"
+    },
+    "source": "docs/progress.json#/tasks",
+    "rule": "Until both dependencies are accepted, only independent synthetic fixture/interface preparation is allowed. Do not implement T10 production behavior, connect a fake-success repository, or run behavior/performance tests."
+  },
+  "sources": [
+    {
+      "path": "docs/spec/tasks/T10.md",
+      "sections": ["依赖", "子任务顺序", "完成标准与行为测试", "验证命令"]
+    },
+    {
+      "path": "docs/spec/02-architecture.md",
+      "sections": ["§4 UI—仓储接口", "§5 本地实体与搜索语义"]
+    },
+    {
+      "path": "docs/spec/03-data-sync-and-security.md",
+      "sections": ["§5.5 丢钥、卸载与备份恢复 gate"]
+    },
+    {
+      "path": "docs/spec/08-acceptance-matrix.md",
+      "sections": ["§4 性能测量"]
+    },
+    {
+      "path": "docs/spec/limits.v1.json",
+      "fields": [
+        "transport.summaryPageItems",
+        "transport.summaryPageBytes",
+        "content.maxPreviewCharacters",
+        "performanceTargets.search10000ItemsFirstPageP95Ms"
+      ]
+    }
+  ],
+  "fixturePolicy": {
+    "syntheticDataOnly": true,
+    "fixedSeed": "Use a recorded deterministic seed for synthetic entities; the seed creates no data from a user profile.",
+    "neverUse": [
+      "live user profile or installed application database",
+      "real account or cloud data",
+      "production storage or network service",
+      "real clipboard or user content"
+    ],
+    "queryContract": "Use only the HistoryQuery and ItemSummary fields already described in docs/spec/02-architecture.md §4. Do not add query fields or alter contracts/schema during this fixture preparation.",
+    "limitsSource": "Read page item, serialized page byte, preview character, and performance targets from docs/spec/limits.v1.json. Do not copy threshold values into fixture-local constants.",
+    "frozenSearchSemantics": "Search/index matching uses Unicode NFKC and case-insensitive matching, including Chinese one/two/three-character substrings and tags; result ordering is (capturedAt or updatedAt DESC, id DESC); a cursor carries sort values and a query fingerprint; query changes invalidate the old cursor.",
+    "unfrozenBehavior": "Do not invent fromUtc/toUtc equality inclusivity, malformed-query error codes, behavior for a single otherwise-valid summary that alone exceeds the page-byte cap, or the query response/error/coverage mapping when local vault or query-store access is unavailable. Cases needing these rules remain NOT_RUN until specified.",
+    "statusMeaning": "NOT_RUN means no behavior has been verified. This plan and its synthetic data definitions are preparation only."
+  },
+  "fixtureFamilies": [
+    {
+      "id": "t10a-chinese-substring-normalization-and-source-preservation",
+      "stage": "a-b",
+      "category": ["search-correctness", "unicode", "privacy", "persistence"],
+      "input": "A fixed synthetic set of text and saved records with Chinese one-, two-, and three-character matches, longer substring matches, tags, and full-width/case variants. Include a synthetic body whose original bytes differ from its NFKC-normalized search form.",
+      "action": "Query using each short Chinese term, a substring, a Unicode compatibility variant, and a case variant where applicable; then read/copy the matched synthetic source through the fixture interface without editing it.",
+      "expected": "Search matches follow NFKC, case-insensitive, substring semantics for Chinese one/two/three-character terms and tags, including matches beyond whole-token FTS behavior. Search/index normalization does not rewrite the original body; reading/copying returns the original synthetic bytes/content. Query summaries contain only summary fields, not the source body.",
+      "observation": "Compare returned synthetic IDs to the deterministic expected set for each query; capture the original source bytes before/after; inspect returned summary fields for body absence.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T10.md · 子任务顺序 a-b / 完成标准", "docs/spec/02-architecture.md §4-5"]
+    },
+    {
+      "id": "t10a-combined-type-source-device-date-and-collection-filters",
+      "stage": "a",
+      "category": ["search-correctness", "filtering", "pagination"],
+      "input": "Synthetic items vary by kind, tag text, sourceAppId, deviceId, capturedAt/updatedAt, area, and collectionId, with timestamp samples strictly inside or outside the selected range (no equality-boundary sample).",
+      "action": "Run text/tag search alone and with combinations of the existing HistoryQuery kind, source, device, date, area, and collection fields.",
+      "expected": "Each combined query returns exactly the intersection of its specified search and filter criteria. The fixture uses only fields in the frozen HistoryQuery interface and does not assume whether fromUtc/toUtc include an item exactly at the endpoint.",
+      "observation": "Record query field values, deterministic expected ID set, returned ordered IDs, and any cursor; confirm excluded synthetic items do not appear.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T10.md · 子任务顺序 a / 完成标准", "docs/spec/02-architecture.md §4-5"]
+    },
+    {
+      "id": "t10a-stable-order-and-keyset-pages-no-gaps-or-duplicates",
+      "stage": "a",
+      "category": ["pagination", "search-correctness"],
+      "input": "A static synthetic result set with tied capturedAt values for history or tied updatedAt values for saved items, deterministic distinct IDs, and enough matching records to cross multiple page boundaries.",
+      "action": "Read all successive pages with the returned opaque cursor under one unchanged query and generation; separately read the full expected result set from the deterministic fixture oracle.",
+      "expected": "The result order follows the specified timestamp descending, then ID descending tie-break. Concatenated pages equal the fixture oracle exactly, with no duplicates or missing IDs. This externally checks cursor pagination outcomes without requiring inspection of the query implementation or decoding cursor internals.",
+      "observation": "Record per-page ordered IDs, opaque cursor presence, final concatenated IDs, and set/order comparison against the synthetic oracle.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T10.md · 子任务顺序 a / 完成标准", "docs/spec/02-architecture.md §4-5", "docs/spec/limits.v1.json#/transport/summaryPageItems"]
+    },
+    {
+      "id": "t10a-query-change-invalidates-old-cursor",
+      "stage": "a",
+      "category": ["pagination", "error", "search-correctness"],
+      "input": "A synthetic result set and first-page cursor produced by query A; query B changes a search or filter field while retaining the old cursor.",
+      "action": "Submit query B with query A's cursor, then submit a fresh query B request without that cursor.",
+      "expected": "The old cursor is not silently accepted as a continuation for the changed query fingerprint. The result explicitly reports cursor invalidation or clearly starts a fresh query-B page; it does not mix query-A and query-B results. Exact error-code spelling is left to the canonical error contract.",
+      "observation": "Compare query-B response generation/IDs to a fresh query-B first page and record whether the old cursor was rejected or restarted; assert no old-query continuation is returned.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T10.md · 子任务顺序 a / 完成标准", "docs/spec/02-architecture.md §4-5"]
+    },
+    {
+      "id": "t10b-old-generation-cancellation-and-profile-switch",
+      "stage": "b",
+      "category": ["cancellation", "profile-isolation", "pagination", "privacy"],
+      "input": "A synthetic query held at an injectable query-worker barrier, followed by a newer query generation; a second synthetic profile namespace has distinguishable result IDs.",
+      "action": "Hold query A, start query B with a newer generation, then switch the active synthetic profile before releasing query A. Release responses in reverse order.",
+      "expected": "The old generation is canceled or discarded and cannot publish a success page after query B/profile switch. Returned pages are bound to the active request generation and synthetic profile; no result from the prior profile is exposed through the new query/event state.",
+      "observation": "Record request IDs/generations, active profile namespace, response completion order, emitted page IDs/generation, and stale-result suppression.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T10.md · 子任务顺序 b", "docs/spec/02-architecture.md §4-5"]
+    },
+    {
+      "id": "t10b-query-with-local-vault-unavailable-or-access-denied",
+      "stage": "a-b",
+      "category": ["permissions", "error", "privacy", "profile-isolation"],
+      "input": "A synthetic local profile with known indexed item IDs and protected synthetic content; an injected query-store/vault adapter reports temporarily unavailable or access denied before reading it.",
+      "action": "Issue a synthetic HistoryQuery under each injected access outcome, observe the returned query/page/coverage state without requiring a particular response shape, then restore fake access and issue a fresh query.",
+      "expected": "OPEN QUESTION: the specification does not freeze the exact query response, error, or coverage mapping for unavailable/denied local access. Do not invent an error code or report protected rows as a verified empty, complete result. Preserve the synthetic profile; while access is unavailable, return no protected content.",
+      "observation": "Record only the adapter access outcome, whether a page/result/error was emitted and its non-content status fields, and before/after synthetic profile identity and ID set. Do not store protected synthetic content in evidence.",
+      "status": "NOT_RUN",
+      "gate": "OPEN_QUESTION: query result/error/coverage presentation for local-vault or query-store access failure is not frozen.",
+      "specLinks": ["docs/spec/tasks/T10.md · 完成标准与行为测试", "docs/spec/02-architecture.md §4, §7", "docs/spec/03-data-sync-and-security.md §5.5"]
+    },
+    {
+      "id": "t10a-summary-item-byte-and-preview-bounds",
+      "stage": "a",
+      "category": ["capacity", "privacy", "pagination"],
+      "input": "Synthetic text and image records with source bodies/attachments longer or larger than summary fields, including a preview at and beyond limits.content.maxPreviewCharacters and a page whose next whole summary would exceed the current page's remaining limits.transport.summaryPageBytes even though each individual complete summary is smaller than the full page-byte cap.",
+      "action": "Query the records and measure the serialized QueryPage response; advance to the next page using the returned cursor.",
+      "expected": "Every preview is at or below maxPreviewCharacters. ItemSummary/QueryPage does not contain body text, DataURL, original image bytes, or keys. The complete serialized response stays within summaryPageBytes; if the next complete item would exceed the remaining page budget, the page ends before that item and returns a cursor so no item is truncated or skipped.",
+      "observation": "Record serialized response byte length, item count, preview character count, field names present, forbidden field/content scan result without storing matched content, and next-page IDs.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T10.md · 完成标准", "docs/spec/02-architecture.md §4", "docs/spec/limits.v1.json#/transport/summaryPageBytes", "docs/spec/limits.v1.json#/content/maxPreviewCharacters"]
+    },
+    {
+      "id": "t10a-page-item-limit-boundary",
+      "stage": "a",
+      "category": ["capacity", "pagination"],
+      "input": "A synthetic query result set with at least one more matching item than limits.transport.summaryPageItems; every individual summary is otherwise known to fit the page-byte limit.",
+      "action": "Request a page at the supported maximum and traverse cursors through the whole static result set.",
+      "expected": "No page contains more than the canonical summaryPageItems limit; the next cursor continues from the first unreturned item. Concatenated pages contain each expected result once. The case avoids a single summary larger than the whole page-byte cap because that behavior is not specified.",
+      "observation": "Record each page item count, next cursor, and concatenated IDs versus the deterministic fixture oracle.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T10.md · 完成标准", "docs/spec/02-architecture.md §4", "docs/spec/limits.v1.json#/transport/summaryPageItems"]
+    },
+    {
+      "id": "t10c-search-result-beyond-first-unfiltered-page-and-coverage",
+      "stage": "c",
+      "category": ["search-correctness", "coverage", "pagination"],
+      "input": "A deterministic synthetic dataset built from a fixed seed with 10,000 text items; place a unique search match after the first unfiltered page in the frozen sort order, and provide a fixture index mode that can expose either the full set or a known incomplete subset.",
+      "action": "Search for the unique term and query through the result cursor. Run once with the full synthetic set indexed and once with indexing deliberately paused at a known subset.",
+      "expected": "The unique match is found even though its source item sorts beyond the first unfiltered page; search is not limited to scanning/rendering only that first page. Full-index coverage reports the known indexed entity count and complete state; partial-index coverage reports the known subset and incomplete state rather than implying the entire dataset was searched.",
+      "observation": "Compare returned IDs and coverage fields against fixed-seed fixture metadata, including indexedEntities and complete; record the synthetic index frontier without using profile data.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T10.md · 子任务顺序 c / 完成标准", "docs/spec/02-architecture.md §4-5", "docs/spec/08-acceptance-matrix.md §4"]
+    },
+    {
+      "id": "t10c-10000-item-search-first-page-performance",
+      "stage": "c",
+      "category": ["performance", "search-correctness"],
+      "input": "The fixed-seed 10,000-item synthetic text dataset with documented machine, OS, build, cache, and query conditions.",
+      "action": "After dependencies and implementation are accepted, measure normal first-page searches under the fixed environment and preserve correctness assertions for Chinese short terms, substrings, combined filters, and beyond-first-page hits.",
+      "expected": "Compare the measured first-page P95 to limits.performanceTargets.search10000ItemsFirstPageP95Ms using the sample-count and reporting rules in acceptance-matrix §4. A performance miss does not permit weakening search semantics. No measurement or target pass is claimed by this plan.",
+      "observation": "Eventually record seed, machine/OS, build, cache/network conditions, sample count, p50/p95/max/failure count, query classes, and correctness results; never use real profile data.",
+      "status": "NOT_RUN",
+      "specLinks": ["docs/spec/tasks/T10.md · 完成标准与行为测试", "docs/spec/08-acceptance-matrix.md §4", "docs/spec/limits.v1.json#/performanceTargets/search10000ItemsFirstPageP95Ms"]
+    }
+  ],
+  "requiredNotRunGates": [
+    {
+      "id": "t07-and-t09-accepted",
+      "status": "NOT_RUN",
+      "reason": "T10 depends on T07 and T09. Search implementation and behavior tests remain gated until both are accepted."
+    },
+    {
+      "id": "t06-query-schema-and-error-contract",
+      "status": "NOT_RUN",
+      "reason": "T06 canonical strict schemas/DTO generation remain in progress. Do not edit contracts/schema, generated output, or invent exact malformed-query/cursor error codes in this fixture preparation."
+    },
+    {
+      "id": "query-access-failure-response-mapping",
+      "status": "OPEN_QUESTION",
+      "reason": "The specs require preserving data and restricting protected content while vault/access is unavailable, but do not freeze the exact HistoryQuery result, error, or coverage mapping. The synthetic fixture stays gated and asserts no status/error code."
+    },
+    {
+      "id": "date-range-equality-semantics",
+      "status": "NOT_RUN",
+      "reason": "The referenced query interface provides fromUtc/toUtc but does not state endpoint inclusivity. Current fixtures use timestamps strictly inside/outside the range; equality-edge assertions wait for a frozen rule."
+    },
+    {
+      "id": "single-summary-larger-than-page-byte-cap",
+      "status": "NOT_RUN",
+      "reason": "The specs require bounded pages without truncating an item but do not define the response when one otherwise-valid summary alone exceeds the entire page-byte cap. The planned byte-boundary case avoids that input."
+    },
+    {
+      "id": "10000-item-search-performance-measurement",
+      "status": "NOT_RUN",
+      "reason": "No T10 search behavior or performance run has been performed. Future acceptance requires the fixed environment and sample/reporting rules in 08 §4."
+    }
+  ],
+  "plannedValidationCommands": [
+    {
+      "command": "cargo test -p clipnest-core query",
+      "executionStatus": "NOT_RUN",
+      "gate": "T07 and T09 accepted; T10 query implementation and workspace test target exist."
+    },
+    {
+      "command": "pnpm fixtures:generate -- --profile 10000-text",
+      "executionStatus": "NOT_RUN",
+      "gate": "T07 and T09 accepted; the reviewed deterministic fixture generator exists."
+    }
+  ],
+  "executionSafety": {
+    "productionFilesChanged": false,
+    "contractsOrSchemaChanged": false,
+    "generatedFilesChanged": false,
+    "progressOrSharedEvidenceChanged": false,
+    "liveProfileRead": false,
+    "liveProfileHashed": false,
+    "realUserContent": false,
+    "productionStorageOrNetwork": false,
+    "behaviorTestsRun": false,
+    "performanceTestsRun": false
+  },
+  "acceptanceReminder": "All cases are synthetic and NOT_RUN. This plan does not implement search, finalize pending DTO schemas, inspect any profile data, or establish performance. Keep T10 status not_started until T07/T09 dependencies, behavior tests, evidence, and required review are complete."
+}

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "task": "T13",
+  "evidenceType": "fixture_plan_independent_adversarial_review",
+  "checkedDate": "2026-10-04",
+  "reviewedArtifacts": [
+    "tests/tasks/T13/fixture-plan.json",
+    "docs/spec/tasks/T13.md",
+    "docs/spec/01-product-and-ux.md",
+    "docs/spec/02-architecture.md",
+    "docs/spec/04-desktop-performance.md",
+    "docs/spec/07-release-and-commercial.md",
+    "docs/spec/08-acceptance-matrix.md",
+    "docs/spec/limits.v1.json",
+    "docs/progress.json"
+  ],
+  "result": "PASS_WITH_LIMITATIONS",
+  "scope": "Independent static adversarial review of fixture-plan coverage and frozen/open assertions only.",
+  "findings": [
+    "Removed any fixed pass assertion for same-changeCount notification coalescing; that policy remains OPEN_QUESTION while the frozen zero-reencode requirement is explicitly sourced.",
+    "Added a native macOS acceptance crosswalk for changeCount, target/minimized behavior, two-display placement, menu-bar/startup/hotkey, denied Accessibility copy-only, and cancellation/cache/UI integration. All behavior remains NOT_RUN and cannot be closed by Windows results.",
+    "Separated shared cancellation ordering from Windows helper ACK timing; native macOS deadline/interruption/recovery remains OPEN_QUESTION.",
+    "Kept imageWorkerPeakBytes as a non-acceptance observation until T09 freezes allocation categories and measurement method.",
+    "Added gated candidate-matched signed/notarized update/rollback smoke planning and a synthetic telemetry/crash redaction canary; both remain NOT_RUN."
+  ],
+  "checks": {
+    "fixtureCaseCount": 31,
+    "caseNumbersContiguousFrom1To31": true,
+    "fixtureIdsUnique": true,
+    "allFixtureAndNativeGateStatuses": "NOT_RUN",
+    "releaseStaticCheckCount": 5,
+    "allReleaseStaticCheckStatuses": "NOT_RUN",
+    "nativeMacBehaviorExecuted": false,
+    "releaseBuildSignNotarizeInstallUpdateExecuted": false,
+    "windowsEvidenceUsedForMacAcceptance": false,
+    "T11Status": "not_started",
+    "T12Status": "not_started",
+    "T13Status": "not_started",
+    "acceptanceGateCount": 9,
+    "nativeMacAcceptanceGateCount": 8,
+    "syntheticPrivacyGateCount": 1
+  },
+  "remainingOpenQuestions": [
+    "Supported macOS versions/architectures, native CI/device and two-display availability.",
+    "Accessibility detection, denied/unknown mapping, authorization copy, and safe native permission-transition provisioning.",
+    "Duplicate changeCount notification coalescing, delayed-render retry count/deadline, capture overflow and terminal error mapping.",
+    "Native macOS cancellation deadline, interruption limits and supervision/recovery mapping.",
+    "Target identity/revalidation, minimized restoration, display-selection/safe-area policy, menu-bar close behavior, startup opt-in, and hotkey-conflict recovery.",
+    "Signing identity/entitlement allowlist, notarization acceptance evidence, updater signature/channel/error policy, and rollback schema window.",
+    "imageWorkerPeakBytes allocation categories and measurement method from T09."
+  ],
+  "notPerformed": [
+    "Native macOS behavior, permission, pasteboard, display, startup, hotkey, UI, or performance execution.",
+    "Build, sign, notarize, install, update, or rollback.",
+    "Access to a live profile, user clipboard, account, user permission/login-item settings, signing credentials, or production service.",
+    "Windows behavior treated as macOS evidence."
+  ],
+  "limitations": [
+    "This is fixture-plan review only; it is not implementation review, behavior evidence, release evidence, T13 acceptance, or a macOS support claim.",
+    "T11 and T12 remain not_started; all behavior and release execution remains gated and NOT_RUN."
+  ]
+}

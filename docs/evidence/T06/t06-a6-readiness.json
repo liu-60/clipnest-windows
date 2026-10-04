@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "T06-a6-readiness",
+  "result": "GATED_NOT_IMPLEMENTED",
+  "checkedDate": "2026-10-04",
+  "scope": "Read-only check for a useful, independently buildable packages/domain entry that can be added before dependency selection and T06-b.",
+  "inputs": [
+    {
+      "path": "docs/spec/02-architecture.md",
+      "observation": "Architecture and future task cards reference packages/domain/src, but do not explicitly freeze the npm package name."
+    },
+    {
+      "path": "docs/spec/tasks/T12.md; T15.md; T21.md; T22.md; T24.md",
+      "observation": "Future task cards reference the domain package path; their business interfaces should be implemented by their owning tasks, not invented as an empty T06 export."
+    },
+    {
+      "path": "docs/spec/tasks/T06.md",
+      "observation": "T06 allowlist permits packages/*/package.json, packages/*/tsconfig*.json, and packages/domain/src/index.ts; the workspace glob includes packages/*."
+    },
+    {
+      "path": "package.json; pnpm-lock.yaml",
+      "observation": "TypeScript 5.9.3 is present in the root lock resolution, but no local node_modules/.bin/tsc or global tsc was available at inspection. Workspace frozen install has not completed supply-chain policy verification."
+    }
+  ],
+  "decision": "Do not create an empty @clipnest/domain package yet. The package identity is inferred rather than frozen, and the package cannot currently demonstrate an independent typecheck without relying on an unverified root compiler path or adding a dependency before its license review. Keep packages/domain entry pending until the package name and compiler/dependency route are confirmed; T06-b should define its actual interfaces.",
+  "notVerified": [
+    "No package or compiler was installed, and no build/typecheck was attempted.",
+    "The absence of a local compiler is an inspection-time environment observation and may change after an approved workspace install.",
+    "This readiness record does not accept T06-a or full T06."
+  ]
+}

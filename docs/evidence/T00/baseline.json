@@ -1,0 +1,50 @@
+{
+  "baselineCommit": "91cafd765b9480e011647c9d8cd2976269f12aef",
+  "branch": "codex/v2-clipboard",
+  "installationVersion": "1.1.4",
+  "installedExeSha256": "079fac0ce6cf0883bd6a37ac103329e0ae83c79a1d69d72d5287d04a4115b411",
+  "installedAsarSha256": "ac129d4c350be076441827a6221d3db3924199a9a82be847871d6a4de8dd673d",
+  "node": "v24.16.0",
+  "pnpm": "11.19.0",
+  "rust": "not_installed",
+  "visualStudioCBuildTools": false,
+  "userProfileRead": "top_level_metadata_only",
+  "userClipboardRead": false,
+  "cloudDeployment": "not_performed",
+  "legacyBranch": "codex/m0-latency",
+  "profileMetadataRead": "top_level_names_sizes_timestamps_enumerated_by_review_agent",
+  "profileContentsOpened": false,
+  "profileContentHashesCalculated": false,
+  "profileModified": false,
+  "reviewNote": "A read-only reviewer enumerated top-level %APPDATA%\\\\ClipNest entry metadata; no entry contents were opened, hashed, or written. No further profile access.",
+  "v2Remote": "https://github.com/liu-60/clipnest-windows.git",
+  "v2Branch": "codex/v2-clipboard",
+  "legacyRemote": "https://github.com/liu-60/clipnest-windows.git",
+  "sdkStatus": {
+    "windowsCppBuildTools": "not_detected",
+    "windowsWebView2": "not_verified",
+    "androidSdk": "not_detected",
+    "iosSdk": "not_available_on_windows"
+  },
+  "signingStatus": "unknown_not_configured",
+  "merchantStatus": "unknown_not_configured",
+  "cloudRegionStatus": "unknown_not_selected",
+  "userDataHashStatus": "not_collected; the implementation and review did not open user profile files",
+  "applicationLaunchedForT00": false,
+  "installationDirectoryUsedAsWorkspace": false,
+  "workspaceIsolation": {
+    "v2Root": "D:/ClipNest-work/v2",
+    "v2Branch": "codex/v2-clipboard",
+    "legacyRoot": "D:/ClipNest-work/electron-l0",
+    "legacyBranch": "codex/m0-latency",
+    "rootsAreDistinct": true,
+    "syntheticProfile": ".test-data/profile"
+  },
+  "licenseAndCompatibilityGate": "candidate libraries remain uninstalled; exact version, license, and compatibility checks are required in T06 before first installation",
+  "testProfileFixtures": [
+    "synthetic text",
+    "synthetic link",
+    "synthetic image"
+  ],
+  "userProfileContentRead": false
+}

@@ -1,0 +1,410 @@
+{
+  "schemaVersion": 1,
+  "task": "T16",
+  "taskStatus": "not_started",
+  "planStatus": "preflight_only",
+  "executionStatus": "NOT_RUN",
+  "sourceOfExpectedBehavior": [
+    "docs/spec/tasks/T16.md",
+    "docs/spec/03-data-sync-and-security.md §3.1-3.2, §7.1-7.2, §9, §10 S01-S08/S26, §11",
+    "docs/spec/limits.v1.json",
+    "docs/spec/08-acceptance-matrix.md §3"
+  ],
+  "dependencyGate": {
+    "dependsOn": [
+      "T14",
+      "T15"
+    ],
+    "requiredStatus": "accepted",
+    "state": "wait_for_T14_and_T15_accepted",
+    "transitiveGate": "T06 canonical contracts/DTO and migration/test harness foundations must be accepted before implementation or behavior testing.",
+    "beforeGate": "Only this synthetic fixture plan is prepared. Do not implement T16, connect PostgreSQL/services, run tests/builds, or claim database/RLS/CAS acceptance before dependencies are accepted."
+  },
+  "harnessBoundary": {
+    "syntheticInputs": "Use ephemeral synthetic identities labelled A/B, WA/WB, D1/D2. Labels are symbolic. Ciphertext-looking bytes are opaque storage canaries only, not valid AEAD, crypto vectors, or T15 evidence.",
+    "plannedHarnesses": [
+      "After T14/T15 gates, use disposable PostgreSQL with separate migration owner, trusted auth adapter, and non-owner NOSUPERUSER NOBYPASSRLS business/worker roles.",
+      "Use recording HTTP/session/device adapters, transaction barriers, controllable synthetic clock, and actual pool capped from limits.v1.json. Mocks cannot prove RLS, FK, rollback, locking, EXPLAIN, or DB acceptance.",
+      "Use T06-frozen canonical request/response encoding and strict DTOs before exact hash/UTF-8 boundary assertions."
+    ],
+    "forbidden": [
+      "Production/shared PostgreSQL or cloud services, live accounts/devices/workspaces, real credentials/user data, or user-controlled clipboard/input.",
+      "Service-role/BYPASSRLS shortcut, table-owner application role, mock-only RLS pass, or static checks reported as DB behavior acceptance.",
+      "Creating real encryption vectors, valid AEAD ciphertext, or key material.",
+      "Changing limits, lock order, epoch, receipts/idempotency, RLS, or protocol errors to make fixtures pass.",
+      "Editing shared fixtures/contracts/migrations or running tests/builds/migrations/PostgreSQL/services during preflight."
+    ],
+    "acceptanceStatus": {
+      "isolatedPostgreSQL": "NOT_RUN",
+      "RLSAndCrossTenantBehavior": "NOT_RUN",
+      "CASReceiptsAndSequenceTransactions": "NOT_RUN",
+      "HTTPAndPoolBehavior": "NOT_RUN",
+      "cryptoInterop": "NOT_RUN"
+    }
+  },
+  "syntheticActors": {
+    "accountA": "A",
+    "accountB": "B",
+    "personalWorkspaceA": "WA",
+    "personalWorkspaceB": "WB",
+    "deviceA1": "D1",
+    "deviceA2": "D2",
+    "manifestPayload": "SYNTHETIC_OPAQUE_BYTES_ONLY_NOT_A_CRYPTO_VECTOR",
+    "note": "A/B own separate personal workspaces; D1/D2 are synthetic devices of A. Canary bytes are never claimed decryptable or cryptographically valid."
+  },
+  "cases": [
+    {
+      "id": "T16-S01-TENANT-RLS",
+      "references": [
+        "T16.a-b",
+        "03 §3.1, §9, §10 S01-S02",
+        "08 §3"
+      ],
+      "harness": "isolated_postgresql_non_owner_roles_and_recording_http",
+      "executionStatus": "NOT_RUN",
+      "setup": "Seed WA/A and WB/B with synthetic entity/version/attachment metadata; D1 is authorized only for A/WA.",
+      "action": "Use A+D1 against WB and WB attachment; mismatch route/body wid both ways; run WA control.",
+      "assert": [
+        "Cross-tenant responses are non-disclosing 404 RESOURCE_NOT_FOUND; no signed URL/body metadata/global-hash leak.",
+        "Path/body wid mismatch has zero writes, receipt, ledger delta, or URL; request fields cannot change auth-derived userId.",
+        "Inspect PostgreSQL rows/effects; mocks alone do not pass."
+      ]
+    },
+    {
+      "id": "T16-S02-ROLE-SCOPE-RLS",
+      "references": [
+        "T16.a",
+        "03 §3.1, §10 S02",
+        "08 §3"
+      ],
+      "harness": "isolated_postgresql_role_catalog_and_rls",
+      "executionStatus": "NOT_RUN",
+      "setup": "Install planned migration with distinct migration owner, trusted auth adapter, business API and worker roles.",
+      "action": "Inspect roles/policies; scoped and no-scope reads/inserts, including WITH CHECK violation.",
+      "assert": [
+        "Business/worker are NOSUPERUSER NOBYPASSRLS and not protected-table owners; every business table has ENABLE/FORCE RLS.",
+        "USING/WITH CHECK scope reads zero unauthorized rows and rejects unauthorized inserts; no elevated bypass.",
+        "cn.user_id comes from trusted auth mapping, not request input."
+      ]
+    },
+    {
+      "id": "T16-S03-OPID-EXACT-RETRY",
+      "references": [
+        "T16.b",
+        "03 §3.2 receipts/log/events",
+        "03 §7.1, §9, §10 S03"
+      ],
+      "harness": "isolated_postgresql_push_receipt_and_dropped_response",
+      "executionStatus": "NOT_RUN",
+      "setup": "Prepare active D1 lease, WA epoch and create op with opId/exact T06 canonical bytes; payload is opaque non-crypto canary.",
+      "action": "Commit, drop HTTP response, retry exact bytes, then retry same opId with one canonical field changed.",
+      "assert": [
+        "Exact replay returns original result/seq; one version/change/event/outbox/seq only; receipt and mutation commit atomically.",
+        "Changed hash returns 409 IDEMPOTENCY_MISMATCH with zero new writes and no fresh opId; only committed ops are reported committed."
+      ]
+    },
+    {
+      "id": "T16-S04-REVISION-CAS-CONFLICT",
+      "references": [
+        "T16.b",
+        "03 §7.1, §9, §10 S04"
+      ],
+      "harness": "isolated_postgresql_two_device_barrier",
+      "executionStatus": "NOT_RUN",
+      "setup": "WA saved entity at r; D1/D2 prepare distinct ops at baseRevision r.",
+      "action": "Release pushes concurrently; inspect entity, versions, receipts and retained drafts.",
+      "assert": [
+        "Exactly one commits r+1; other gets terminal 409 REVISION_CONFLICT with currentRevision/currentHeadVersionId/currentSeq.",
+        "Losing draft remains; server does not overwrite head/copy ciphertext; exact retry returns stable conflict receipt."
+      ]
+    },
+    {
+      "id": "T16-S05-DELETE-CONFLICT-NO-RESURRECT",
+      "references": [
+        "T16.b",
+        "03 §3.2 entities",
+        "03 §7.1, §9, §10 S05"
+      ],
+      "harness": "isolated_postgresql_delete_update_cas",
+      "executionStatus": "NOT_RUN",
+      "setup": "Prepare independent remote-delete/offline-update and remote-update/stale-delete histories.",
+      "action": "Commit delete then deliver old update; commit update then deliver stale delete; retry and attempt old ID reuse.",
+      "assert": [
+        "Update after delete returns ITEM_DELETED without reviving ID; stale delete returns REVISION_CONFLICT and cannot silently advance base revision.",
+        "Deleted/retired ID is never reused; exact delete replay returns receipt, distinct second delete returns ITEM_DELETED."
+      ]
+    },
+    {
+      "id": "T16-S06-RELATION-IDENTITY-HISTORY",
+      "references": [
+        "T16.a-b",
+        "03 §3.2 collection_entries/entity_versions",
+        "03 §7.1, §10 S06"
+      ],
+      "harness": "isolated_postgresql_relation_constraints",
+      "executionStatus": "NOT_RUN",
+      "setup": "Create synthetic collection, saved target, relation, independent revisions and immutable old version.",
+      "action": "Race relation/body edits; unpin/repin with new relation ID; try old-version mutation and old relation ID reuse.",
+      "assert": [
+        "Relation/body revisions are independent; repin gets new ID and active relation unique key holds.",
+        "Old versions are immutable; edit creates CAS version; deleting collection/target does not show active relation or delete saved target."
+      ]
+    },
+    {
+      "id": "T16-S07-WORKSPACE-SEQ-ORDER",
+      "references": [
+        "T16.b",
+        "03 §7.1, §10 S07"
+      ],
+      "harness": "isolated_postgresql_workspace_lock_barrier",
+      "executionStatus": "NOT_RUN",
+      "setup": "Two valid WA operations; hold first after workspace lock/sequence allocation, then commit after delay or rollback while second waits.",
+      "action": "Run commit and rollback variants; inspect log, workspace.last_seq, receipts and pull.",
+      "assert": [
+        "Seq increments last_seq under workspace row lock in the same transaction; no nextval substitute.",
+        "No later commit has lower seq; rollback leaves no visible uncommitted seq/log/receipt/version; pull cannot skip committed lower seq."
+      ]
+    },
+    {
+      "id": "T16-S08-PULL-PAGE-BUDGET-REPLAY",
+      "references": [
+        "T16.c",
+        "03 §7.2, §9, §10 S08",
+        "limits.v1.json summaryPageItems/summaryPageBytes"
+      ],
+      "harness": "isolated_postgresql_pull_exact_wire_bytes",
+      "executionStatus": "NOT_RUN",
+      "setup": "Read limits 50 items/131072 bytes; seed >50 changes and a separate dataset that reaches byte cap first.",
+      "action": "Fetch fixed cursor; interrupt before client cursor commit; refetch and apply page+cursor atomically.",
+      "assert": [
+        "Each page obeys item and exact UTF-8 byte caps using T06 serializer; toSeq ends at final emitted row, only empty remainder may advance to upper.",
+        "Same cursor replay is stable; seq keyset, not OFFSET; no skipped/unreturned change and no large body inline."
+      ]
+    },
+    {
+      "id": "T16-PULL-FROZEN-UPPER-KEYSET",
+      "references": [
+        "T16.c",
+        "03 §7.2"
+      ],
+      "harness": "isolated_postgresql_repeatable_read_with_writer",
+      "executionStatus": "NOT_RUN",
+      "setup": "Seed changes through H; first pull freezes upperSeq=H; concurrent push commits H+1 before next page.",
+      "action": "Continue old traversal then start new pull.",
+      "assert": [
+        "Old traversal retains H and afterSeq<seq<=H ordering; H+1 appears only in next traversal.",
+        "Each short read is consistent; no live-head fallback, OFFSET, or connection held between page requests."
+      ]
+    },
+    {
+      "id": "T16-ACK-LEASE-BOOTSTRAP",
+      "references": [
+        "T16.c",
+        "03 §3.2 workspace_devices",
+        "03 §7.1-7.2, §9"
+      ],
+      "harness": "isolated_postgresql_ack_lease_state_machine",
+      "executionStatus": "NOT_RUN",
+      "setup": "Seed active appliedSeq q, WA lastSeq L, snapshot_required and clearly expired device; seed synthetic ready snapshot metadata only.",
+      "action": "Try same-epoch advance/regression/>L, wrong epoch, ordinary ACK while snapshot_required, valid and below-H bootstrap.",
+      "assert": [
+        "ACK monotonic same-epoch and <=lastSeq; invalid ACK has no effect; ACK represents committed local page transaction.",
+        "snapshot_required needs matching device/workspace/epoch/snapshot/H and appliedSeq>=H bootstrap; expired lease cannot push via seenSeq or blindly replay outbox."
+      ]
+    },
+    {
+      "id": "T16-COMPOSITE-FK-HEAD-TRASH",
+      "references": [
+        "T16.a",
+        "03 §3.2 entity/version/key/ref constraints"
+      ],
+      "harness": "isolated_postgresql_composite_fks",
+      "executionStatus": "NOT_RUN",
+      "setup": "Seed WA/WB entities/keys/versions; prepare cross-wid refs, mismatched keyVersion/kid and invalid head/trash pointers.",
+      "action": "Attempt invalid scoped writes and valid active-delete-retire transition.",
+      "assert": [
+        "Composite FKs reject cross-workspace combinations; (wid,keyVersion,kid) and deferred (wid,eid,versionId) pointers match as a tuple.",
+        "Active/deleted/trash/retired checks hold; core version/log/receipt/ledger/attachment rows are not broad-cascade-deleted."
+      ]
+    },
+    {
+      "id": "T16-LEDGER-RECEIPT-LOG-CONSTRAINTS",
+      "references": [
+        "T16.a-b",
+        "03 §3.2 ledgers/events/log/receipts/outbox"
+      ],
+      "harness": "isolated_postgresql_atomic_unique_constraints",
+      "executionStatus": "NOT_RUN",
+      "setup": "Seed nonnegative ledger and receipt/log; prepare duplicate (wid,source,phase), (wid,opId), and seq.",
+      "action": "Commit/replay event path; try negative counters, same-wid duplicates and same seq in WB.",
+      "assert": [
+        "One mutation produces one idempotent usage event; counters stay nonnegative; scoped unique constraints reject duplicates.",
+        "Same seq in WB is allowed; a constraint failure rolls back version/seq/receipt/ledger/outbox together."
+      ]
+    },
+    {
+      "id": "T16-DECIMAL-BIGINT-BOUNDARIES",
+      "references": [
+        "T16.a-c",
+        "03 §2.1, §9, §10 S26"
+      ],
+      "harness": "frozen_decimal_contract_and_postgresql_bigint",
+      "executionStatus": "NOT_RUN",
+      "setup": "Use Decimal strings 0, 1, 2^53-1, 2^53, signed BIGINT max/max+1 and invalid syntax per field.",
+      "action": "Round-trip epoch/seq/revision/appliedSeq/bytes/conflict details/limitBytes through DTO, BIGINT and client parse.",
+      "assert": [
+        "Values above 2^53 retain digits without Number rounding; invalid or >BIGINT returns 400 INVALID_DECIMAL/INVALID_DTO with zero mutation.",
+        "Respect field-specific positive/nonnegative constraints; no crypto vector."
+      ]
+    },
+    {
+      "id": "T16-PUSH-BATCH-COUNT-UTF8",
+      "references": [
+        "T16.b",
+        "03 §7.1, §9",
+        "limits.v1.json syncBatchOperations/syncBatchBytes"
+      ],
+      "harness": "frozen_contract_serializer_and_isolated_postgresql",
+      "executionStatus": "NOT_RUN",
+      "setup": "Read limits 50 operations/1048576 UTF-8 bytes; use multibyte synthetic fields and frozen T06 serializer.",
+      "action": "Submit at count/byte boundary, 51 operations, byte cap and cap+1.",
+      "assert": [
+        "Both limits derive from sole config; over limit returns 413 REQUEST_TOO_LARGE and zero writes/receipts/seq/version/ledger changes.",
+        "At-limit batch handles each op independently with per-op receipts; no batch-wide atomicity promise."
+      ]
+    },
+    {
+      "id": "T16-DB-POOL-SCOPE-REUSE",
+      "references": [
+        "T16.a-c",
+        "03 §3.1, §11",
+        "limits.v1.json serverDatabasePoolPerProcess"
+      ],
+      "harness": "real_server_pool_with_isolated_postgresql",
+      "executionStatus": "NOT_RUN",
+      "setup": "Read cap=10; use actual pool, WA/A and WB/B, plus failure after setting local scope.",
+      "action": "Exceed request concurrency, force rollback, reuse physical connections across A/B/no-scope.",
+      "assert": [
+        "At most 10 DB connections per process; frontend concurrency does not expand pool; scope never leaks on commit/rollback/reuse.",
+        "Validate session/device and establish local scope/timeouts before protected queries/URLs/ledger; mock pool insufficient."
+      ]
+    },
+    {
+      "id": "T16-WORKSPACE-RATE-LIMIT",
+      "references": [
+        "T16.b",
+        "03 §7.1, §9, §11",
+        "limits.v1.json 600/min and 90-day receipt/lease"
+      ],
+      "harness": "isolated_postgresql_limiter_controllable_clock",
+      "executionStatus": "NOT_RUN",
+      "setup": "D1/D2 share WA; WB control; read 600 ops/min and 90-day receipt retention/offline lease.",
+      "action": "Commit 600 WA unique ops across devices; try 601st new op, exact replay and WB op.",
+      "assert": [
+        "Limit is workspace-wide; 601st returns 429 RATE_LIMITED+Retry-After with no mutation; exact receipt replay consumes no new slot.",
+        "WB budget independent; receipt retention not shorter than active lease; missing post-expiry receipt does not prove failure."
+      ]
+    },
+    {
+      "id": "T16-DB-TIMEOUTS",
+      "references": [
+        "T16.b-c",
+        "03 §3.1, §7.1, §11",
+        "limits.v1.json statementTimeoutMs/lockTimeoutMs"
+      ],
+      "harness": "isolated_postgresql_lock_and_statement_timeout",
+      "executionStatus": "NOT_RUN",
+      "setup": "Read 2000ms statement/250ms lock limits; one session holds WA lock while another request waits.",
+      "action": "Measure blocked request and over-budget statement, then inspect fresh-transaction state.",
+      "assert": [
+        "Transaction-local limits cannot be lengthened by request; errors rollback before pool return and leave no partial effects.",
+        "Timeout is retryable DB_BUSY/STORAGE_UNAVAILABLE as applicable; EXPLAIN/perf timing remain separate NOT_RUN gates."
+      ]
+    },
+    {
+      "id": "T16-HTTP-ERROR-MAPPING",
+      "references": [
+        "T16.b-c",
+        "03 §9"
+      ],
+      "harness": "recording_http_adapter_over_isolated_database",
+      "executionStatus": "NOT_RUN",
+      "setup": "Prepare invalid DTO/Decimal, unauthorized object, CAS, idem, epoch/cursor/lease, oversized batch, rate and DB failure.",
+      "action": "Capture status, ApiErrorV1, retryable, Retry-After, requestId and durable effects.",
+      "assert": [
+        "Use frozen 400/404/409/413/429/503 mappings; only transient network/storage/rate errors are retryable; disclose no SQL/tenant existence/ciphertext/credentials.",
+        "Unspecified SQL constraint error details remain open, not invented."
+      ]
+    },
+    {
+      "id": "T16-PULL-SINGLE-ROW-OVER-BUDGET",
+      "references": [
+        "T16.c",
+        "03 §7.2",
+        "limits.v1.json summaryPageBytes"
+      ],
+      "harness": "gated_fixture_policy_not_frozen",
+      "executionStatus": "NOT_RUN",
+      "setup": "One synthetic summary alone exceeds 131072 bytes after serializer freeze.",
+      "action": "Do not assert error/cursor/skip/retry behavior until policy is specified.",
+      "assert": [
+        "Does not count toward acceptance until spec/contracts define policy.",
+        "toSeq never passes an unreturned change."
+      ],
+      "fixtureStatus": "OPEN_QUESTION"
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "T16-OQ-01",
+      "question": "T06 must freeze canonical PushOperationV1 bytes/hash and JSON serializer before exact idempotency/byte boundaries execute.",
+      "impact": "Independent encoders can disagree on request hash or UTF-8 size."
+    },
+    {
+      "id": "T16-OQ-02",
+      "question": "How does pull report a first summary that cannot fit alone within summaryPageBytes?",
+      "impact": "No invented error/cursor/skip behavior; gated fixture remains OPEN_QUESTION."
+    },
+    {
+      "id": "T16-OQ-03",
+      "question": "Rate-window algorithm/boundaries and Retry-After representation are unspecified.",
+      "impact": "Assert workspace scope/no-write/Retry-After presence only; do not assume fixed/sliding algorithm or exact duration."
+    },
+    {
+      "id": "T16-OQ-04",
+      "question": "Lease renewal duration and equality-at-expiry semantics are not fully specified.",
+      "impact": "Test clearly active/expired only; do not infer grace period or renewal duration."
+    },
+    {
+      "id": "T16-OQ-05",
+      "question": "90-day receipt/lease cleanup timing and calendar-day versus duration semantics are unspecified.",
+      "impact": "Assert retention is not shorter than lease; avoid exact cleanup boundary."
+    },
+    {
+      "id": "T16-OQ-06",
+      "question": "Exact external errors for every SQL CHECK/FK/unique failure are not enumerated in §9.",
+      "impact": "Assert reject/rollback/no leak and only frozen mappings."
+    }
+  ],
+  "plannedCommands": [
+    {
+      "command": "pnpm --filter @clipnest/server test sync",
+      "status": "NOT_RUN",
+      "gate": "Wait for T14/T15 accepted; real isolated PostgreSQL required."
+    },
+    {
+      "command": "pnpm test:integration -- --suite sync",
+      "status": "NOT_RUN",
+      "gate": "Wait for T14/T15 accepted; disposable PostgreSQL/non-owner roles required."
+    }
+  ],
+  "acceptanceGates": {
+    "fixturePlanExecution": "NOT_RUN",
+    "realMigrationAndPostgreSQL": "NOT_RUN",
+    "RLSAndCrossTenantAcceptance": "NOT_RUN",
+    "CASReceiptSeqAndPull": "NOT_RUN",
+    "BigintPoolRateAndTimeoutBudgets": "NOT_RUN",
+    "S01ThroughS08": "NOT_RUN",
+    "independentAdversarialReview": "NOT_RUN"
+  }
+}

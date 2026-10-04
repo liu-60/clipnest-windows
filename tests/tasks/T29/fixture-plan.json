@@ -1,0 +1,2274 @@
+{
+  "schemaVersion": 1,
+  "task": "T29",
+  "status": "not_started",
+  "executionStatus": "NOT_RUN",
+  "planType": "synthetic_fixture_interface_planning_only",
+  "progressSnapshotDate": "2026-10-04",
+  "dependencies": [
+    {
+      "task": "T08",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false,
+      "executionStatus": "NOT_RUN"
+    },
+    {
+      "task": "T19",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false,
+      "executionStatus": "NOT_RUN"
+    },
+    {
+      "task": "T25",
+      "requiredStatus": "accepted",
+      "observedStatus": "not_started",
+      "accepted": false,
+      "executionStatus": "NOT_RUN"
+    }
+  ],
+  "additionalPrerequisiteSnapshot": [
+    {
+      "task": "T07",
+      "relationship": "localDBKey/SQLCipher and durable local.totalBytes accounting needed by profile import/restore",
+      "observedStatus": "not_started",
+      "accepted": false,
+      "executionStatus": "NOT_RUN"
+    },
+    {
+      "task": "T16",
+      "relationship": "canonical server delete/recovery worker, ledger and epoch interfaces are part of the unaccepted T19 dependency chain",
+      "observedStatus": "not_started",
+      "accepted": false,
+      "executionStatus": "NOT_RUN"
+    },
+    {
+      "task": "T18",
+      "relationship": "selected S3 provider's immutable object-version and physical delete-confirmation contract is part of the unaccepted T19 dependency chain",
+      "observedStatus": "not_started",
+      "accepted": false,
+      "executionStatus": "NOT_RUN"
+    }
+  ],
+  "dependencyInterpretation": "T08/T19/T25 are direct T29 dependencies and none is accepted. T07/T16/T18 additionally remain unaccepted prerequisites for local byte/key semantics and server/provider interfaces. This file plans synthetic observations only; no backend, fake-success adapter, behavior, command, database, object store, profile, account, user data, deletion, import, export, or restore was exercised.",
+  "source": {
+    "taskCard": "docs/spec/tasks/T29.md",
+    "specifications": [
+      "docs/spec/06-model-runbook.md §1-§3/§5-§8",
+      "docs/spec/03-data-sync-and-security.md §4.2",
+      "docs/spec/03-data-sync-and-security.md §2.2/§3.1/§5.5/§7.3/§8.2/§8.3/§9/§10 S25/§11",
+      "docs/spec/07-release-and-commercial.md §6",
+      "docs/spec/08-acceptance-matrix.md §3/§5/§6",
+      "docs/spec/limits.v1.json cloud.trashDays/cloud.maxRetiredIdsPerWorkspace/cloud.maxStoredObjectsPerWorkspace",
+      "docs/progress.json#/tasks/T07",
+      "docs/progress.json#/tasks/T08",
+      "docs/progress.json#/tasks/T16",
+      "docs/progress.json#/tasks/T18",
+      "docs/progress.json#/tasks/T19",
+      "docs/progress.json#/tasks/T25",
+      "docs/progress.json#/tasks/T29",
+      "tests/tasks/T08/fixture-plan.json",
+      "tests/tasks/T19/fixture-plan.json",
+      "tests/tasks/T25/fixture-plan.json"
+    ],
+    "repositoryInstructions": {
+      "path": "AGENTS.md",
+      "status": "NOT_FOUND",
+      "searched": [
+        "D:\\ClipNest-work\\v2",
+        "D:\\ClipNest-work",
+        "D:\\ClipNest"
+      ],
+      "note": "未发现仓库/父级AGENTS.md；遵循用户本轮提供的AGENTS.md要求及任务卡/06中的限制，没有推断额外规则。"
+    },
+    "reviewedTaskCardSections": [
+      "依赖",
+      "允许修改",
+      "子任务顺序",
+      "完成标准与行为测试",
+      "验证命令",
+      "回滚与交付"
+    ],
+    "progressStatuses": {
+      "T07": "not_started",
+      "T08": "not_started",
+      "T16": "not_started",
+      "T18": "not_started",
+      "T19": "not_started",
+      "T25": "not_started",
+      "T29": "not_started"
+    }
+  },
+  "repositorySnapshot": {
+    "inspectedAt": "2026-10-04",
+    "relevantProductionPaths": {
+      "crates/core/src/export": "NOT_FOUND",
+      "apps/server/src/modules/deletion": "NOT_FOUND",
+      "apps/server/src/worker/deletion": "NOT_FOUND",
+      "apps/mobile/src/features/data": "NOT_FOUND",
+      "apps/web/src/features/data": "NOT_FOUND",
+      "fixtures/recovery": "NOT_FOUND"
+    },
+    "commandReadiness": {
+      "cargo test -p clipnest-core export": "NOT_RUN; crates/core currently has no src/export path or export tests observed.",
+      "pnpm test:integration -- --suite deletion-restore": "NOT_RUN; the current root package.json does not define test:integration."
+    },
+    "note": "代码路径/命令缺失作为实现前置记录，不通过创建假服务或假成功测试绕过。"
+  },
+  "scope": {
+    "allowedNow": [
+      "Define synthetic, externally observable export/import/trash-restore/account-delete/S3-confirmation/isolated-recovery fixtures and their source mappings.",
+      "Record error, cancellation, capacity and permission boundaries while leaving unfrozen terminal/UI/API semantics OPEN_QUESTION.",
+      "Separate planned synthetic integration gates from provider-version and production-equivalent operational restore gates."
+    ],
+    "blockedUntilDependenciesAccepted": [
+      "Any production implementation or behavior execution for T29.",
+      "Any test/build/database/S3/provider/account/profile/filesystem operation representing a real import, export, deletion or restore.",
+      "Using mock/fake-success backends as provider or operational recovery acceptance."
+    ],
+    "excluded": [
+      "Real user content, live profile/key/vault, production account, production credentials, production bucket or backup.",
+      "Writing fixtures/recovery, production code, docs/progress.json or files outside tests/tasks/T29/** and docs/evidence/T29/**.",
+      "Selecting a portable archive DTO/checksum algorithm, legal retention period, provider behavior, deletion-job API, or policy not frozen by the referenced specifications.",
+      "Claiming T29/S25/S27 accepted from plan presence or synthetic assertions."
+    ]
+  },
+  "interfacePlanning": {
+    "portableExport": "User explicitly chooses a portable plaintext data export with a visible sensitive-data warning. The export is bounded/streamed, carries a versioned manifest/checksum and source originals as required by a later frozen inclusion contract; only complete output may be marked complete. No key goes in the archive. Exact format/checksum/inclusion/limits are OPEN_QUESTION.",
+    "portableImport": "Import into a separate profile and new SQLCipher database protected with a new localDBKey; the localDBKey is distinct from the workspace-derived cloud content AEAD key and recovery key. Assign fresh identity IDs and re-encrypt locally. If the user later explicitly enables cloud sync, cloud manifests/blobs use the workspace-derived content key with a fresh nonce/AAD for the new IDs; never use or export localDBKey as the cloud key. Preserve the old profile until the new profile validates. Import does not automatically enable cloud upload or inherit a revoked credential.",
+    "trashRestore": "Restore before the configured 30-day trash expiry as a new identity/version and re-encrypt cloud content with the workspace-derived content AEAD key using a fresh nonce/AAD for the new identities; localDBKey protects only the local SQLCipher database and is never a cloud content key. Rebuild collection references through a new-ID map and account for new identities. Do not reactivate the old ID or discard its fence. Exact bulk atomicity/capacity and expired-boundary response remain OPEN_QUESTION.",
+    "accountDeletion": "Require recent account verification; stop new writes/revoke device sessions; persist a queryable deletion job; report provider cancellation, data erasure and legal/financial/backup retention as separate outcomes. Job DTO, idempotency, retry and terminal states remain OPEN_QUESTION.",
+    "physicalObjectDeletion": "Keep eligible objects charged while deleting. A delete marker, timeout or failed call alone does not confirm physical VersionId removal. Only the frozen provider's evidence for every required physical version may trigger the once-only corresponding ledger decrement.",
+    "disasterRecovery": "Restore PG and object copies only to an isolated target. Reconcile physical versions/ledger and durable post-backup deletion fences while reads/writes/downloads remain closed; incomplete evidence means remain isolated. Only after complete reconciliation apply required deletions, advance epoch and require fresh snapshot/bootstrap. Marker/evidence encoding and canonical worker interface remain OPEN_QUESTION."
+  },
+  "coverageMap": {
+    "acceptanceCriteria": [
+      {
+        "id": "T29-A01",
+        "statement": "可移植明文导出必须由用户明确选择并显示敏感提醒，不能导出密钥或把服务器说成可解密。",
+        "fixtureIds": [
+          "T29-F01",
+          "T29-F02",
+          "T29-F03",
+          "T29-F10"
+        ],
+        "status": "NOT_RUN"
+      },
+      {
+        "id": "T29-A02",
+        "statement": "有界、可校验且完整后才标完成；对明确纳入的所选资料包含原件/原始附件，不能用缩略图或有损重编码替代。",
+        "fixtureIds": [
+          "T29-F03",
+          "T29-F04",
+          "T29-F05",
+          "T29-F06",
+          "T29-F07",
+          "T29-F08",
+          "T29-F50"
+        ],
+        "status": "NOT_RUN"
+      },
+      {
+        "id": "T29-A03",
+        "statement": "错误、取消、权限、key、磁盘/容量、provider或恢复中断不能造成源数据丢失、提前释放或假成功。",
+        "fixtureIds": [
+          "T29-F04",
+          "T29-F06",
+          "T29-F07",
+          "T29-F08",
+          "T29-F09",
+          "T29-F14",
+          "T29-F15",
+          "T29-F16",
+          "T29-F17",
+          "T29-F21",
+          "T29-F24",
+          "T29-F25",
+          "T29-F26",
+          "T29-F28",
+          "T29-F32",
+          "T29-F35",
+          "T29-F38",
+          "T29-F40",
+          "T29-F41",
+          "T29-F44",
+          "T29-F45",
+          "T29-F46",
+          "T29-F50"
+        ],
+        "status": "NOT_RUN"
+      },
+      {
+        "id": "T29-A04",
+        "statement": "导入到独立新profile/database，以新localDBKey与新ID重新加密，保留旧库证据。",
+        "fixtureIds": [
+          "T29-F11",
+          "T29-F12",
+          "T29-F14",
+          "T29-F21",
+          "T29-F29"
+        ],
+        "status": "NOT_RUN"
+      },
+      {
+        "id": "T29-A05",
+        "statement": "映射恢复身份及collection关系，检查新建身份预算；不自动启用同步或静默覆盖。",
+        "fixtureIds": [
+          "T29-F11",
+          "T29-F13",
+          "T29-F18",
+          "T29-F19",
+          "T29-F20",
+          "T29-F22",
+          "T29-F23"
+        ],
+        "status": "NOT_RUN"
+      },
+      {
+        "id": "T29-A06",
+        "statement": "trash窗口内恢复生成新ID/version并重新加密；过期/预算/key失败不复用旧ID。",
+        "fixtureIds": [
+          "T29-F22",
+          "T29-F23",
+          "T29-F24",
+          "T29-F25",
+          "T29-F26",
+          "T29-F27",
+          "T29-F29"
+        ],
+        "status": "NOT_RUN"
+      },
+      {
+        "id": "T29-A07",
+        "statement": "明确云已提交、local-only、pending outbox/draft各自可恢复边界。",
+        "fixtureIds": [
+          "T29-F02",
+          "T29-F13",
+          "T29-F27",
+          "T29-F28",
+          "T29-F29",
+          "T29-F48"
+        ],
+        "status": "NOT_RUN"
+      },
+      {
+        "id": "T29-A08",
+        "statement": "账号删除先近期验证/停写/撤销会话，再创建可查durable job；失败/重试不假报完成。",
+        "fixtureIds": [
+          "T29-F30",
+          "T29-F31",
+          "T29-F32",
+          "T29-F33",
+          "T29-F34",
+          "T29-F35",
+          "T29-F36"
+        ],
+        "status": "NOT_RUN"
+      },
+      {
+        "id": "T29-A09",
+        "statement": "provider合同取消、个人资料删除、法定/财务留存，以及备份保留状态/副本清除状态分别表述；具体保留期限保持OPEN_QUESTION。",
+        "fixtureIds": [
+          "T29-F34",
+          "T29-F35"
+        ],
+        "status": "NOT_RUN"
+      },
+      {
+        "id": "T29-A10",
+        "statement": "S3每个需删的物理VersionId被确认后才释放对应ledger；marker/失败不算确认，重复扣减零delta。",
+        "fixtureIds": [
+          "T29-F33",
+          "T29-F35",
+          "T29-F37",
+          "T29-F38",
+          "T29-F39",
+          "T29-F40",
+          "T29-F41",
+          "T29-F42",
+          "T29-F43",
+          "T29-F45"
+        ],
+        "status": "NOT_RUN"
+      },
+      {
+        "id": "T29-A11",
+        "statement": "PG+对象恢复先隔离，核对完整删除证据/账本/物理版本，再推进epoch并fresh-bootstrap。",
+        "fixtureIds": [
+          "T29-F42",
+          "T29-F43",
+          "T29-F44",
+          "T29-F45",
+          "T29-F46",
+          "T29-F47",
+          "T29-F48"
+        ],
+        "status": "NOT_RUN"
+      },
+      {
+        "id": "T29-A12",
+        "statement": "导入/删除/对象清理/恢复都遵循用户与workspace权限，不泄露跨workspace对象存在性。",
+        "fixtureIds": [
+          "T29-F08",
+          "T29-F16",
+          "T29-F36",
+          "T29-F40",
+          "T29-F41",
+          "T29-F48"
+        ],
+        "status": "NOT_RUN"
+      },
+      {
+        "id": "T29-A13",
+        "statement": "使用冻结容量和trash/retired-id约束；满盘/满预算不破坏既有资料，删除不因栅栏预算失败。",
+        "fixtureIds": [
+          "T29-F05",
+          "T29-F07",
+          "T29-F17",
+          "T29-F20",
+          "T29-F22",
+          "T29-F24",
+          "T29-F25",
+          "T29-F37",
+          "T29-F39",
+          "T29-F43",
+          "T29-F45"
+        ],
+        "status": "NOT_RUN"
+      },
+      {
+        "id": "T29-A14",
+        "statement": "telemetry/crash/error/recovery证据不含明文、凭证、密钥、签名或未脱敏SQL参数。",
+        "fixtureIds": [
+          "T29-F10",
+          "T29-F49"
+        ],
+        "status": "NOT_RUN"
+      }
+    ],
+    "specScenarioMap": [
+      {
+        "scenario": "03 §10 S25 synthetic recovery core already covered by T19/T25; T29 scope is production-equivalent operational PG+object recovery and deletion-evidence runbook.",
+        "fixtureIds": [
+          "T29-F42",
+          "T29-F43",
+          "T29-F44",
+          "T29-F45",
+          "T29-F46",
+          "T29-F47",
+          "T29-F48"
+        ],
+        "status": "NOT_RUN",
+        "scopeNote": "Plan coverage only. It does not replace T19/T25 synthetic core acceptance or actual isolated operational rehearsal."
+      },
+      {
+        "scenario": "03 §10 S27: T29 closes portable import/export and local-only restore boundaries; T29 does not claim the already-owned T07/T22/T23 native vault/reinstall behavior.",
+        "fixtureIds": [
+          "T29-F11",
+          "T29-F12",
+          "T29-F13",
+          "T29-F21",
+          "T29-F27",
+          "T29-F28",
+          "T29-F29"
+        ],
+        "status": "NOT_RUN",
+        "scopeNote": "All filesystem/SQLCipher/key/device behavior remains NOT_RUN; T29 plan only states the boundary."
+      },
+      {
+        "scenario": "T25-D02 / T25-D03 deferred operations and portable restore follow-up.",
+        "fixtureIds": [
+          "T29-F22",
+          "T29-F29",
+          "T29-F42",
+          "T29-F47"
+        ],
+        "status": "NOT_RUN",
+        "scopeNote": "The deferred coverage is planned here but remains unexecuted."
+      }
+    ]
+  },
+  "fixtures": [
+    {
+      "id": "T29-F01",
+      "subcard": "a",
+      "slice": "export",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成资料库含已选与未选记录、附件及合成敏感 canary；用户没有提供真实资料。",
+      "plannedAction": "规划一次由用户明确发起的资料导出并检查可见提醒与输出边界。",
+      "observableAssertions": [
+        "只有明确用户选择才进入明文导出；页面/操作显示敏感内容提醒。",
+        "导出不把 localDBKey、cloud/recovery key、device credential 或其他密钥材料写入归档。",
+        "未选记录不因默认全选或后台触发而进入输出；默认选择策略与最终文案保持 OPEN_QUESTION。"
+      ],
+      "acceptanceIds": [
+        "T29-A01"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/a; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ01",
+        "T29-OQ02"
+      ]
+    },
+    {
+      "id": "T29-F02",
+      "subcard": "a",
+      "slice": "export",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成个人云密文对象与客户端已解锁的合成资料并存；不联系服务器。",
+      "plannedAction": "规划对用户明确请求的导出边界做来源分类。",
+      "observableAssertions": [
+        "云端服务只提供密文及必要元数据；服务器不导出或解密个人正文/附件。",
+        "云已提交资料、local-only、pending outbox/draft 的包含范围按用户明确选择及冻结的导出清单报告，不声称CNREC1可恢复local-only/pending。",
+        "服务端导出不能被描述成“全部已解密历史”。"
+      ],
+      "acceptanceIds": [
+        "T29-A01",
+        "T29-A07"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/a; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ02"
+      ]
+    },
+    {
+      "id": "T29-F03",
+      "subcard": "a",
+      "slice": "export",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成归档由小型manifest、若干记录和原始附件字节组成，附带拟议格式版本/checksum 字段；字段编码只是fixture数据，不冻结协议。",
+      "plannedAction": "规划流式写出后按同一冻结格式读回并核对记录数、附件字节及校验结果。",
+      "observableAssertions": [
+        "只有完整流结束且所有被纳入附件与记录均匹配后，结果才能标为完整。",
+        "格式版本、manifest及checksum必须可供导入端校验；当前fixture不选定规范序列化、checksum算法或具体字段名。",
+        "格式不得把key写入zip，也不得将checksum表述为来源认证。",
+        "所选媒体必须导出原件字节；缩略图、预览或有损重编码不能冒充原件。原件纳入范围仍服从已冻结的用户选择清单。"
+      ],
+      "acceptanceIds": [
+        "T29-A02"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/a; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ01",
+        "T29-OQ02"
+      ]
+    },
+    {
+      "id": "T29-F04",
+      "subcard": "a",
+      "slice": "export",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成完整归档的记录字节或附件被截断/篡改，manifest checksum 与实际字节不一致。",
+      "plannedAction": "规划导入前的完整性失败路径并观察归档是否被标为成功。",
+      "observableAssertions": [
+        "不匹配或截断归档不能作为完整有效导出/导入成功呈现。",
+        "原资料与既有数据库保持不变；损坏文件的清理和部分导入策略不在fixture中臆定。",
+        "返回码/用户文案在未冻结时记为OPEN_QUESTION。"
+      ],
+      "acceptanceIds": [
+        "T29-A02",
+        "T29-A03"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/a; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ01",
+        "T29-OQ05"
+      ]
+    },
+    {
+      "id": "T29-F05",
+      "subcard": "a",
+      "slice": "export",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成附件大小跨越若干流块，目标磁盘容量由合成适配器报告；不创建真实大文件。",
+      "plannedAction": "规划采用有界流处理原件/附件并观察临时内存、暂存文件和输出完成标记。",
+      "observableAssertions": [
+        "实现应按有界流处理，不把完整资料或附件聚合进无界内存缓冲。",
+        "不得在超出冻结导出/磁盘预算时静默丢附件或写出完整标记。",
+        "当前规范未冻结导出内存、分块、最大字节及磁盘预留阈值；本fixture不伪造数值门槛。"
+      ],
+      "acceptanceIds": [
+        "T29-A02",
+        "T29-A13"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/a; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ03"
+      ]
+    },
+    {
+      "id": "T29-F06",
+      "subcard": "a",
+      "slice": "export",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成导出在归档写到中途时收到用户取消；原库仍可读。",
+      "plannedAction": "规划取消发生在输出流期间，分别观察输出完成标志、原记录和遗留临时产物。",
+      "observableAssertions": [
+        "取消不能报告导出完整，原记录/附件不变。",
+        "部分目标文件的删除/保留、取消响应、可恢复进度和状态映射未冻结，均记OPEN_QUESTION，不断言具体终态。"
+      ],
+      "acceptanceIds": [
+        "T29-A03"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/a; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ04"
+      ]
+    },
+    {
+      "id": "T29-F07",
+      "subcard": "a",
+      "slice": "export",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成目标盘在最后一个流块前返回空间耗尽；原资料有独立快照。",
+      "plannedAction": "规划导出遇满盘，比较完成标记与原库快照。",
+      "observableAssertions": [
+        "满盘时不能标记完整，也不能删除或修改源资料。",
+        "空间预检与竞态、部分文件清理及精确错误码/重试文案仍OPEN_QUESTION。",
+        "容量试验只用合成预算，不使用真实用户目录。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A13"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/a; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ03",
+        "T29-OQ04",
+        "T29-OQ18"
+      ]
+    },
+    {
+      "id": "T29-F08",
+      "subcard": "a",
+      "slice": "export",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成目标路径由本地适配器返回拒绝写入/无目录权限。",
+      "plannedAction": "规划导出权限拒绝并检查源资料及完成标志。",
+      "observableAssertions": [
+        "不把权限拒绝报告为成功；源资料不变。",
+        "操作系统具体错误到领域错误/文案映射保持OPEN_QUESTION。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A12"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/a; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ18"
+      ]
+    },
+    {
+      "id": "T29-F09",
+      "subcard": "a",
+      "slice": "export",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成资料库已存在但本机vault暂不可用或localDBKey缺失。",
+      "plannedAction": "规划请求包含本机资料的导出，检查是否会创建空库、替换key或假称导出完整。",
+      "observableAssertions": [
+        "不能覆盖/删除原库，也不能以新key创建空库来替代原资料。",
+        "不能从账号密码重置推导localDBKey；无法解锁时只能给出保留证据/可移植恢复入口，具体错误文案OPEN_QUESTION。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A07"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/a; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ06",
+        "T29-OQ07"
+      ]
+    },
+    {
+      "id": "T29-F10",
+      "subcard": "a",
+      "slice": "export",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成已选与未选记录中嵌入合成正文、标题、URL、图片、token、key canary。",
+      "plannedAction": "规划检查归档清单与结构化操作日志的敏感字段边界，只统计匹配类别。",
+      "observableAssertions": [
+        "明确选择外的资料不进入归档；key/token不得出现在归档。",
+        "错误/遥测/崩溃信息不得含正文、URL、标题、来源、图片或密钥；证据仅报告类别和命中计数，不保留canary原文。"
+      ],
+      "acceptanceIds": [
+        "T29-A01",
+        "T29-A02",
+        "T29-A14"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/a; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ02"
+      ]
+    },
+    {
+      "id": "T29-F11",
+      "subcard": "b",
+      "slice": "import",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "一个格式有效的合成可移植归档含合成文本、原始附件、集合及关系。",
+      "plannedAction": "规划导入到单独新profile、新目录和新本地数据库。",
+      "observableAssertions": [
+        "导入目标生成新的localDbId/localDBKey及独立SQLCipher库，不复用/覆盖源库。",
+        "资料在目标本地key下重新加密；导入成功本身不打开云同步或上传。",
+        "新库完成与原profile隔离验证前不自动切换/覆盖原库。"
+      ],
+      "acceptanceIds": [
+        "T29-A04",
+        "T29-A05"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/08-acceptance-matrix.md §3"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ02",
+        "T29-OQ07",
+        "T29-OQ08"
+      ]
+    },
+    {
+      "id": "T29-F12",
+      "subcard": "b",
+      "slice": "import",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成归档携带源entity/version/attachment标识与校验过的内容字节，不提供可重用的密钥。",
+      "plannedAction": "规划导入身份分配和读回检查。",
+      "observableAssertions": [
+        "导入创建新的localDBKey并用于新SQLCipher本地库；localDBKey与workspace root派生的云内容AEAD key、cloud recovery key相互独立。",
+        "导入的entityId/versionId/attachmentId使用全新身份；源ID不在目标作为原ID复活。",
+        "归档内容写入新本地库时按新localDBKey重新加密，不能复制旧密文/AAD并只改标识，也不能伪造服务端替客户端重加密。",
+        "只有用户之后明确选择云同步时，云manifest/blob才使用workspace派生内容key及针对新身份生成的新nonce/AAD；不得把localDBKey写入或用作云内容密钥。此fixture不启动上传。",
+        "身份随机生成机制由冻结客户端接口提供；本fixture不制造真实密钥。"
+      ],
+      "acceptanceIds": [
+        "T29-A04",
+        "T29-A05"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/08-acceptance-matrix.md §3",
+        "docs/spec/03-data-sync-and-security.md §4.2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ07",
+        "T29-OQ08"
+      ]
+    },
+    {
+      "id": "T29-F13",
+      "subcard": "b",
+      "slice": "import",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成可移植归档混有曾云提交及local-only资料；另有独立pending outbox/draft标记作为不默认输入的源状态。",
+      "plannedAction": "规划导入后检查新资料同步scope、outbox和draft。",
+      "observableAssertions": [
+        "仅导入归档中明确包含的内容；导入资料不自动开始上传，不继承已撤销device credential。",
+        "账号/CNREC1云恢复只覆盖已cloud-committed资料，不能把local-only、未提交outbox或draft伪报成云恢复结果。",
+        "同步scope、显式重新开启上传的用户确认步骤必须保持可见；未冻结接口保持OPEN_QUESTION。"
+      ],
+      "acceptanceIds": [
+        "T29-A05",
+        "T29-A07"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/08-acceptance-matrix.md §3"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ02",
+        "T29-OQ10"
+      ]
+    },
+    {
+      "id": "T29-F14",
+      "subcard": "b",
+      "slice": "import",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成输入分别为未知格式版本、manifest缺失、checksum错误和附件截断。",
+      "plannedAction": "规划导入前校验并观察目标profile与源库状态。",
+      "observableAssertions": [
+        "无法通过冻结格式校验的输入不得呈现为完整导入。",
+        "源库不变且新目标库不能被发布为成功恢复状态。",
+        "未知版本、校验顺序、失败归档处置和精确错误码保持OPEN_QUESTION。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A04"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/08-acceptance-matrix.md §3"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ01",
+        "T29-OQ05"
+      ]
+    },
+    {
+      "id": "T29-F15",
+      "subcard": "b",
+      "slice": "import",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成导入在新库若干合成记录之后收到取消信号，旧profile独立存在。",
+      "plannedAction": "规划中途取消、进程中断后重新打开两个profile，记录行数及状态但不执行。",
+      "observableAssertions": [
+        "不得报告完整导入或覆盖源profile。",
+        "T08已将导入取消及partial-commit政策列为OPEN_QUESTION；fixture不推断回滚、保留部分行或重试语义，必须等产品/协议冻结。"
+      ],
+      "acceptanceIds": [
+        "T29-A03"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/08-acceptance-matrix.md §3"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ04",
+        "T29-OQ05"
+      ]
+    },
+    {
+      "id": "T29-F16",
+      "subcard": "b",
+      "slice": "import",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成目标profile目录写权限拒绝，source archive只读。",
+      "plannedAction": "规划导入受权限拒绝时检查源归档及现有profile。",
+      "observableAssertions": [
+        "不能因拒绝权限覆盖现有数据库或报告成功。",
+        "平台权限到错误码和用户文案仍OPEN_QUESTION；测试只使用合成适配器。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A12"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/08-acceptance-matrix.md §3"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ18"
+      ]
+    },
+    {
+      "id": "T29-F17",
+      "subcard": "b",
+      "slice": "import",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成T07预算适配器给出当前占用、导入增量和冻结预算边界；数值由接受后的T07配置供给，当前不填造数值。",
+      "plannedAction": "分别规划恰好预算内与超预算导入，并检查已存在收藏、draft和源归档。",
+      "observableAssertions": [
+        "只按冻结local.totalBytes算法和唯一limits配置判断；未接受T07的预算公式前不声明数字容量通过。",
+        "超预算不得突破预算或静默淘汰既有收藏/待同步资料；local budget failure不得被伪装成功。",
+        "精确导入预留/部分事务结果和本地错误展示仍OPEN_QUESTION。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A13"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/08-acceptance-matrix.md §3"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ08",
+        "T29-OQ18"
+      ]
+    },
+    {
+      "id": "T29-F18",
+      "subcard": "b",
+      "slice": "import",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成两个源集合、多个saved及collection_entry关系均有不同旧ID，含一条deleted端点关系。",
+      "plannedAction": "规划构建旧到新ID映射并核对目标的关系端点。",
+      "observableAssertions": [
+        "被导入的collection、saved及有效关系分别使用新ID，关系仅指向新集合/目标。",
+        "源端点已删除的关系不得让目标显示为有效关系；collection_entry不是saved正文或附件。",
+        "集合顺序/被删除端点如何呈现等未冻结语义不增加断言。"
+      ],
+      "acceptanceIds": [
+        "T29-A05",
+        "T29-A12"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/08-acceptance-matrix.md §3"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ07"
+      ]
+    },
+    {
+      "id": "T29-F19",
+      "subcard": "b",
+      "slice": "import",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成两份有效导出具有重复源entityId但内容不同，另有相同归档的重放输入。",
+      "plannedAction": "规划各分支以确认ID remap而不混并不同记录。",
+      "observableAssertions": [
+        "T08已指出同一导出中冲突重复ID没有冻结winner政策；不得任选一项覆盖另一项。相同归档重放/目标合并策略也未冻结；保持OPEN_QUESTION，不统计为ID冲突覆盖已接受。"
+      ],
+      "acceptanceIds": [
+        "T29-A04",
+        "T29-A05",
+        "T29-A13"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/08-acceptance-matrix.md §3"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ05",
+        "T29-OQ07"
+      ]
+    },
+    {
+      "id": "T29-F20",
+      "subcard": "b",
+      "slice": "import",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成目标账户/本地身份预算接近maxRetiredIdsPerWorkspace，并预置创建时占用的退休栅栏预留计数。",
+      "plannedAction": "规划导入/恢复需要新ID及退休名额的分支，检查ID与budget计数快照。",
+      "observableAssertions": [
+        "不得复用旧ID或后台删除墓碑腾空间；新创建的身份按冻结协议预留将来的retired slot。",
+        "删除不能因预算满而被拒绝；新建超过预算应走导出/显式新workspace迁移入口。",
+        "批量import预留策略和精确capacity code未冻结，继续OPEN_QUESTION。"
+      ],
+      "acceptanceIds": [
+        "T29-A05",
+        "T29-A13"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/08-acceptance-matrix.md §3",
+        "docs/spec/limits.v1.json cloud.maxRetiredIdsPerWorkspace"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ08",
+        "T29-OQ09"
+      ]
+    },
+    {
+      "id": "T29-F21",
+      "subcard": "b",
+      "slice": "import",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成SQLCipher不可用、目标key创建失败或目标库事务中断，源库保持可读状态。",
+      "plannedAction": "规划初始化/提交屏障并检查profile指针和数据库文件身份。",
+      "observableAssertions": [
+        "原库和原key证据保留；不使用普通SQLite明文fallback；新库未完整验证前不得标成ready或切换为当前profile。精确清理/恢复状态和错误映射OPEN_QUESTION。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A04"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/08-acceptance-matrix.md §3"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ06",
+        "T29-OQ07"
+      ]
+    },
+    {
+      "id": "T29-F22",
+      "subcard": "b",
+      "slice": "trash",
+      "platformScope": "client+cloud-synthetic",
+      "syntheticSetup": "合成cloud回收站中的deleted实体处于trashDays到期前；fixture仅使用密钥类型标记，不包含真实key：workspace派生内容key与SQLCipher localDBKey明确分离。",
+      "plannedAction": "规划用户明确恢复后创建目标记录并读回。",
+      "observableAssertions": [
+        "云回收站恢复创建新的entityId、versionId及需要的新attachmentId；云内容按workspace派生内容AEAD key重新加密，并为新身份生成新的nonce及包含新身份字段的AAD。",
+        "localDBKey仅保护客户端本地SQLCipher库，不能作为云manifest/blob内容key，也不能写入云归档；云recovery key同样不替代workspace内容key。",
+        "旧删除栅栏保持不变，旧ID不能重新变为live；旧ciphertext不得由服务器复制并冒充新身份。",
+        "只恢复仍在期限内且用户明确选择的记录；limits中的trashDays=30是期限配置，不是已执行验收。"
+      ],
+      "acceptanceIds": [
+        "T29-A06",
+        "T29-A13"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §8.3",
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/limits.v1.json cloud.trashDays",
+        "docs/spec/03-data-sync-and-security.md §4.2"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ07",
+        "T29-OQ09"
+      ]
+    },
+    {
+      "id": "T29-F23",
+      "subcard": "b",
+      "slice": "trash",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成恢复集合中同时含一条collection、一条saved和一条collection_entry，各自旧ID不同。",
+      "plannedAction": "规划批量恢复并按旧到新映射解析关系。",
+      "observableAssertions": [
+        "恢复后的集合与saved使用新ID，collection_entry重新引用目标新ID；不能仅复活旧关系ID或把关系合并进saved正文。"
+      ],
+      "acceptanceIds": [
+        "T29-A06",
+        "T29-A05"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §8.3",
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/limits.v1.json cloud.trashDays"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ07"
+      ]
+    },
+    {
+      "id": "T29-F24",
+      "subcard": "b",
+      "slice": "trash",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成回收站记录的trash_expires_at已超过trashDays窗口，相关附件可能待GC。",
+      "plannedAction": "规划过期后再次恢复并分别检查实体栅栏和附件计费。",
+      "observableAssertions": [
+        "不得将过期trash内容当作仍可恢复head；新ID策略不能静默重用旧实体ID。过期边界的外部错误/是否另存/GC具体状态未冻结，不断言HTTP/UI结果。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A06"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §8.3",
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/limits.v1.json cloud.trashDays"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ09",
+        "T29-OQ14"
+      ]
+    },
+    {
+      "id": "T29-F25",
+      "subcard": "b",
+      "slice": "trash",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成一条活跃被删除前占满允许的retirement reservation边界的记录，以及一份新ID预算不足的批量恢复输入。",
+      "plannedAction": "规划删除已存在记录及恢复新副本的容量边界。",
+      "observableAssertions": [
+        "已经预留退休名额的delete不可因retired预算满被拒绝；恢复是新create，预算不足不得删除旧trash/墓碑来腾位。",
+        "规划约束：精确restore整体/部分提交策略和capacity code未冻结，保持OPEN_QUESTION。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A13"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §8.3",
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/limits.v1.json cloud.trashDays"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ05",
+        "T29-OQ08",
+        "T29-OQ09"
+      ]
+    },
+    {
+      "id": "T29-F26",
+      "subcard": "b",
+      "slice": "trash",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成trash内容对应的localDBKey暂不可用或错误，旧DB及回收站记录均存在。",
+      "plannedAction": "规划请求恢复时触发key/vault failure并重读原profile。",
+      "observableAssertions": [
+        "不能因key失败覆盖原库、丢弃回收站证据或宣称恢复完成；修复vault/选择可移植导出路线再继续。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A06"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §8.3",
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/limits.v1.json cloud.trashDays"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ06"
+      ]
+    },
+    {
+      "id": "T29-F27",
+      "subcard": "b",
+      "slice": "trash",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成设备只有CNREC1/recovery credential，但缺localDBKey；云snapshot中只有已提交实体。",
+      "plannedAction": "规划恢复到新namespace并对比云已提交项与local-only/pending/draft标记。",
+      "observableAssertions": [
+        "CNREC1只能恢复云已提交内容；不能解锁丢失localDBKey的旧数据库，也不能伪恢复local-only/pending/outbox/draft。新namespace验证前不覆盖原profile。"
+      ],
+      "acceptanceIds": [
+        "T29-A06",
+        "T29-A07"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §8.3",
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/limits.v1.json cloud.trashDays"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ07",
+        "T29-OQ10"
+      ]
+    },
+    {
+      "id": "T29-F28",
+      "subcard": "b",
+      "slice": "trash",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成匿名local-only资料无localDBKey且没有先前可移植导出；原库路径仍保留。",
+      "plannedAction": "规划展示恢复失败/重新建立空profile的隔离分支。",
+      "observableAssertions": [
+        "不能声称能够解密或从账号恢复本地内容；保留旧库/证据，任何新profile置于独立目录；精确提示和是否允许用户显式另建profile文案OPEN_QUESTION。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A07"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §8.3",
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/limits.v1.json cloud.trashDays"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ06",
+        "T29-OQ10"
+      ]
+    },
+    {
+      "id": "T29-F29",
+      "subcard": "b",
+      "slice": "trash",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成已导出资料在隔离恢复profile内导入，新localDBKey通过合成vault接口生成。",
+      "plannedAction": "规划S27 portable-recovery分支并核查新库、身份和上传状态。",
+      "observableAssertions": [
+        "这是T29负责的S27可移植恢复子场景；导入产生新profile/new key/new IDs/重新加密，不自动上传，不继承撤销credential；原profile不得被覆盖。"
+      ],
+      "acceptanceIds": [
+        "T29-A04",
+        "T29-A05",
+        "T29-A07"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/b; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §2.2",
+        "docs/spec/03-data-sync-and-security.md §8.3",
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/limits.v1.json cloud.trashDays"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ02",
+        "T29-OQ07",
+        "T29-OQ10"
+      ]
+    },
+    {
+      "id": "T29-F30",
+      "subcard": "c",
+      "slice": "deletion",
+      "platformScope": "server+synthetic-account",
+      "syntheticSetup": "合成删除请求分别使用过期会话、近期验证缺失和未经授权的另一账号标识。",
+      "plannedAction": "规划近期验证失败及越权请求的外部结果，检查未创建跨租户job。",
+      "observableAssertions": [
+        "删除只允许经过服务端验证的account主体；另一用户不能观察或删除他人账户/工作区，按冻结API权限返回不可区分的资源结果。",
+        "规划约束：近期验证的窗口、方法、客户端错误文案未冻结，不猜测。"
+      ],
+      "acceptanceIds": [
+        "T29-A08",
+        "T29-A12"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §3.1",
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ11",
+        "T29-OQ18"
+      ]
+    },
+    {
+      "id": "T29-F31",
+      "subcard": "c",
+      "slice": "deletion",
+      "platformScope": "server+synthetic-account",
+      "syntheticSetup": "合成已通过待冻结的近期验证、两台设备会话、一个账号删除job请求；不接外部provider。",
+      "plannedAction": "规划请求创建、确认响应丢失、worker/服务器进程重启后再查询job。",
+      "observableAssertions": [
+        "在对用户报告已接受删除前，job与所需删除状态须为durable且可查询；停新写/撤销设备会话先于表示删除完成。",
+        "规划约束：具体request/job DTO、状态、响应丢失后的幂等键和结果码未冻结，不用假后端模拟成功。"
+      ],
+      "acceptanceIds": [
+        "T29-A08"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §3.1",
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ11",
+        "T29-OQ12"
+      ]
+    },
+    {
+      "id": "T29-F32",
+      "subcard": "c",
+      "slice": "deletion",
+      "platformScope": "server+synthetic-account",
+      "syntheticSetup": "合成删除job已durable，接着模拟worker进程中断、短暂PG失败及重启恢复。",
+      "plannedAction": "规划同一job继续核对，并检查数据/对象账本在确认前的状态。",
+      "observableAssertions": [
+        "中断/暂时失败不得把账户标为完整删除或提前释放字节；操作可恢复性和任何重试需防重复副作用。pg-boss具体retry/状态映射仍OPEN_QUESTION。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A08"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §3.1",
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ12",
+        "T29-OQ14"
+      ]
+    },
+    {
+      "id": "T29-F33",
+      "subcard": "c",
+      "slice": "deletion",
+      "platformScope": "server+synthetic-account",
+      "syntheticSetup": "同一合成账号重复发送两个等价删除请求，包含响应丢失后的重试。",
+      "plannedAction": "规划重复请求/job执行及usage event的幂等检查。",
+      "observableAssertions": [
+        "不得产生重复收费、重复账本释放或相反状态；确切去重键、重复响应与多并发job合并策略未冻结，不把本fixture结果伪造为已知。"
+      ],
+      "acceptanceIds": [
+        "T29-A08",
+        "T29-A10"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §3.1",
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ12",
+        "T29-OQ14"
+      ]
+    },
+    {
+      "id": "T29-F34",
+      "subcard": "c",
+      "slice": "deletion",
+      "platformScope": "server+synthetic-account",
+      "syntheticSetup": "合成账号关联独立的商店合同状态、云内容、账本及保留策略标签。",
+      "plannedAction": "规划删除job状态和外部运营记录的分离审阅。",
+      "observableAssertions": [
+        "provider合同取消、个人数据删除、法定/财务留存分别记录，不用单一“删除成功”覆盖各自状态。",
+        "备份保留状态与备份副本清除状态必须单独说明；不能把账号/在线数据删除完成表述成所有备份副本已清除，也不能隐去仍保留的备份副本。",
+        "规划约束：留存类别、期限、法律依据、备份保留/清除期限与状态、商店取消流程未冻结，保持OPEN_QUESTION。"
+      ],
+      "acceptanceIds": [
+        "T29-A08",
+        "T29-A09"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §3.1",
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ13"
+      ]
+    },
+    {
+      "id": "T29-F35",
+      "subcard": "c",
+      "slice": "deletion",
+      "platformScope": "server+synthetic-account",
+      "syntheticSetup": "合成PG对象引用仍受change_log、trash或有效snapshot pin保护，账号删除worker请求回收。",
+      "plannedAction": "规划清理前重新核对保护引用和GC状态。",
+      "observableAssertions": [
+        "受保护引用未解除时不得提前物理回收或减字节；符合GC条件才可进入deleting并等待物理确认。",
+        "规划约束：账号删除等待/保留窗口与引用清理顺序的完整job策略未冻结。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A08",
+        "T29-A10"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §3.1",
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ12",
+        "T29-OQ13",
+        "T29-OQ14"
+      ]
+    },
+    {
+      "id": "T29-F36",
+      "subcard": "c",
+      "slice": "deletion",
+      "platformScope": "server+synthetic-account",
+      "syntheticSetup": "两个合成workspace的账号分别具有工作区A/B；worker本轮只获准在A scope内工作。",
+      "plannedAction": "规划尝试用B的对象和job标识访问/变更B的记录。",
+      "observableAssertions": [
+        "worker/API受事务级verified scope和RLS约束；A范围不可读取、触碰或泄露B；不能以uuid难猜或BYPASSRLS替代隔离。"
+      ],
+      "acceptanceIds": [
+        "T29-A08",
+        "T29-A12"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §3.1",
+        "docs/spec/03-data-sync-and-security.md §9",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ12"
+      ]
+    },
+    {
+      "id": "T29-F37",
+      "subcard": "c",
+      "slice": "s3",
+      "platformScope": "server+isolated-versioned-object-store",
+      "syntheticSetup": "合成versioned bucket对象有多个VersionId和delete marker，PG账本仍计入实际版本字节。",
+      "plannedAction": "规划按VersionId发起删除并检查提供方确认前后ledger快照。",
+      "observableAssertions": [
+        "只出现delete marker不能证明版本对象消失；对所有应删除物理版本获得确认后才能释放对应占用。",
+        "规划约束：确切provider/SDK/HEAD与VersionId删除可观察语义须经T18 provider gate冻结。"
+      ],
+      "acceptanceIds": [
+        "T29-A10",
+        "T29-A13"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §8.2",
+        "docs/spec/03-data-sync-and-security.md §8.3",
+        "docs/spec/03-data-sync-and-security.md §10 S17/S18",
+        "docs/spec/08-acceptance-matrix.md §3"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ14",
+        "T29-OQ15"
+      ]
+    },
+    {
+      "id": "T29-F38",
+      "subcard": "c",
+      "slice": "s3",
+      "platformScope": "server+isolated-versioned-object-store",
+      "syntheticSetup": "合成对象删除调用返回失败、超时/结果未知，远端版本仍存在。",
+      "plannedAction": "规划轮询/重试前先做幂等状态核对。",
+      "observableAssertions": [
+        "失败或未知状态不得提前减计费/标deleted；只依照未来冻结provider语义继续核验，不推断一次超时表示已删除。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A10"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §8.2",
+        "docs/spec/03-data-sync-and-security.md §8.3",
+        "docs/spec/03-data-sync-and-security.md §10 S17/S18",
+        "docs/spec/08-acceptance-matrix.md §3"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ12",
+        "T29-OQ14",
+        "T29-OQ15"
+      ]
+    },
+    {
+      "id": "T29-F39",
+      "subcard": "c",
+      "slice": "s3",
+      "platformScope": "server+isolated-versioned-object-store",
+      "syntheticSetup": "同一物理对象的成功确认被两个worker交错重复处理，账本含staging/pending_final/logical合计。",
+      "plannedAction": "规划重复确认及补偿event唯一键检查。",
+      "observableAssertions": [
+        "重复worker产生零delta；每个对象确认的账本扣减最多一次，ledger不能为负，delete确认之前保持计费。"
+      ],
+      "acceptanceIds": [
+        "T29-A10",
+        "T29-A13"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §8.2",
+        "docs/spec/03-data-sync-and-security.md §8.3",
+        "docs/spec/03-data-sync-and-security.md §10 S17/S18",
+        "docs/spec/08-acceptance-matrix.md §3"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ14",
+        "T29-OQ16"
+      ]
+    },
+    {
+      "id": "T29-F40",
+      "subcard": "c",
+      "slice": "s3",
+      "platformScope": "server+isolated-versioned-object-store",
+      "syntheticSetup": "合成附件处于deleting期间，新workspace transaction试图新增引用；并行删除任务按另一个workspace scoped执行。",
+      "plannedAction": "规划引用创建竞态和worker隔离。",
+      "observableAssertions": [
+        "deleting附件不得复活，新引用按冻结错误 ATTACHMENT_NOT_READY 拒绝；其他workspace的同hash/相同key对象不因该请求泄露或被删除。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A10",
+        "T29-A12"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §8.2",
+        "docs/spec/03-data-sync-and-security.md §8.3",
+        "docs/spec/03-data-sync-and-security.md §10 S17/S18",
+        "docs/spec/08-acceptance-matrix.md §3",
+        "docs/spec/03-data-sync-and-security.md §3.1"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ15"
+      ]
+    },
+    {
+      "id": "T29-F41",
+      "subcard": "c",
+      "slice": "s3",
+      "platformScope": "server+isolated-versioned-object-store",
+      "syntheticSetup": "合成对象inventory出现PG无登记的孤儿对象和一个账本已登记对象，provider确认均未执行。",
+      "plannedAction": "规划先纳入受限隔离核查清单，再单独决定物理删除与账本对账。",
+      "observableAssertions": [
+        "未登记对象不返回客户且不立即释放/冲销已计用量；隔离清理先核实对象身份与tenant；不得使用跨workspace cipher hash查找。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A10"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §8.2",
+        "docs/spec/03-data-sync-and-security.md §8.3",
+        "docs/spec/03-data-sync-and-security.md §10 S17/S18",
+        "docs/spec/08-acceptance-matrix.md §3",
+        "docs/spec/03-data-sync-and-security.md §3.1"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ14",
+        "T29-OQ15"
+      ]
+    },
+    {
+      "id": "T29-F42",
+      "subcard": "c",
+      "slice": "recovery",
+      "platformScope": "isolated-PG+versioned-object-store",
+      "syntheticSetup": "合成PG PITR checkpoint与对象版本manifest来自不一致恢复点；有合成活跃设备游标。",
+      "plannedAction": "规划恢复到独立隔离目标并在对账期间探测普通read/write/download入口。",
+      "observableAssertions": [
+        "PG与对象备份不假定一致；正常写、下载及客户端重新开放保持隔离，直到对象版本、ledger与删除fence核对完成。",
+        "规划约束：生产等价恢复点生成与对象inventory证据格式未冻结。"
+      ],
+      "acceptanceIds": [
+        "T29-A11",
+        "T29-A12"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/03-data-sync-and-security.md §10 S25",
+        "docs/spec/03-data-sync-and-security.md §11",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/08-acceptance-matrix.md §5"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ14",
+        "T29-OQ15",
+        "T29-OQ16",
+        "T29-OQ17"
+      ]
+    },
+    {
+      "id": "T29-F43",
+      "subcard": "c",
+      "slice": "recovery",
+      "platformScope": "isolated-PG+versioned-object-store",
+      "syntheticSetup": "合成备份删除水位为25，恢复点之后的durable外部删除证据水位为41，并含被删除记录/对象版本。",
+      "plannedAction": "规划回放旧备份、合并后备份删除证据并检验水位与记录可见性。",
+      "observableAssertions": [
+        "恢复后的删除水位不能低于41；适用的备份后删除必须重放完成后才能解除隔离；已删实体/对象不可重新向用户公开。",
+        "规划约束：外部水位的权威来源、编码和完整性证明未冻结，不能由本fixture自行设计。"
+      ],
+      "acceptanceIds": [
+        "T29-A11",
+        "T29-A13"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/03-data-sync-and-security.md §10 S25",
+        "docs/spec/03-data-sync-and-security.md §11",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/08-acceptance-matrix.md §5"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ15",
+        "T29-OQ16",
+        "T29-OQ17"
+      ]
+    },
+    {
+      "id": "T29-F44",
+      "subcard": "c",
+      "slice": "recovery",
+      "platformScope": "isolated-PG+versioned-object-store",
+      "syntheticSetup": "合成场景缺失恢复点之后的部分删除事件/签名证明，不能证明删除证据完整。",
+      "plannedAction": "规划执行restore preflight并查询正常bootstrap/下载是否被允许。",
+      "observableAssertions": [
+        "缺少完整删除证据时必须继续隔离并报告；不得仅因备份可读或保留30天就开放旧状态。",
+        "规划约束：证据完整性格式和缺失证据的运维处置/通知状态仍OPEN_QUESTION。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A11"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/03-data-sync-and-security.md §10 S25",
+        "docs/spec/03-data-sync-and-security.md §11",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/08-acceptance-matrix.md §5"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ15",
+        "T29-OQ17"
+      ]
+    },
+    {
+      "id": "T29-F45",
+      "subcard": "c",
+      "slice": "recovery",
+      "platformScope": "isolated-PG+versioned-object-store",
+      "syntheticSetup": "合成恢复后的物理版本盘点与PG ledger出现数量/大小/hash映射不一致。",
+      "plannedAction": "规划把空间保持隔离，做限定workspace的物理版本与ledger对账。",
+      "observableAssertions": [
+        "账本和实际对象版本必须逐范围对账；任何未知额外对象保持隔离清理，不下发给客户端、不把不匹配的预算当成通过。",
+        "规划约束：允许恢复开放的精确差异阈值/纠正流程由运维runbook冻结。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A10",
+        "T29-A11"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/03-data-sync-and-security.md §10 S25",
+        "docs/spec/03-data-sync-and-security.md §11",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/08-acceptance-matrix.md §5"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ14",
+        "T29-OQ16",
+        "T29-OQ17"
+      ]
+    },
+    {
+      "id": "T29-F46",
+      "subcard": "c",
+      "slice": "recovery",
+      "platformScope": "isolated-PG+versioned-object-store",
+      "syntheticSetup": "合成隔离恢复在object reconciliation之前、删除fence重放之前、epoch推进之前各有一个崩溃点。",
+      "plannedAction": "规划每个崩溃后重启，检查恢复目标是否仍处于隔离且原profile未被改写。",
+      "observableAssertions": [
+        "任一未完成步骤不发布半恢复状态、不接受旧设备正常写入或下载；不覆盖原备份/恢复证据。",
+        "规划约束：恢复worker持久状态/阶段DTO与恢复点锁定方法未冻结。"
+      ],
+      "acceptanceIds": [
+        "T29-A03",
+        "T29-A11"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/03-data-sync-and-security.md §10 S25",
+        "docs/spec/03-data-sync-and-security.md §11",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/08-acceptance-matrix.md §5"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ12",
+        "T29-OQ17"
+      ]
+    },
+    {
+      "id": "T29-F47",
+      "subcard": "c",
+      "slice": "recovery",
+      "platformScope": "isolated-PG+versioned-object-store",
+      "syntheticSetup": "合成complete case：删除证据完整、PG与所有对象VersionId/ledger一致、受保护引用核对完成；旧设备仍持旧epoch/cursor。",
+      "plannedAction": "规划先提交删除fence对账，再推进epoch并为旧设备要求全新snapshot/bootstrap。",
+      "observableAssertions": [
+        "只有确认备份/对象/账本/删除fence完整后才提高epoch并重新开放客户端；旧epoch cursor/outbox不能作为新状态直接续写，设备必须fresh snapshot/bootstrap。",
+        "规划约束：epoch提交与snapshot/job canonical接口依赖未accepted的T16/T18/T19；本case仅冻结已写于03的顺序。"
+      ],
+      "acceptanceIds": [
+        "T29-A11",
+        "T29-A13"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/03-data-sync-and-security.md §10 S25",
+        "docs/spec/03-data-sync-and-security.md §11",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/08-acceptance-matrix.md §5"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ16",
+        "T29-OQ17"
+      ]
+    },
+    {
+      "id": "T29-F48",
+      "subcard": "c",
+      "slice": "recovery",
+      "platformScope": "isolated-PG+versioned-object-store",
+      "syntheticSetup": "合成恢复空间A和B各自有不同账户标识、墓碑、对象版本和restore job，执行主体只授权A。",
+      "plannedAction": "规划A恢复runbook对B ID进行read/write/bootstrap探测。",
+      "observableAssertions": [
+        "workspace scope/业务角色RLS仍生效；A恢复不能发现、删除、恢复或通过错误差异泄露B中的内容。"
+      ],
+      "acceptanceIds": [
+        "T29-A07",
+        "T29-A11",
+        "T29-A12"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/c; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/03-data-sync-and-security.md §7.3",
+        "docs/spec/03-data-sync-and-security.md §10 S25",
+        "docs/spec/03-data-sync-and-security.md §11",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/08-acceptance-matrix.md §5",
+        "docs/spec/03-data-sync-and-security.md §3.1",
+        "docs/spec/03-data-sync-and-security.md §9"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ17"
+      ]
+    },
+    {
+      "id": "T29-F49",
+      "subcard": "c",
+      "slice": "privacy",
+      "platformScope": "synthetic-telemetry+error-bundle",
+      "syntheticSetup": "合成canary类别包括正文、标题、URL、来源、图片、token、key、凭证、签名材料及PG/S3操作参数；值均为惰性标记。",
+      "plannedAction": "规划检查合成job日志、崩溃输出、结构化错误和restore证据包，并只输出检查类别/命中与否。",
+      "observableAssertions": [
+        "敏感正文/元数据/密钥/token/签名和未脱敏SQL参数不进入telemetry、crash、error bundle或提交证据；不把canary原文写入复核报告。",
+        "规划约束：允许留存的运维字段白名单及聚合策略仍需产品/安全负责人冻结。"
+      ],
+      "acceptanceIds": [
+        "T29-A14"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §验证命令/回滚与交付",
+        "docs/spec/03-data-sync-and-security.md §3.1/§9",
+        "docs/spec/06-model-runbook.md §7/§8",
+        "docs/spec/08-acceptance-matrix.md §3/§6"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ19"
+      ]
+    },
+    {
+      "id": "T29-F50",
+      "subcard": "a",
+      "slice": "export",
+      "platformScope": "local-profile-synthetic",
+      "syntheticSetup": "合成导出在写出部分记录/附件及临时manifest后进程崩溃；重启时目标位置存在部分字节但无可信完整提交证据，源profile快照独立保留。",
+      "plannedAction": "规划崩溃前与重启后的目标清单、完成状态及源profile校验；不实际写文件或杀进程。",
+      "observableAssertions": [
+        "崩溃留下的部分文件在重启后不得被识别、展示或导入为完整成功的导出。",
+        "原profile及源附件保持不变；恢复/重试前仍需完成格式、checksum及原件完整性检查。",
+        "临时文件清理、断点续传、重试和明确完成标记的原子发布语义仍为OPEN_QUESTION，不在fixture中选择。"
+      ],
+      "acceptanceIds": [
+        "T29-A02",
+        "T29-A03"
+      ],
+      "sourceRefs": [
+        "docs/spec/tasks/T29.md §子任务顺序/a; 完成标准与行为测试",
+        "docs/spec/03-data-sync-and-security.md §5.5",
+        "docs/spec/07-release-and-commercial.md §6",
+        "docs/spec/06-model-runbook.md §2/§5/§8"
+      ],
+      "status": "NOT_RUN",
+      "evidence": [],
+      "openQuestionRefs": [
+        "T29-OQ04"
+      ]
+    }
+  ],
+  "acceptanceGates": [
+    {
+      "id": "T29-G01",
+      "name": "User-directed bounded portable export, manifest/checksum and originals",
+      "fixtureIds": [
+        "T29-F01",
+        "T29-F02",
+        "T29-F03",
+        "T29-F04",
+        "T29-F05",
+        "T29-F10",
+        "T29-F50"
+      ],
+      "requires": [
+        "T25 accepted",
+        "T19 accepted",
+        "T08 accepted",
+        "portable format/inclusion contract frozen",
+        "isolated synthetic filesystem adapter"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T29-G02",
+      "name": "Export/import cancellation, disk/capacity, key and permission failures",
+      "fixtureIds": [
+        "T29-F06",
+        "T29-F07",
+        "T29-F08",
+        "T29-F09",
+        "T29-F14",
+        "T29-F15",
+        "T29-F16",
+        "T29-F17",
+        "T29-F21",
+        "T29-F50"
+      ],
+      "requires": [
+        "T25 accepted",
+        "T19 accepted",
+        "T08 accepted",
+        "cancel/partial-commit and error mappings frozen",
+        "synthetic fault-injection adapters only"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T29-G03",
+      "name": "New-profile import, new key/IDs, re-encryption, relation map and no auto-upload",
+      "fixtureIds": [
+        "T29-F11",
+        "T29-F12",
+        "T29-F13",
+        "T29-F18",
+        "T29-F19",
+        "T29-F20",
+        "T29-F21"
+      ],
+      "requires": [
+        "T25 accepted",
+        "T19 accepted",
+        "T08 accepted",
+        "T07 and T08 accepted",
+        "SQLCipher/vault interface available",
+        "portable format and local-budget accounting frozen"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T29-G04",
+      "name": "Trash restore, expiry and reserved identity/capacity boundaries",
+      "fixtureIds": [
+        "T29-F22",
+        "T29-F23",
+        "T29-F24",
+        "T29-F25",
+        "T29-F26",
+        "T29-F27",
+        "T29-F28",
+        "T29-F29"
+      ],
+      "requires": [
+        "T25 accepted",
+        "T19 accepted",
+        "T08 accepted",
+        "T08 and T19 accepted",
+        "trashDays and ID-fence implementation available",
+        "local/cloud capacity and restore mapping frozen"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T29-G05",
+      "name": "Account deletion recent verification and durable job",
+      "fixtureIds": [
+        "T29-F30",
+        "T29-F31",
+        "T29-F32",
+        "T29-F33",
+        "T29-F34",
+        "T29-F35",
+        "T29-F36"
+      ],
+      "requires": [
+        "T25 accepted",
+        "T19 accepted",
+        "T08 accepted",
+        "T19 and T25 accepted",
+        "canonical authenticated delete-job API and pg-boss implementation",
+        "isolated workspace-scoped PostgreSQL harness"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T29-G06",
+      "name": "Provider-confirmed S3 physical-version deletion and exactly-once accounting",
+      "fixtureIds": [
+        "T29-F37",
+        "T29-F38",
+        "T29-F39",
+        "T29-F40",
+        "T29-F41"
+      ],
+      "requires": [
+        "T25 accepted",
+        "T19 accepted",
+        "T08 accepted",
+        "T18/T19 accepted",
+        "selected versioned provider and disposable bucket with real VersionId semantics",
+        "isolated ledger and provider evidence"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T29-G07",
+      "name": "S25 isolated operational PG+object disaster recovery",
+      "fixtureIds": [
+        "T29-F42",
+        "T29-F43",
+        "T29-F44",
+        "T29-F45",
+        "T29-F46",
+        "T29-F47",
+        "T29-F48"
+      ],
+      "requires": [
+        "T25 accepted",
+        "T19 accepted",
+        "T08 accepted",
+        "T08/T19/T25 accepted",
+        "production-equivalent backup copies restored only into an isolated environment",
+        "durable deletion evidence completeness proven",
+        "physical object/ledger reconciliation and recovery owner signoff"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T29-G08",
+      "name": "Local-only versus cloud-committed recovery boundary",
+      "fixtureIds": [
+        "T29-F02",
+        "T29-F13",
+        "T29-F27",
+        "T29-F28",
+        "T29-F29"
+      ],
+      "requires": [
+        "T25 accepted",
+        "T19 accepted",
+        "T08 accepted",
+        "T08/T25 accepted",
+        "localDBKey/vault behavior and portable import contract available",
+        "no profile overwrite and no implicit upload"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T29-G09",
+      "name": "Permission and tenant-scope isolation for import, deletion workers and recovery",
+      "fixtureIds": [
+        "T29-F08",
+        "T29-F16",
+        "T29-F30",
+        "T29-F36",
+        "T29-F40",
+        "T29-F41",
+        "T29-F48"
+      ],
+      "requires": [
+        "T25 accepted",
+        "T19 accepted",
+        "T08 accepted",
+        "T08/T19/T25 accepted",
+        "verified user/workspace context",
+        "real isolated PostgreSQL FORCE RLS roles for server behavior"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T29-G10",
+      "name": "Privacy canary exclusion from export-adjacent telemetry and recovery evidence",
+      "fixtureIds": [
+        "T29-F10",
+        "T29-F49"
+      ],
+      "requires": [
+        "T25 accepted",
+        "T19 accepted",
+        "T08 accepted",
+        "synthetic canaries only",
+        "isolated fake telemetry/error sinks",
+        "no production observability account"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T29-G11",
+      "name": "Task-card command readiness and behavior validation",
+      "fixtureIds": [
+        "T29-F03",
+        "T29-F12",
+        "T29-F31",
+        "T29-F37",
+        "T29-F47"
+      ],
+      "requires": [
+        "T25 accepted",
+        "T19 accepted",
+        "T08 accepted",
+        "T01/T06 scripts or implementation of the card-authorized tests",
+        "all direct dependencies accepted",
+        "no command is represented as run by this plan"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "id": "T29-G12",
+      "name": "Independent critical adversarial review after implementation",
+      "fixtureIds": [
+        "T29-F06",
+        "T29-F12",
+        "T29-F20",
+        "T29-F31",
+        "T29-F37",
+        "T29-F43",
+        "T29-F44",
+        "T29-F47",
+        "T29-F49"
+      ],
+      "requires": [
+        "T25 accepted",
+        "T19 accepted",
+        "T08 accepted",
+        "implementation diff and real isolated behavior evidence",
+        "T08/T19/T25 accepted",
+        "serious findings closed"
+      ],
+      "status": "NOT_RUN",
+      "evidence": []
+    }
+  ],
+  "commands": [
+    {
+      "id": "T29-C01",
+      "command": "cargo test -p clipnest-core export",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "blockedBy": [
+        "T08 accepted",
+        "portable-export core module/tests exist",
+        "current crates/core/src/export path was NOT_FOUND"
+      ]
+    },
+    {
+      "id": "T29-C02",
+      "command": "pnpm test:integration -- --suite deletion-restore",
+      "status": "NOT_RUN",
+      "evidence": [],
+      "blockedBy": [
+        "T19/T25 accepted",
+        "deletion/restore implementation and isolated PG+versioned-object-store harness exist",
+        "current root package.json has no test:integration script"
+      ]
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "T29-OQ01",
+      "topic": "Portable archive canonical format: version field, manifest DTO, serialization/canonical bytes, checksum algorithm and import compatibility policy.",
+      "owner": "T29 export/import interface owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ02",
+      "topic": "Exact export inclusion selection for history/saved/collections, original attachments, cloud-committed data, local-only data, trash, and pending outbox/drafts; what is excluded by default.",
+      "owner": "Product/data portability owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ03",
+      "topic": "Export stream/chunk/memory cap, maximum archive bytes, free-space reservation and atomic final destination/publication rule.",
+      "owner": "T29 client owner with T07 capacity owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ04",
+      "topic": "Export/import cancellation and crash terminal states, partial file/database cleanup or resume, progress UI, and partial-commit semantics; T08 import cancellation remains open.",
+      "owner": "Product/data module owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ05",
+      "topic": "Unsupported/corrupt format policy, duplicate source IDs within one archive, exact import atomicity, repeated same-archive replay and collision handling; T08 has no frozen duplicate-ID winner.",
+      "owner": "T08/T29 data import owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ06",
+      "topic": "Exact vault/key failure categories, permission/error mapping and user copy for portable export, new profile creation and trash restore.",
+      "owner": "T07/T23/T29 platform owners",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ07",
+      "topic": "Canonical old-to-new identity mapping for entity/version/attachment/collection_entry, included versions, metadata/order, and restoration of deleted relationship endpoints.",
+      "owner": "T29 export/import owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ08",
+      "topic": "T07 durable local-byte accounting formula and how bulk import reserves capacity atomically; exact local full response/partial-import behavior.",
+      "owner": "T07 with T29 owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ09",
+      "topic": "Bulk restore's retirement-slot reservation and budget preflight; trash expiry inclusivity at the 30-day boundary, expired-item result and exact error mapping.",
+      "owner": "T29 core/API owner; align T08",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ10",
+      "topic": "localDBKey generation/vault persistence and SQLCipher creation/crash recovery behavior for imported/recovered profiles; cloud credential/session is not a substitute.",
+      "owner": "T07/T22/T23 owners",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ11",
+      "topic": "Meaning of recent account verification: freshness interval, allowed step-up factors, stale-session response, session/device revoke timing and concurrent account operations.",
+      "owner": "Auth/product owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ12",
+      "topic": "Canonical delete job API/DTO and durable states, idempotency key/duplicate request semantics, progress/result visibility, cancellation, worker lease/retry cadence and terminal failure handling.",
+      "owner": "T29 server deletion owner aligned with T16/T19",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ13",
+      "topic": "Provider contract cancellation versus data deletion versus statutory/financial retention: retained categories, durations, backup purge boundary and user-facing completion statement.",
+      "owner": "Operations/legal/product owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ14",
+      "topic": "T18-selected S3 provider/SDK immutable-version enumeration, VersionId deletion/HEAD semantics, timeout ambiguity, multipart/staging cleanup and exact physical-delete confirmation.",
+      "owner": "T18 object-store owner with T29 deletion owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ15",
+      "topic": "Authoritative post-backup deletion evidence source, durability/separation/retention and completeness proof; deletion watermark encoding and recovery point relation (T19-OQ07).",
+      "owner": "T19/T29 recovery operations owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ16",
+      "topic": "Canonical object-version-to-ledger reconciliation fields and allowed correction procedure for extras/missing versions, in-flight uploads and retained accounting (T16/T18 interfaces not accepted).",
+      "owner": "T16/T18/T19 owners",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ17",
+      "topic": "Restore orchestration DTO/state transitions for isolated profile/PG+object recovery, epoch commit, fresh snapshot/bootstrap and re-opening traffic (canonical T16/T18 worker interface not accepted).",
+      "owner": "T19/T29 recovery operations owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ18",
+      "topic": "Platform filesystem permission and full-disk failure category/result mapping; no operation-specific UI wording is frozen.",
+      "owner": "T29 client/product owner",
+      "status": "OPEN_QUESTION"
+    },
+    {
+      "id": "T29-OQ19",
+      "topic": "Allow-listed operational telemetry/error-bundle metadata for deletion/recovery and exact redaction/report retention; sensitive classes remain prohibited by 03/06/08.",
+      "owner": "Security/operations owner",
+      "status": "OPEN_QUESTION"
+    }
+  ],
+  "limitations": [
+    "Planning only: 50 synthetic fixtures, 12 gates, 2 commands, and 19 OPEN_QUESTION items; all execution and evidence arrays are NOT_RUN/empty.",
+    "Direct dependencies T08/T19/T25 and additional local/provider prerequisites T07/T16/T18 are not accepted. No backend, fake-success service, test, build, database, S3, account, live profile, real user data, deletion, export, import, device or restore action was performed.",
+    "T19/T25 own synthetic S25 core reruns; T29 only plans the still-required production-equivalent isolated operational recovery and portable S27 subscenarios. The plan does not close S25 or S27.",
+    "Relevant T29 production module paths and recovery fixtures were not present in the observed workspace; package script test:integration is absent. Required command readiness remains blocked and NOT_RUN.",
+    "Local byte-budget formula, archive format/checksum/inclusion/cancellation, identity mapping, recent-verification/job states, provider physical-delete contract, deletion-evidence completeness/retention, and recovery DTO remain OPEN_QUESTION as listed.",
+    "iOS/Android OS-vault uninstall/backup behavior belongs to T07/T22/T23/T25 gates; this T29 plan does not claim native device coverage.",
+    "The author static self-check is not the independent critical review required after T29 behavior implementation."
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "task": "T08",
+  "reviewType": "independent_read_only_fixture_plan_review",
+  "reviewedDate": "2026-10-04",
+  "reviewedArtifact": "tests/tasks/T08/fixture-plan.json",
+  "result": "PASS_WITH_LIMITATIONS",
+  "verified": {
+    "fixtureCount": 15,
+    "allFixturesExecutionStatus": "NOT_RUN",
+    "syntheticOnly": true,
+    "dependencyGate": "T07 is not accepted; production implementation and behavior testing remain gated.",
+    "imageVector": "The fixed Base64 vector decodes to 70 bytes; PNG signature and 1x1 RGBA IHDR are valid, all IHDR/IDAT/IEND CRCs match, and the IDAT zlib stream inflates to one five-byte scanline.",
+    "userCancellation": "The synthetic cancellation case is NOT_RUN and gated OPEN_QUESTION. It records the trigger and observations without asserting a terminal state, counters, or whether partially committed rows are retained or rolled back.",
+    "vaultAndPermission": "The fake-adapter case checks that unavailable vault/target access does not report completed import, replace the existing target, or create an empty target over it; the source and known target state remain synthetic.",
+    "duplicateIdAndMimePolicy": "Conflicting duplicate IDs within one export and Data URL media-type versus decoded-format mismatch are explicit OPEN_QUESTION cases; neither asserts an outcome or counts as behavior coverage.",
+    "replay": "Exact same-export replay checks durable idempotency without assuming a result-enum name and is distinct from conflicting duplicate rows.",
+    "profileSafety": "The live %APPDATA%\\ClipNest profile is explicitly excluded. Any future integrity check on a real copy requires the user's explicit selection of a distinct isolated copy.",
+    "syncAndPrivacy": "Only harmless synthetic markers are used for legacy token/password/tombstone fields; the fixture plan does not enable automatic sync/upload or include payload bytes in evidence."
+  },
+  "reviewChecks": {
+    "jsonParse": "PASS",
+    "independentReviewer": "PASS_WITH_LIMITATIONS",
+    "staticImageVectorStructureCrcAndInflate": "PASS",
+    "noBehaviorTestsOrBuild": true,
+    "noProductionImplementation": true,
+    "noLiveProfileOrService": true
+  },
+  "limitations": [
+    "This is a fixture-plan review only; all T08 behavior remains NOT_RUN and T08 remains not_started while T07 is not accepted.",
+    "User-cancellation terminal behavior and partial-commit policy, conflicting duplicate-ID policy, and Data URL MIME-versus-decoded-format policy remain OPEN_QUESTION.",
+    "Actual SQLCipher import, OS vault behavior, restart durability, isolated-profile recovery, and any real-copy integrity check remain NOT_RUN."
+  ],
+  "sources": [
+    "docs/spec/tasks/T08.md",
+    "docs/spec/00-README.md §3",
+    "docs/spec/03-data-sync-and-security.md §5.5",
+    "docs/spec/08-acceptance-matrix.md §3",
+    "tests/tasks/T08/fixture-plan.json",
+    "independent agent review in this task"
+  ]
+}

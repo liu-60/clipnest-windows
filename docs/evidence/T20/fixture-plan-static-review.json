@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "task": "T20",
+  "evidenceType": "STATIC_FIXTURE_PLAN_ONLY",
+  "result": "STATIC_FIXTURE_PLAN_ONLY",
+  "reviewedAt": "2026-10-04",
+  "reviewRole": "author structural self-check; not an independent final review",
+  "planPath": "tests/tasks/T20/fixture-plan.json",
+  "sources": [
+    "docs/spec/tasks/T20.md",
+    "docs/spec/03-data-sync-and-security.md §5.4/§5.5/§6",
+    "docs/spec/02-architecture.md §4/§5/§6/§7",
+    "docs/spec/08-acceptance-matrix.md U04/U07/U08/U12",
+    "docs/spec/limits.v1.json",
+    "docs/spec/01-product-and-ux.md §4 P11"
+  ],
+  "staticChecks": {
+    "planJsonParses": true,
+    "progressJsonParses": true,
+    "fixtureCaseCount": 19,
+    "declaredCountMatches": true,
+    "fixtureIdsUnique": true,
+    "allFixtureStatuses": "NOT_RUN",
+    "allAcceptanceStatuses": "NOT_RUN",
+    "allCommandStatuses": "NOT_RUN",
+    "dependencyStatusesObserved": {
+      "T06": "in_progress",
+      "T15": "not_started"
+    },
+    "taskStatus": "not_started",
+    "sourceLabelsPresent": true
+  },
+  "conclusion": "This self-check records JSON structure, IDs/status/dependency metadata, and presence of declared source labels only. It does not establish that each case fully covers its cited source and is not an independent final review. No behavior acceptance is claimed.",
+  "limitations": [
+    "No behavior test, build, browser, service, database, account, clipboard, or user-data operation was performed.",
+    "T20 remains not_started; T06 and T15 are not accepted.",
+    "T07 byte accounting/Web cache eviction, T06 error mapping, T10 coverage/cancellation presentation, and exact anonymous export interaction remain OPEN_QUESTION.",
+    "The independent read-only review recommendations are recorded as revision input only; no independent final review has occurred."
+  ],
+  "reviewInput": "Recommendations from two independent read-only T20 reviews were applied as revision input, including the omitted 01 §4 P11 ephemeral-cache case; no independent follow-up/final review is claimed.",
+  "recommendationsRecorded": [
+    "Add synthetic adapter-unavailable and storage-permission-denied fail-closed fixture.",
+    "Make old-generation cancellation and any worker-termination event observable without assuming a return code.",
+    "Include opaque non-secret key handles and stale scope/account/revision recheck after async preparation.",
+    "Bound case 12 persistence inspection to app-managed durable stores and exclude browser/OS internals and JS memory-erasure claims.",
+    "Narrow static-review conclusion to structure/status/dependency checks and presence of source labels only.",
+    "Add a synthetic P11 case for cache non-persistence notice, continued eligible online use, and no cross-refresh durability promise; list 01 §4/P11 as a declared source."
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "task": "T12",
+  "evidenceType": "fixture_plan_static_validation",
+  "checkedDate": "2026-10-04",
+  "reviewedArtifact": "tests/tasks/T12/fixture-plan.json",
+  "result": "PASS",
+  "checks": {
+    "jsonParse": "PASS",
+    "fixtureCaseCount": 30,
+    "caseNumbersContiguousFrom1To30": true,
+    "fixtureIdsUnique": true,
+    "allFixtureCasesExecutionStatus": "NOT_RUN",
+    "U01ThroughU12ReferencedExactlyOnce": true,
+    "openQuestionsCount": 6,
+    "dependencyStatusesMatchObservedProgress": true
+  },
+  "validationScope": "Static plan structure and status consistency only.",
+  "notPerformed": [
+    "renderer or domain production implementation",
+    "unit, renderer, browser, or E2E behavior tests",
+    "real profile, account, service, or clipboard access",
+    "accessibility audit or responsive browser inspection",
+    "performance measurements",
+    "independent implementation review"
+  ],
+  "limitations": [
+    "All 30 T12 behavior cases remain NOT_RUN; this static result does not accept T12.",
+    "T08, T10, and T11 are not accepted, so implementation and behavior testing remain gated.",
+    "Exact error/return mapping, durable-byte accounting, conflict resolution codes, narrow-panel breakpoint, and automated accessibility thresholds remain OPEN_QUESTION."
+  ]
+}

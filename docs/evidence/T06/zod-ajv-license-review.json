@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "T06-b Zod/Ajv runtime candidate audit",
+  "result": "PASS_WITH_LIMITATIONS",
+  "reviewDate": "2026-10-04",
+  "reviewer": "Independent read-only T06 dependency reviewer",
+  "scope": [
+    "docs/evidence/T06/zod-ajv-license-audit.json",
+    "upstream manifests and Ajv security/format documentation linked from that record"
+  ],
+  "findings": [
+    "Zod 4.6.5, Ajv 8.20.0, ajv-formats 3.0.1, and the four enumerated Ajv runtime dependency leaves match the audited upstream version/license/range metadata.",
+    "Ajv Draft 2020-12 uses a distinct Ajv2020 entry, ajv/dist/2020; ajv-formats and Ajv standalone operation have version-instance constraints, and the format plugin ReDoS/strict-format risks are described accurately.",
+    "fast-uri 3.1.8 is a reasonable minimum pin within Ajv's ^3.0.1 range based on its fixes and security advisory; the final lock must confirm the resolved version.",
+    "Zod's manifest has no engines field and its npm description gives general Node support, which is not an explicit Node 24 guarantee. The research JSON was corrected to say Node 24 remains unverified."
+  ],
+  "notVerified": [
+    "No pnpm graph was resolved; final versions, deduplication of Ajv, tarball integrity, notices, and the distribution inventory remain pending.",
+    "No Node 24 runtime execution, schema validation fixture, generated schema, or test was run.",
+    "This candidate review does not select or freeze the schema toolchain."
+  ],
+  "primarySources": [
+    "https://github.com/ajv-validator/ajv/releases/tag/v8.20.0",
+    "https://raw.githubusercontent.com/ajv-validator/ajv/v8.20.0/lib/2020.ts",
+    "https://github.com/fastify/fast-uri/releases/tag/v3.1.8",
+    "https://github.com/fastify/fast-uri/security/advisories/GHSA-hrr3-gc8f-f4qj",
+    "https://ajv.js.org/guide/formats.html",
+    "https://ajv.js.org/guide/standalone.html",
+    "https://ajv.js.org/security.html",
+    "https://www.npmjs.com/package/zod?activeTab=versions",
+    "https://raw.githubusercontent.com/colinhacks/zod/v4.6.5/packages/zod/package.json"
+  ]
+}
