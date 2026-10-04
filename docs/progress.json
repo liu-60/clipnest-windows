@@ -84,6 +84,19 @@
         "tests/tasks/T04/measure-image-worker-16mp.cjs",
         "docs/evidence/T04/image-worker-16mp-fresh-worker-5-sample-measurement.json",
         "docs/evidence/T04/image-worker-16000000-pixel-jpeg-20mib-fresh-worker-5-sample-measurement.json",
+        "docs/evidence/T04/image-worker-16000000-pixel-jpeg-20mib-fresh-worker-5-sample-before-preflight.json",
+        "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-5-sample-before-preflight.json",
+        "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-5-sample-measurement.json",
+        "docs/evidence/T04/image-worker-3000000-pixel-jpeg-20mib-fresh-worker-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-4000000-pixel-jpeg-20mib-fresh-worker-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-4000000-pixel-jpeg-jpeg-js-20mib-fresh-worker-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-4000000-pixel-jpeg-native-image-20mib-fresh-worker-1-sample-before-preflight.json",
+        "docs/evidence/T04/image-worker-4000000-pixel-jpeg-native-image-20mib-fresh-worker-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-5000000-pixel-jpeg-native-image-20mib-fresh-worker-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-6000000-pixel-jpeg-native-image-20mib-fresh-worker-1-sample-before-preflight.json",
+        "docs/evidence/T04/image-worker-6000000-pixel-jpeg-native-image-20mib-fresh-worker-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-7997584-pixel-jpeg-native-image-20mib-fresh-worker-1-sample-before-preflight.json",
+        "docs/evidence/T04/image-worker-7997584-pixel-jpeg-native-image-20mib-fresh-worker-1-sample-measurement.json",
         "docs/evidence/T04/image-worker-16mp-compressed-large-buffer-regression.json",
         "docs/evidence/T04/packaged-asar-worker-smoke.json",
         "tests/tasks/T04/packaged-asar-worker-smoke.cjs",
@@ -96,7 +109,7 @@
         "P15 选图仍在 src/main/native/content-provider.ts 重复 Base64 解码/SHA-256并执行主线程DIB转换；该文件不在 T04 allowlist，用户选择暂不扩围，此门保持未关闭。",
         "pnpm test:unit 最新为114/114通过；本次最新压缩IPC代码已在独立 Windows x64 目录包 ASAR 中通过真实 utilityProcess smoke（decoded_compressed、3000×3000 RGBA逐字节一致），见 docs/evidence/T04/packaged-asar-worker-smoke.json。该检查未安装应用，也未覆盖完整窗口/剪贴板/面板/输入整链；图像色彩/EXIF/ICC与JPEG质量仍未覆盖。",
         "本次selection准备竞速补丁的定向验证已通过：pnpm build:main / TypeScript 编译成功，20/20 fake tests 通过（图像准备11、selection截止9）；pnpm test:native 的56项 Rust 单元/隔离fake集成测试也通过。新增 0ms helper check-only：截止后即时检查按键，不重开500ms窗口，并在剪贴板/输入门前复核；native/tests/control.rs 和 protocol.rs 覆盖此契约。独立静态复核确认实现与证据一致，同时指出采样与 EmptyClipboard/SendInput 非原子，按键在最后采样后到 OS 调用前转换的竞态仍未排除。真实 Electron/utilityProcess/helper 取消竞速、物理按键、系统剪贴板/输入或面板行为仍未运行。静态路径显示预注册取消不重启 helper；已登记取消未确认时锁存 clipboard fence 并保留 job，直至 helper 退出确认。",
-        "20MiB合成高熵baseline JPEG的5个fresh utilityProcess样本全部在约3.09–3.22s后以image_worker_capacity_exceeded拒绝；拒绝前 PeakWorkingSet64最高656289792B（625.89MiB），超过256MiB预算，见 image-worker-16000000-pixel-jpeg-20mib-fresh-worker-5-sample-measurement.json。当前 jpeg-js 容量拒绝不能证明进程峰值受限，此结果为明确失败而非通过；需要解码前内存防护并复测。"
+        "新增JPEG SOF采样/MCU系数块及元数据预检，在调用jpeg-js前按112MiB进程余量、512B/系数块、组件行/RGB/RGBA、量化/Huffman表与Huffman树、注释字符串估算；将量化表和Huffman表定义各限64个、单表Huffman符号限256个、COM累计限1MiB，JPEG marker段数限4096。16MP、20MiB合成baseline 4:4:4（5样本）和NativeImage生成4:2:0（5样本）均在约165–168ms capacity reject p95内拒绝，PeakWorkingSet64最高107622400B（102.64MiB），低于256MiB；相同布局预检前曾分别达到656289792B（625.89MiB）与462811136B（441.37MiB）。当前guard下已确认的成功样本只有4MP 4:2:0单次203.41MiB；5MP 4:2:0单次236.56MiB和3MP 4:4:4单次218.55MiB来自未记录当前预检估算的旧样本，尚待当前版本复测。预检保守拒绝了曾以246.85MiB完成一次解码的4MP 4:4:4及曾以242.73MiB完成一次解码的6MP 4:2:0，显示其牺牲有效输入。该经验估算与少量合成样本不构成通用RSS硬上限；16MP JPEG成功解码、更多采样/内容、渐进JPEG、EXIF/ICC及完整打包运行仍未验收，需评估内存更合适的解码器并复测后再关闭T04门。JPEG定向单测14/14通过；T04状态仍为in_progress。"
       ]
     },
     "T05": {

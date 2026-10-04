@@ -71,6 +71,38 @@ function testPaeth(left, up, upperLeft) {
 function request(format, bytes, width = 2, height = 1) {
   return { jobId: "real-image", format, encodedBytes: Uint8Array.from(bytes), width, height };
 }
+function jpegSof(width, height, samplingFactors) {
+  const componentCount = samplingFactors.length;
+  const segmentLength = 8 + componentCount * 3;
+  const bytes = Buffer.alloc(4 + segmentLength);
+  bytes.set([0xff, 0xd8, 0xff, 0xc0]);
+  bytes.writeUInt16BE(segmentLength, 4);
+  bytes[6] = 8;
+  bytes.writeUInt16BE(height, 7);
+  bytes.writeUInt16BE(width, 9);
+  bytes[11] = componentCount;
+  for (let index = 0; index < componentCount; index++) {
+    const offset = 12 + index * 3;
+    bytes[offset] = index + 1;
+    bytes[offset + 1] = samplingFactors[index];
+  }
+  return bytes;
+}
+function jpegSegment(marker, payload) {
+  const bytes = Buffer.alloc(payload.length + 4);
+  bytes.set([0xff, marker]);
+  bytes.writeUInt16BE(payload.length + 2, 2);
+  payload.copy(bytes, 4);
+  return bytes;
+}
+function truncatedJpegSegment(marker, payload, missingBytes = 2) {
+  const bytes = jpegSegment(marker, payload);
+  bytes.writeUInt16BE(bytes.readUInt16BE(2) + missingBytes, 2);
+  return bytes;
+}
+function jpegWithSegments(frame, segments) {
+  return Buffer.concat([frame, ...segments, Buffer.from([0xff, 0xd9])]);
+}
 const decode = (input) => decodeProductionImage(input, new AbortController().signal);
 
 test("production PNG decoder returns exact unpremultiplied RGBA and preserves encoded bytes", async () => {
@@ -139,7 +171,7 @@ test("real JPEG decoder produces strict opaque RGBA and rejects damaged data", a
     else assert.ok(Math.abs(result.pixels[index] - pixels[index]) <= 2);
   }
   assert.deepEqual(input.encodedBytes, before);
-  await assert.rejects(decode(request("jpeg", encoded.subarray(0, encoded.length / 2))), /image_decode_failed/);
+  await assert.rejects(decode(request("jpeg", encoded.subarray(0, encoded.length / 2))), /image_source_invalid/);
   await assert.rejects(decode(request("jpeg", encoded, 1, 1)), /image_dimensions_mismatch/);
 });
 
@@ -153,6 +185,72 @@ test("encoded source, actual pixel dimensions, and PNG working-set limits are en
   await assert.rejects(decode(request("png", png({ width: 4000, height: 4000, depth: 16 }), 4000, 4000)), /image_worker_capacity_exceeded/);
   // Filter bookkeeping for millions of narrow rows must also fit the budget.
   await assert.rejects(decode(request("png", png({ width: 1, height: 16_000_000 }), 1, 16_000_000)), /image_worker_capacity_exceeded/);
+});
+
+test("JPEG SOF sampling and coefficient blocks are checked before full decode allocation", async () => {
+  for (const samplingFactors of [[0x11, 0x11, 0x11], [0x22, 0x11, 0x11]]) {
+    await assert.rejects(
+      decode(request("jpeg", jpegSof(4000, 4000, samplingFactors), 4000, 4000)),
+      /image_worker_capacity_exceeded/,
+    );
+  }
+  await assert.rejects(
+    decode(request("jpeg", jpegSof(32, 32, [0x00, 0x11, 0x11]), 32, 32)),
+    /image_source_invalid/,
+  );
+});
+
+test("JPEG metadata allocations are bounded before decode", async () => {
+  const frame = jpegSof(32, 32, [0x11, 0x11, 0x11]);
+  const comments = Array.from({ length: 17 }, () => jpegSegment(0xfe, Buffer.alloc(65_533)));
+  await assert.rejects(decode(request("jpeg", jpegWithSegments(frame, comments), 32, 32)), /image_worker_capacity_exceeded/);
+
+  const quantizationTable = Buffer.alloc(65);
+  const quantizationTables = Array.from({ length: 65 }, () => jpegSegment(0xdb, quantizationTable));
+  await assert.rejects(decode(request("jpeg", jpegWithSegments(frame, quantizationTables), 32, 32)), /image_worker_capacity_exceeded/);
+
+  const huffmanTable = Buffer.alloc(18);
+  huffmanTable[1] = 1;
+  const huffmanTables = Array.from({ length: 65 }, () => jpegSegment(0xc4, huffmanTable));
+  await assert.rejects(decode(request("jpeg", jpegWithSegments(frame, huffmanTables), 32, 32)), /image_worker_capacity_exceeded/);
+
+  const repeatedHuffmanTables = Buffer.concat(Array.from({ length: 65 }, () => huffmanTable));
+  await assert.rejects(
+    decode(request("jpeg", Buffer.concat([frame, truncatedJpegSegment(0xc4, repeatedHuffmanTables)]), 32, 32)),
+    /image_source_invalid/,
+  );
+
+  const repeatedQuantizationTables = Buffer.concat(Array.from({ length: 65 }, () => quantizationTable));
+  await assert.rejects(
+    decode(request("jpeg", Buffer.concat([frame, truncatedJpegSegment(0xdb, repeatedQuantizationTables)]), 32, 32)),
+    /image_source_invalid/,
+  );
+
+  const nearlyFullCommentList = Array.from({ length: 16 }, () => jpegSegment(0xfe, Buffer.alloc(65_533)));
+  const truncatedComment = truncatedJpegSegment(0xfe, Buffer.alloc(1024), 2048);
+  await assert.rejects(
+    decode(request("jpeg", Buffer.concat([frame, ...nearlyFullCommentList, truncatedComment]), 32, 32)),
+    /image_source_invalid/,
+  );
+
+  const oversizedHuffmanSymbols = Buffer.alloc(17 + 257);
+  oversizedHuffmanSymbols[1] = 255;
+  oversizedHuffmanSymbols[2] = 2;
+  await assert.rejects(
+    decode(request("jpeg", jpegWithSegments(frame, [jpegSegment(0xc4, oversizedHuffmanSymbols)]), 32, 32)),
+    /image_source_invalid/,
+  );
+
+  const emptyAppSegment = jpegSegment(0xe2, Buffer.alloc(0));
+  const maximumSegments = Array.from({ length: 4095 }, () => emptyAppSegment);
+  await assert.rejects(
+    decode(request("jpeg", jpegWithSegments(frame, maximumSegments), 32, 32)),
+    /image_decode_failed/,
+  );
+  const excessiveSegments = Array.from({ length: 4096 }, () => emptyAppSegment);
+  await assert.rejects(decode(request("jpeg", jpegWithSegments(frame, excessiveSegments), 32, 32)), /image_worker_capacity_exceeded/);
+
+  await assert.rejects(decode(request("jpeg", jpegSof(32, 32, [0x11, 0x11]), 32, 32)), /image_format_unsupported/);
 });
 
 test("decoder handles already-aborted requests and invalid format/signature without output", async () => {

@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "DIAGNOSTIC_MEASUREMENT_WITH_LIMITATIONS",
+  "measurementType": "fresh_utility_process_per_uncached_16000000-pixel_synthetic_jpeg_decode",
+  "executionStatus": "MEASURED",
+  "source": {
+    "commit": "21a25b5fa6c04cafea6f15497e7ca1fb44ee05a0",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "osVersion": "Windows 11 Enterprise",
+    "electronVersion": "40.10.2",
+    "nodeVersion": "24.15.0",
+    "cpuModel": "Intel(R) Xeon(R) Platinum 8378C CPU @ 2.80GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 17178939392,
+    "displayOrForegroundAppUsed": false,
+    "systemClipboardReadOrWritten": false,
+    "inputSent": false
+  },
+  "fixture": {
+    "format": "jpeg",
+    "width": 4000,
+    "height": 4000,
+    "pixelCount": 16000000,
+    "content": "deterministic high-entropy synthetic baseline JPEG; APP2 segments bring the source within 3 bytes of 20 MiB; no user data",
+    "encodedBytes": 20971520,
+    "sourceLimitBytes": 20971520,
+    "sourceLimitHeadroomBytes": 0,
+    "jpegQuality": 96,
+    "jpegEncoder": "native-image",
+    "jpegImageBytesBeforeApp2Padding": 17179456,
+    "jpegApp2PaddingBytes": 3792064,
+    "jpegSamplingFactors": [
+      {
+        "horizontal": 2,
+        "vertical": 2
+      },
+      {
+        "horizontal": 1,
+        "vertical": 1
+      },
+      {
+        "horizontal": 1,
+        "vertical": 1
+      }
+    ],
+    "sha256": "c9362e8411a710e82c8ead5e41295c0f6902bf8f5eac9cf40ac25915abb68ab1"
+  },
+  "worker": {
+    "runtime": "Electron utilityProcess",
+    "recyclingPolicy": "one fresh process per uncached image larger than the 32 MiB decoded cache",
+    "configuredPeakBytes": 268435456,
+    "processes": [
+      {
+        "pid": 12144,
+        "spawnMs": 46.28,
+        "peakWorkingSetBytes": 435716096,
+        "sampledPeakPrivateBytes": 449900544,
+        "workingSetAtStopBytes": 308584448,
+        "privateBytesAtStop": 285786112,
+        "samplerSamples": 49
+      },
+      {
+        "pid": 63248,
+        "spawnMs": 41.09,
+        "peakWorkingSetBytes": 440926208,
+        "sampledPeakPrivateBytes": 433917952,
+        "workingSetAtStopBytes": 313790464,
+        "privateBytesAtStop": 290553856,
+        "samplerSamples": 47
+      },
+      {
+        "pid": 59380,
+        "spawnMs": 82.09,
+        "peakWorkingSetBytes": 462811136,
+        "sampledPeakPrivateBytes": 461090816,
+        "workingSetAtStopBytes": 335675392,
+        "privateBytesAtStop": 310419456,
+        "samplerSamples": 47
+      },
+      {
+        "pid": 62144,
+        "spawnMs": 81.18,
+        "peakWorkingSetBytes": 438247424,
+        "sampledPeakPrivateBytes": 404381696,
+        "workingSetAtStopBytes": 311111680,
+        "privateBytesAtStop": 284745728,
+        "samplerSamples": 46
+      },
+      {
+        "pid": 53740,
+        "spawnMs": 519.61,
+        "peakWorkingSetBytes": 439042048,
+        "sampledPeakPrivateBytes": 409759744,
+        "workingSetAtStopBytes": 311906304,
+        "privateBytesAtStop": 286429184,
+        "samplerSamples": 46
+      }
+    ],
+    "observedPeakWorkingSetBytes": 462811136,
+    "observedPeakWorkingSetMiB": 441.37,
+    "sampledPeakPrivateBytes": 461090816,
+    "sampledPeakPrivateMiB": 439.73,
+    "sampleIntervalMs": 100,
+    "totalSamplerSamples": 235,
+    "withinConfiguredPeakWorkingSet": false
+  },
+  "latency": {
+    "sampleCount": 5,
+    "successfulSampleCount": 5,
+    "capacityRejectedSampleCount": 0,
+    "samples": [
+      {
+        "requestId": "t04-jpeg-4000x4000-1",
+        "durationMs": 5274.92,
+        "workerStartupMs": 46.28,
+        "outcome": "success",
+        "workingSetBeforeBytes": 56946688,
+        "privateBytesBefore": 29044736,
+        "workingSetAfterBytes": 308584448,
+        "privateBytesAfter": 285786112,
+        "responsePayloadBytes": 53071439,
+        "peakWorkingSetBytes": 435716096,
+        "sampledPeakPrivateBytes": 449900544
+      },
+      {
+        "requestId": "t04-jpeg-4000x4000-2",
+        "durationMs": 4934.66,
+        "workerStartupMs": 41.09,
+        "outcome": "success",
+        "workingSetBeforeBytes": 63537152,
+        "privateBytesBefore": 30769152,
+        "workingSetAfterBytes": 313790464,
+        "privateBytesAfter": 290553856,
+        "responsePayloadBytes": 53071439,
+        "peakWorkingSetBytes": 440926208,
+        "sampledPeakPrivateBytes": 433917952
+      },
+      {
+        "requestId": "t04-jpeg-4000x4000-3",
+        "durationMs": 4906.1,
+        "workerStartupMs": 82.09,
+        "outcome": "success",
+        "workingSetBeforeBytes": 63627264,
+        "privateBytesBefore": 32251904,
+        "workingSetAfterBytes": 335675392,
+        "privateBytesAfter": 310419456,
+        "responsePayloadBytes": 53071439,
+        "peakWorkingSetBytes": 462811136,
+        "sampledPeakPrivateBytes": 461090816
+      },
+      {
+        "requestId": "t04-jpeg-4000x4000-4",
+        "durationMs": 4821.53,
+        "workerStartupMs": 81.18,
+        "outcome": "success",
+        "workingSetBeforeBytes": 61177856,
+        "privateBytesBefore": 29220864,
+        "workingSetAfterBytes": 311111680,
+        "privateBytesAfter": 284745728,
+        "responsePayloadBytes": 53071439,
+        "peakWorkingSetBytes": 438247424,
+        "sampledPeakPrivateBytes": 404381696
+      },
+      {
+        "requestId": "t04-jpeg-4000x4000-5",
+        "durationMs": 4898.68,
+        "workerStartupMs": 519.61,
+        "outcome": "success",
+        "workingSetBeforeBytes": 61173760,
+        "privateBytesBefore": 29122560,
+        "workingSetAfterBytes": 311906304,
+        "privateBytesAfter": 286429184,
+        "responsePayloadBytes": 53071439,
+        "peakWorkingSetBytes": 439042048,
+        "sampledPeakPrivateBytes": 409759744
+      }
+    ],
+    "p50Ms": 4906.1,
+    "p95Ms": 5274.92,
+    "maxMs": 5274.92,
+    "capacityRejectP50Ms": null,
+    "capacityRejectP95Ms": null,
+    "p50WorkerStartupMs": 81.18,
+    "p95WorkerStartupMs": 519.61,
+    "maxWorkerStartupMs": 519.61,
+    "timingScope": "fresh utility process ready, then request post through decompressed 64,000,000-byte RGBA response receipt",
+    "diagnosticOnly": true,
+    "doesNotSatisfyNormalTextOrWake100SampleAcceptance": true
+  },
+  "limitations": [
+    "Fresh-process synthetic 16MP samples are diagnostic; they do not satisfy the T05 100-sample controlled desktop timing gates or measure end-user paste latency.",
+    "The JPEG is a generated baseline image with synthetic APP2 padding to exercise the encoded-source ceiling; progressive JPEG, real EXIF/ICC metadata, other image content, UI responsiveness and original clipboard conversion are not covered.",
+    "No fixture was rejected by the decoder's internal capacity guard in this sample set; this does not establish a universal process-memory ceiling.",
+    "PeakWorkingSet64 is the OS-reported peak for each fresh process; private bytes are sampled every 100 ms and around each decode, so shorter private-memory peaks can be missed. These observations do not prove a hard ceiling for every decode.",
+    "No clipboard, target window, physical input, installed package, helper, or rollback behavior was exercised. P15 and full T04 acceptance remain open."
+  ]
+}

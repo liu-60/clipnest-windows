@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "DIAGNOSTIC_MEASUREMENT_WITH_LIMITATIONS",
+  "measurementType": "fresh_utility_process_per_uncached_5000000-pixel_synthetic_jpeg_decode",
+  "executionStatus": "MEASURED",
+  "source": {
+    "commit": "21a25b5fa6c04cafea6f15497e7ca1fb44ee05a0",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "osVersion": "Windows 11 Enterprise",
+    "electronVersion": "40.10.2",
+    "nodeVersion": "24.15.0",
+    "cpuModel": "Intel(R) Xeon(R) Platinum 8378C CPU @ 2.80GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 17178939392,
+    "displayOrForegroundAppUsed": false,
+    "systemClipboardReadOrWritten": false,
+    "inputSent": false
+  },
+  "fixture": {
+    "format": "jpeg",
+    "width": 2500,
+    "height": 2000,
+    "pixelCount": 5000000,
+    "content": "deterministic high-entropy synthetic baseline JPEG; APP2 segments bring the source within 3 bytes of 20 MiB; no user data",
+    "encodedBytes": 20971518,
+    "sourceLimitBytes": 20971520,
+    "sourceLimitHeadroomBytes": 2,
+    "jpegQuality": 100,
+    "jpegEncoder": "native-image",
+    "jpegImageBytesBeforeApp2Padding": 7021190,
+    "jpegApp2PaddingBytes": 13950328,
+    "jpegSamplingFactors": [
+      {
+        "horizontal": 2,
+        "vertical": 2
+      },
+      {
+        "horizontal": 1,
+        "vertical": 1
+      },
+      {
+        "horizontal": 1,
+        "vertical": 1
+      }
+    ],
+    "sha256": "55e0c854ed917cc7ceebd6df295a3f6c45a2e9365b24217c91cec147a7006b36"
+  },
+  "worker": {
+    "runtime": "Electron utilityProcess",
+    "recyclingPolicy": "one fresh process per uncached image larger than the 32 MiB decoded cache",
+    "configuredPeakBytes": 268435456,
+    "processes": [
+      {
+        "pid": 21280,
+        "spawnMs": 26.51,
+        "peakWorkingSetBytes": 248053760,
+        "sampledPeakPrivateBytes": 221028352,
+        "workingSetAtStopBytes": 187068416,
+        "privateBytesAtStop": 159600640,
+        "samplerSamples": 10
+      }
+    ],
+    "observedPeakWorkingSetBytes": 248053760,
+    "observedPeakWorkingSetMiB": 236.56,
+    "sampledPeakPrivateBytes": 221028352,
+    "sampledPeakPrivateMiB": 210.79,
+    "sampleIntervalMs": 100,
+    "totalSamplerSamples": 10,
+    "withinConfiguredPeakWorkingSet": true
+  },
+  "latency": {
+    "sampleCount": 1,
+    "successfulSampleCount": 1,
+    "capacityRejectedSampleCount": 0,
+    "samples": [
+      {
+        "requestId": "t04-jpeg-2500x2000-1",
+        "durationMs": 916.81,
+        "workerStartupMs": 26.51,
+        "outcome": "success",
+        "workingSetBeforeBytes": 59445248,
+        "privateBytesBefore": 32751616,
+        "workingSetAfterBytes": 187068416,
+        "privateBytesAfter": 159600640,
+        "responsePayloadBytes": 20000000,
+        "peakWorkingSetBytes": 248053760,
+        "sampledPeakPrivateBytes": 221028352
+      }
+    ],
+    "p50Ms": 916.81,
+    "p95Ms": 916.81,
+    "maxMs": 916.81,
+    "capacityRejectP50Ms": null,
+    "capacityRejectP95Ms": null,
+    "p50WorkerStartupMs": 26.51,
+    "p95WorkerStartupMs": 26.51,
+    "maxWorkerStartupMs": 26.51,
+    "timingScope": "fresh utility process ready, then request post through decompressed 64,000,000-byte RGBA response receipt",
+    "diagnosticOnly": true,
+    "doesNotSatisfyNormalTextOrWake100SampleAcceptance": true
+  },
+  "limitations": [
+    "Fresh-process synthetic 16MP samples are diagnostic; they do not satisfy the T05 100-sample controlled desktop timing gates or measure end-user paste latency.",
+    "The JPEG is a generated baseline image with synthetic APP2 padding to exercise the encoded-source ceiling; progressive JPEG, real EXIF/ICC metadata, other image content, UI responsiveness and original clipboard conversion are not covered.",
+    "No fixture was rejected by the decoder's internal capacity guard in this sample set; this does not establish a universal process-memory ceiling.",
+    "PeakWorkingSet64 is the OS-reported peak for each fresh process; private bytes are sampled every 100 ms and around each decode, so shorter private-memory peaks can be missed. These observations do not prove a hard ceiling for every decode.",
+    "No clipboard, target window, physical input, installed package, helper, or rollback behavior was exercised. P15 and full T04 acceptance remain open."
+  ]
+}

@@ -28,6 +28,21 @@ const pngInterlace = require("pngjs/lib/interlace") as {
   getImagePasses(width: number, height: number): { width: number; height: number }[];
 };
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+// Keep substantial room for the Electron/V8 baseline and untracked allocator overhead.
+const JPEG_PROCESS_RESERVE_BYTES = 112 * 1024 * 1024;
+// jpeg-js accounts 256 bytes per coefficient block; double that for typed-array and grid overhead.
+const JPEG_BLOCK_PEAK_ESTIMATE_BYTES = 512;
+// Bound repeated table definitions because jpeg-js allocates before overwriting a table ID.
+const JPEG_MAX_QUANTIZATION_TABLES = 64;
+const JPEG_MAX_HUFFMAN_TABLES = 64;
+const JPEG_MAX_HUFFMAN_SYMBOLS_PER_TABLE = 256;
+const JPEG_MAX_MARKER_SEGMENTS = 4096;
+// jpeg-js keeps COM payloads as strings for the lifetime of the decoded image.
+const JPEG_MAX_COMMENT_BYTES = 1024 * 1024;
+const JPEG_QUANTIZATION_TABLE_PEAK_BYTES = 512;
+// DHT input symbols expand into nested JavaScript tree nodes during decode.
+const JPEG_HUFFMAN_SYMBOL_PEAK_BYTES = 2048;
+const JPEG_HUFFMAN_TABLE_PEAK_BYTES = 4096;
 
 /** Called only by the utility-process production entry; never decode on the main thread. */
 export const decodeProductionImage: ImageDecoder = async (input, signal) => {
@@ -194,7 +209,11 @@ function validatePngChunks(bytes: Buffer, input: ImageDecodeInput): void {
 }
 
 function decodeJpegImage(bytes: Buffer, input: ImageDecodeInput): DecodedImage {
-  validateDimensions(...jpegDimensions(bytes), input);
+  const frame = parseJpegFrame(bytes);
+  validateDimensions(frame.width, frame.height, input);
+  if (estimateJpegPeakBytes(bytes.byteLength, frame) > IMAGE_LIMITS.workerPeakBytes) {
+    throw new Error("image_worker_capacity_exceeded");
+  }
   const image = decodeJpeg(bytes, {
     useTArray: true, formatAsRGBA: true, tolerantDecoding: false,
     maxResolutionInMP: 16, maxMemoryUsageInMB: 256,
@@ -202,25 +221,167 @@ function decodeJpegImage(bytes: Buffer, input: ImageDecodeInput): DecodedImage {
   return { width: image.width, height: image.height, pixels: image.data };
 }
 
-function jpegDimensions(bytes: Buffer): [number, number] {
+interface JpegFrame {
+  width: number;
+  height: number;
+  components: { horizontalSampling: number; verticalSampling: number }[];
+  quantizationTables: number;
+  huffmanTables: number;
+  huffmanSymbols: number;
+  commentBytes: number;
+}
+
+function parseJpegFrame(bytes: Buffer): JpegFrame {
   if (bytes.length < 4 || bytes[0] !== 0xff || bytes[1] !== 0xd8) throw new Error("image_source_invalid");
   let offset = 2;
-  while (offset + 4 <= bytes.length) {
-    if (bytes[offset] !== 0xff) break;
-    while (bytes[offset] === 0xff) offset++;
-    const marker = bytes[offset++];
-    if (marker === 0xd9 || marker === 0xda || marker === 0x00) break;
-    if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) continue;
-    if (offset + 2 > bytes.length) break;
-    const length = bytes.readUInt16BE(offset);
-    if (length < 2 || offset + length > bytes.length) break;
-    if ([0xc0, 0xc1, 0xc2].includes(marker)) {
-      if (length < 8) break;
-      return [bytes.readUInt16BE(offset + 5), bytes.readUInt16BE(offset + 3)];
+  let scanningEntropy = false;
+  let segmentCount = 0;
+  let frame: JpegFrame | undefined;
+  let quantizationTables = 0;
+  let huffmanTables = 0;
+  let huffmanSymbols = 0;
+  let commentBytes = 0;
+  const completedFrame = (): JpegFrame => {
+    if (!frame) throw new Error("image_source_invalid");
+    frame.quantizationTables = quantizationTables;
+    frame.huffmanTables = huffmanTables;
+    frame.huffmanSymbols = huffmanSymbols;
+    frame.commentBytes = commentBytes;
+    return frame;
+  };
+  while (offset < bytes.length) {
+    let marker = -1;
+    if (scanningEntropy) {
+      let foundMarker = false;
+      while (offset < bytes.length) {
+        if (bytes[offset++] !== 0xff) continue;
+        while (bytes[offset] === 0xff) offset++;
+        if (offset >= bytes.length) break;
+        marker = bytes[offset++];
+        if (marker === 0x00 || (marker >= 0xd0 && marker <= 0xd7)) continue;
+        scanningEntropy = false;
+        foundMarker = true;
+        break;
+      }
+      if (!foundMarker) break;
+    } else {
+      if (bytes[offset++] !== 0xff) throw new Error("image_source_invalid");
+      while (bytes[offset] === 0xff) offset++;
+      if (offset >= bytes.length) break;
+      marker = bytes[offset++];
     }
+    if (marker < 0) break;
+    if (marker === 0xd9) {
+      return completedFrame();
+    }
+    if (marker === 0xd8 || marker === 0x00) throw new Error("image_source_invalid");
+    if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) continue;
+    if (++segmentCount > JPEG_MAX_MARKER_SEGMENTS) throw new Error("image_worker_capacity_exceeded");
+    if (offset + 2 > bytes.length) {
+      throw new Error("image_source_invalid");
+    }
+    const length = bytes.readUInt16BE(offset);
+    if (length < 2) throw new Error("image_source_invalid");
+    if (offset + length > bytes.length) {
+      throw new Error("image_source_invalid");
+    }
+    const segmentEnd = offset + length;
+    if (marker === 0xdb) {
+      let cursor = offset + 2;
+      while (cursor < segmentEnd) {
+        const specification = bytes[cursor++];
+        const precision = specification >> 4;
+        const tableId = specification & 0x0f;
+        const tableBytes = 64 * (precision === 0 ? 1 : 2);
+        if (precision > 1 || tableId > 15 || cursor + tableBytes > segmentEnd) {
+          throw new Error("image_source_invalid");
+        }
+        cursor += tableBytes;
+        if (++quantizationTables > JPEG_MAX_QUANTIZATION_TABLES) {
+          throw new Error("image_worker_capacity_exceeded");
+        }
+      }
+    } else if (marker === 0xc4) {
+      let cursor = offset + 2;
+      while (cursor < segmentEnd) {
+        if (cursor + 17 > segmentEnd) throw new Error("image_source_invalid");
+        const specification = bytes[cursor++];
+        if ((specification >> 4) > 1) throw new Error("image_source_invalid");
+        let symbolCount = 0;
+        for (let index = 0; index < 16; index++) symbolCount += bytes[cursor++];
+        if (symbolCount > JPEG_MAX_HUFFMAN_SYMBOLS_PER_TABLE || cursor + symbolCount > segmentEnd) {
+          throw new Error("image_source_invalid");
+        }
+        cursor += symbolCount;
+        huffmanSymbols += symbolCount;
+        if (++huffmanTables > JPEG_MAX_HUFFMAN_TABLES) {
+          throw new Error("image_worker_capacity_exceeded");
+        }
+      }
+    } else if (marker === 0xfe) {
+      commentBytes += length - 2;
+      if (commentBytes > JPEG_MAX_COMMENT_BYTES) throw new Error("image_worker_capacity_exceeded");
+    }
+    if (marker === 0xc0 || marker === 0xc1 || marker === 0xc2) {
+      if (frame) throw new Error("image_source_invalid");
+      const componentCount = bytes[offset + 7];
+      if (length !== 8 + componentCount * 3) {
+        throw new Error("image_source_invalid");
+      }
+      if (componentCount === 2) throw new Error("image_format_unsupported");
+      if (![1, 3, 4].includes(componentCount)) throw new Error("image_source_invalid");
+      const components: JpegFrame["components"] = [];
+      const identifiers = new Set<number>();
+      for (let index = 0; index < componentCount; index++) {
+        const componentOffset = offset + 8 + index * 3;
+        const identifier = bytes[componentOffset];
+        const sampling = bytes[componentOffset + 1];
+        const horizontalSampling = sampling >> 4;
+        const verticalSampling = sampling & 0x0f;
+        if (identifiers.has(identifier) || horizontalSampling < 1 || horizontalSampling > 4 ||
+            verticalSampling < 1 || verticalSampling > 4) throw new Error("image_source_invalid");
+        identifiers.add(identifier);
+        components.push({ horizontalSampling, verticalSampling });
+      }
+      frame = {
+        width: bytes.readUInt16BE(offset + 5),
+        height: bytes.readUInt16BE(offset + 3),
+        components,
+        quantizationTables,
+        huffmanTables,
+        huffmanSymbols,
+        commentBytes,
+      };
+    } else if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+      throw new Error("image_format_unsupported");
+    }
+    if (marker === 0xda && !frame) throw new Error("image_source_invalid");
     offset += length;
+    if (marker === 0xda) scanningEntropy = true;
   }
-  throw new Error("image_source_invalid");
+  if (!frame) throw new Error("image_source_invalid");
+  return completedFrame();
+}
+
+function estimateJpegPeakBytes(encodedBytes: number, frame: JpegFrame): number {
+  const maxHorizontalSampling = Math.max(...frame.components.map((component) => component.horizontalSampling));
+  const maxVerticalSampling = Math.max(...frame.components.map((component) => component.verticalSampling));
+  const mcusPerLine = Math.ceil(frame.width / (maxHorizontalSampling * 8));
+  const mcusPerColumn = Math.ceil(frame.height / (maxVerticalSampling * 8));
+  let blockCount = 0;
+  let componentLineBytes = 0;
+  for (const component of frame.components) {
+    blockCount += mcusPerLine * component.horizontalSampling * mcusPerColumn * component.verticalSampling;
+    const blocksPerLine = Math.ceil(Math.ceil(frame.width / 8) * component.horizontalSampling / maxHorizontalSampling);
+    const blocksPerColumn = Math.ceil(Math.ceil(frame.height / 8) * component.verticalSampling / maxVerticalSampling);
+    componentLineBytes += blocksPerLine * 8 * blocksPerColumn * 8;
+  }
+  const pixels = frame.width * frame.height;
+  return JPEG_PROCESS_RESERVE_BYTES + encodedBytes * 2 + blockCount * JPEG_BLOCK_PEAK_ESTIMATE_BYTES +
+    componentLineBytes + pixels * (frame.components.length + 4) +
+    frame.quantizationTables * JPEG_QUANTIZATION_TABLE_PEAK_BYTES +
+    frame.huffmanTables * JPEG_HUFFMAN_TABLE_PEAK_BYTES +
+    frame.huffmanSymbols * JPEG_HUFFMAN_SYMBOL_PEAK_BYTES + frame.commentBytes * 2;
 }
 
 function validateInput(input: ImageDecodeInput): void {

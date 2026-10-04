@@ -38,10 +38,16 @@
       "failed": 0,
       "command": "pnpm test:unit"
     },
+    "latestJpegPreflightRun": {
+      "status": "PASS",
+      "passed": 14,
+      "failed": 0,
+      "command": "pnpm test:unit -- clipboard-image-decoder.test.cjs"
+    },
     "checkpointEvidence": "docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json",
     "requiredNotRun": [
       "Real Electron window clipboard/panel integration and final-helper target-visible card-click acceptance",
-      "A 256 MiB process-memory guarantee across all supported image content, JPEG and source-size boundaries; current five-sample synthetic RGBA measurement is diagnostic only",
+      "A 256 MiB process-memory guarantee across supported image content; PNG/JPEG synthetic fresh-worker measurements establish only their listed cases, and the conservative JPEG preflight rejects inputs above its measured accepted range",
       "T05 100-sample controlled text/wake measurements and final package acceptance"
     ],
     "workerPeakMemoryMeasurement": {
@@ -65,7 +71,7 @@
       ]
     },
     "jpegWorkerPeakMemoryDiagnostic": {
-      "status": "CAPACITY_REJECTED_OVER_BUDGET",
+      "status": "EARLY_CAPACITY_REJECT_WITHIN_BUDGET_WITH_COMPATIBILITY_LIMITATION",
       "artifact": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-20mib-fresh-worker-5-sample-measurement.json",
       "samples": 5,
       "freshWorkerPerSample": true,
@@ -73,15 +79,54 @@
       "sourceBytes": 20971520,
       "capacityRejectedSamples": 5,
       "successfulDecodes": 0,
-      "capacityRejectP95Ms": 3223.1,
-      "maxPeakWorkingSetBytes": 656289792,
-      "maxPeakWorkingSetMiB": 625.89,
+      "capacityRejectP95Ms": 168.48,
+      "maxPeakWorkingSetBytes": 107622400,
+      "maxPeakWorkingSetMiB": 102.64,
       "budgetBytes": 268435456,
-      "withinBudget": false,
+      "withinBudget": true,
+      "preflightModel": {
+        "processReserveBytes": 117440512,
+        "estimatedBytesPerCoefficientBlock": 512,
+        "estimatedBytesPerQuantizationTable": 512,
+        "estimatedBytesPerHuffmanTable": 4096,
+        "estimatedBytesPerHuffmanSymbol": 2048,
+        "commentBytesMultiplier": 2,
+        "maximumMarkerSegments": 4096,
+        "metadataLimits": {
+          "quantizationTables": 64,
+          "huffmanTables": 64,
+          "huffmanSymbolsPerTable": 256,
+          "commentBytes": 1048576
+        },
+        "accountsFor": [
+          "encoded input copies",
+          "component sample lines",
+          "RGB intermediate",
+          "RGBA output",
+          "quantization and Huffman table expansion",
+          "decoded JPEG comments"
+        ]
+      },
+      "comparisonArtifacts": [
+        "docs/evidence/T04/image-worker-16000000-pixel-jpeg-20mib-fresh-worker-5-sample-before-preflight.json",
+        "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-5-sample-before-preflight.json",
+        "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-5-sample-measurement.json",
+        "docs/evidence/T04/image-worker-3000000-pixel-jpeg-20mib-fresh-worker-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-4000000-pixel-jpeg-20mib-fresh-worker-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-4000000-pixel-jpeg-jpeg-js-20mib-fresh-worker-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-4000000-pixel-jpeg-native-image-20mib-fresh-worker-1-sample-before-preflight.json",
+        "docs/evidence/T04/image-worker-4000000-pixel-jpeg-native-image-20mib-fresh-worker-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-5000000-pixel-jpeg-native-image-20mib-fresh-worker-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-6000000-pixel-jpeg-native-image-20mib-fresh-worker-1-sample-before-preflight.json",
+        "docs/evidence/T04/image-worker-6000000-pixel-jpeg-native-image-20mib-fresh-worker-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-7997584-pixel-jpeg-native-image-20mib-fresh-worker-1-sample-before-preflight.json",
+        "docs/evidence/T04/image-worker-7997584-pixel-jpeg-native-image-20mib-fresh-worker-1-sample-measurement.json"
+      ],
       "limitations": [
-        "synthetic high-entropy baseline JPEG with APP2 padding to the encoded source limit; not representative of all JPEG content or metadata",
-        "all samples were rejected; this does not measure successful decode latency",
-        "the observed process peak exceeded the configured budget before capacity rejection"
+        "16MP/20MiB samples are rejected before full decode; the maximum supported JPEG size has not been established",
+        "Existing 5MP 4:2:0 and 3MP 4:4:4 successful samples were recorded before the metadata-aware estimate and do not prove current-guard admission or a universal RSS ceiling",
+        "the guard conservatively rejects a 4MP 4:4:4 input that decoded once at 246.85 MiB and a 6MP 4:2:0 input that decoded once at 242.73 MiB before the preflight was added",
+        "the preflight estimate does not replace Windows measurements for progressive JPEG, EXIF/ICC, packaged full-app use, or a hard process RSS bound"
       ]
     },
     "latestPackagedAsarCompressedIpcSmoke": {

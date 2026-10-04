@@ -1,4 +1,4 @@
-// Diagnostic Windows x64 measurement using only a synthetic PNG and an
+// Diagnostic Windows x64 measurement using only a synthetic PNG/JPEG and an
 // isolated Electron utility process. It never accesses the system clipboard
 // or sends input to another application.
 const assert = require("node:assert/strict");
@@ -19,7 +19,9 @@ const INFLATE_CHUNK_BYTES = 1024 * 1024;
 const SAMPLE_COUNT = Math.min(5, Math.max(1, Number(process.env.T04_IMAGE_SAMPLE_COUNT) || 5));
 const SAMPLE_INTERVAL_MS = Math.max(50, Number(process.env.T04_IMAGE_SAMPLE_INTERVAL_MS) || 100);
 const IMAGE_FORMAT = process.env.T04_IMAGE_FORMAT || "png";
+const JPEG_ENCODER = process.env.T04_JPEG_ENCODER || "jpeg-js";
 if (IMAGE_FORMAT !== "png" && IMAGE_FORMAT !== "jpeg") throw new Error("unsupported_t04_image_format");
+if (JPEG_ENCODER !== "jpeg-js" && JPEG_ENCODER !== "native-image") throw new Error("unsupported_t04_jpeg_encoder");
 if (!Number.isSafeInteger(PIXELS) || PIXELS > 16_000_000) throw new Error("synthetic_image_exceeds_pixel_limit");
 
 if (!process.versions.electron) {
@@ -45,7 +47,7 @@ async function runMeasurement() {
   const workerEntry = path.join(ROOT, "dist-electron", "main", "clipboard", "image-worker.js");
   const outputName = IMAGE_FORMAT === "png"
     ? `image-worker-16mp-fresh-worker-${SAMPLE_COUNT}-sample-measurement.json`
-    : `image-worker-${PIXELS}-pixel-jpeg-20mib-fresh-worker-${SAMPLE_COUNT}-sample-measurement.json`;
+    : `image-worker-${PIXELS}-pixel-jpeg-${JPEG_ENCODER === "jpeg-js" ? "" : "native-image-"}20mib-fresh-worker-${SAMPLE_COUNT}-sample-measurement.json`;
   const outputPath = path.join(ROOT, "docs", "evidence", "T04", outputName);
   assert.ok(fs.existsSync(workerEntry), `compiled worker entry missing: ${workerEntry}`);
   if (process.platform !== "win32" || process.arch !== "x64") {
@@ -53,7 +55,7 @@ async function runMeasurement() {
   }
 
   await app.whenReady();
-  const jpegFixture = IMAGE_FORMAT === "jpeg" ? buildSyntheticJpeg(WIDTH, HEIGHT) : null;
+  const jpegFixture = IMAGE_FORMAT === "jpeg" ? buildSyntheticJpeg(WIDTH, HEIGHT, JPEG_ENCODER) : null;
   const encodedBytes = jpegFixture?.bytes ?? buildSyntheticPng(WIDTH, HEIGHT);
   if (encodedBytes.byteLength > 20 * 1024 * 1024) throw new Error("synthetic_image_exceeds_source_limit");
   const imageSha256 = createHash("sha256").update(encodedBytes).digest("hex");
@@ -170,14 +172,27 @@ async function runMeasurement() {
       sourceLimitBytes: 20 * 1024 * 1024,
       sourceLimitHeadroomBytes: 20 * 1024 * 1024 - encodedBytes.byteLength,
       jpegQuality: jpegFixture?.quality ?? null,
+      jpegEncoder: jpegFixture?.encoder ?? null,
       jpegImageBytesBeforeApp2Padding: jpegFixture?.imageBytesBeforePadding ?? null,
       jpegApp2PaddingBytes: jpegFixture?.app2PaddingBytes ?? null,
+      jpegSamplingFactors: jpegFixture?.samplingFactors ?? null,
       sha256: imageSha256,
     },
     worker: {
       runtime: "Electron utilityProcess",
       recyclingPolicy: "one fresh process per uncached image larger than the 32 MiB decoded cache",
       configuredPeakBytes: WORKER_LIMIT_BYTES,
+      jpegCapacityEstimate: IMAGE_FORMAT === "jpeg" ? {
+        processReserveBytes: 112 * 1024 * 1024,
+        coefficientBlockBytes: 512,
+        quantizationTableBytes: 512,
+        huffmanTableBytes: 4096,
+        huffmanSymbolBytes: 2048,
+        commentByteMultiplier: 2,
+        metadataLimits: { quantizationTables: 64, huffmanTables: 64, huffmanSymbolsPerTable: 256, commentBytes: 1024 * 1024 },
+        maximumMarkerSegments: 4096,
+        includes: "encoded input copies, coefficient blocks, component lines, RGB intermediate, RGBA output, JPEG tables, Huffman trees, and decoded comments",
+      } : null,
       processes: workers,
       observedPeakWorkingSetBytes: peakWorkingSetBytes,
       observedPeakWorkingSetMiB: round(peakWorkingSetBytes / 1024 / 1024),
@@ -212,7 +227,9 @@ async function runMeasurement() {
         ? "The PNG input is one generated gradient/noise fixture; JPEG, other image content, UI responsiveness and original clipboard conversion are not covered."
         : "The JPEG is a generated baseline image with synthetic APP2 padding to exercise the encoded-source ceiling; progressive JPEG, real EXIF/ICC metadata, other image content, UI responsiveness and original clipboard conversion are not covered.",
       capacityRejectedSamples.length > 0
-        ? "A valid under-limit fixture may receive image_worker_capacity_exceeded from the decoder's internal 256 MiB allocation guard; a capacity rejection is fail-closed behavior, not a successful decode or proof of process peak under every input."
+        ? IMAGE_FORMAT === "jpeg"
+          ? "The measured JPEG sample set was capacity-rejected and did not prove successful full-resolution decode; the observed low peak applies only to these synthetic SOF layouts and is not a universal process-memory ceiling."
+          : "A capacity rejection is fail-closed behavior, not a successful decode or proof of process peak under every input."
         : "No fixture was rejected by the decoder's internal capacity guard in this sample set; this does not establish a universal process-memory ceiling.",
       `PeakWorkingSet64 is the OS-reported peak for each fresh process; private bytes are sampled every ${SAMPLE_INTERVAL_MS} ms and around each decode, so shorter private-memory peaks can be missed. These observations do not prove a hard ceiling for every decode.`,
       "No clipboard, target window, physical input, installed package, helper, or rollback behavior was exercised. P15 and full T04 acceptance remain open.",
@@ -346,7 +363,7 @@ function buildSyntheticPng(width, height) {
   }
 }
 
-function buildSyntheticJpeg(width, height) {
+function buildSyntheticJpeg(width, height, encoder) {
   const pixels = Buffer.allocUnsafe(width * height * 4);
   let state = 0x6d2b79f5;
   for (let offset = 0; offset < pixels.byteLength; offset += 4) {
@@ -359,12 +376,19 @@ function buildSyntheticJpeg(width, height) {
     pixels[offset + 3] = 0xff;
   }
 
-  const jpeg = require("jpeg-js");
-  const qualities = [82, 78, 74, 70, 66, 62, 58, 54, 50, 46, 42, 38];
+  const qualities = encoder === "native-image"
+    ? [100, 96, 92, 88, 84, 80, 76, 72, 68, 64, 60, 56, 52, 48, 44, 40]
+    : [82, 78, 74, 70, 66, 62, 58, 54, 50, 46, 42, 38];
+  const jpeg = encoder === "jpeg-js" ? require("jpeg-js") : null;
+  const nativeBitmap = encoder === "native-image"
+    ? require("electron").nativeImage.createFromBitmap(pixels, { width, height })
+    : null;
   let quality = null;
   let imageBytes = null;
   for (const candidate of qualities) {
-    const encoded = Buffer.from(jpeg.encode({ width, height, data: pixels }, candidate).data);
+    const encoded = encoder === "jpeg-js"
+      ? Buffer.from(jpeg.encode({ width, height, data: pixels }, candidate).data)
+      : nativeBitmap.toJPEG(candidate);
     if (encoded.byteLength < 20 * 1024 * 1024) {
       quality = candidate;
       imageBytes = encoded;
@@ -390,7 +414,32 @@ function buildSyntheticJpeg(width, height) {
   }
 
   const bytes = Buffer.concat([imageBytes.subarray(0, 2), ...segments, imageBytes.subarray(2)]);
-  return { bytes, quality, imageBytesBeforePadding: imageBytes.byteLength, app2PaddingBytes };
+  return { bytes, quality, encoder, imageBytesBeforePadding: imageBytes.byteLength, app2PaddingBytes,
+    samplingFactors: readJpegSamplingFactors(imageBytes) };
+}
+
+function readJpegSamplingFactors(bytes) {
+  let offset = 2;
+  while (offset + 4 <= bytes.length) {
+    if (bytes[offset++] !== 0xff) throw new Error("synthetic_jpeg_marker_invalid");
+    while (bytes[offset] === 0xff) offset++;
+    const marker = bytes[offset++];
+    if (marker === 0xd9 || marker === 0xda) break;
+    if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) continue;
+    const segmentLength = bytes.readUInt16BE(offset);
+    if (segmentLength < 2 || offset + segmentLength > bytes.length) throw new Error("synthetic_jpeg_segment_invalid");
+    if ([0xc0, 0xc1, 0xc2].includes(marker)) {
+      const components = bytes[offset + 7];
+      const samplingFactors = [];
+      for (let index = 0; index < components; index++) {
+        const sampling = bytes[offset + 9 + index * 3];
+        samplingFactors.push({ horizontal: sampling >> 4, vertical: sampling & 0x0f });
+      }
+      return samplingFactors;
+    }
+    offset += segmentLength;
+  }
+  throw new Error("synthetic_jpeg_sof_missing");
 }
 
 function assertPixel(pixels, x, y) {
