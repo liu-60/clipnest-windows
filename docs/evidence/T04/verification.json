@@ -124,6 +124,11 @@
       "command": "pnpm test:unit -- main-image-preparation-failure.test.cjs main-paste-orchestration.test.cjs host-authorization.test.cjs (based on HEAD 414e9a3)",
       "status": "PASS",
       "result": "pnpm build:main (tsc -p tsconfig.main.json) passed; 20 tests passed across the new T04 production-orchestration VM fake and existing main-paste/host-authorization fixtures. For P17/T04-I04, image_worker_capacity_exceeded returned blocked with zero Electron fallback writes, helper registration/commit_write/paste, and panel hides; the retained image stayed unchanged. Images also fail closed with those side effects at zero when the helper or clipboard-sequence baseline is unavailable, before snapshot/decode. A non-image snapshot failure and unavailable-helper/baseline cases still use the existing copy-only fallback. A fake authorization_denied after a successful helper clipboard commit still returned copied_only without paste/input or panel hiding. The test used fake clipboard, window, authorization, and helper boundaries; it did not access OS clipboard, physical input, or a real window."
+    },
+    {
+      "command": "temporary Electron 40.10.2 utilityProcess PureJsImage 0.17.0 16MP baseline JPEG feasibility spike; detailed results in docs/evidence/T04/purejsimage-16mp-feasibility-spike.json",
+      "status": "MEASURED_WITH_LIMITATIONS",
+      "result": "One fresh worker sample each for synthetic 20 MiB SOF0 4:2:0 and 4:4:4 fixtures fully materialized 64,000,000-byte RGBA in 1964.26 ms / 149.32 MiB and 2140.84 ms / 151.97 MiB PeakWorkingSet64, respectively. AbortSignal did not stop decode; iterator return completed. Package was extracted in TEMP only, not installed or integrated. This is candidate feasibility evidence only: no independent pixel oracle, parent IPC transfer, packaged ASAR, repeat distribution, or complete license/distribution review."
     }
   ],
   "implementedAndCovered": [
@@ -240,6 +245,7 @@
     "A synthetic Electron main-process NativeImage toPNG/toJPEG plus Base64/SHA-256 diagnostic now verifies a late 500 ms poll fails closed after the real event loop resumes. It does not call clipboard.readImage, exercise RGBA-to-BGRA/DIB conversion, establish physical key timing, or validate the 3000 ms preparation deadline under real clipboard load.",
     "The helper zero-budget check-only path has 56 Rust fake tests and no new 500 ms wait. Physical-key timing, final-sample-to-EmptyClipboard/SendInput races, and the complete Electron/helper clipboard/paste path remain NOT_RUN.",
     "P15 remains open: src/main/native/content-provider.ts repeats Base64 decode/hash and main-thread pixel conversion. User chose not to add this file to current T04 scope.",
+    "PureJsImage 0.17.0 candidate feasibility spike: one fresh utilityProcess sample decoded each synthetic 16 MP baseline 4:2:0 and 4:4:4 JPEG near the 20 MiB source limit and materialized full RGBA below the observed 256 MiB target. Decoder AbortSignal was ineffective; repeated distributions, output IPC, ASAR, independent pixel oracle, and complete license/HEIF notice review are open. Candidate is not installed or approved; see docs/evidence/T04/purejsimage-16mp-feasibility-spike.json. This does not close the general image-memory or T04 gate.",
     "Independent final static review passed with limitations; it does not close P15, actual keyboard timing, full Electron/helper clipboard/paste acceptance or full T04 acceptance. The latest compressed IPC code passed an isolated ASAR worker smoke, which is not installation or end-user UI acceptance."
   ],
   "artifacts": [
@@ -270,6 +276,7 @@
     "tests/tasks/T04/packaged-asar-worker-smoke.cjs",
     "docs/evidence/T04/main-thread-image-deadline-diagnostic.json",
     "tests/tasks/T04/run-image-main-thread-deadline-electron.cjs",
-    "tests/tasks/T04/main-image-preparation-failure.test.cjs"
+    "tests/tasks/T04/main-image-preparation-failure.test.cjs",
+    "docs/evidence/T04/purejsimage-16mp-feasibility-spike.json"
   ]
 }

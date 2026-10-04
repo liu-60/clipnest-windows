@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "candidateDependencyTask": "T06",
+  "result": "CANDIDATE_FEASIBILITY_ONLY",
+  "date": "2026-10-05",
+  "candidate": {
+    "name": "purejsimage",
+    "version": "0.17.0",
+    "licenseDeclared": "MIT",
+    "source": "https://registry.npmjs.org/purejsimage/-/purejsimage-0.17.0.tgz",
+    "integrity": "sha512-u/A6tC4FYCRqL61QMAHiTEwKByh17txytXalgAjKhv84lFQfDNVaRc8H816dLqsTpm5MaEz9pd7UzHc0qaaJ8A==",
+    "repositoryDependencyInstalled": false,
+    "distributionReview": "OPEN: the package archive includes optional HEIF/HEIC codec code; review complete notices, distribution scope, and the upstream patent note before considering approval."
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "os": "Windows 11 Enterprise",
+    "electronVersion": "40.10.2",
+    "nodeVersion": "24.15.0",
+    "runtime": "fresh Electron utilityProcess per fixture",
+    "repositoryHeadAtMeasurement": "6c5635438d64380c0c18d309c40ea963cdb46e1e",
+    "repositoryWasCleanAtMeasurement": true,
+    "windowOpened": false,
+    "systemClipboardReadOrWritten": false,
+    "realInputSent": false
+  },
+  "method": {
+    "format": "baseline JPEG SOF0",
+    "dimensions": "4000x4000",
+    "pixelCount": 16000000,
+    "fixtureGeneration": "Candidate public JPEG encoder generated synthetic fixtures; APP2 segments padded each file to within 1-3 bytes of the 20 MiB input limit.",
+    "decoderOutput": "Streamed rgb8 pixel blocks were assembled into an exact 64000000-byte RGBA buffer inside the worker and retained until after PeakWorkingSet64 sampling.",
+    "parentTransferMeasured": false,
+    "independentPixelOracle": false,
+    "samplesPerFixture": 1
+  },
+  "fixtures": [
+    {
+      "sampling": "4:2:0",
+      "samplingFactors": ["Y 2x2", "Cb 1x1", "Cr 1x1"],
+      "inputBytes": 20971519,
+      "inputSha256": "d16b5319d89bdd1e65798d0480e0778ede921318fb28281f20a5fce154e2c9be",
+      "decodedRows": 4000,
+      "blockCount": 250,
+      "rgbaBytes": 64000000,
+      "rgbaSha256": "47127546382d9f48f9b03b7dbd8d9283c24c2a623f754dd326158af577e2733b",
+      "durationMs": 1964.26,
+      "peakWorkingSetBytes": 156573696,
+      "peakWorkingSetMiB": 149.32,
+      "sampledPeakPrivateBytes": 126849024
+    },
+    {
+      "sampling": "4:4:4",
+      "samplingFactors": ["Y 1x1", "Cb 1x1", "Cr 1x1"],
+      "inputBytes": 20971517,
+      "inputSha256": "f9f48af53e829b2c20a489e88b841c4f02d3682a64c1d5dfe5cc0454c2626d50",
+      "decodedRows": 4000,
+      "blockCount": 500,
+      "rgbaBytes": 64000000,
+      "rgbaSha256": "f3f55fd20daef6275bc39fbf1cd8774d2675ed154672e0f115804f47c9ea4af3",
+      "durationMs": 2140.84,
+      "peakWorkingSetBytes": 159350784,
+      "peakWorkingSetMiB": 151.97,
+      "sampledPeakPrivateBytes": 127905792
+    }
+  ],
+  "behavior": {
+    "truncatedImageData": "Both fixtures failed with ImageError: JPEG ended before image data.",
+    "abortSignal": "After AbortSignal was aborted during async iteration, the decoder yielded another block; the decoder itself did not honor the signal.",
+    "iteratorReturn": "Calling the async iterator return() completed.",
+    "cancellationGate": "Any integration must prove timely cancellation by ending iteration or terminating and retiring the utilityProcess; this spike did not validate the production cancellation path."
+  },
+  "decision": {
+    "nextStep": "Candidate merits a separate T06 dependency and distribution review before any installation or production integration.",
+    "dependencyAccepted": false,
+    "productionIntegrated": false,
+    "t04MemoryGatePassed": false,
+    "t04Status": "in_progress"
+  },
+  "limitations": [
+    "One sample per fixture is feasibility evidence, not a stable peak-memory distribution or a hard 256 MiB process limit.",
+    "Synthetic fixtures were encoded by the candidate package; no independent pixel oracle was used, so the recorded output hashes identify outputs but do not independently establish decoder fidelity.",
+    "The 64 MB RGBA output was not transferred to the parent process and the candidate was not loaded from a packaged ASAR.",
+    "Progressive JPEG, EXIF, ICC, orientation, broad content variation, and the complete product pipeline were not tested.",
+    "Measurement harnesses and source fixtures remain in the local TEMP audit directory and are not archived in the repository; raw JSON measurements were transcribed into this evidence record."
+  ]
+}
