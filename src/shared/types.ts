@@ -1,3 +1,5 @@
+import type { NativeTriggerKey } from "./native-contracts";
+
 export type ClipboardType = "text" | "link" | "image";
 
 export interface ClipboardItem {
@@ -62,9 +64,20 @@ export interface UpdateInfo {
   error: string | null;
 }
 
+export type CopyItemResult = Readonly<{
+  status:
+    | "input_submitted"
+    | "copied_only"
+    | "cancelled"
+    | "blocked"
+    | "not_found"
+    | "unknown";
+  reasonCode?: string;
+}>;
+
 export interface ClipnestApi {
   getHistory: () => Promise<ClipboardItem[]>;
-  copyItem: (id: string) => Promise<void>;
+  copyItem: (id: string, triggerKeys?: readonly NativeTriggerKey[]) => Promise<CopyItemResult>;
   editItem: (id: string, content: string) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   togglePinItem: (id: string) => Promise<void>;
@@ -78,10 +91,11 @@ export interface ClipnestApi {
   checkForUpdates: () => Promise<UpdateInfo>;
   downloadUpdate: () => Promise<UpdateInfo>;
   installUpdate: () => Promise<void>;
+  reportPanelActionable: (requestId: string) => void;
   onHistoryUpdated: (callback: (items: ClipboardItem[]) => void) => () => void;
   onSettingsUpdated: (callback: (settings: ClipnestSettings) => void) => () => void;
   onUpdateState: (callback: (update: UpdateInfo) => void) => () => void;
-  onPanelShown: (callback: () => void) => () => void;
+  onPanelShown: (callback: (requestId: string | null, generation: string | null) => void) => () => void;
   onNavigateSettings: (callback: () => void) => () => void;
 }
 

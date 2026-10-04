@@ -9,10 +9,15 @@ import {
   nativeImage,
   safeStorage,
   screen,
+  systemPreferences,
   Tray,
 } from "electron";
 import { autoUpdater } from "electron-updater";
-import { spawn, spawnSync } from "node:child_process";
+import { IMAGE_LIMITS, ImagePreparationService, inspectImageSource } from "./clipboard/image-preparation";
+import { raceSelectionPreparation, selectionHelperDeadlineAtCommit, startSelectionKeyReleaseMonitor, SELECTION_KEY_RELEASE_WINDOW_MS, type SelectionKeyReleaseMonitor } from "./clipboard/selection-key-deadline";
+import { encodeClipboardImage } from "./clipboard/image-payload";
+import { setPanelInitialPresentation, shouldAnimatePanel } from "./clipboard/panel-presentation";
+import { ClipboardSequenceGate } from "./clipboard/sequence-gate";
 import {
   createCipheriv,
   createDecipheriv,
@@ -29,16 +34,74 @@ import {
   unlinkSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { performance } from "node:perf_hooks";
 import type {
   ClipboardItem,
   ClipboardType,
   ClipnestSettings,
   ClipnestSettingsPatch,
+  CopyItemResult,
   CloudSyncState,
   UpdateInfo,
 } from "../shared/types";
+import type { NativeResult, NativeTarget, NativeTriggerKey } from "../shared/native-contracts";
 import type { OpenDialogOptions } from "electron";
+import { MetricsRecorder } from "./metrics/recorder";
+import { captureClipboardBaseline, HostAuthorizationGate } from "./native/host-authorization";
+import { ClipboardWriteFence, NativeHelperClient } from "./native/helper-client";
+import { NativeContentProvider, type NativeContentSnapshot, type NativeImageBitmap } from "./native/content-provider";
+import { createWin32HostBridge, type Win32HostBridge } from "./native/win32-host-bridge";
+import { createNativeHelperEnvironment } from "./native/profile-identity";
+
+const benchmarkMode = process.env.CLIPNEST_BENCHMARK_MODE === "1";
+
+function benchmarkProfileDirectory(): string {
+  const benchmarkRoot = resolve(__dirname, "../../tests/tasks/T01/runtime-profile");
+  const override = process.env.CLIPNEST_DATA_DIR?.trim();
+  if (!override) throw new Error("Benchmark mode requires an isolated profile directory");
+  const profile = resolve(override);
+  const relativeProfile = relative(benchmarkRoot, profile);
+  if (
+    !/^run-[0-9]+-[a-f0-9-]+$/i.test(relativeProfile) ||
+    relativeProfile === ".." ||
+    relativeProfile.startsWith(`..${sep}`) ||
+    isAbsolute(relativeProfile)
+  ) {
+    throw new Error("Benchmark profile must be a unique child of the T01 runtime profile root");
+  }
+  return profile;
+}
+
+function benchmarkSampleCount(): number {
+  const value = Number(process.env.CLIPNEST_BENCHMARK_SAMPLES ?? "1");
+  if (!Number.isInteger(value) || value < 1 || value > 100) {
+    throw new Error("CLIPNEST_BENCHMARK_SAMPLES must be an integer from 1 to 100");
+  }
+  return value;
+}
+
+const benchmarkSamples = benchmarkMode ? benchmarkSampleCount() : 0;
+const suppressBenchmarkAcknowledgement = benchmarkMode && process.argv.includes("--simulate-no-ack");
+if (benchmarkMode) {
+  const profile = process.env.CLIPNEST_DATA_DIR?.trim();
+  if (!profile || resolve(profile) !== benchmarkProfileDirectory()) {
+    throw new Error("Benchmark mode requires the isolated T01 profile path");
+  }
+  if (!process.argv.includes("--no-input")) {
+    throw new Error("Benchmark mode requires --no-input");
+  }
+  app.setName("ClipNest-T01-Benchmark");
+}
+
+const metrics = new MetricsRecorder({
+  enabled: benchmarkMode,
+  outputPath: benchmarkMode ? join(benchmarkProfileDirectory(), "metrics.jsonl") : undefined,
+});
+let completedBenchmarkSamples = 0;
+let failedBenchmarkSamples = 0;
+const benchmarkAckTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const BENCHMARK_ACTIONABLE_TIMEOUT_MS = 5_000;
 
 const DEFAULT_MAX_HISTORY_ITEMS = 100;
 const MIN_MAX_HISTORY_ITEMS = 20;
@@ -46,8 +109,7 @@ const MAX_MAX_HISTORY_ITEMS = 2_000;
 const MAX_HISTORY_BYTES = 25_000_000;
 const MAX_EDITABLE_TEXT_BYTES = 2_000_000;
 const POLL_INTERVAL_MS = 450;
-const MAX_STORED_IMAGE_BYTES = 5_000_000;
-const PANEL_HEIGHT = 400;
+const PANEL_HEIGHT = 315;
 const HISTORY_FILE_NAME = "history.json";
 const STARTUP_ARGUMENT = "--hidden";
 const APP_DISPLAY_NAME = "ClipNest";
@@ -82,6 +144,8 @@ let tray: Tray | null = null;
 let isQuitting = false;
 let history: ClipboardItem[] = [];
 let lastClipboardSignature = "";
+const clipboardSequenceGate = new ClipboardSequenceGate();
+const imagePreparationService = new ImagePreparationService();
 let storeDirectory = "";
 let storePath = "";
 let settingsPath = "";
@@ -103,7 +167,43 @@ let startupEnabled = false;
 let pollTimer: NodeJS.Timeout | null = null;
 let blurTimer: NodeJS.Timeout | null = null;
 let panelAnimationTimer: NodeJS.Timeout | null = null;
-let previousWindowHandle: string | null = null;
+let panelGeneration: string | null = null;
+let panelTarget: NativeTarget | null = null;
+let pendingPanelGeneration: string | null = null;
+let openingGuardUntil = 0;
+let nativePasteJob: {
+  jobId: string;
+  generation: string;
+  objectToken: string;
+  itemRef: string;
+  contentPreparationDeadlineAt: number;
+  helperClient: NativeHelperClient | null;
+  imageDecodeController: AbortController;
+  keyReleaseMonitor: SelectionKeyReleaseMonitor | null;
+  snapshot: NativeContentSnapshot | null;
+  registrationAttempted: boolean;
+  registered: boolean;
+  clipboardCommitAttempted: boolean;
+  pasteRequested: boolean;
+  clipboardSequence: string | null;
+  triggerKeys: NativeTriggerKey[];
+  cancelled: boolean;
+  preparationPromise: Promise<NativeResult> | null;
+  cancellationQuiescent: boolean;
+  terminalPromise: Promise<void>;
+  resolveTerminal: () => void;
+  cancelPromise: Promise<boolean> | null;
+} | null = null;
+let openingGuardTimer: NodeJS.Timeout | null = null;
+let helperClient: NativeHelperClient | null = null;
+let helperReady: Extract<NativeResult, { status: "ready" }> | null = null;
+let helperRestartAttempted = false;
+let helperRestartPromise: Promise<boolean> | null = null;
+const helperClipboardFence = new ClipboardWriteFence();
+let win32HostBridge: Win32HostBridge | null = null;
+let nativeContentProvider: NativeContentProvider | null = null;
+const hostAuthorizationGate = new HostAuthorizationGate();
+let panelOpeningPromise: Promise<void> | null = null;
 let cloudSyncTimer: NodeJS.Timeout | null = null;
 let cloudSyncPromise: Promise<ClipnestSettings> | null = null;
 let cloudSyncQueued = false;
@@ -138,6 +238,9 @@ function createAppIcon(size?: number) {
 
 function applyDataDirectoryOverride(): void {
   const override = process.env.CLIPNEST_DATA_DIR?.trim();
+  if (benchmarkMode && !override) {
+    throw new Error("Benchmark mode refuses to use the default profile");
+  }
   if (!override) return;
 
   const dataDirectory = resolve(override);
@@ -1115,94 +1218,92 @@ function readClipboardImage(): { item: ClipboardItem; signature: string } | null
   if (image.isEmpty()) return null;
 
   const size = image.getSize();
-  const largestSide = Math.max(size.width, size.height);
-  const scale = Math.min(1, 960 / Math.max(1, largestSide));
-  const normalizedImage = scale < 1
-    ? image.resize({
-        width: Math.max(1, Math.round(size.width * scale)),
-        height: Math.max(1, Math.round(size.height * scale)),
-      })
-    : image;
-
-  const normalizedPng = normalizedImage.toPNG();
-  let bytes = normalizedPng;
-  let mimeType = "image/png";
-
-  // Photos can still produce large PNGs after resizing. Keep the copy instead
-  // of dropping it by falling back to a bounded JPEG representation.
-  if (bytes.byteLength > MAX_STORED_IMAGE_BYTES) {
-    bytes = normalizedImage.toJPEG(82);
-    mimeType = "image/jpeg";
-  }
-  if (bytes.byteLength > MAX_STORED_IMAGE_BYTES) return null;
+  const encoded = encodeClipboardImage(image);
+  if (!encoded) return null;
+  const base64 = encoded.bytes.toString("base64");
 
   return {
-    signature: fingerprint("image", normalizedPng.toString("base64")),
+    signature: fingerprint("image", base64),
     item: {
       id: randomUUID(),
       type: "image",
-      content: `data:${mimeType};base64,${bytes.toString("base64")}`,
+      content: `data:${encoded.mimeType};base64,${base64}`,
       preview: `图片 ${size.width} × ${size.height}`,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       pinned: false,
       tags: [],
-      byteSize: bytes.byteLength,
-      width: size.width,
-      height: size.height,
+      byteSize: encoded.bytes.byteLength,
+      width: encoded.width,
+      height: encoded.height,
     },
   };
 }
 
 function readClipboardItem(): { item: ClipboardItem; signature: string } | null {
-  try {
-    const formats = clipboard.availableFormats();
-    const hasImageFormat = formats.some((format) =>
-      /image\/|bitmap|dib|png|jpeg|jpg|gif/i.test(format),
-    );
+  const formats = clipboard.availableFormats();
+  const hasImageFormat = formats.some((format) =>
+    /image\/|bitmap|dib|png|jpeg|jpg|gif/i.test(format),
+  );
 
-    // On Windows an image copy can expose a stale text representation too.
-    // Read the native image first whenever the native formats identify one.
-    if (hasImageFormat || formats.length === 0) {
-      const image = readClipboardImage();
-      if (image) return image;
-    }
-
-    const text = clipboard.readText();
-    if (!text) return null;
-    const type: ClipboardType = isLink(text) ? "link" : "text";
-    return {
-      signature: fingerprint(type, text),
-      item: {
-        id: randomUUID(),
-        type,
-        content: text,
-        preview: previewText(text),
-        createdAt: Date.now(),
-        pinned: false,
-        tags: [],
-        byteSize: Buffer.byteLength(text, "utf8"),
-        updatedAt: Date.now(),
-      },
-    };
-  } catch (error) {
-    // Clipboard owners can disappear between reads; one failed poll must not
-    // stop the long-running watcher.
-    console.warn("ClipNest: clipboard read failed", error);
-    return null;
+  // On Windows an image copy can expose a stale text representation too.
+  // Read the native image first whenever the native formats identify one.
+  if (hasImageFormat || formats.length === 0) {
+    const image = readClipboardImage();
+    if (image) return image;
   }
+
+  const text = clipboard.readText();
+  if (!text) return null;
+  const type: ClipboardType = isLink(text) ? "link" : "text";
+  return {
+    signature: fingerprint(type, text),
+    item: {
+      id: randomUUID(),
+      type,
+      content: text,
+      preview: previewText(text),
+      createdAt: Date.now(),
+      pinned: false,
+      tags: [],
+      byteSize: Buffer.byteLength(text, "utf8"),
+      updatedAt: Date.now(),
+    },
+  };
+}
+
+function currentClipboardSequence(): number | null {
+  const sequence = win32HostBridge?.getClipboardSequenceNumber();
+  return typeof sequence === "number" && Number.isInteger(sequence) &&
+    sequence > 0 && sequence <= 0xffff_ffff ? sequence : null;
+}
+
+function markCurrentClipboardSequenceProcessed(): boolean {
+  const sequence = currentClipboardSequence();
+  return sequence !== null && clipboardSequenceGate.markProcessed(sequence);
 }
 
 function pollClipboard(): void {
-  try {
-    const payload = readClipboardItem();
+  void clipboardSequenceGate.capture(currentClipboardSequence, readClipboardItem).then((capture) => {
+    if (capture.status === "skipped" || capture.status === "in_progress" ||
+        capture.status === "captured_unstable") return;
+    const payload = capture.value;
     if (!payload || payload.signature === lastClipboardSignature) return;
-    if (addHistoryItem(payload.item)) lastClipboardSignature = payload.signature;
-  } catch (error) {
-    console.warn("ClipNest: clipboard polling failed", error);
-  }
-}
 
+    try {
+      if (addHistoryItem(payload.item)) {
+        lastClipboardSignature = payload.signature;
+      } else if (capture.status === "captured") {
+        clipboardSequenceGate.forgetProcessed(capture.sequence);
+      }
+    } catch (error) {
+      if (capture.status === "captured") clipboardSequenceGate.forgetProcessed(capture.sequence);
+      throw error;
+    }
+  }).catch((error: unknown) => {
+    console.warn("ClipNest: clipboard polling failed", error);
+  });
+}
 function panelBoundsForCurrentDisplay(): Electron.Rectangle {
   const cursor = screen.getCursorScreenPoint();
   const display = screen.getDisplayNearestPoint(cursor);
@@ -1223,46 +1324,23 @@ function positionPanel(): Electron.Rectangle | null {
   return bounds;
 }
 
-function hidePanel(): void {
+function hidePanel(cancelPaste = true): void {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   if (panelAnimationTimer) {
     clearInterval(panelAnimationTimer);
     panelAnimationTimer = null;
   }
+  if (cancelPaste && panelGeneration) {
+    const oldGeneration = panelGeneration;
+    panelGeneration = null;
+    panelTarget = null;
+    pendingPanelGeneration = null;
+    if (openingGuardTimer) clearTimeout(openingGuardTimer);
+    openingGuardTimer = null;
+    openingGuardUntil = 0;
+    if (nativePasteJob?.generation === oldGeneration) void cancelNativePasteJob(nativePasteJob);
+  }
   mainWindow.hide();
-}
-
-const WINDOWS_FOREGROUND_SCRIPT = `
-Add-Type -TypeDefinition @'
-using System;
-using System.Runtime.InteropServices;
-
-public static class ClipNestForeground {
-    [DllImport("user32.dll")]
-    public static extern IntPtr GetForegroundWindow();
-}
-'@
-[ClipNestForeground]::GetForegroundWindow().ToInt64()
-`;
-
-function capturePreviousWindowHandle(): string | null {
-  if (process.platform !== "win32") return null;
-  const encodedCommand = Buffer.from(WINDOWS_FOREGROUND_SCRIPT, "utf16le").toString("base64");
-  const result = spawnSync("powershell.exe", [
-    "-NoLogo",
-    "-NoProfile",
-    "-NonInteractive",
-    "-WindowStyle",
-    "Hidden",
-    "-EncodedCommand",
-    encodedCommand,
-  ], {
-    encoding: "utf8",
-    timeout: 5_000,
-    windowsHide: true,
-  });
-  const handle = String(result.stdout ?? "").trim();
-  return /^\d+$/.test(handle) && handle !== "0" ? handle : null;
 }
 
 function getMainWindowHandle(): string | null {
@@ -1274,227 +1352,435 @@ function getMainWindowHandle(): string | null {
     : BigInt(nativeHandle.readUInt32LE(0))).toString();
 }
 
-const WINDOWS_PASTE_SCRIPT = `
-Add-Type -TypeDefinition @'
-using System;
-using System.Runtime.InteropServices;
-using System.Threading;
-
-public static class ClipNestKeyboard {
-    [StructLayout(LayoutKind.Sequential)]
-    private struct INPUT {
-        public uint type;
-        public INPUTUNION data;
-    }
-
-    [StructLayout(LayoutKind.Explicit)]
-    private struct INPUTUNION {
-        [FieldOffset(0)] public KEYBDINPUT keyboard;
-        [FieldOffset(0)] public MOUSEINPUT mouse;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct MOUSEINPUT {
-        public int dx;
-        public int dy;
-        public uint mouseData;
-        public uint flags;
-        public uint time;
-        public IntPtr extraInfo;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct KEYBDINPUT {
-        public ushort virtualKey;
-        public ushort scanCode;
-        public uint flags;
-        public uint time;
-        public IntPtr extraInfo;
-    }
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern uint SendInput(uint inputCount, INPUT[] inputs, int inputSize);
-
-    [DllImport("user32.dll")]
-    private static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
-
-    [DllImport("user32.dll")]
-    private static extern bool SetForegroundWindow(IntPtr hWnd);
-
-    [DllImport("user32.dll")]
-    private static extern IntPtr GetForegroundWindow();
-
-    [DllImport("user32.dll")]
-    private static extern bool SetActiveWindow(IntPtr hWnd);
-
-    [DllImport("user32.dll")]
-    private static extern IntPtr SetFocus(IntPtr hWnd);
-
-    [DllImport("user32.dll")]
-    private static extern bool BringWindowToTop(IntPtr hWnd);
-
-    [DllImport("user32.dll")]
-    private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
-
-    [DllImport("kernel32.dll")]
-    private static extern uint GetCurrentThreadId();
-
-    [DllImport("user32.dll")]
-    private static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool attach);
-
-    [DllImport("user32.dll")]
-    private static extern void SwitchToThisWindow(IntPtr hWnd, bool altTab);
-
-    private static void RestoreWindow(IntPtr target) {
-        var currentThread = GetCurrentThreadId();
-        uint targetProcessId;
-        var targetThread = GetWindowThreadProcessId(target, out targetProcessId);
-        var foreground = GetForegroundWindow();
-        uint foregroundProcessId;
-        var foregroundThread = GetWindowThreadProcessId(foreground, out foregroundProcessId);
-        var attachedForeground = false;
-        var attachedTarget = false;
-        try {
-            if (foregroundThread != 0 && foregroundThread != currentThread) {
-                attachedForeground = AttachThreadInput(currentThread, foregroundThread, true);
-            }
-            if (targetThread != 0 && targetThread != currentThread && targetThread != foregroundThread) {
-                attachedTarget = AttachThreadInput(currentThread, targetThread, true);
-            }
-            ShowWindowAsync(target, 9);
-            BringWindowToTop(target);
-            SwitchToThisWindow(target, true);
-            SetActiveWindow(target);
-            SetForegroundWindow(target);
-            SetFocus(target);
-        } finally {
-            if (attachedTarget) AttachThreadInput(currentThread, targetThread, false);
-            if (attachedForeground) AttachThreadInput(currentThread, foregroundThread, false);
-        }
-    }
-
-    private static INPUT Key(ushort virtualKey, uint flags) {
-        return new INPUT {
-            type = 1,
-            data = new INPUTUNION {
-                keyboard = new KEYBDINPUT {
-                    virtualKey = virtualKey,
-                    scanCode = 0,
-                    flags = flags,
-                    time = 0,
-                    extraInfo = IntPtr.Zero
-                }
-            }
-        };
-    }
-
-    public static uint RestoreAndPaste(long targetHandle) {
-        var target = new IntPtr(targetHandle);
-        if (target != IntPtr.Zero) {
-            RestoreWindow(target);
-            Thread.Sleep(180);
-        }
-        const uint keyUp = 2;
-        var inputs = new[] {
-            Key(0x11, 0),
-            Key(0x56, 0),
-            Key(0x56, keyUp),
-            Key(0x11, keyUp)
-        };
-        return SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
-    }
+function getMainWindowTarget(): NativeTarget | null {
+  const hwnd = getMainWindowHandle();
+  if (!hwnd || !win32HostBridge) return null;
+  const target = win32HostBridge.getWindowTarget(hwnd);
+  return target?.pid === process.pid ? target : null;
 }
-'@
-$sent = [ClipNestKeyboard]::RestoreAndPaste([long]$env:CLIPNEST_TARGET_HWND)
-if ($sent -lt 4) { exit 1 }
-`;
 
-function simulatePaste(targetHandle: string | null): void {
-  if (process.platform !== "win32") return;
-  const encodedCommand = Buffer.from(WINDOWS_PASTE_SCRIPT, "utf16le").toString("base64");
+function nativeHelperPath(): string | null {
+  const packagedPath = join(process.resourcesPath, "native", "clipnest-helper.exe");
+  const candidates = app.isPackaged
+    ? [packagedPath]
+    : [
+        join(app.getAppPath(), "native", "target-electron-l0", "x86_64-pc-windows-gnu", "release", "clipnest-helper.exe"),
+        resolve(app.getAppPath(), "..", ".tools", "rust", "target-electron-l0", "x86_64-pc-windows-gnu", "release", "clipnest-helper.exe"),
+      ];
+  return candidates.find((candidate) => isAbsolute(candidate) && existsSync(candidate)) ?? null;
+}
+
+function handleCurrentNativeResult(result: NativeResult): void {
+  if (result.status !== "job_finished") return;
+  const job = nativePasteJob;
+  if (!job || job.jobId !== result.jobId || job.generation !== result.generation) return;
+  if (job.snapshot) nativeContentProvider?.release(job.snapshot, job.jobId, job.objectToken);
+  nativePasteJob = null;
+  job.resolveTerminal();
+}
+
+async function restartNativeHelperAfterFailure(client: NativeHelperClient): Promise<boolean> {
+  if (helperClient !== client) return client.hasExited;
+  if (helperRestartPromise) return helperRestartPromise;
+  const shouldRestart = !helperRestartAttempted;
+  if (shouldRestart) {
+    helperRestartAttempted = true;
+    helperReady = null;
+  }
+  const restarting = (async () => {
+    const exited = await client.terminateAndWait(300);
+    if (exited) helperClipboardFence.confirmHelperExit();
+    if (helperClient === client && exited) helperClient = null;
+    if (!exited || isQuitting) {
+      console.warn("ClipNest: native helper restart skipped", exited ? "app_quitting" : "helper_exit_unconfirmed");
+      return exited;
+    }
+    if (shouldRestart) startNativeHelper();
+    return true;
+  })();
+  helperRestartPromise = restarting;
   try {
-    const child = spawn("powershell.exe", [
-      "-NoLogo",
-      "-NoProfile",
-      "-NonInteractive",
-      "-WindowStyle",
-      "Hidden",
-      "-EncodedCommand",
-      encodedCommand,
-    ], {
-      env: {
-        ...process.env,
-        CLIPNEST_TARGET_HWND: targetHandle && /^\d+$/.test(targetHandle) ? targetHandle : "0",
+    return await restarting;
+  } finally {
+    if (helperRestartPromise === restarting) helperRestartPromise = null;
+  }
+}
+
+async function decodeNativeClipboardImage(dataUrl: string, encodedBytes: Buffer): Promise<NativeImageBitmap> {
+  const source = inspectImageSource(dataUrl, encodedBytes);
+  const identity = createHash("sha256").update(encodedBytes).digest("hex");
+  const job = nativePasteJob;
+  if (!job) throw new Error("image_selection_job_missing");
+  const { image } = await imagePreparationService.prepare({
+    itemRef: identity,
+    itemVersion: identity,
+    format: source.format,
+    encodedBytes,
+    width: source.width,
+    height: source.height,
+  }, {
+    signal: job.imageDecodeController.signal,
+    isCurrent: () => isCurrentNativePasteJob(job),
+    deadlineAt: job.contentPreparationDeadlineAt,
+  });
+  const bgra = Buffer.allocUnsafe(image.pixels.byteLength);
+  for (let sourceOffset = 0, targetOffset = 0; sourceOffset < image.pixels.length; sourceOffset += 4, targetOffset += 4) {
+    const alpha = image.pixels[sourceOffset + 3];
+    bgra[targetOffset] = Math.round(image.pixels[sourceOffset + 2] * alpha / 255);
+    bgra[targetOffset + 1] = Math.round(image.pixels[sourceOffset + 1] * alpha / 255);
+    bgra[targetOffset + 2] = Math.round(image.pixels[sourceOffset] * alpha / 255);
+    bgra[targetOffset + 3] = alpha;
+  }
+  return { width: image.width, height: image.height, bgra };
+}
+function startNativeHelper(): void {
+  if (process.platform !== "win32" || benchmarkMode || isQuitting) return;
+  try {
+    win32HostBridge ??= createWin32HostBridge();
+    nativeContentProvider ??= new NativeContentProvider({
+      lookupCurrentItem: (itemRef) => history.find((item) => item.id === itemRef),
+      isTrustedSender: (senderId) => Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents.id === senderId),
+      // Image decoding stays off the Electron main event loop in the utility process.
+      decodeImage: decodeNativeClipboardImage,
+    });
+    const executablePath = nativeHelperPath();
+    if (!executablePath) throw new Error("native_helper_resource_missing");
+    const helperEnvironment = createNativeHelperEnvironment(app.getPath("userData"));
+    const bridge = win32HostBridge;
+    let client: NativeHelperClient;
+    client = new NativeHelperClient({
+      acceptReady: (ready, childPid) => {
+        const identity = bridge.getProcessIdentity(childPid);
+        const accepted = identity?.pid === ready.helperPid &&
+          ready.helperPid === childPid &&
+          identity.processCreatedAt === ready.helperProcessCreatedAt;
+        if (accepted) helperReady = ready;
+        return accepted;
       },
-      detached: false,
-      stdio: "ignore",
-      windowsHide: true,
+      onCurrentResult: handleCurrentNativeResult,
+      onUnavailable: () => {
+        if (helperClient === client) {
+          if (nativePasteJob?.clipboardCommitAttempted && !client.hasExited) helperClipboardFence.blockUntilHelperExit();
+          helperReady = null;
+          void restartNativeHelperAfterFailure(client);
+        }
+      },
+      onProcessExit: () => {
+        if (helperClient === client) helperClipboardFence.confirmHelperExit();
+        const job = nativePasteJob;
+        if (job?.cancelled && job.registrationAttempted && job.helperClient === client) {
+          if (job.snapshot) nativeContentProvider?.release(job.snapshot, job.jobId, job.objectToken);
+          job.cancellationQuiescent = true;
+          nativePasteJob = null;
+          job.resolveTerminal();
+        }
+      },
     });
-    child.once("error", (error) => {
-      console.warn("ClipNest: paste helper failed", error.message);
+    helperClient = client;
+    void client.start(executablePath, helperEnvironment).catch((error: unknown) => {
+      console.warn("ClipNest: native helper unavailable", error instanceof Error ? error.message : "startup_failed");
     });
-    child.once("exit", (code, signal) => {
-      if (code !== 0) console.warn(`ClipNest: paste helper exited with ${code ?? "null"}/${signal ?? "null"}`);
-    });
-    child.unref();
   } catch (error) {
-    console.warn("ClipNest: unable to start paste helper", error);
+    helperReady = null;
+    console.warn("ClipNest: native paste unavailable", error instanceof Error ? error.message : "bridge_start_failed");
   }
 }
 
-function pasteIntoPreviousWindow(): void {
-  const targetHandle = previousWindowHandle;
-  previousWindowHandle = null;
-  hidePanel();
-  // Let Windows restore the window that was active before ClipNest opened.
-  if (process.platform === "win32") {
-    setTimeout(() => {
-      // Re-read the foreground window after hiding the panel. This covers
-      // launchers and shells that temporarily steal focus while opening it.
-      const restoredHandle = capturePreviousWindowHandle();
-      const ownHandle = getMainWindowHandle();
-      const pasteTarget = restoredHandle && restoredHandle !== ownHandle
-        ? restoredHandle
-        : targetHandle;
-      simulatePaste(pasteTarget);
-    }, 100);
+function writeItemToElectronClipboard(item: ClipboardItem): void {
+  helperClipboardFence.assertWriteAllowed();
+  if (item.type === "image") {
+    const image = nativeImage.createFromDataURL(item.content);
+    clipboard.writeImage(image);
+    if (!markCurrentClipboardSequenceProcessed()) {
+      lastClipboardSignature = fingerprint("image", image.toPNG().toString("base64"));
+    }
+    return;
   }
+  clipboard.writeText(item.content);
+  lastClipboardSignature = fingerprint(item.type, item.content);
+  markCurrentClipboardSequenceProcessed();
 }
 
-function showPanel(): void {
+function makeNativePasteJob(
+  generation: string,
+  itemRef: string,
+  triggerKeys: NativeTriggerKey[],
+  contentPreparationDeadlineAt: number,
+  keyReleaseMonitor: SelectionKeyReleaseMonitor | null,
+) {
+  let resolveTerminal: () => void = () => {};
+  const terminalPromise = new Promise<void>((resolve) => { resolveTerminal = resolve; });
+  return {
+    jobId: randomUUID(),
+    generation,
+    objectToken: randomUUID(),
+    itemRef,
+    contentPreparationDeadlineAt,
+    helperClient: null,
+    imageDecodeController: new AbortController(),
+    keyReleaseMonitor,
+    snapshot: null as NativeContentSnapshot | null,
+    registrationAttempted: false,
+    registered: false,
+    clipboardCommitAttempted: false,
+    pasteRequested: false,
+    clipboardSequence: null as string | null,
+    triggerKeys,
+    cancelled: false,
+    preparationPromise: null as Promise<NativeResult> | null,
+    cancellationQuiescent: false,
+    terminalPromise,
+    resolveTerminal,
+    cancelPromise: null as Promise<boolean> | null,
+  };
+}
+
+function isCurrentNativePasteJob(job: NonNullable<typeof nativePasteJob>): boolean {
+  return nativePasteJob === job && !job.cancelled && panelGeneration === job.generation;
+}
+
+async function cancelNativePasteJob(job: NonNullable<typeof nativePasteJob>): Promise<boolean> {
+  if (job.cancelPromise) return job.cancelPromise;
+  job.cancelPromise = (async () => {
+    job.cancelled = true;
+    job.keyReleaseMonitor?.cancel();
+    job.imageDecodeController.abort();
+    const startedAt = performance.now();
+    const deadlineAt = startedAt + 50;
+    if (!job.registrationAttempted) {
+      if (!job.snapshot) {
+        // Waiting for terminalPromise here deadlocks: the owner settles it only
+        // after this cancellation race returns. Wait for the actual preparation
+        // work, bounded by the local cleanup deadline, instead.
+        const preparation = job.preparationPromise;
+        if (preparation) {
+          const preparationQuiescent = await Promise.race([
+            preparation.then(() => true, () => true),
+            new Promise<boolean>((resolve) => setTimeout(() => resolve(false), Math.max(0, deadlineAt - performance.now()))),
+          ]);
+          if (!preparationQuiescent) {
+            job.cancellationQuiescent = false;
+            return false;
+          }
+        }
+      }
+      if (job.snapshot) nativeContentProvider?.release(job.snapshot, job.jobId, job.objectToken);
+      if (nativePasteJob === job) nativePasteJob = null;
+      job.cancellationQuiescent = true;
+      return true;
+    }
+    const client = job.helperClient;
+    if (!client || client.hasExited) {
+      if (job.snapshot) nativeContentProvider?.release(job.snapshot, job.jobId, job.objectToken);
+      if (nativePasteJob === job) nativePasteJob = null;
+      job.cancellationQuiescent = true;
+      job.resolveTerminal();
+      return true;
+    }
+    if (client.state !== "ready" || client.currentPanelGeneration !== job.generation) {
+      job.cancellationQuiescent = false;
+      helperClipboardFence.blockUntilHelperExit();
+      return false;
+    }
+    try {
+      const result = await client.request(
+        nativeContentProvider!.cancelCommand(job.jobId),
+        job.generation,
+        { deadlineAt },
+      );
+      if (result.status !== "cancelled" && result.status !== "too_late") {
+        job.cancellationQuiescent = false;
+        helperClipboardFence.blockUntilHelperExit();
+        return false;
+      }
+      const remaining = Math.max(0, deadlineAt - performance.now());
+      const quiescent = await Promise.race([
+        job.terminalPromise.then(() => true),
+        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), remaining)),
+      ]);
+      job.cancellationQuiescent = quiescent;
+      if (!quiescent) helperClipboardFence.blockUntilHelperExit();
+      return quiescent;
+    } catch {
+      job.cancellationQuiescent = false;
+      helperClipboardFence.blockUntilHelperExit();
+      return false;
+    }
+  })();
+  return job.cancelPromise;
+}
+async function sendNativeContent(
+  job: NonNullable<typeof nativePasteJob>,
+  provider: NativeContentProvider,
+  client: NativeHelperClient,
+): Promise<NativeResult> {
+  const snapshot = job.snapshot;
+  if (!snapshot) throw new Error("content_snapshot_missing");
+  job.helperClient = client;
+  job.registrationAttempted = true;
+  const registered = await client.request(provider.registerCommand(snapshot, job.jobId, job.objectToken), job.generation);
+  if (registered.status !== "content_registered") return registered;
+  job.registered = true;
+  provider.markRegistered(snapshot, job.jobId, job.objectToken);
+  if (!isCurrentNativePasteJob(job)) throw new Error("paste_cancelled");
+
+  const transfer = provider.createTransfer(snapshot, job.jobId, job.objectToken);
+  let chunk = transfer.nextChunk();
+  while (chunk) {
+    if (!isCurrentNativePasteJob(job)) throw new Error("paste_cancelled");
+    const chunkResult = await client.request(chunk, job.generation);
+    if (chunkResult.status !== "chunk_accepted" || chunkResult.jobId !== job.jobId) return chunkResult;
+    transfer.acknowledge(chunk.index, true);
+    chunk = transfer.nextChunk();
+  }
+  const finish = transfer.finishCommand();
+  if (finish) {
+    const finished = await client.request(finish, job.generation);
+    if (finished.status !== "content_registered" || finished.jobId !== job.jobId) return finished;
+  }
+  if (!isCurrentNativePasteJob(job)) throw new Error("paste_cancelled");
+  return client.request(provider.prepareCommand(snapshot, job.jobId, job.objectToken), job.generation);
+}
+
+function completeBenchmarkSample(requestId: string, succeeded: boolean): void {
+  const timer = benchmarkAckTimers.get(requestId);
+  if (timer) clearTimeout(timer);
+  benchmarkAckTimers.delete(requestId);
+  completedBenchmarkSamples += 1;
+  if (!succeeded) failedBenchmarkSamples += 1;
+
+  if (completedBenchmarkSamples >= benchmarkSamples) {
+    void metrics.flush().then(
+      () => app.exit(failedBenchmarkSamples === 0 ? 0 : 1),
+      () => app.exit(1),
+    );
+    return;
+  }
+  mainWindow?.hide();
+  setImmediate(showPanel);
+}
+
+function renderPanel(requestId: string | null, generation: string): void {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   if (blurTimer) clearTimeout(blurTimer);
   const targetBounds = panelBoundsForCurrentDisplay();
-  const shouldAnimate = !mainWindow.isVisible();
-  if (shouldAnimate) previousWindowHandle = capturePreviousWindowHandle();
-  if (panelAnimationTimer) clearInterval(panelAnimationTimer);
-
-  if (shouldAnimate) {
-    const startY = targetBounds.y + Math.min(28, targetBounds.height);
-    mainWindow.setBounds({ ...targetBounds, y: startY }, false);
-  } else {
-    mainWindow.setBounds(targetBounds, false);
+  const opening = !mainWindow.isVisible();
+  const shouldAnimate = shouldAnimatePanel(
+    opening,
+    benchmarkMode,
+    () => systemPreferences.getAnimationSettings(),
+  );
+  if (panelAnimationTimer) {
+    clearInterval(panelAnimationTimer);
+    panelAnimationTimer = null;
   }
-  mainWindow.show();
+
+  // Keep the native window at its final bounds; motion uses opacity, not repeated SetWindowPos calls.
+  setPanelInitialPresentation(mainWindow, targetBounds, shouldAnimate);
+  if (benchmarkMode) mainWindow.showInactive();
+  else mainWindow.show();
+
+  if (opening && !benchmarkMode) {
+    openingGuardUntil = performance.now() + 100;
+    if (openingGuardTimer) clearTimeout(openingGuardTimer);
+    openingGuardTimer = setTimeout(() => {
+      openingGuardUntil = 0;
+      openingGuardTimer = null;
+    }, 100);
+  }
 
   if (shouldAnimate) {
-    const startedAt = Date.now();
+    const startedAt = performance.now();
     panelAnimationTimer = setInterval(() => {
-      if (!mainWindow || mainWindow.isDestroyed()) return;
-      const progress = Math.min(1, (Date.now() - startedAt) / 150);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      mainWindow.setBounds({
-        ...targetBounds,
-        y: Math.round(targetBounds.y + (targetBounds.height > 0 ? 28 * (1 - eased) : 0)),
-      }, false);
-      if (progress >= 1) {
-        clearInterval(panelAnimationTimer!);
+      if (!mainWindow || mainWindow.isDestroyed()) {
+        if (panelAnimationTimer) clearInterval(panelAnimationTimer);
         panelAnimationTimer = null;
-        mainWindow.setBounds(targetBounds, false);
+        return;
+      }
+      const progress = Math.min(1, (performance.now() - startedAt) / 150);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      mainWindow.setOpacity(eased);
+      if (progress >= 1) {
+        if (panelAnimationTimer) clearInterval(panelAnimationTimer);
+        panelAnimationTimer = null;
+        mainWindow.setOpacity(1);
       }
     }, 16);
   }
-  mainWindow.webContents.send("panel:shown");
+  metrics.mark(requestId, "panel_shown");
+  mainWindow.webContents.send("panel:shown", requestId, generation);
+}
+function showPanel(): void {
+  if (!mainWindow || mainWindow.isDestroyed() || panelOpeningPromise) return;
+  const requestId = metrics.begin("wake");
+  if (benchmarkMode && requestId) {
+    const timer = setTimeout(() => {
+      if (!metrics.isActive(requestId)) return;
+      metrics.mark(requestId, "panel_actionable_timeout", "failed");
+      metrics.finish(requestId, "failed");
+      completeBenchmarkSample(requestId, false);
+    }, BENCHMARK_ACTIONABLE_TIMEOUT_MS);
+    benchmarkAckTimers.set(requestId, timer);
+  }
+
+  if (mainWindow.isVisible()) {
+    const generation = panelGeneration ?? randomUUID();
+    panelGeneration = generation;
+    renderPanel(requestId, generation);
+    return;
+  }
+
+  const generation = randomUUID();
+  panelGeneration = generation;
+  panelTarget = null;
+  pendingPanelGeneration = generation;
+
+  const opening = (async () => {
+    const oldJob = nativePasteJob;
+    if (oldJob) {
+      const stopped = await cancelNativePasteJob(oldJob);
+      if (!stopped) {
+        if (oldJob.registrationAttempted) {
+          const failedClient = oldJob.helperClient;
+          if (oldJob.clipboardCommitAttempted && failedClient && !failedClient.hasExited) {
+            helperClipboardFence.blockUntilHelperExit();
+          }
+          if (failedClient) void restartNativeHelperAfterFailure(failedClient);
+        } else {
+          if (oldJob.snapshot) nativeContentProvider?.release(oldJob.snapshot, oldJob.jobId, oldJob.objectToken);
+          if (nativePasteJob === oldJob) nativePasteJob = null;
+          oldJob.cancellationQuiescent = true;
+          oldJob.resolveTerminal();
+        }
+      }
+    } else if (helperClient?.activeJobCount) {
+      if (!helperClient.hasExited) helperClipboardFence.blockUntilHelperExit();
+      void restartNativeHelperAfterFailure(helperClient);
+    }
+    if (panelGeneration !== generation) return;
+
+    const client = helperClient;
+    if (client?.state === "ready") {
+      try {
+        client.beginPanelGeneration(generation);
+        metrics.mark(requestId, "previous_window_capture_started");
+        const result = await client.request({ kind: "capture" }, generation, { timeoutMs: 100 });
+        panelTarget = result.status === "captured" && result.target.pid !== process.pid
+          ? result.target
+          : null;
+        metrics.mark(requestId, "previous_window_captured");
+      } catch {
+        panelTarget = null;
+        metrics.mark(requestId, "previous_window_captured", "failed");
+      }
+    }
+    if (panelGeneration !== generation) return;
+    pendingPanelGeneration = null;
+    renderPanel(requestId, generation);
+  })();
+  panelOpeningPromise = opening.finally(() => {
+    panelOpeningPromise = null;
+  });
 }
 
 function showSettings(): void {
@@ -1517,8 +1803,9 @@ function createMainWindow(): void {
     resizable: false,
     movable: true,
     skipTaskbar: true,
-    alwaysOnTop: true,
-    backgroundColor: "#f5f5fb",
+    alwaysOnTop: !benchmarkMode,
+    backgroundColor: "#e4e1e8",
+    hasShadow: false,
     title: "ClipNest",
     webPreferences: {
       preload: preloadPath,
@@ -1528,15 +1815,24 @@ function createMainWindow(): void {
     },
   });
 
-  mainWindow.setAlwaysOnTop(true, "floating");
+  if (benchmarkMode) mainWindow.setOpacity(0);
+  if (!benchmarkMode) mainWindow.setAlwaysOnTop(true, "floating");
   mainWindow.on("blur", () => {
+    if (benchmarkMode) return;
     if (blurTimer) clearTimeout(blurTimer);
     blurTimer = setTimeout(() => {
-      if (!isQuitting && mainWindow && !mainWindow.isFocused()) hidePanel();
+      if (!isQuitting && mainWindow && mainWindow.isVisible() && !mainWindow.isFocused()) {
+        // The helper is handing foreground back to the captured input window. Hiding
+        // after that transfer must not cancel the same request or discard its target.
+        hidePanel(!nativePasteJob?.pasteRequested);
+      }
     }, 120);
   });
   mainWindow.on("focus", () => {
     if (blurTimer) clearTimeout(blurTimer);
+    if (openingGuardTimer) clearTimeout(openingGuardTimer);
+    openingGuardTimer = null;
+    openingGuardUntil = 0;
   });
   mainWindow.on("close", (event) => {
     if (!isQuitting) {
@@ -1561,7 +1857,11 @@ function createMainWindow(): void {
     mainWindow?.webContents.send("updates:state", updateInfo);
   });
   mainWindow.once("ready-to-show", () => {
-    if (process.argv.includes("--show")) setTimeout(showPanel, 80);
+    if (benchmarkMode) {
+      showPanel();
+    } else if (process.argv.includes("--show")) {
+      setTimeout(showPanel, 80);
+    }
   });
 }
 
@@ -1728,7 +2028,434 @@ function refreshTrayMenu(): void {
   tray.setContextMenu(buildTrayMenu());
 }
 
+function parseNativeTriggerKeys(value: unknown): NativeTriggerKey[] | null {
+  if (!Array.isArray(value) || value.length > 2) return null;
+  if (!value.every((key) => key === "Enter" || key === "V")) return null;
+  const keys = value as NativeTriggerKey[];
+  if (new Set(keys).size !== keys.length || (keys.includes("Enter") && keys.includes("V"))) return null;
+  return [...keys];
+}
+
+function resultForNativeStatus(result: NativeResult): CopyItemResult {
+  if (result.status === "input_submitted") return { status: "input_submitted" };
+  if (result.status === "copied_only") return { status: "copied_only", reasonCode: result.reasonCode };
+  if (result.status === "cancelled") return { status: "cancelled", reasonCode: result.reasonCode };
+  const reasonCode = "reasonCode" in result ? result.reasonCode : undefined;
+  return { status: "blocked", reasonCode: reasonCode ?? result.status };
+}
+
+function finishSelectionMetrics(requestId: string | null, outcome: "ok" | "not_found" | "no_input" | "failed"): void {
+  metrics.mark(requestId, "copy_ipc_acknowledged");
+  metrics.finish(requestId, outcome);
+  if (!benchmarkMode) void metrics.flush().catch(() => undefined);
+}
+
+async function copySelectedItem(
+  senderId: number,
+  trustedFrame: boolean,
+  itemRef: unknown,
+  rawTriggerKeys: unknown,
+  generation: unknown,
+  requestId: string | null,
+): Promise<CopyItemResult> {
+  metrics.mark(requestId, "selection_received");
+  if (!trustedFrame || !mainWindow || mainWindow.isDestroyed() || mainWindow.webContents.id !== senderId) {
+    finishSelectionMetrics(requestId, "failed");
+    return { status: "blocked", reasonCode: "untrusted_sender" };
+  }
+  if (typeof itemRef !== "string" || typeof generation !== "string") {
+    finishSelectionMetrics(requestId, "failed");
+    return { status: "blocked", reasonCode: "selection_arguments_invalid" };
+  }
+  const triggerKeys = parseNativeTriggerKeys(rawTriggerKeys);
+  if (!triggerKeys) {
+    finishSelectionMetrics(requestId, "failed");
+    return { status: "blocked", reasonCode: "trigger_keys_invalid" };
+  }
+  const item = history.find((candidate) => candidate.id === itemRef);
+  if (!item) {
+    finishSelectionMetrics(requestId, "not_found");
+    return { status: "not_found" };
+  }
+  if (benchmarkMode && process.argv.includes("--no-input")) {
+    finishSelectionMetrics(requestId, "no_input");
+    return { status: "copied_only", reasonCode: "benchmark_no_input" };
+  }
+  if (
+    generation !== panelGeneration ||
+    pendingPanelGeneration === generation ||
+    !mainWindow.isVisible()
+  ) {
+    finishSelectionMetrics(requestId, "failed");
+    return { status: "cancelled", reasonCode: "stale_panel_generation" };
+  }
+  if (performance.now() < openingGuardUntil) {
+    finishSelectionMetrics(requestId, "failed");
+    return { status: "blocked", reasonCode: "panel_opening_guard" };
+  }
+  if (helperClipboardFence.isBlocked) {
+    finishSelectionMetrics(requestId, "failed");
+    return { status: "blocked", reasonCode: "helper_side_effect_unresolved" };
+  }
+  if (nativePasteJob?.generation === generation && nativePasteJob.itemRef === itemRef &&
+      nativePasteJob.triggerKeys.length === triggerKeys.length &&
+      nativePasteJob.triggerKeys.every((key, index) => key === triggerKeys[index])) {
+    finishSelectionMetrics(requestId, "failed");
+    return { status: "blocked", reasonCode: "duplicate_selection_intent" };
+  }
+
+  const bridge = win32HostBridge;
+  const selectionStartedTickMs = bridge?.getMonotonicTickMs() ?? null;
+  const selectionDeadlineTickMs = selectionStartedTickMs === null
+    ? null
+    : selectionStartedTickMs + SELECTION_KEY_RELEASE_WINDOW_MS;
+  const selectionStartedAt = performance.now();
+  const selectionDeadlineAt = selectionStartedAt + SELECTION_KEY_RELEASE_WINDOW_MS;
+  let selectionMonitorActive = true;
+  const selectionKeyReleaseMonitor = bridge && selectionDeadlineTickMs !== null
+    ? startSelectionKeyReleaseMonitor({
+      selectionDeadlineAt,
+      selectionDeadlineTickMs,
+      nowAt: () => performance.now(),
+      nowTickMs: () => bridge.getMonotonicTickMs(),
+      keysReleased: () => bridge.areKeysReleased(triggerKeys),
+      isCurrent: () => selectionMonitorActive && panelGeneration === generation,
+    })
+    : null;
+  try {
+    const baselineClipboardSequence = bridge ? captureClipboardBaseline(bridge) : null;
+
+  if (nativePasteJob) {
+    if (nativePasteJob.clipboardCommitAttempted || nativePasteJob.cancelled) {
+      finishSelectionMetrics(requestId, "failed");
+      return { status: "blocked", reasonCode: "active_job" };
+    }
+    const stopped = await cancelNativePasteJob(nativePasteJob);
+    if (!stopped) {
+      finishSelectionMetrics(requestId, "failed");
+      return { status: "blocked", reasonCode: "cancel_not_quiescent" };
+    }
+  }
+  if (helperClipboardFence.isBlocked) {
+    finishSelectionMetrics(requestId, "failed");
+    return { status: "blocked", reasonCode: "helper_side_effect_unresolved" };
+  }
+
+  const client = helperClient;
+  const provider = nativeContentProvider;
+  if (
+    !client ||
+    client.state !== "ready" ||
+    client.currentPanelGeneration !== generation ||
+    client.acceptedHelperGeneration !== generation ||
+    !provider ||
+    !bridge ||
+    selectionDeadlineTickMs === null
+  ) {
+    try {
+      writeItemToElectronClipboard(item);
+      metrics.mark(requestId, "clipboard_written");
+      hidePanel(false);
+      metrics.mark(requestId, "panel_hidden");
+      finishSelectionMetrics(requestId, "ok");
+      return {
+        status: "copied_only",
+        reasonCode: bridge && selectionDeadlineTickMs === null ? "selection_clock_unavailable" : "native_helper_unavailable",
+      };
+    } catch {
+      finishSelectionMetrics(requestId, "failed");
+      return { status: "blocked", reasonCode: helperClipboardFence.isBlocked ? "helper_side_effect_unresolved" : "clipboard_write_failed" };
+    }
+  }
+
+  if (baselineClipboardSequence === null) {
+    try {
+      // This is still the user's direct copy action; automation is disabled when
+      // Windows cannot provide a sequence baseline for a conditional native write.
+      writeItemToElectronClipboard(item);
+      metrics.mark(requestId, "clipboard_written");
+      hidePanel(false);
+      metrics.mark(requestId, "panel_hidden");
+      finishSelectionMetrics(requestId, "ok");
+      return { status: "copied_only", reasonCode: "clipboard_sequence_unavailable" };
+    } catch {
+      finishSelectionMetrics(requestId, "failed");
+      return { status: "blocked", reasonCode: helperClipboardFence.isBlocked ? "helper_side_effect_unresolved" : "clipboard_write_failed" };
+    }
+  }
+
+  const job = makeNativePasteJob(
+    generation,
+    itemRef,
+    triggerKeys,
+    selectionStartedAt + IMAGE_LIMITS.contentPrepareTimeoutMs,
+    selectionKeyReleaseMonitor,
+  );
+  nativePasteJob = job;
+
+  try {
+    const preparation = (async () => {
+      job.snapshot = await provider.snapshot(senderId, itemRef);
+      if (!isCurrentNativePasteJob(job)) throw new Error("paste_cancelled");
+      return sendNativeContent(job, provider, client);
+    })();
+    job.preparationPromise = preparation;
+    const cancelSelectionJobWork = async (): Promise<void> => {
+      job.imageDecodeController.abort();
+      const quiescent = await cancelNativePasteJob(job);
+      if (!quiescent && job.registrationAttempted) {
+        helperClipboardFence.blockUntilHelperExit();
+        const failedClient = job.helperClient;
+        if (failedClient) {
+          const helperRetired = await restartNativeHelperAfterFailure(failedClient);
+          if (helperRetired) {
+            if (job.snapshot) provider.release(job.snapshot, job.jobId, job.objectToken);
+            job.cancellationQuiescent = true;
+            if (nativePasteJob === job) nativePasteJob = null;
+            job.resolveTerminal();
+          }
+        }
+      }
+    };
+    const preparationRace = await raceSelectionPreparation({
+      monitor: selectionKeyReleaseMonitor!,
+      preparation,
+      cancelPreparation: cancelSelectionJobWork,
+    });
+    if (preparationRace.kind === "blocked") {
+      if (preparationRace.decision.reasonCode === "selection_cancelled") {
+        finishSelectionMetrics(requestId, "failed");
+        return { status: "cancelled", reasonCode: "selection_cancelled" };
+      }
+      finishSelectionMetrics(requestId, "no_input");
+      return { status: "blocked", reasonCode: preparationRace.decision.reasonCode };
+    }
+    const prepared = preparationRace.result;
+    if (prepared.status !== "prepared" || prepared.jobId !== job.jobId) {
+      const response = resultForNativeStatus(prepared);
+      finishSelectionMetrics(requestId, "failed");
+      return response;
+    }
+    if (!job.snapshot || !provider.isCurrent(job.snapshot)) {
+      await cancelSelectionJobWork();
+      finishSelectionMetrics(requestId, "failed");
+      return { status: "cancelled", reasonCode: "content_snapshot_stale" };
+    }
+    if (!isCurrentNativePasteJob(job)) {
+      await cancelSelectionJobWork();
+      finishSelectionMetrics(requestId, "failed");
+      return { status: "cancelled", reasonCode: "selection_cancelled" };
+    }
+    const keyRelease = selectionKeyReleaseMonitor
+      ? await selectionKeyReleaseMonitor.waitForPreparation()
+      : { kind: "blocked", reasonCode: "selection_clock_unavailable" } as const;
+    if (keyRelease.kind !== "continue") {
+      await cancelSelectionJobWork();
+      if (keyRelease.reasonCode === "selection_cancelled") {
+        finishSelectionMetrics(requestId, "failed");
+        return { status: "cancelled", reasonCode: "selection_cancelled" };
+      }
+      finishSelectionMetrics(requestId, "no_input");
+      return { status: "blocked", reasonCode: keyRelease.reasonCode };
+    }
+
+    const keysReleasedBeforeCommit = bridge.areKeysReleased(triggerKeys);
+    if (keysReleasedBeforeCommit !== true) {
+      finishSelectionMetrics(requestId, "no_input");
+      return {
+        status: "blocked",
+        reasonCode: keysReleasedBeforeCommit === false ? "key_held" : "key_state_unavailable",
+      };
+    }
+    const helperSelectionDeadline = selectionHelperDeadlineAtCommit(
+      bridge.getMonotonicTickMs(),
+      selectionDeadlineTickMs,
+    );
+    if (helperSelectionDeadline.kind === "unavailable") {
+      finishSelectionMetrics(requestId, "no_input");
+      return { status: "blocked", reasonCode: "selection_clock_unavailable" };
+    }
+
+    // The helper rechecks trigger and modifier keys; its operation timeout remains bounded separately.
+    job.clipboardCommitAttempted = true;
+    const commitWriteCommand = {
+      kind: "commit_write",
+      jobId: job.jobId,
+      prepareToken: prepared.prepareToken,
+      baselineClipboardSequence,
+      // Zero means the original 500ms cutoff elapsed: recheck keys immediately, never restart the wait.
+      selectionBudgetMs: helperSelectionDeadline.kind === "expired"
+        ? helperSelectionDeadline.selectionBudgetMs
+        : keyRelease.operationBudgetMs,
+      ...(helperSelectionDeadline.kind === "include"
+        ? { selectionDeadlineTickMs: helperSelectionDeadline.deadlineTickMs }
+        : {}),
+      triggerKeys,
+    } as const;
+    const written = await client.request(commitWriteCommand, generation);
+    if (written.status !== "clipboard_written" || written.jobId !== job.jobId) {
+      const response = resultForNativeStatus(written);
+      finishSelectionMetrics(requestId, "failed");
+      return response;
+    }
+    job.clipboardSequence = written.clipboardSequence;
+    clipboardSequenceGate.markProcessed(Number(written.clipboardSequence));
+    metrics.mark(requestId, "clipboard_written");
+
+    if (!isCurrentNativePasteJob(job)) {
+      finishSelectionMetrics(requestId, "failed");
+      return { status: "copied_only", reasonCode: "cancelled_after_clipboard_commit" };
+    }
+    if (!panelTarget) {
+      await cancelNativePasteJob(job);
+      finishSelectionMetrics(requestId, "failed");
+      return { status: "copied_only", reasonCode: "target_unavailable" };
+    }
+    const hostWindow = getMainWindowTarget();
+    const ready = helperReady;
+    if (!hostWindow || !ready) {
+      await cancelNativePasteJob(job);
+      finishSelectionMetrics(requestId, "failed");
+      return { status: "copied_only", reasonCode: "host_identity_unavailable" };
+    }
+    const authorization = hostAuthorizationGate.authorize(
+      ready,
+      { pid: ready.helperPid },
+      hostWindow,
+      bridge,
+    );
+    if (authorization !== "authorized") {
+      await cancelNativePasteJob(job);
+      finishSelectionMetrics(requestId, "failed");
+      return { status: "copied_only", reasonCode: authorization };
+    }
+    if (!isCurrentNativePasteJob(job)) {
+      await cancelNativePasteJob(job);
+      finishSelectionMetrics(requestId, "failed");
+      return { status: "copied_only", reasonCode: "selection_cancelled" };
+    }
+    const keysReleased = bridge.areKeysReleased(triggerKeys);
+    if (keysReleased !== true) {
+      await cancelNativePasteJob(job);
+      finishSelectionMetrics(requestId, "no_input");
+      return {
+        status: "copied_only",
+        reasonCode: keysReleased === false ? "trigger_key_held" : "key_state_unavailable",
+      };
+    }
+
+    // Keep the host foreground until the authorized helper takes focus. Hiding
+    // first lets Windows activate a transient/third window and cancels the paste.
+    const target = panelTarget;
+    job.pasteRequested = true;
+    const pasted = await client.request({
+      kind: "paste",
+      jobId: job.jobId,
+      prepareToken: prepared.prepareToken,
+      hostWindow,
+      target,
+      expectedClipboardSequence: written.clipboardSequence,
+      triggerKeys,
+    }, generation, { timeoutMs: 750 });
+    if (
+      pasted.status === "input_submitted" &&
+      pasted.jobId === job.jobId &&
+      pasted.target.hwnd === target.hwnd &&
+      pasted.target.pid === target.pid &&
+      pasted.target.processCreatedAt === target.processCreatedAt
+    ) {
+      metrics.mark(requestId, "send_input_acknowledged");
+      if (panelGeneration === generation) {
+        hidePanel(false);
+        metrics.mark(requestId, "panel_hidden");
+        panelGeneration = null;
+        panelTarget = null;
+      }
+      finishSelectionMetrics(requestId, "ok");
+      return { status: "input_submitted" };
+    }
+    if (pasted.status === "input_submitted") {
+      if (mainWindow && !mainWindow.isVisible()) showPanel();
+      finishSelectionMetrics(requestId, "failed");
+      return { status: "unknown", reasonCode: "input_ack_identity_mismatch" };
+    }
+    if (mainWindow && !mainWindow.isVisible()) showPanel();
+    finishSelectionMetrics(requestId, "failed");
+    return {
+      status: "copied_only",
+      reasonCode: "reasonCode" in pasted ? pasted.reasonCode : pasted.status,
+    };
+  } catch (error) {
+    const reasonCode = error instanceof Error ? error.message : "native_paste_failed";
+    if (job.clipboardCommitAttempted) {
+      // A lost acknowledgement makes the side effect unknown. Never retry it.
+      if (mainWindow && !mainWindow.isVisible()) showPanel();
+      finishSelectionMetrics(requestId, "failed");
+      return { status: "unknown", reasonCode };
+    }
+    if (reasonCode === "image_prepare_timeout") {
+      // Keep the panel and clipboard untouched when the bounded image preparation expires.
+      finishSelectionMetrics(requestId, "failed");
+      return { status: "blocked", reasonCode };
+    }
+    const currentItem = history.find((candidate) => candidate.id === item.id);
+    const selectedContentStillCurrent =
+      currentItem?.type === item.type && currentItem.content === item.content;
+    if (
+      !job.cancelled &&
+      !helperClipboardFence.isBlocked &&
+      generation === panelGeneration &&
+      Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) &&
+      selectedContentStillCurrent
+    ) {
+      try {
+        writeItemToElectronClipboard(item);
+        metrics.mark(requestId, "clipboard_written");
+        hidePanel(false);
+        metrics.mark(requestId, "panel_hidden");
+        finishSelectionMetrics(requestId, "ok");
+        return { status: "copied_only", reasonCode };
+      } catch {
+        finishSelectionMetrics(requestId, "failed");
+        return { status: "blocked", reasonCode: helperClipboardFence.isBlocked ? "helper_side_effect_unresolved" : "clipboard_write_failed" };
+      }
+    }
+    finishSelectionMetrics(requestId, "failed");
+    return { status: reasonCode === "paste_cancelled" ? "cancelled" : "blocked", reasonCode };
+  } finally {
+    if (!job.registrationAttempted || (job.cancelled && job.cancellationQuiescent) || client.hasExited) {
+      if (job.snapshot) provider.release(job.snapshot, job.jobId, job.objectToken);
+      if (nativePasteJob === job) nativePasteJob = null;
+      job.resolveTerminal();
+    } else if (!job.clipboardCommitAttempted && !job.cancelled && nativePasteJob === job) {
+      void cancelNativePasteJob(job);
+    }
+  }
+  } finally {
+    selectionMonitorActive = false;
+    selectionKeyReleaseMonitor?.cancel();
+  }
+}
+
 function registerIpc(): void {
+  ipcMain.on("metrics:panel-actionable", (event, requestId: unknown) => {
+    if (
+      !mainWindow ||
+      event.sender.id !== mainWindow.webContents.id ||
+      typeof requestId !== "string" ||
+      !metrics.isActive(requestId)
+    ) return;
+    if (suppressBenchmarkAcknowledgement) return;
+
+    metrics.mark(requestId, "panel_actionable");
+    if (!metrics.finish(requestId, "ok")) return;
+    if (!benchmarkMode) {
+      void metrics.flush().catch(() => undefined);
+      return;
+    }
+    completeBenchmarkSample(requestId, true);
+  });
+
   ipcMain.handle("history:get", () => history);
   ipcMain.handle("settings:get", () => getAppSettingsSnapshot());
   ipcMain.handle("settings:update", (_event, patch: unknown) => updateAppSettings(patch));
@@ -1738,21 +2465,15 @@ function registerIpc(): void {
   ipcMain.handle("updates:check", () => checkForUpdates());
   ipcMain.handle("updates:download", () => downloadUpdate());
   ipcMain.handle("updates:install", () => installUpdate());
-  ipcMain.handle("history:copy", (_event, id: string) => {
-    const item = history.find((candidate) => candidate.id === id);
-    if (!item) return;
-
-    if (item.type === "image") {
-      const image = nativeImage.createFromDataURL(item.content);
-      clipboard.writeImage(image);
-      // Compare pixels rather than the stored data URL. JPEG fallback images
-      // are re-encoded by Windows when read back from the clipboard.
-      lastClipboardSignature = fingerprint("image", image.toPNG().toString("base64"));
-    } else {
-      clipboard.writeText(item.content);
-      lastClipboardSignature = fingerprint(item.type, item.content);
+  ipcMain.handle("history:copy", async (event, id: unknown, triggerKeys: unknown, generation: unknown): Promise<CopyItemResult> => {
+    const requestId = metrics.begin("selection");
+    const trustedFrame = event.senderFrame === event.sender.mainFrame;
+    const result = await copySelectedItem(event.sender.id, trustedFrame, id, triggerKeys, generation, requestId);
+    if (process.env.CLIPNEST_DEBUG_PASTE === "1") {
+      // Only operation status: never log clipboard contents or target window titles.
+      console.info("ClipNest: paste result", JSON.stringify(result));
     }
-    pasteIntoPreviousWindow();
+    return result;
   });
   ipcMain.handle("history:edit", (_event, id: string, content: string) => {
     if (typeof content !== "string") throw new Error("常用内容格式无效");
@@ -1783,7 +2504,7 @@ function registerIpc(): void {
     scheduleCloudSync();
   });
   ipcMain.handle("history:clear", clearUnpinnedHistory);
-  ipcMain.handle("panel:hide", hidePanel);
+  ipcMain.handle("panel:hide", () => hidePanel());
 }
 
 applyDataDirectoryOverride();
@@ -1797,14 +2518,29 @@ if (!gotLock) {
   });
 
   void app.whenReady().then(() => {
-    app.setAppUserModelId("com.clipnest.app");
-    registerAutoUpdater();
-    // Keep the data location stable even when the app is launched from a
-    // portable folder or the executable is rebuilt with a different name.
-    configureStartup();
+    app.setAppUserModelId(benchmarkMode ? "com.clipnest.app.t01" : "com.clipnest.app");
+    if (benchmarkMode) {
+      loadAppSettings();
+      appSettings = {
+        ...appSettings,
+        storageDirectory: benchmarkProfileDirectory(),
+        cloudEnabled: false,
+        cloudAccessToken: "",
+        cloudWebPassword: "",
+        cloudEncryptionKey: "",
+      };
+      storeDirectory = benchmarkProfileDirectory();
+      storePath = join(storeDirectory, HISTORY_FILE_NAME);
+    } else {
+      registerAutoUpdater();
+      // Keep the data location stable even when the app is launched from a
+      // portable folder or the executable is rebuilt with a different name.
+      configureStartup();
+    }
     loadHistory();
     createMainWindow();
-    createTray();
+    startNativeHelper();
+    if (!benchmarkMode) createTray();
     registerIpc();
     cloudSyncState = appSettings.cloudEnabled
       ? (isCloudConfigured() ? "idle" : "error")
@@ -1814,16 +2550,17 @@ if (!gotLock) {
       : null;
     if (appSettings.cloudEnabled && isCloudConfigured()) void syncCloudHistory();
 
-    const registered = globalShortcut.register("CommandOrControl+Shift+V", showPanel);
-    if (!registered) {
-      console.warn("ClipNest: 无法注册 Ctrl+Shift+V，可能已被其他软件占用。");
+    if (!benchmarkMode) {
+      const registered = globalShortcut.register("CommandOrControl+Shift+V", showPanel);
+      if (!registered) {
+        console.warn("ClipNest: 无法注册 Ctrl+Shift+V，可能已被其他软件占用。");
+      }
+      pollClipboard();
+      pollTimer = setInterval(pollClipboard, POLL_INTERVAL_MS);
     }
-
-    pollClipboard();
-    pollTimer = setInterval(pollClipboard, POLL_INTERVAL_MS);
   });
 
-  app.on("activate", showPanel);
+  if (!benchmarkMode) app.on("activate", showPanel);
   app.on("window-all-closed", () => {
     // ClipNest stays alive in the tray even if the panel is closed.
   });
@@ -1831,6 +2568,12 @@ if (!gotLock) {
     isQuitting = true;
     globalShortcut.unregisterAll();
     if (pollTimer) clearInterval(pollTimer);
+    void imagePreparationService.dispose();
+    helperClient?.close();
+    helperClient = null;
+    helperReady = null;
+    win32HostBridge?.close();
+    win32HostBridge = null;
     tray?.destroy();
   });
 }

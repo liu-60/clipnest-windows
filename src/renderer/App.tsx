@@ -7,7 +7,6 @@ import {
   Layers3,
   Link2,
   Pencil,
-  Plus,
   Search,
   Settings2,
   Trash2,
@@ -25,6 +24,7 @@ import {
 } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { ClipboardItem, ClipboardType, ClipnestSettings, UpdateInfo } from "../shared/types";
+import type { NativeTriggerKey } from "../shared/native-contracts";
 import SettingsPage from "./SettingsPage";
 
 type Filter = "all" | "favorite" | ClipboardType;
@@ -35,7 +35,7 @@ const filters: Array<{
   label: string;
   icon: typeof Layers3;
 }> = [
-  { id: "all", label: "全部历史", icon: Layers3 },
+  { id: "all", label: "历史", icon: Layers3 },
   { id: "favorite", label: "常用", icon: Heart },
   { id: "text", label: "文本", icon: FileText },
   { id: "link", label: "链接", icon: Link2 },
@@ -93,9 +93,9 @@ interface VirtualHistoryGridProps {
   onEdit: (item: ClipboardItem, content: string) => void;
 }
 
-const GRID_GAP = 14;
-const GRID_CARD_WIDTH = 205;
-const GRID_CARD_HEIGHT = 260;
+const GRID_GAP = 16;
+const GRID_CARD_WIDTH = 220;
+const GRID_CARD_HEIGHT = 232;
 const GRID_ITEM_SIZE = GRID_CARD_WIDTH + GRID_GAP;
 
 const VirtualHistoryGrid = forwardRef<VirtualHistoryGridHandle, VirtualHistoryGridProps>(
@@ -167,7 +167,7 @@ const VirtualHistoryGrid = forwardRef<VirtualHistoryGridHandle, VirtualHistoryGr
             })}
           </div>
         </section>
-        <div className="grid-hint"><kbd>↑</kbd><kbd>↓</kbd> 选择 <span>·</span> <kbd>↵</kbd> 复制</div>
+        <div className="grid-hint"><kbd>←</kbd><kbd>→</kbd> 选择 <span>·</span> <kbd>↵</kbd> 粘贴到原输入位置</div>
       </div>
     );
   },
@@ -182,9 +182,17 @@ function App() {
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [preparingImageRequest, setPreparingImageRequest] = useState<object | null>(null);
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
+  const [panelShowVersion, setPanelShowVersion] = useState(0);
   const searchRef = useRef<HTMLInputElement>(null);
   const noticeTimer = useRef<number | undefined>(undefined);
   const virtualGridRef = useRef<VirtualHistoryGridHandle>(null);
+  const pendingWakeRequestId = useRef<string | null>(null);
+  const activePanelGeneration = useRef<string | null>(null);
+  const activeCopyIntent = useRef<{ generation: string | null; token: object } | null>(null);
+  const searchComposing = useRef(false);
+  const searchNavigationActive = useRef(false);
 
   const filteredItems = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -192,9 +200,11 @@ function App() {
       const matchesFilter =
         activeFilter === "all" ||
         (activeFilter === "favorite" ? item.pinned : item.type === activeFilter);
+      if (!matchesFilter) return false;
+      if (!normalizedQuery) return true;
       const searchableContent = item.type === "image" ? item.preview : item.content;
       const searchableText = `${searchableContent} ${(item.tags ?? []).join(" ")}`.toLowerCase();
-      return matchesFilter && (!normalizedQuery || searchableText.includes(normalizedQuery));
+      return searchableText.includes(normalizedQuery);
     });
   }, [activeFilter, items, query]);
 
@@ -210,10 +220,42 @@ function App() {
   }, []);
 
   const copyItem = useCallback(
-    async (item: ClipboardItem | null) => {
+    async (item: ClipboardItem | null, triggerKeys: readonly NativeTriggerKey[] = []) => {
       if (!item) return;
-      await window.clipnest.copyItem(item.id);
-      showNotice("已复制，随时可以粘贴");
+      const requestGeneration = activePanelGeneration.current;
+      if (activeCopyIntent.current?.generation === requestGeneration) return;
+      const requestToken = {};
+      activeCopyIntent.current = { generation: requestGeneration, token: requestToken };
+      if (item.type === "image") setPreparingImageRequest(requestToken);
+      try {
+        const result = await window.clipnest.copyItem(item.id, triggerKeys);
+        if (requestGeneration !== activePanelGeneration.current) return;
+        switch (result.status) {
+          case "input_submitted":
+            showNotice("已发送粘贴快捷键");
+            break;
+          case "copied_only":
+            showNotice("已复制，请手动粘贴");
+            break;
+          case "cancelled":
+            showNotice("操作已取消");
+            break;
+          case "blocked":
+            showNotice("当前无法复制或自动粘贴");
+            break;
+          case "not_found":
+            showNotice("内容已不存在");
+            break;
+          case "unknown":
+            showNotice("操作结果未知，请检查目标窗口，勿重复触发");
+            break;
+        }
+      } catch {
+        if (requestGeneration === activePanelGeneration.current) showNotice("复制失败");
+      } finally {
+        if (activeCopyIntent.current?.token === requestToken) activeCopyIntent.current = null;
+        setPreparingImageRequest((current) => current === requestToken ? null : current);
+      }
     },
     [showNotice],
   );
@@ -237,6 +279,7 @@ function App() {
         setItems(nextItems);
         setSettings(nextSettings);
         setUpdateInfo(nextUpdateInfo);
+        setInitialDataLoaded(true);
       },
     );
     const removeHistoryListener = window.clipnest.onHistoryUpdated((nextItems) => setItems(nextItems));
@@ -260,15 +303,34 @@ function App() {
   }, [filteredItems, selectedId, selectedItem]);
 
   useEffect(() => {
-    const cleanup = window.clipnest.onPanelShown(() => {
-      if (viewMode !== "history") return;
-      window.requestAnimationFrame(() => {
-        virtualGridRef.current?.scrollToStart();
-        searchRef.current?.focus();
-      });
+    return window.clipnest.onPanelShown((requestId, generation) => {
+      if (activePanelGeneration.current !== generation) {
+        activeCopyIntent.current = null;
+        searchNavigationActive.current = false;
+        searchComposing.current = false;
+        setPreparingImageRequest(null);
+      }
+      activePanelGeneration.current = generation;
+      pendingWakeRequestId.current = requestId;
+      setPanelShowVersion((version) => version + 1);
     });
-    return cleanup;
-  }, [viewMode]);
+  }, []);
+
+  useEffect(() => {
+    if (!panelShowVersion || viewMode !== "history") return;
+    const requestId = pendingWakeRequestId.current;
+    if (requestId && !initialDataLoaded) return;
+    const frame = window.requestAnimationFrame(() => {
+      virtualGridRef.current?.scrollToStart();
+      searchRef.current?.focus();
+      if (pendingWakeRequestId.current && document.activeElement === searchRef.current) {
+        const actionableRequestId = pendingWakeRequestId.current;
+        window.clipnest.reportPanelActionable(actionableRequestId);
+        pendingWakeRequestId.current = null;
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [initialDataLoaded, panelShowVersion, viewMode]);
 
   useEffect(() => {
     virtualGridRef.current?.scrollToStart();
@@ -278,8 +340,11 @@ function App() {
     const onKeyDown = (event: KeyboardEvent) => {
       const activeElement = document.activeElement as HTMLElement | null;
       const isInput = activeElement?.tagName === "INPUT" || activeElement?.tagName === "TEXTAREA";
+      const isSearchInput = activeElement === searchRef.current;
+      const isComposing = event.isComposing || searchComposing.current;
 
       if (event.key === "Escape") {
+        if (isComposing || activeElement?.tagName === "TEXTAREA") return;
         event.preventDefault();
         if (viewMode === "settings") {
           setViewMode("history");
@@ -288,11 +353,33 @@ function App() {
         }
         return;
       }
+      if (isComposing) return;
       if (viewMode !== "history") return;
 
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         searchRef.current?.focus();
+        return;
+      }
+
+      if (isSearchInput && (event.key === "ArrowDown" || (event.key === "ArrowUp" && searchNavigationActive.current))) {
+        event.preventDefault();
+        if (!filteredItems.length) return;
+        const currentIndex = filteredItems.findIndex((item) => item.id === selectedItem?.id);
+        const nextIndex = !searchNavigationActive.current
+          ? 0
+          : (Math.max(0, currentIndex) + (event.key === "ArrowUp" ? -1 : 1) + filteredItems.length) % filteredItems.length;
+        searchNavigationActive.current = true;
+        setSelectedId(filteredItems[nextIndex].id);
+        virtualGridRef.current?.scrollToIndex(nextIndex);
+        return;
+      }
+
+      if (isSearchInput && event.key === "Enter") {
+        if (isComposing) return;
+        event.preventDefault();
+        if (event.repeat) return;
+        void copyItem(selectedItem, ["Enter"]);
         return;
       }
 
@@ -312,9 +399,11 @@ function App() {
         return;
       }
 
-      if (event.key === "Enter" && !event.isComposing) {
+      if (event.key === "Enter") {
+        if (isComposing) return;
         event.preventDefault();
-        void copyItem(selectedItem);
+        if (event.repeat) return;
+        void copyItem(selectedItem, ["Enter"]);
         return;
       }
 
@@ -364,28 +453,19 @@ function App() {
       ) : (
         <>
           <header className="paste-topbar drag-region">
-            <div className="window-controls no-drag" aria-label="窗口控制">
-              <button
-                className="traffic-light traffic-red"
-                onClick={() => void window.clipnest.hidePanel()}
-                aria-label="关闭面板"
-              ><Circle size={13} fill="currentColor" strokeWidth={1.2} /></button>
-              <span className="traffic-light traffic-yellow" aria-hidden="true"><Circle size={13} fill="currentColor" strokeWidth={1.2} /></span>
-              <span className="traffic-light traffic-green" aria-hidden="true"><Circle size={13} fill="currentColor" strokeWidth={1.2} /></span>
-            </div>
-
-            <div className="paste-brand">
-              <span className="brand-name">ClipNest</span>
-              <span className="brand-subtitle">剪切板</span>
-            </div>
-
             <div className="paste-toolbar no-drag">
               <div className="search-box">
                 <Search size={17} strokeWidth={2} />
                 <input
                   ref={searchRef}
                   value={query}
-                  onChange={(event) => setQuery(event.target.value)}
+                  onChange={(event) => {
+                    searchNavigationActive.current = false;
+                    if (event.target.value !== query) setSelectedId(null);
+                    setQuery(event.target.value);
+                  }}
+                  onCompositionStart={() => { searchComposing.current = true; }}
+                  onCompositionEnd={() => { searchComposing.current = false; }}
                   placeholder="搜索剪切板历史…"
                   aria-label="搜索剪切板历史"
                 />
@@ -396,40 +476,6 @@ function App() {
                 )}
                 <div className="key-hint"><kbd>Ctrl</kbd><kbd>K</kbd></div>
               </div>
-              <div className="top-filter-stack">
-                <button
-                  className={`top-chip ${activeFilter === "all" ? "active" : ""}`}
-                  onClick={() => setActiveFilter("all")}
-                >
-                  <Circle className="chip-dot neutral-dot" size={9} fill="currentColor" strokeWidth={0} />
-                  剪切板历史记录
-                  <span className="chip-count">{items.length}</span>
-                </button>
-                <button
-                  className={`top-chip utility-chip ${activeFilter === "favorite" ? "active" : ""}`}
-                  onClick={() => setActiveFilter("favorite")}
-                >
-                  <Heart className="chip-dot favorite-dot" size={11} fill="currentColor" strokeWidth={1.5} />
-                  常用
-                  <span className="chip-count">{countFor("favorite")}</span>
-                </button>
-              </div>
-              <button
-                className="plus-button"
-                onClick={() => searchRef.current?.focus()}
-                aria-label="搜索剪切板"
-              >
-                <Plus size={17} strokeWidth={1.8} />
-              </button>
-            </div>
-
-            <button className="more-button no-drag" onClick={() => setViewMode("settings")} aria-label="打开设置">
-              <Settings2 size={17} />
-            </button>
-          </header>
-
-          <main className="paste-content">
-            <div className="view-toolbar no-drag">
               <nav className="filter-pills" aria-label="剪切板分类">
                 {filters.map((filter) => {
                   const Icon = filter.icon;
@@ -448,19 +494,27 @@ function App() {
                   );
                 })}
               </nav>
-              <div className="view-actions">
-                <div className="listening-pill"><Circle className="pulse-dot" size={7} fill="currentColor" strokeWidth={0} /> 正在监听</div>
-                <div className="view-count">
-                  {query ? `匹配 ${filteredItems.length} 条` : `${filteredItems.length} 条记录`}
-                </div>
-                {items.some((item) => !item.pinned) && (
-                  <button className="clear-button" onClick={() => void handleClear()}>
-                    <Trash2 size={13} /> 清除非收藏
-                  </button>
-                )}
-              </div>
             </div>
+            <div className="view-actions no-drag">
+              <div className="listening-pill"><Circle className="pulse-dot" size={7} fill="currentColor" strokeWidth={0} /> 正在监听</div>
+              <div className="view-count">
+                {query ? `匹配 ${filteredItems.length} 条` : `${filteredItems.length} 条记录`}
+              </div>
+              {items.some((item) => !item.pinned) && (
+                <button className="clear-button" onClick={() => void handleClear()}>
+                  <Trash2 size={13} /> 清除非收藏
+                </button>
+              )}
+            </div>
+            <button className="more-button no-drag" onClick={() => setViewMode("settings")} aria-label="打开设置" title="设置">
+              <Settings2 size={17} />
+            </button>
+            <button className="more-button close-panel-button no-drag" onClick={() => void window.clipnest.hidePanel()} aria-label="关闭面板" title="关闭面板（Esc）">
+              <X size={18} />
+            </button>
+          </header>
 
+          <main className="paste-content">
             {items.length === 0 ? (
               <EmptyState />
             ) : filteredItems.length === 0 ? (
@@ -488,7 +542,9 @@ function App() {
         </>
       )}
 
-      {notice && <div className="toast"><Check size={15} /> {notice}</div>}
+      {preparingImageRequest ? (
+        <div className="toast" role="status" aria-live="polite"><Circle size={15} /> 正在准备图片…</div>
+      ) : notice && <div className="toast"><Check size={15} /> {notice}</div>}
     </div>
   );
 }
@@ -546,7 +602,6 @@ function HistoryCard({
         onSelect();
         onCopy();
       }}
-      onDoubleClick={() => { if (!editing) onCopy(); }}
     >
       <div className={`paste-card-header type-${item.type}`}>
         <div className="card-header-copy">
