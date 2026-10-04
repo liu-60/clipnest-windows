@@ -70,6 +70,27 @@ test("rejects a missing case ID constraint in report schema", () => {
   assert.ok(codes.includes("SCHEMA_CASE_EXACTLY_ONCE"));
 });
 
+test("requires cases to be present in every report", () => {
+  const codes = codesFor(({ reportSchema }) => {
+    reportSchema.required = reportSchema.required.filter((key) => key !== "cases");
+  });
+  assert.ok(codes.includes("SCHEMA_CASES_REQUIRED"));
+});
+
+test("requires an object report at the schema root", () => {
+  const codes = codesFor(({ reportSchema }) => {
+    reportSchema.type = "array";
+  });
+  assert.ok(codes.includes("SCHEMA_ROOT_TYPE"));
+});
+
+test("requires Draft 2020-12 for exact case occurrence constraints", () => {
+  const codes = codesFor(({ reportSchema }) => {
+    reportSchema.$schema = "http://json-schema.org/draft-04/schema#";
+  });
+  assert.ok(codes.includes("SCHEMA_DIALECT"));
+});
+
 test("rejects duplicate case ID constraints in report schema", () => {
   const codes = codesFor(({ reportSchema }) => {
     const clauses = reportSchema.properties.cases.allOf;

@@ -33,6 +33,15 @@ function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema }) {
   if (fixturePlan.task !== "T05" || assertionMap.task !== "T05") {
     add("TASK_ID", "fixturePlan and assertionMap must identify task T05");
   }
+  if (reportSchema.$schema !== "https://json-schema.org/draft/2020-12/schema") {
+    add("SCHEMA_DIALECT", "reportSchema must use JSON Schema Draft 2020-12 for contains/maxContains constraints");
+  }
+  if (reportSchema.type !== "object") {
+    add("SCHEMA_ROOT_TYPE", "reportSchema root must be an object");
+  }
+  if (!Array.isArray(reportSchema.required) || !reportSchema.required.includes("cases")) {
+    add("SCHEMA_CASES_REQUIRED", "reportSchema root must require the cases property");
+  }
   if (fixturePlan.status !== "preflight_only" || fixturePlan.executionStatus !== "NOT_RUN") {
     add("PREPARATION_STATUS", "fixturePlan must remain preflight_only with executionStatus NOT_RUN");
   }
