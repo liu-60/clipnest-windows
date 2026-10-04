@@ -64,6 +64,26 @@
         "not end-user paste latency"
       ]
     },
+    "jpegWorkerPeakMemoryDiagnostic": {
+      "status": "CAPACITY_REJECTED_OVER_BUDGET",
+      "artifact": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-20mib-fresh-worker-5-sample-measurement.json",
+      "samples": 5,
+      "freshWorkerPerSample": true,
+      "pixelDimensions": "4000x4000",
+      "sourceBytes": 20971520,
+      "capacityRejectedSamples": 5,
+      "successfulDecodes": 0,
+      "capacityRejectP95Ms": 3223.1,
+      "maxPeakWorkingSetBytes": 656289792,
+      "maxPeakWorkingSetMiB": 625.89,
+      "budgetBytes": 268435456,
+      "withinBudget": false,
+      "limitations": [
+        "synthetic high-entropy baseline JPEG with APP2 padding to the encoded source limit; not representative of all JPEG content or metadata",
+        "all samples were rejected; this does not measure successful decode latency",
+        "the observed process peak exceeded the configured budget before capacity rejection"
+      ]
+    },
     "latestPackagedAsarCompressedIpcSmoke": {
       "status": "PASS",
       "artifact": "docs/evidence/T04/packaged-asar-worker-smoke.json",
