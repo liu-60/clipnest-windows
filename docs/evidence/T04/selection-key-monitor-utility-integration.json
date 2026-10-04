@@ -1,7 +1,10 @@
 {
   "schemaVersion": 1,
   "task": "T04",
-  "fixtures": ["T04-I08", "T04-I10"],
+  "fixtures": [
+    "T04-I08",
+    "T04-I10"
+  ],
   "status": "PASS_WITH_LIMITATIONS",
   "environment": {
     "os": "Windows",
@@ -14,7 +17,10 @@
     "probe": "tests/tasks/T04/run-image-selection-electron.cjs",
     "productionMonitor": "dist-electron/main/clipboard/selection-key-deadline.js",
     "productionOrchestration": "copySelectedItem and cancelNativePasteJob declarations extracted from src/main/main.ts",
-    "workingTreeWasDirty": true
+    "workingTreeWasDirty": true,
+    "commit": "5f44ab84ba55e6aca5cae6b376a9b31e60d9e771",
+    "productionMonitorSourceSha256": "14617c58607dd36ae025766af18b62e55d26e87397d7a26eb062742b80bfeeb9",
+    "probeSha256": "fab9b305e2e4f2cdd540ad40c58daae5d7f3239272c9c48259f40b10cddc8e23"
   },
   "command": "$env:ELECTRON_OVERRIDE_DIST_PATH=(Resolve-Path -LiteralPath 'node_modules/.pnpm/electron@40.10.2/node_modules/electron/dist').Path; node tests/tasks/T04/run-image-selection-electron.cjs",
   "result": "PASS_WITH_LIMITATIONS",
@@ -26,19 +32,25 @@
     "utilityProcessDecodeCount": 6,
     "productionMonitor": {
       "scheduler": "production default setTimeout on Electron main event loop",
-      "monotonicClock": "same node:perf_hooks performance.now source for VM and bridge ticks",
+      "monotonicClock": "production Win32HostBridge GetTickCount64 for helper deadline; node:perf_hooks performance.now for the monitor cutoff and sample ages",
       "cancellationPollReads": 2,
       "keyReadsAfterCancellationWait": 0,
-      "heldCutoffElapsedMs": 503.02,
-      "heldCutoffTimerLateAtMs": 3.05,
-      "heldCutoffLastPreCutoffSampleAgeMs": 12.97,
-      "heldCutoffLastPreCutoffSampleAgeTickMs": 13,
-      "heldCutoffDecision": { "kind": "blocked", "reasonCode": "key_state_unavailable" },
-      "releasedCutoffElapsedMs": 505.47,
-      "releasedCutoffTimerLateAtMs": 5.54,
-      "releasedCutoffLastPreCutoffSampleAgeMs": 11.03,
-      "releasedCutoffLastPreCutoffSampleAgeTickMs": 11,
-      "releasedCutoffDecision": { "kind": "blocked", "reasonCode": "key_state_unavailable" },
+      "heldCutoffElapsedMs": 501.48,
+      "heldCutoffTimerLateAtMs": 1.45,
+      "heldCutoffLastPreCutoffSampleAgeMs": 14.71,
+      "heldCutoffLastPreCutoffSampleAgeTickMs": 15,
+      "heldCutoffDecision": {
+        "kind": "blocked",
+        "reasonCode": "key_held"
+      },
+      "releasedCutoffElapsedMs": 513.89,
+      "releasedCutoffTimerLateAtMs": 13.89,
+      "releasedCutoffLastPreCutoffSampleAgeMs": 2.23,
+      "releasedCutoffLastPreCutoffSampleAgeTickMs": 0,
+      "releasedCutoffDecision": {
+        "kind": "blocked",
+        "reasonCode": "key_state_unavailable"
+      },
       "releasedCutoffContinued": false,
       "keyReadsAfterReleasedCompletionWait": 0
     },
@@ -57,7 +69,10 @@
         "real Electron utilityProcess decoded response, pending request abort, rejection, and process exit"
       ],
       "trigger": "Cancel the production paste job while its monitor has polled at least once and a decoded worker response is held before delivery.",
-      "monitorResult": { "kind": "blocked", "reasonCode": "selection_cancelled" },
+      "monitorResult": {
+        "kind": "blocked",
+        "reasonCode": "selection_cancelled"
+      },
       "workerRejection": "image_cancelled",
       "workerExitObserved": true,
       "monitorPollReadsBeforeCancel": 2,
@@ -69,12 +84,18 @@
       "status": "PASS_WITH_LIMITATIONS",
       "keyStateAdapter": "fake held",
       "scheduler": "production default setTimeout scheduler",
-      "cutoffElapsedMs": 503.02,
-      "timerLateAtMs": 3.05,
-      "lastPreCutoffSampleAgeMs": 12.97,
-      "lastPreCutoffSampleAgeTickMs": 13,
-      "monitorResult": { "kind": "blocked", "reasonCode": "key_state_unavailable" },
-      "selectionResult": { "status": "blocked", "reasonCode": "key_state_unavailable" },
+      "cutoffElapsedMs": 501.48,
+      "timerLateAtMs": 1.45,
+      "lastPreCutoffSampleAgeMs": 14.71,
+      "lastPreCutoffSampleAgeTickMs": 15,
+      "monitorResult": {
+        "kind": "blocked",
+        "reasonCode": "key_held"
+      },
+      "selectionResult": {
+        "status": "blocked",
+        "reasonCode": "key_state_unavailable"
+      },
       "workerRejection": "image_cancelled",
       "workerExitObserved": true,
       "helperRegistrationRequests": 0,
@@ -85,11 +106,14 @@
       "status": "NOT_CLOSED",
       "keyStateAdapter": "fake released",
       "scheduler": "production default setTimeout scheduler",
-      "cutoffElapsedMs": 505.47,
-      "timerLateAtMs": 5.54,
-      "lastPreCutoffSampleAgeMs": 11.03,
-      "lastPreCutoffSampleAgeTickMs": 11,
-      "monitorResult": { "kind": "blocked", "reasonCode": "key_state_unavailable" },
+      "cutoffElapsedMs": 513.89,
+      "timerLateAtMs": 13.89,
+      "lastPreCutoffSampleAgeMs": 2.23,
+      "lastPreCutoffSampleAgeTickMs": 0,
+      "monitorResult": {
+        "kind": "blocked",
+        "reasonCode": "key_state_unavailable"
+      },
       "selectionContinuedWhilePreparationPending": false,
       "selectionBudgetMsZeroSentToHelper": false,
       "workerAbortedAndExited": true,
@@ -102,7 +126,7 @@
     "real": [
       "Electron 40.10.2 browser/main process event loop",
       "the production default timer scheduler in startSelectionKeyReleaseMonitor",
-      "the shared node:perf_hooks performance.now monotonic clock for VM orchestration and bridge ticks",
+      "production Win32HostBridge GetTickCount64 for the helper deadline and node:perf_hooks performance.now for monitor cutoff/sample-age decisions",
       "production selection and cancellation orchestration extracted from src/main/main.ts",
       "real Electron utilityProcess image decode response and process exit"
     ],
@@ -118,8 +142,8 @@
     "sentPhysicalInput": false
   },
   "limitations": [
-    "In this Windows x64 run, the production default timer resumed 3.05ms and 5.54ms after its absolute deadline; the latest key samples were already 12.97ms and 11.03ms old. The monitor therefore returned key_state_unavailable for both fake held and fake released states under its 5ms timer-lateness and sample-freshness bound.",
-    "The real Electron run verifies fail-closed cancellation and timer cleanup but does not establish a real-time released cutoff continuing preparation or sending selectionBudgetMs=0. Exact-cutoff and 5ms jitter branches pass deterministic fake-clock fixtures; a delayed sample older than one poll interval or a timer more than one interval late fails closed.",
+    "In the latest Windows x64 run, the held callback resumed 1.45ms after cutoff and the current key sample remained held, so the monitor blocked with key_held. The released callback resumed 13.89ms late, exceeding the 5ms bound, and failed closed as key_state_unavailable despite a 2.23ms pre-cutoff sample.",
+    "The real Electron run verifies cancellation and timer cleanup but did not observe released-cutoff continuation or selectionBudgetMs=0. A first invocation timed out waiting 5 seconds for the real utilityProcess cancellation response; the immediate rerun passed. Exact-cutoff and jitter boundaries remain covered by deterministic fakes only.",
     "An independent review found that a released sample up to 5ms before cutoff cannot prove there was no key re-press after that sample and before cutoff. If preparation finishes after a later release, the current key check and helper zero-budget check may observe released state and continue. The polling-only implementation therefore does not prove exact held-at-cutoff semantics; this is a P1 acceptance gap.",
     "No real key state, BrowserWindow, native helper, OS clipboard, panel side effect, physical input, or target-visible paste was exercised.",
     "The existing 8000ms image-preparation deadline scenario uses a pending monitor stub so its timer does not supersede that separate worker-timeout case."
@@ -129,5 +153,9 @@
     "scope": "Read-only review of selection-key cutoff, sample freshness, jitter and cutoff-to-helper behavior.",
     "finding": "A fresh released pre-cutoff sample does not rule out a re-press held at cutoff. The current level-state polling API has no key transition timestamp to reconstruct that event.",
     "effect": "Keep exact held-at-cutoff acceptance open; this probe and its fakes do not close the gap."
-  }
+  },
+  "limitationNotes": [
+    "GetTickCount64 on this host advances in roughly 15–16ms steps; monitor freshness and cutoff comparisons therefore use the high-resolution performance.now clock that created selectionDeadlineAt. The native tick remains the helper deadline clock.",
+    "A released sample before cutoff cannot rule out a key re-press after that sample or transitions wholly between level polls. P1 exact held-at-cutoff remains open."
+  ]
 }

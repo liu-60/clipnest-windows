@@ -163,7 +163,27 @@
     {
       "command": "ELECTRON_OVERRIDE_DIST_PATH=<Electron 40.10.2 dist>; node tests/tasks/T04/run-image-selection-electron.cjs (production 3000ms selection timeout)",
       "status": "PASS_WITH_LIMITATIONS",
-      "result": "On the current monitor source, a warm real utilityProcess emitted a decoded response 1.62ms after the selection-start anchor; the harness held delivery through the production 3000ms deadline. Selection settled image_prepare_timeout at 3013.93ms, the request aborted at 3003.23ms and the real utilityProcess exited at 3015.59ms. No helper registration, clipboard commit, paste, fallback, or panel hide was added; existing image content/preview and the one preexisting 8-byte cache entry remained unchanged. The timeout scenario used a pending fake monitor to isolate preparation timing; separate production-timer held/released probes both failed closed and do not close I10. See docs/evidence/T04/image-selection-production-3000ms-timeout.json."
+      "result": "Historical run superseded by the current high-resolution-clock rerun recorded in image-selection-production-3000ms-timeout.json. Earlier source metrics were 3013.93ms settle / 3003.23ms abort / 3015.59ms exit; current measurements are in the later check below."
+    },
+    {
+      "command": "pnpm test:unit (after T04 cutoff, duplicate-sequence and 3000ms probe changes)",
+      "status": "PASS",
+      "result": "The latest main TypeScript build passed and all 160 unit tests passed, 0 failed. This includes the current 15 selection-key deadline tests and 8 clipboard-sequence tests. The suite uses fakes/VMs except for test-local decoder cases and does not operate the user’s OS clipboard, physical input, or desktop window."
+    },
+    {
+      "command": "pnpm lint",
+      "status": "PASS",
+      "result": "tsc --noEmit -p tsconfig.main.json and tsc --noEmit -p tsconfig.renderer.json both passed on the current working tree."
+    },
+    {
+      "command": "ELECTRON_OVERRIDE_DIST_PATH=<Electron 40.10.2 dist>; node tests/tasks/T04/run-image-selection-electron.cjs (current high-resolution selection clock; retry after startup timeout)",
+      "status": "PASS_WITH_LIMITATIONS",
+      "result": "The first invocation timed out waiting 5 seconds for the real utilityProcess cancellation response; an immediate rerun passed. The passing run used production Win32HostBridge GetTickCount64 for the helper deadline and performance.now for monitor cutoff/sample age. The 3000ms selection settled at 3017.76ms; worker abort was 3007.15ms and process exit 3018.37ms. The held 500ms case blocked as key_held (timer 1.45ms late); the released case failed closed as key_state_unavailable (timer 13.89ms late). No BrowserWindow, OS clipboard, or physical input was used. Exact held-at-cutoff and released continuation remain unverified."
+    },
+    {
+      "command": "node --check tests/tasks/T04/run-image-selection-electron.cjs",
+      "status": "PASS",
+      "result": "The current Electron probe parses successfully; it then ran in the real Electron 40.10.2 browser process with fake clipboard/helper/panel/input boundaries."
     }
   ],
   "implementedAndCovered": [
@@ -285,7 +305,7 @@
     "P15 remains open: src/main/native/content-provider.ts repeats Base64 decode/hash and main-thread pixel conversion. User chose not to add this file to current T04 scope.",
     "PureJsImage 0.17.0 candidate feasibility spike: one fresh utilityProcess sample decoded each synthetic 16 MP baseline 4:2:0 and 4:4:4 JPEG near the 20 MiB source limit and materialized full RGBA below the observed 256 MiB target. Decoder AbortSignal was ineffective; repeated distributions, output IPC, ASAR, and independent pixel oracle remain open. The exact registry tarball integrity and archive inventory are now recorded in docs/evidence/T04/purejsimage-dependency-subcard.json; the HEVC/H.265 distribution decision and complete notice/legal review remain open. Candidate is not installed or approved. This does not close the general image-memory or T04 gate.",
     "Independent final static review passed with limitations; it does not close P15, actual keyboard timing, full Electron/helper clipboard/paste acceptance or full T04 acceptance. The latest compressed IPC code passed an isolated ASAR worker smoke, which is not installation or end-user UI acceptance.",
-    "The latest production real-timer probe exercises the added cutoff callback sample: held and released fake-key scenarios both fail closed because the held callback was 13.84ms late and the released case's last pre-cutoff sample was 17.29ms old. This update can block a re-press still held at callback time, but cannot see a re-press released before the callback or transitions between samples. Real released-cutoff continuation and helper zero-budget behavior remain NOT_CLOSED; exact held-at-cutoff remains P1_OPEN.",
+    "The latest production real-timer probe uses performance.now for the selection cutoff and sample age. The held fake-key case resumed 1.45ms late and blocked as key_held; the released case resumed 13.89ms late and failed closed as key_state_unavailable. A released sample still cannot rule out a re-press after the sample or transitions between polls, so real released-cutoff continuation/helper zero-budget behavior remain NOT_CLOSED and exact held-at-cutoff remains P1_OPEN.",
     "Production duplicate-sequence polling is now covered by a VM regression extracted from main.ts; after the first synthetic image is captured, a repeated DWORD sequence causes no additional format/image read, dimension read, PNG/JPEG encode, Base64 conversion, SHA-256, or history update. This fake does not access the OS clipboard."
   ],
   "artifacts": [

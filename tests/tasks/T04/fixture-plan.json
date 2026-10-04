@@ -202,6 +202,10 @@
         "the selected item and scrolled item agree",
         "one user action creates at most one job",
         "the input caret retains ordinary arrow-key behavior"
+      ],
+      "evidence": [
+        "tests/tasks/T04/keyboard-renderer.test.cjs: search Down selects and scrolls the intended result, Enter executes that result once, and ArrowLeft retains native caret behavior in the renderer harness",
+        "The renderer harness does not exercise a live Electron window or physical keyboard input."
       ]
     },
     {
@@ -215,6 +219,10 @@
         "IME Escape cancels composition without creating a paste job or hiding the panel",
         "composition Enter creates no paste job and does not close the panel",
         "a later non-composing Enter creates exactly one job"
+      ],
+      "evidence": [
+        "tests/tasks/T04/keyboard-renderer.test.cjs: IME composition, repeat Enter, and busy-state fixture verifies no job or hide during composition and one active copy after composition",
+        "This is a renderer harness; it does not emulate a real Windows IME or live Electron window."
       ]
     },
     {
@@ -230,6 +238,10 @@
         "a single click preserves the existing select-and-execute behavior",
         "the dblclick handler adds no extra execution",
         "event.repeat and busy state do not create overlapping duplicate jobs"
+      ],
+      "evidence": [
+        "tests/tasks/T04/keyboard-renderer.test.cjs: a card has no onDoubleClick handler, a second click is blocked while busy, and repeat/busy Enter cannot create another active job",
+        "The test uses a renderer harness and fake copy acknowledgements; it does not verify target-visible clipboard/paste effects."
       ]
     },
     {
@@ -242,6 +254,10 @@
       "action": "Run clipboard capture for the unchanged sequence.",
       "assert": [
         "content read/decode/PNG/Base64/hash counts remain zero after sequence comparison"
+      ],
+      "evidence": [
+        "tests/tasks/T04/clipboard-sequence-gate.test.cjs: production pollClipboard VM harness captures the first synthetic image then verifies a duplicate sequence adds no format/image reads, size reads, encoding, Base64, SHA-256, or history update",
+        "The clipboard and image are fakes; no real Electron clipboard read or decoder call occurs."
       ]
     },
     {
@@ -255,6 +271,10 @@
       "assert": [
         "the sequence is captured once",
         "duplicate notifications and selecting the stored image do not repeat PNG/Base64/hash work"
+      ],
+      "evidence": [
+        "tests/tasks/T04/clipboard-sequence-gate.test.cjs: stable sequence capture and duplicate notification tests cover the production polling path and count image work",
+        "Selecting an already-stored image still passes through src/main/native/content-provider.ts, which repeats Base64 decoding/hash; the user chose to defer that file, so the stored-image P15 requirement remains open."
       ]
     },
     {
@@ -309,7 +329,8 @@
       ],
       "evidence": [
         "tests/tasks/T04/clipboard-image-preparation.test.cjs: fake deadline abort and retirement semantics",
-        "docs/evidence/T04/image-selection-worker-cancel-timeout.json: complementary real utilityProcess process-exit evidence through production selection, using an 8000ms test-only deadline and post-decode response gate"
+        "docs/evidence/T04/image-selection-production-3000ms-timeout.json: production 3000ms selection-start deadline with a warm real utilityProcess, held decoded response, abort, process exit, no helper registration or external side effects",
+        "The real-process probe gates the response after decode completed, so it verifies deadline cancellation/retirement but not interruption of decoder CPU work."
       ]
     },
     {
@@ -327,6 +348,11 @@
         "held-at-cutoff cases produce zero clipboard writes, input submissions, and panel hides",
         "release observed before the cutoff permits preparation to finish after 500ms but before 3000ms and continue immediately after a current key-state recheck",
         "when preparation finishes after the released cutoff, main omits the expired helper deadline; a commit that starts before cutoff still carries the original absolute deadline"
+      ],
+      "evidence": [
+        "tests/tasks/T04/selection-key-deadline.test.cjs: deterministic fake-clock coverage for held, re-pressed, released, late, stale, and cancellation paths",
+        "docs/evidence/T04/image-selection-production-3000ms-timeout.json: current production-timer scenarios both fail closed under stale sampling; exact cutoff continuation remains unverified",
+        "A re-press released before the delayed callback or any transition between level samples can still be missed; exact held-at-cutoff remains P1_OPEN without event-timestamp evidence."
       ]
     },
     {
@@ -340,6 +366,10 @@
       "assert": [
         "each request waiting for retirement returns image_prepare_timeout by its own deadline",
         "retirement remains latched and no replacement worker is created"
+      ],
+      "evidence": [
+        "tests/tasks/T04/clipboard-image-preparation.test.cjs: deadline-bounded never-resolving worker retirement prevents a replacement process",
+        "The fixture injects a fake worker disposal promise and does not measure a real process in this specific case."
       ]
     },
     {
@@ -373,6 +403,10 @@
       "assert": [
         "empty query does not scan item bodies",
         "the initial visible list remains correct"
+      ],
+      "evidence": [
+        "tests/tasks/T04/keyboard-renderer.test.cjs: empty-query fixture verifies no body reads and that visible ordering still uses image preview",
+        "The harness does not measure live-window rendering latency."
       ]
     },
     {
@@ -443,6 +477,11 @@
         "released keys permit clipboard commit, while a re-pressed key blocks input submission",
         "a key held at check-only commit blocks clipboard commit",
         "this isolated fake does not establish physical keyboard timing or the OS-level race after the final key sample"
+      ],
+      "evidence": [
+        "tests/tasks/T04/selection-key-deadline.test.cjs: zero selection budget is classified as expired and does not add a fresh monitor window",
+        "native/tests/control.rs and native/tests/protocol.rs: isolated Rust fake-platform contract for check-only key sampling and clipboard/input gates; pnpm test:native result is recorded in docs/evidence/T04/verification.json",
+        "No physical keyboard, system clipboard, or SendInput operation is used by these tests."
       ]
     },
     {

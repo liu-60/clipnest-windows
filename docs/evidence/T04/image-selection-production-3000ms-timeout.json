@@ -11,11 +11,11 @@
     "electron": "40.10.2"
   },
   "source": {
-    "commit": "2b231e62347093c201451964e21b210f1cf44be6",
+    "commit": "5f44ab84ba55e6aca5cae6b376a9b31e60d9e771",
     "branch": "codex/m0-latency",
     "workingTreeWasDirty": true,
-    "probeSha256": "1c19c6ec9620dd884f617db82089729745caf9bb43be0facccb194f33850d11c1",
-    "selectionMonitorSourceSha256": "7690d171581efde6641da0d7ed162b12d068b59e9180b234356534dea83a8d9e",
+    "probeSha256": "fab9b305e2e4f2cdd540ad40c58daae5d7f3239272c9c48259f40b10cddc8e23",
+    "selectionMonitorSourceSha256": "14617c58607dd36ae025766af18b62e55d26e87397d7a26eb062742b80bfeeb9",
     "productionPreparationDeadlineSourceChanged": false,
     "selectionMonitorSourceChangedBeforeProbe": true
   },
@@ -27,7 +27,7 @@
     },
     "selectionKeyDeadlineUnitTests": {
       "status": "PASS",
-      "passed": 14,
+      "passed": 15,
       "failed": 0,
       "command": "pnpm test:unit -- selection-key-deadline.test.cjs"
     },
@@ -60,17 +60,20 @@
       "realWorkerResponse": {
         "type": "decoded",
         "emittedBeforeAbsoluteDeadline": true,
-        "elapsedFromSelectionStartMs": 1.62,
+        "elapsedFromSelectionStartMs": 1.51,
         "harnessGateReleasedAfterTimeout": false,
-        "heldDurationMs": 3012.31
+        "heldDurationMs": 3016.26
       },
       "selection": {
-        "result": { "status": "blocked", "reasonCode": "image_prepare_timeout" },
-        "elapsedFromSelectionStartMs": 3013.93,
+        "result": {
+          "status": "blocked",
+          "reasonCode": "image_prepare_timeout"
+        },
+        "elapsedFromSelectionStartMs": 3017.76,
         "workerDecodeRejection": "image_prepare_timeout",
-        "workerAbortElapsedFromSelectionStartMs": 3003.23,
+        "workerAbortElapsedFromSelectionStartMs": 3007.15,
         "realUtilityProcessExitObserved": true,
-        "workerExitElapsedFromSelectionStartMs": 3015.59
+        "workerExitElapsedFromSelectionStartMs": 3018.37
       },
       "sideEffects": {
         "helperRequestsAdded": 0,
@@ -81,20 +84,31 @@
         "retainedOriginalAndPreviewUnchanged": true,
         "decodedCacheEntriesAfterScenario": 1
       },
-      "monitorIsolation": "The deadline scenario uses a test-only pending selection monitor so the independent 500ms cutoff cannot cancel it first."
+      "monitorIsolation": "The deadline scenario uses a test-only pending selection monitor so the independent 500ms cutoff cannot cancel it first.",
+      "workerFactoryCountAtTimeout": 1,
+      "workerInstance": 1,
+      "realUtilityProcessPid": 66520
     },
     "realSelectionKeyMonitorScenarios": {
       "heldCutoff": {
-        "status": "FAIL_CLOSED",
-        "timerLateMs": 13.84,
-        "lastPreCutoffSampleAgeMs": 1.8,
-        "decision": { "kind": "blocked", "reasonCode": "key_state_unavailable" }
+        "status": "BLOCKED_HELD",
+        "elapsedMs": 501.48,
+        "timerLateMs": 1.45,
+        "lastPreCutoffSampleAgeMs": 14.71,
+        "decision": {
+          "kind": "blocked",
+          "reasonCode": "key_held"
+        }
       },
       "releasedCutoff": {
         "status": "FAIL_CLOSED",
-        "timerLateMs": 0.03,
-        "lastPreCutoffSampleAgeMs": 17.29,
-        "decision": { "kind": "blocked", "reasonCode": "key_state_unavailable" },
+        "elapsedMs": 513.89,
+        "timerLateMs": 13.89,
+        "lastPreCutoffSampleAgeMs": 2.23,
+        "decision": {
+          "kind": "blocked",
+          "reasonCode": "key_state_unavailable"
+        },
         "continued": false
       }
     },
@@ -115,12 +129,31 @@
       "browserWindowCreated": false,
       "systemClipboardReadOrWritten": false,
       "physicalInputSent": false
-    }
+    },
+    "clockResolutionDiagnostic": {
+      "source": "production Win32HostBridge GetTickCount64",
+      "samples": 40,
+      "positiveStepRangeMs": "15–16",
+      "impact": "The selection monitor now compares cutoff and sample age on its high-resolution performance.now clock; native ticks remain the helper absolute-deadline clock."
+    },
+    "retryHistory": [
+      {
+        "attempt": 1,
+        "status": "FAIL",
+        "detail": "The real utilityProcess cancellation response was not observed within the harness 5-second wait."
+      },
+      {
+        "attempt": 2,
+        "status": "PASS_WITH_LIMITATIONS",
+        "detail": "Immediate rerun completed all scenarios; output is recorded in this evidence artifact."
+      }
+    ]
   },
   "limitations": [
     "The timeout case proves service abort and real utilityProcess retirement after a successful decoded message was intercepted; it does not interrupt decoder CPU work because decoding and message emission already completed.",
-    "The isolated timeout case uses a pending fake selection monitor. Separate production-scheduler monitor probes use a fake key-state source and fail closed here: the held callback was 13.84ms late, and the released case's last pre-cutoff sample was 17.29ms old.",
+    "An earlier production-timer run had a held callback 13.84ms late and a released sample 17.29ms old; those historical measurements are superseded by the current run recorded in realSelectionKeyMonitorScenarios. The latest held case blocks as key_held and the released case fails closed as key_state_unavailable. Neither observes released-cutoff continuation.",
     "The cutoff callback now samples once and can block when it still observes a held key. A 499ms re-press followed by release before a delayed 501ms callback, and brief transitions between samples, may still escape observation; P1/I10 remains open.",
-    "No BrowserWindow, OS clipboard, physical keyboard/input, actual panel side effect, helper process, or target-visible paste was used."
+    "No BrowserWindow, OS clipboard, physical keyboard/input, actual panel side effect, helper process, or target-visible paste was used.",
+    "The first current-tree probe invocation timed out waiting for the real utilityProcess cancellation response; an immediate second invocation passed. Preserve this retry variance when interpreting the integration evidence."
   ]
 }
