@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "recordType": "pinned_jpeg_decoder_memory_route_review",
+  "checkedDate": "2026-10-05",
+  "source": {
+    "commit": "e646f93c3009d69aef358b932e3af8a0a03eba3e",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true
+  },
+  "result": "NO_SAFE_LOW_CHANGE_PATH_UNDER_CURRENT_DEPENDENCY",
+  "scope": {
+    "decoder": "jpeg-js 0.4.4 as pinned in the current lockfile",
+    "target": "Decode supported 16 MP JPEG to full-resolution width*height*4 RGBA within the 256 MiB utility-process PeakWorkingSet64 target.",
+    "allowedChangesReviewed": [
+      "src/main/clipboard/image-decoder.ts",
+      "src/main/clipboard/image-worker.ts",
+      "tests/tasks/T04/**",
+      "docs/evidence/T04/**"
+    ],
+    "packageInstalledOrChanged": false,
+    "productionFilesChangedByThisReview": false,
+    "desktopClipboardOrInputUsed": false
+  },
+  "findings": [
+    {
+      "finding": "The pinned jpeg-js decoder copies the encoded input, creates an Int32Array(64) for every coefficient block, retains full-image component scanlines, materializes an RGB intermediate, and then allocates the final image output. formatAsRGBA=false still leaves the caller responsible for constructing full RGBA; useTArray only selects the typed-array container.",
+      "source": "node_modules/.pnpm/jpeg-js@0.4.4/node_modules/jpeg-js/lib/decoder.js"
+    },
+    {
+      "finding": "The current production preflight estimates coefficient blocks, component lines, RGB/RGBA output, encoded-input copies, JPEG tables and process reserve before entering jpeg-js. Lowering its estimate would admit more decodes without reducing decoder allocations.",
+      "source": "src/main/clipboard/image-decoder.ts"
+    },
+    {
+      "finding": "The 16 MP, 20 MiB synthetic JPEG runs after preflight were capacity-rejected before full decode: five 4:4:4 samples peaked at 101.55 MiB and five 4:2:0 samples peaked at 101.30 MiB. Those rejection measurements do not establish successful 16 MP JPEG support.",
+      "sources": [
+        "docs/evidence/T04/image-worker-16000000-pixel-jpeg-20mib-fresh-worker-5-sample-measurement.json",
+        "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-5-sample-measurement.json"
+      ]
+    },
+    {
+      "finding": "Earlier one-sample preflight-disabled measurements peaked at 246.86 MiB for a 4 MP 4:4:4 JPEG and 242.73 MiB for a 6 MP 4:2:0 JPEG. These near-budget single samples do not justify weakening the guard or prove a hard limit.",
+      "sources": [
+        "docs/evidence/T04/image-worker-4000000-pixel-jpeg-jpeg-js-20mib-fresh-worker-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-6000000-pixel-jpeg-native-image-20mib-fresh-worker-1-sample-before-preflight.json"
+      ]
+    }
+  ],
+  "recommendation": "Keep the current preflight. A materially lower peak while returning complete 16 MP RGBA requires a substantial streaming/reworked decoder or a separately approved decoder route; do not infer acceptance from capacity-rejected samples. Any selected route still needs repeated fresh-worker Windows measurements, independent pixel comparisons, supported JPEG sampling/progression and metadata fixtures, cancellation/failure coverage, and packaged-worker verification.",
+  "notVerified": [
+    "Successful full-resolution 16 MP JPEG decode within the 256 MiB process target.",
+    "A universal memory ceiling across JPEG inputs, progressive JPEG, metadata, and packaged full-app execution.",
+    "Approval or installation of an alternative decoder, including its complete distribution/license review.",
+    "T04 acceptance, which remains in_progress."
+  ]
+}
