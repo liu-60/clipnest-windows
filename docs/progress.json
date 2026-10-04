@@ -83,13 +83,15 @@
         "docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json",
         "tests/tasks/T04/measure-image-worker-16mp.cjs",
         "docs/evidence/T04/image-worker-16mp-fresh-worker-5-sample-measurement.json",
-        "docs/evidence/T04/image-worker-16mp-compressed-large-buffer-regression.json"
+        "docs/evidence/T04/image-worker-16mp-compressed-large-buffer-regression.json",
+        "docs/evidence/T04/packaged-asar-worker-smoke.json",
+        "tests/tasks/T04/packaged-asar-worker-smoke.cjs"
       ],
       "openGates": [
         "五个 fresh utilityProcess 的合成16MP RGBA PNG诊断测量：request→压缩传输→异步还原RGBA p50 524.91ms、p95/max 547.68ms，PeakWorkingSet64最高169066496B（161.23MiB），低于256MiB预算；每进程OS峰值、100ms private采样与Node 24.15/Electron 40.10.2环境见 image-worker-16mp-fresh-worker-5-sample-measurement.json。此结果只覆盖一种6.77MB合成PNG和5次样本，不证明所有PNG/JPEG、接近20MiB输入或打包运行的硬上限。",
         "新加9MP真实Electron utilityProcess压缩响应/异步inflate回归已通过；完整Electron窗口图片剪贴板/面板整链、系统剪贴板与物理输入、U01目标可见输入仍未验收。真实主线程toPNG/toJPEG、Base64/hash、RGBA→BGRA/DIB与deadline stall及 T05 100样本控制基准未测。",
         "P15 选图仍在 src/main/native/content-provider.ts 重复 Base64 解码/SHA-256并执行主线程DIB转换；该文件不在 T04 allowlist，用户选择暂不扩围，此门保持未关闭。",
-        "pnpm test:unit 最新为114/114通过；之前v3包/安装82文件hash与ASAR探针通过，但本轮 image-worker 压缩IPC变更未重新打包/安装验证。真实Electron worker PNG/JPEG/9MP压缩响应/CRC/取消/退出通过；图像色彩/EXIF/ICC与JPEG质量仍未覆盖。",
+        "pnpm test:unit 最新为114/114通过；本次最新压缩IPC代码已在独立 Windows x64 目录包 ASAR 中通过真实 utilityProcess smoke（decoded_compressed、3000×3000 RGBA逐字节一致），见 docs/evidence/T04/packaged-asar-worker-smoke.json。该检查未安装应用，也未覆盖完整窗口/剪贴板/面板/输入整链；图像色彩/EXIF/ICC与JPEG质量仍未覆盖。",
         "本次selection准备竞速补丁的定向验证已通过：pnpm build:main / TypeScript 编译成功，20/20 fake tests 通过（图像准备11、selection截止9）；pnpm test:native 的56项 Rust 单元/隔离fake集成测试也通过。新增 0ms helper check-only：截止后即时检查按键，不重开500ms窗口，并在剪贴板/输入门前复核；native/tests/control.rs 和 protocol.rs 覆盖此契约。独立静态复核确认实现与证据一致，同时指出采样与 EmptyClipboard/SendInput 非原子，按键在最后采样后到 OS 调用前转换的竞态仍未排除。真实 Electron/utilityProcess/helper 取消竞速、物理按键、系统剪贴板/输入或面板行为仍未运行。静态路径显示预注册取消不重启 helper；已登记取消未确认时锁存 clipboard fence 并保留 job，直至 helper 退出确认。"
       ]
     },
@@ -105,7 +107,7 @@
         "docs/evidence/T05/current-static-audit.json"
       ],
       "openGates": [
-        "T05任务状态保持not_started；用户已授权的v3本地检查点打包、ASAR/模块probe及安装文件一致性检查已通过，不等于T04 accepted或P01-P28发布门验收。T04已有单个合成16MP PNG的5样本诊断，但全内容内存/性能、最新压缩IPC代码打包与最终卡片UI点击仍未验收。",
+        "T05任务状态保持not_started；用户已授权的v3本地检查点打包、ASAR/模块probe及安装文件一致性检查已通过，不等于T04 accepted或P01-P28发布门验收。T04已有单个合成16MP PNG的5样本诊断和最新代码的隔离ASAR worker smoke，但全内容内存/性能、完整安装包接受及最终卡片UI点击仍未验收。",
         "当前本地检查点已通过3项真实clipboard序列回归和1项自建EDIT原caret真实SendInput/合成文字可见性集成；不等于T05受控独立目标整链输入验收。最终卡片点击、图像外部粘贴及wake-to-actionable 100样本基准仍NOT_RUN，T05执行需隔离桌面。",
         "fixture已增加G0交互路径无阻塞spawnSync、无每次交互新建helper的观察门；两项均planned/NOT_RUN，需用进程调用追踪与helper身份实证。",
         "report.schema.json现要求PASS提供非空commit、Windows x64与完整性能控制变量，并要求两个指标为controlled_live、至少100个成功样本和证据引用；requestId唯一性、原始样本与计数/分位数一致性仍须人工重算，所有指标目前NOT_RUN。",

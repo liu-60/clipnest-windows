@@ -109,6 +109,11 @@
       "command": "node tests/tasks/T04/measure-image-worker-16mp.cjs (5 fresh utility processes; 100 ms Windows sampler)",
       "status": "MEASURED_WITH_LIMITATIONS",
       "result": "Five synthetic 4000×4000 PNG decodes: request-to-decompressed-RGBA p50 524.91 ms, p95/max 547.68 ms; process startup p95 110.48 ms; maximum process PeakWorkingSet64 169066496 bytes (161.23 MiB) versus 256 MiB budget; sampled private peak 119549952 bytes (114.01 MiB). This is diagnostic for one generated PNG only, not a hard cap across all supported images or end-user paste latency."
+    },
+    {
+      "command": "pnpm build; pnpm exec electron-builder --win dir --x64 --publish never --config release/windows-flat-20261005/electron-builder.local.cjs; isolated Electron ASAR worker probe",
+      "status": "PASS",
+      "result": "Built package 1.1.4-local.20261005.1 into a new Windows x64 directory under release/windows-flat-20261005. The ASAR-loaded production utilityProcess emitted decoded_compressed for a synthetic 3000x3000 PNG and returned all 36000000 RGBA bytes exactly in 413.15 ms. No install, system clipboard, or input was used. See docs/evidence/T04/packaged-asar-worker-smoke.json."
     }
   ],
   "implementedAndCovered": [
@@ -122,14 +127,15 @@
     "Production utility-process PNG/JPEG decoding is implemented with pinned pngjs 7.0.0/jpeg-js 0.4.4 and tested with real Electron cancellation/exit. The v2 ASAR decoder probe independently confirms packaged worker and decoder resolution; performance and final desktop acceptance remain open.",
     "Images larger than the 32 MiB decoded cache retire their utility worker; the next preparation waits for worker disposal before creating a replacement, covered by a worker-factory regression.",
     "Uncached decoded responses above 32 MiB use bounded-chunk lossless deflate IPC; the main process restores exact RGBA into a preallocated dimension-derived buffer with 1 MiB inflate chunks. Cancellation destroys the active inflater, and protocol fixtures reject excess decompression, mismatched dimensions, and short/long pixel responses.",
-    "Fresh utility-process 16 MP synthetic PNG diagnostic: five samples stayed below 256 MiB PeakWorkingSet64 with maximum 161.23 MiB and decoder/transport/restore p95 547.68 ms; the full OS peak metric and sampled private bytes are recorded per process."
+    "Fresh utility-process 16 MP synthetic PNG diagnostic: five samples stayed below 256 MiB PeakWorkingSet64 with maximum 161.23 MiB and decoder/transport/restore p95 547.68 ms; the full OS peak metric and sampled private bytes are recorded per process.",
+    "Latest compressed image-worker code also passes an isolated Windows x64 directory-package ASAR smoke: the ASAR-loaded worker emits decoded_compressed and the main process restores the complete 3000x3000 RGBA buffer byte-for-byte. This does not verify installation or UI/clipboard/input behavior."
   ],
   "notVerified": [
     "Complete large-image, progressive JPEG, EXIF/orientation/ICC/color and exact-source fidelity acceptance remains incomplete; the installed production PNG/JPEG path has real utility-process and v2 ASAR smoke evidence.",
-    "A five-sample Windows x64 16 MP synthetic RGBA PNG diagnostic using fresh workers and compressed IPC recorded maximum PeakWorkingSet64 161.23 MiB and p95 547.68 ms; it does not prove a hard 256 MiB ceiling for other PNG/JPEG content, inputs near 20 MiB, or every runtime condition. Larger-content, JPEG, package and end-user paste behavior remain unmeasured.",
+    "A five-sample Windows x64 16 MP synthetic RGBA PNG diagnostic using fresh workers and compressed IPC recorded maximum PeakWorkingSet64 161.23 MiB and p95 547.68 ms; it does not prove a hard 256 MiB ceiling for other PNG/JPEG content, inputs near 20 MiB, or every runtime condition. Larger-content, JPEG, full-app packaged behavior and end-user paste remain unmeasured.",
     "P15 image selection still repeats Base64 decoding and hashing in src/main/native/content-provider.ts. The file is outside the T04 allowlist; the user chose not to expand the current scope, so this P15 gate remains open.",
     "Main-process clipboard image toPNG/toJPEG, Base64/hash work and RGBA-to-BGRA/DIB pixel-loop responsiveness were not measured. Fake scheduling does not reproduce these synchronous operations stalling the main event loop across the 500ms key deadline; real deadline timing under that load remains NOT_RUN. Actual Electron window integration was not run; virtual-list scroll and panel presentation fixtures use simulated state/recording fakes.",
-    "The new compressed-response protocol was validated with a real Electron utilityProcess using a 9 MP synthetic PNG and with a five-sample 16 MP synthetic PNG measurement. Full packaged execution of this latest code, actual Electron window/clipboard/panel integration, final-helper target-visible paste and T05 100-run controlled benchmark remain unfinished.",
+    "The new compressed-response protocol was validated with a real Electron utilityProcess, a five-sample 16 MP synthetic PNG measurement, and an isolated Windows x64 directory package ASAR smoke of the latest code. Actual Electron window/clipboard/panel integration, final-helper target-visible paste and T05 100-run controlled benchmark remain unfinished.",
     "The 3000ms deadline, deadline-bounded retirement and selection-start key monitor have fake coverage, and real utility-process cancellation/exit has passed. Full deadline behavior under actual main-process encoding/clipboard load and complete clipboard/panel effects remain unverified.",
     "When preparation completes after a released 500ms cutoff, main sends selectionBudgetMs=0. The helper accepts zero as check-only, samples keys immediately, checks again before clipboard commit, and performs no fresh wait; Rust fake tests cover the contract. The physical-keyboard timing and full Electron/helper route remain NOT_RUN, and no fake rules out a key transition after the final state sample but before an OS operation.",
     "Static main-process review shows pre-registration cutoff cancellation aborts preparation and never restarts the helper; registered cancellation failure latches the clipboard fence and retains the job unless helper exit is confirmed. The integrated cutoff-to-utility-worker/helper cancellation path is NOT_RUN; a kill-requested utility process or unconfirmed helper may still be exiting after the selection returns, while the worker retirement latch or helper job/fence prevents reuse and side effects.",
@@ -221,7 +227,7 @@
     "Validate the 3000 ms preparation and 500 ms key deadlines under actual main-process image conversion/clipboard load; the fake scheduler and worker smokes do not reproduce synchronous toPNG/toJPEG/Base64/hash/RGBA-to-BGRA/DIB load.",
     "The helper zero-budget check-only path has 56 Rust fake tests and no new 500 ms wait. Physical-key timing, final-sample-to-EmptyClipboard/SendInput races, and the complete Electron/helper clipboard/paste path remain NOT_RUN.",
     "P15 remains open: src/main/native/content-provider.ts repeats Base64 decode/hash and main-thread pixel conversion. User chose not to add this file to current T04 scope.",
-    "Independent final static review passed with limitations; it does not close P15, actual keyboard timing, full Electron/helper clipboard/paste acceptance, packaged verification of the latest compressed IPC changes, or full T04 acceptance."
+    "Independent final static review passed with limitations; it does not close P15, actual keyboard timing, full Electron/helper clipboard/paste acceptance or full T04 acceptance. The latest compressed IPC code passed an isolated ASAR worker smoke, which is not installation or end-user UI acceptance."
   ],
   "artifacts": [
     "tests/tasks/T04/fixture-plan.json",
@@ -246,6 +252,8 @@
     "src/main/clipboard/image-worker.ts",
     "src/main/clipboard/image-preparation.ts",
     "tests/tasks/T04/measure-image-worker-16mp.cjs",
-    "docs/evidence/T04/image-worker-16mp-fresh-worker-5-sample-measurement.json"
+    "docs/evidence/T04/image-worker-16mp-fresh-worker-5-sample-measurement.json",
+    "docs/evidence/T04/packaged-asar-worker-smoke.json",
+    "tests/tasks/T04/packaged-asar-worker-smoke.cjs"
   ]
 }

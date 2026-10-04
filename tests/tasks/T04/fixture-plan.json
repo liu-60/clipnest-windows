@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "task": "T04",
   "status": "partial_execution",
-  "executionStatus": "PARTIAL_WITH_REAL_DECODER_AND_ASAR_SMOKES",
+  "executionStatus": "PARTIAL_WITH_REAL_DECODER_AND_LATEST_PACKAGED_ASAR_SMOKE",
   "executionSummary": {
     "moduleLevelFakeFixtures": {
       "status": "PASS",
@@ -63,6 +63,18 @@
         "does not establish a hard process-memory ceiling across JPEG, other PNGs, 20 MiB sources or packaged full-app use",
         "not end-user paste latency"
       ]
+    },
+    "latestPackagedAsarCompressedIpcSmoke": {
+      "status": "PASS",
+      "artifact": "docs/evidence/T04/packaged-asar-worker-smoke.json",
+      "probe": "tests/tasks/T04/packaged-asar-worker-smoke.cjs",
+      "packageVersion": "1.1.4-local.20261005.1",
+      "asarSha256": "EA79F1F6AE86FCAFE0EE1FE235C5A475A8F6B7754524BCB42D047B4651F63633",
+      "dimensions": "3000x3000",
+      "decodedBytes": 36000000,
+      "observedResponse": "decoded_compressed",
+      "allPixelsExact": true,
+      "installed": false
     }
   },
   "sourceOfExpectedBehavior": "<spec-workspace>/docs/spec/tasks/T04.md; <spec-workspace>/docs/spec/01-product-and-ux.md §2; <spec-workspace>/docs/spec/04-desktop-performance.md §6, §8",

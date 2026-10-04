@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "check": "latest-packaged-asar-compressed-worker-smoke",
+  "result": "PASS",
+  "verificationDate": "2026-10-05",
+  "branch": "codex/m0-latency",
+  "sourceCommit": "a78db7448b3deae5a8c00c0ad8fb7d0e464c4ec2",
+  "environment": {
+    "os": "Microsoft Windows 11 Enterprise 10.0.22631",
+    "architecture": "x64",
+    "node": "v24.16.0",
+    "pnpm": "11.19.0",
+    "electron": "40.10.2",
+    "electronBuilder": "25.1.8"
+  },
+  "package": {
+    "version": "1.1.4-local.20261005.1",
+    "target": "Windows x64 directory package",
+    "buildCommand": "pnpm build",
+    "buildStatus": "PASS",
+    "packageCommand": "pnpm exec electron-builder --win dir --x64 --publish never --config release/windows-flat-20261005/electron-builder.local.cjs",
+    "packageStatus": "PASS",
+    "outputDirectory": "release/windows-flat-20261005/artifacts/win-unpacked",
+    "asarPath": "release/windows-flat-20261005/artifacts/win-unpacked/resources/app.asar",
+    "asarBytes": 30610282,
+    "asarSha256": "EA79F1F6AE86FCAFE0EE1FE235C5A475A8F6B7754524BCB42D047B4651F63633",
+    "installPerformed": false,
+    "published": false,
+    "signature": "Unsigned; electron-builder reported that signing was skipped because no signing information was configured."
+  },
+  "smoke": {
+    "source": "tests/tasks/T04/packaged-asar-worker-smoke.cjs",
+    "launch": "Electron 40.10.2 electron.exe launched the isolated release/windows-flat-20261005/asar-harness app with CLIPNEST_ASAR_PATH pointing to the generated app.asar; ELECTRON_RUN_AS_NODE was removed.",
+    "exitCode": 0,
+    "stderr": "",
+    "stdout": "{\"result\":\"PASS\",\"packageVersion\":\"1.1.4-local.20261005.1\",\"packagePath\":\"D:\\\\ClipNest-work\\\\electron-l0\\\\release\\\\windows-flat-20261005\\\\artifacts\\\\win-unpacked\\\\resources\\\\app.asar\",\"workerLoadedFromAsar\":true,\"utilityProcessResponseTypes\":[\"decoded_compressed\"],\"dimensions\":\"3000x3000\",\"pngEncodedBytes\":35074,\"decodedBytes\":36000000,\"decodedCacheThresholdBytes\":33554432,\"allPixelsExact\":true,\"elapsedMs\":413.15,\"compressedIpcObserved\":true,\"clipboardContentRead\":false,\"clipboardWritten\":false,\"inputSent\":false}",
+    "assertions": {
+      "workerLoadedFromAsar": true,
+      "utilityProcessResponseTypes": [
+        "decoded_compressed"
+      ],
+      "dimensions": "3000x3000",
+      "encodedPngBytes": 35074,
+      "decodedRgbaBytes": 36000000,
+      "compressedThresholdBytes": 33554432,
+      "allPixelsByteEqual": true,
+      "elapsedMs": 413.15,
+      "clipboardRead": false,
+      "clipboardWritten": false,
+      "inputSent": false
+    }
+  },
+  "limitations": [
+    "Synthetic PNG and utilityProcess worker path only; this does not verify NSIS installation, app window, panel, system clipboard, physical input or target-visible paste.",
+    "One 9 MP image smoke does not establish a hard memory or latency bound across supported PNG/JPEG content or replace the five-sample diagnostic and T05 controlled benchmark.",
+    "T04 remains in_progress; P15 remains open under the user-confirmed scope, and T05 remains not_started."
+  ]
+}
