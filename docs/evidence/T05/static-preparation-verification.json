@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "result": "PREPARATION_ONLY",
+  "checkedDate": "2026-10-05",
+  "source": {
+    "commit": "d64288fb39445df1e2cd85bcf17fdace18c192fb",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "dirtyChangesWereOutsideTestedT05Paths": true
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "nodeVersion": "24.16.0",
+    "systemClipboardReadOrWritten": false,
+    "inputSent": false,
+    "windowOpened": false
+  },
+  "checks": [
+    {
+      "command": "node --test tests/tasks/T05/validate-preparation.test.cjs",
+      "result": "PASS",
+      "passed": 15,
+      "failed": 0
+    },
+    {
+      "command": "node tests/tasks/T05/validate-preparation.cjs",
+      "result": "PASS",
+      "output": "PREPARATION_ONLY: static traceability/schema checks passed (28 cases, 71 assertions, 2 G0 gates); no behavior was executed and T05 acceptance is not implied."
+    }
+  ],
+  "coveredSchemaRequirements": [
+    "Draft 2020-12 dialect",
+    "object root and required cases property",
+    "exactly one P01-P28 entry each"
+  ],
+  "gateEffect": {
+    "t05Status": "not_started",
+    "acceptanceImplied": false,
+    "behaviorExecuted": false,
+    "g0Status": "planned/NOT_RUN"
+  },
+  "limitations": [
+    "These checks verify fixture-to-assertion traceability and report-schema structure only.",
+    "No T05 report instance, desktop behavior, package, helper lifecycle, rollback, or performance measurement was executed or accepted."
+  ]
+}
