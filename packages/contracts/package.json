@@ -1,0 +1,5 @@
+{
+  "name": "@clipnest/contracts",
+  "private": true,
+  "description": "Canonical shared contracts package; behavior and schemas are staged in T06-b."
+}

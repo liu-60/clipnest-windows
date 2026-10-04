@@ -1,0 +1,7 @@
+{
+  "profileName": "clipnest-v2-synthetic",
+  "profilePath": ".test-data/profile",
+  "shortcut": "Ctrl+Alt+Shift+V",
+  "cloudEnabled": false,
+  "syntheticOnly": true
+}

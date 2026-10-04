@@ -1,0 +1,23 @@
+[
+  {
+    "id": "synthetic-text-001",
+    "kind": "text",
+    "text": "ClipNest v2 synthetic clipboard sample one"
+  },
+  {
+    "id": "synthetic-link-001",
+    "kind": "link",
+    "text": "https://example.invalid/clipnest-v2-fixture"
+  },
+  {
+    "id": "synthetic-text-002",
+    "kind": "text",
+    "text": "含中文的合成剪贴板测试内容"
+  },
+  {
+    "id": "synthetic-image-001",
+    "kind": "image",
+    "path": "synthetic-image.png",
+    "mime": "image/png"
+  }
+]
