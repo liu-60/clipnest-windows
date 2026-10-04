@@ -460,6 +460,10 @@
         "An overdue poll after both deadline clocks have expired returns key_state_unavailable without treating the pre-stall released sample as current.",
         "The isolated fake records zero clipboard writes, input submissions, and panel hides; no OS clipboard, physical input, BrowserWindow, or content-provider P15 path is invoked.",
         "This synthetic diagnostic does not establish physical key timing, OS clipboard/input behavior, or a process peak-memory bound."
+      ],
+      "evidence": [
+        "tests/tasks/T04/run-image-main-thread-deadline-electron.cjs: production encoding and Base64/SHA-256 workload blocks the Electron main loop past the original selection deadline",
+        "docs/evidence/T04/main-thread-image-deadline-diagnostic.json: run measurements and late-poll fail-closed result; no OS clipboard or physical input"
       ]
     }
   ]
