@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "recordType": "test_only_windows_gdiplus_jpeg_memory_route_probe",
+  "checkedDate": "2026-10-05",
+  "result": "PROBE_FAILED_WITH_LIMITATIONS",
+  "source": {
+    "commit": "b9593a54a09fbf4553903f31de85bb4149920eef",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "runnerSha256": "291b186795a8100449b7fe50d2b9efb13927735c79fc1114c58674f8fd5705f4",
+    "childScriptSha256": "a30d0a3366a629833f6b5cd7fe86f786d0c6b52899972ec6133a5fbdc96fa42a",
+    "fixtureScriptSha256": "3751eefa8ba8e99d2faef8aa53d67348942e5338f860c75d2418744872e507a7"
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "osVersion": "Windows 11 Enterprise",
+    "nodeVersion": "24.16.0",
+    "cpuModel": "Intel(R) Xeon(R) Platinum 8378C CPU @ 2.80GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 17178939392,
+    "browserWindowCreated": false,
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "childRuntime": "Windows PowerShell test child process, C# P/Invoke bindings compiled in-memory with Add-Type",
+    "sampleCountPerSubsampling": 1
+  },
+  "scope": {
+    "gdiPlusLoadedBy": "LoadLibraryExW(\"gdiplus.dll\", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32)",
+    "actualModulePathCheckedWith": "GetModuleFileNameW(handle)",
+    "requiredModulePath": "Environment.SpecialFolder.System\\gdiplus.dll (System32 on the required x64 host)",
+    "imageTransport": "attempted CreateStreamOnHGlobal-backed IStream, GdipLoadImageFromStream and full 4000x4000 GdipBitmapLockBits only after the exact System32 module-path check; the check rejected this host's WinSxS resolution first",
+    "processIsolation": "one new Windows PowerShell test process per attempted decode; parent waits for the child close event before continuing",
+    "memoryMetrics": "child Process.WorkingSet64 before/after, PeakWorkingSet64, PrivateMemorySize64 and PeakPagedMemorySize64; a path-gate failure sample measures process initialization only, not image decoding",
+    "independentOracle": "recompute expected smooth RGB gradients in C# from x/y; compare every decoded pixel, all alpha bytes and aggregate/max channel error",
+    "oracleThresholds": {
+      "maxChannelAbsoluteError": 24,
+      "meanRgbAbsoluteError": 3,
+      "alphaMismatchCount": 0
+    },
+    "memoryTargetBytes": 268435456
+  },
+  "fixtures": [
+    {
+      "subsampling": "420",
+      "width": 4000,
+      "height": 4000,
+      "pixelCount": 16000000,
+      "encodedBytes": 20971520,
+      "sourceLimitBytes": 20971520,
+      "sourceLimitHeadroomBytes": 0,
+      "encoder": "Windows System.Drawing JPEG encoder",
+      "quality": 96,
+      "samplingFactors": [
+        {
+          "horizontal": 2,
+          "vertical": 2
+        },
+        {
+          "horizontal": 1,
+          "vertical": 1
+        },
+        {
+          "horizontal": 1,
+          "vertical": 1
+        }
+      ],
+      "jpegSha256": "ab5c942602c42ccec1e9d8a74b98f6de09383a12faa92b08a2e521541cbbb235",
+      "deterministicOracle": "R=32+floor(x*80/width), G=96+floor(y*80/height), B=48+floor((x+y)*80/(width+height)), A=255",
+      "app2PaddingBytes": 20611704
+    }
+  ],
+  "samples": [
+    {
+      "subsampling": "420",
+      "sampleIndex": 1,
+      "launchToExitMs": 1783.12,
+      "childPid": 67512,
+      "processExitCode": 1,
+      "processSignal": null,
+      "processExitedAndReaped": true,
+      "timedOut": false,
+      "stdoutJsonParsed": true,
+      "stderr": null,
+      "child": {
+        "workingSetAfterBytes": 90218496,
+        "privateBytesAfter": 72990720,
+        "peakWorkingSetBytes": 90345472,
+        "peakPagedMemoryBytes": 73084928,
+        "processId": 67512,
+        "result": "FAILED",
+        "failureStage": "load_system32_gdiplus",
+        "failure": "System.InvalidOperationException:gdiplus_loaded_path_not_system32:C:\\Windows\\WinSxS\\amd64_microsoft.windows.gdiplus_6595b64144ccf1df_1.1.22621.6783_none_57ff9bc6ce13cde1\\gdiplus.dll",
+        "gdiplusModulePath": "C:\\Windows\\WinSxS\\amd64_microsoft.windows.gdiplus_6595b64144ccf1df_1.1.22621.6783_none_57ff9bc6ce13cde1\\gdiplus.dll",
+        "loaderFlag": "LOAD_LIBRARY_SEARCH_SYSTEM32 (0x00000800)",
+        "inputSha256": "ab5c942602c42ccec1e9d8a74b98f6de09383a12faa92b08a2e521541cbbb235",
+        "workingSetBeforeBytes": 0,
+        "privateBytesBefore": 0,
+        "decodeAndFullScanMs": 0,
+        "decodedPixelCountVerified": 0,
+        "maxChannelAbsoluteError": 0,
+        "meanRgbAbsoluteError": null,
+        "alphaMismatchCount": 0,
+        "memorySource": "CreateStreamOnHGlobal IStream populated with synthetic JPEG bytes; GdipLoadImageFromStream; full-image GdipBitmapLockBits",
+        "workerArchitecture": "x64",
+        "powershellClrVersion": "4.0.30319.42000"
+      }
+    }
+  ],
+  "processRecycling": {
+    "childCount": 1,
+    "uniqueChildPidCount": 1,
+    "everyChildExitedAndWasReaped": true,
+    "noChildPidWasReusedWithinRun": true
+  },
+  "failure": {
+    "stage": "isolated_gdiplus_child",
+    "subsampling": "420",
+    "sampleIndex": 1,
+    "result": "FAILED",
+    "failureStage": "load_system32_gdiplus",
+    "failure": "System.InvalidOperationException:gdiplus_loaded_path_not_system32:C:\\Windows\\WinSxS\\amd64_microsoft.windows.gdiplus_6595b64144ccf1df_1.1.22621.6783_none_57ff9bc6ce13cde1\\gdiplus.dll"
+  },
+  "limitations": [
+    "This is an isolated decoder feasibility probe; it does not add GDI+ to the production ffi-rs allowlist or integrate an image worker route.",
+    "The fixtures are deterministic smooth synthetic images with APP2 padding, not user images; progressive JPEG, EXIF/ICC handling, malformed inputs, other content, packaging/ASAR behavior and cancellation are not covered.",
+    "This child process is not Electron utilityProcess. The probe reached a Windows PowerShell test child, but the path gate halted before GDI+ startup, memory-stream use, LockBits, pixel validation, or an image decode; packaged Electron worker compatibility is not measured.",
+    "Windows accepted LoadLibraryExW with LOAD_LIBRARY_SEARCH_SYSTEM32, then GetModuleFileNameW reported the actual module under the protected WinSxS component store rather than the required System32 path. The strict check stopped before resolving or invoking any GDI+ export. Recorded child memory is process startup and path-check overhead only.",
+    "No decoder peak or full-pixel result was measured; the single child working-set peak is not an image-decode measurement. T04 memory feasibility and acceptance remain unverified.",
+    "No system clipboard, target window, physical input, user data or visible app window was used. T04 acceptance, P15, JPEG production-route support and later T05 gates remain open."
+  ]
+}

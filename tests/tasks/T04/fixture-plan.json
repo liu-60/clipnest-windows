@@ -13,8 +13,8 @@
     "fullT04Acceptance": "NOT_RUN",
     "latestTargetedFakeRun": {
       "status": "PASS",
-      "command": "pnpm test:unit -- clipboard-image-preparation.test.cjs selection-key-deadline.test.cjs",
-      "passed": 20,
+      "command": "pnpm test:unit -- selection-key-deadline.test.cjs main-image-preparation-failure.test.cjs",
+      "passed": 24,
       "failed": 0
     },
     "nativeHelperFakeRun": {
@@ -34,7 +34,7 @@
     "finalV3AsarDecoderAndInstallation": "PASS; latest logs report 1.1.4-local.20261004.3 and installation manifest matches 82 files. Earlier v2 logs were replaced by v3; see checkpointEvidence.",
     "latestFullUnitSuite": {
       "status": "PASS",
-      "passed": 114,
+      "passed": 163,
       "failed": 0,
       "command": "pnpm test:unit"
     },
@@ -60,7 +60,10 @@
       "realWorkerCancellationAndTimeout": {
         "status": "PASS_WITH_LIMITATIONS",
         "artifact": "docs/evidence/T04/image-selection-worker-cancel-timeout.json",
-        "relatedFixtures": ["T04-I04", "T04-I05"],
+        "relatedFixtures": [
+          "T04-I04",
+          "T04-I05"
+        ],
         "result": "Production selection cancellation and an 8000ms test-only preparation deadline abort a pending UtilityImageWorker request, retire the real utilityProcess, and settle before helper registration; the gated response is a decoded message emitted after decoding completed.",
         "limitations": "This is supplementary evidence, not full fixture acceptance. It does not prove interruption of decoder CPU work, a production 3000ms deadline under clipboard load, helper/OS clipboard/panel/input effects, or real-time key-monitor behavior; separate fake fixtures remain the evidence for I08 timer cleanup and I10 cutoff paths."
       },
@@ -176,6 +179,60 @@
       "productionTransformMs": 1951.13,
       "deadlineMs": 500,
       "result": "key_state_unavailable; zero simulated effects; no system clipboard/input"
+    },
+    "latestSelectionDeadlineMonitorIntegration": {
+      "status": "PASS_WITH_LIMITATIONS",
+      "artifact": "docs/evidence/T04/selection-key-monitor-utility-integration.json",
+      "runner": "tests/tasks/T04/run-image-selection-electron.cjs",
+      "retryHistory": [
+        "First run timed out waiting 5 seconds for the real utilityProcess cancellation response.",
+        "Immediate retry passed all scenarios."
+      ],
+      "clockSources": "performance.now for selection cutoff/sample freshness; production Win32HostBridge GetTickCount64 for helper absolute deadline",
+      "heldAtCutoff": {
+        "timerLateMs": 1.45,
+        "decision": "key_held"
+      },
+      "releasedAtCutoff": {
+        "timerLateMs": 13.89,
+        "decision": "key_state_unavailable",
+        "continued": false
+      },
+      "limitations": [
+        "The current state-level polling cannot reconstruct key transitions between samples or prove exact held-at-cutoff if a re-press ends before the callback.",
+        "Released-cutoff continuation and selectionBudgetMs=0 were not observed in the production-timer run."
+      ]
+    },
+    "latestSelectionProductionDeadline": {
+      "status": "PASS_WITH_LIMITATIONS",
+      "artifact": "docs/evidence/T04/image-selection-production-3000ms-timeout.json",
+      "configuredDeadlineMs": 3000,
+      "selectionElapsedMs": 3017.76,
+      "workerAbortElapsedMs": 3007.15,
+      "workerExitElapsedMs": 3018.37,
+      "realUtilityProcess": true,
+      "decodedResponseHeldUntilDeadline": true,
+      "noHelperOrExternalEffects": true,
+      "limitation": "A test-only pending monitor isolates this preparation-deadline scenario; it does not interrupt already-completed decoder CPU work or establish behavior under real clipboard encoding load."
+    },
+    "latestCrossClockHelperDeadlineRegression": {
+      "status": "PASS_WITH_LIMITATIONS",
+      "tests": [
+        "tests/tasks/T04/selection-key-deadline.test.cjs",
+        "tests/tasks/T04/main-image-preparation-failure.test.cjs"
+      ],
+      "result": "When performance.now is past the original 500ms cutoff while GetTickCount64 remains in its prior tick bucket, production copySelectedItem sends selectionBudgetMs=0 and omits the stale absolute helper deadline. If the coarse tick reaches its deadline while performance.now remains before the original cutoff, the helper deadline returns unavailable and main blocks before sending an expired helper deadline or continuing early.",
+      "verification": "The latest full pnpm test:unit run passed 163/163; targeted cutoff and main image-preparation fakes passed 24/24, including both clock-skew directions and the existing T03 two-argument helper contract.",
+      "limitations": "Clock skew, delayed preparation, key state, helper, clipboard, and input boundaries are fakes. The coarse-clock-ahead case intentionally fails closed and can reject a selection slightly before the high-resolution cutoff; physical key timing and Windows clipboard/input atomicity remain unverified."
+    },
+    "latestJpegMemoryRouteProbe": {
+      "status": "STOPPED_AT_FILE_ID_IDENTITY_GATE",
+      "artifact": "docs/evidence/T04/gdiplus-jpeg-memory-route-probe.json",
+      "auditArtifact": "docs/evidence/T04/gdiplus-jpeg-system-path-audit.json",
+      "runner": "tests/tasks/T04/run-gdiplus-jpeg-memory-probe.cjs",
+      "result": "The WinSxS GDI+ module passed Microsoft catalog signature, version, size, SHA-256, and protected-directory ACL checks against System32, but NTFS file IDs differ; the strict identity gate stopped before GDI+ startup or decode.",
+      "decoderMemoryOrPixelResult": "NOT_MEASURED",
+      "limitations": "No GDI+ export, IStream, decode, LockBits, pixel oracle, or decoder-memory measurement ran; T04 JPEG memory feasibility remains open."
     }
   },
   "sourceOfExpectedBehavior": "<spec-workspace>/docs/spec/tasks/T04.md; <spec-workspace>/docs/spec/01-product-and-ux.md §2; <spec-workspace>/docs/spec/04-desktop-performance.md §6, §8",
@@ -347,12 +404,13 @@
         "a key re-press observed during preparation is not masked by an earlier released sample",
         "held-at-cutoff cases produce zero clipboard writes, input submissions, and panel hides",
         "release observed before the cutoff permits preparation to finish after 500ms but before 3000ms and continue immediately after a current key-state recheck",
-        "when preparation finishes after the released cutoff, main omits the expired helper deadline; a commit that starts before cutoff still carries the original absolute deadline"
+        "when preparation finishes after the high-resolution cutoff, main omits the expired helper deadline and sends a zero-budget check-only commit; a commit carries the absolute helper deadline only when both clocks are before their deadlines, while an early coarse tick fails closed before commit"
       ],
       "evidence": [
         "tests/tasks/T04/selection-key-deadline.test.cjs: deterministic fake-clock coverage for held, re-pressed, released, late, stale, and cancellation paths",
-        "docs/evidence/T04/image-selection-production-3000ms-timeout.json: current production-timer scenarios both fail closed under stale sampling; exact cutoff continuation remains unverified",
-        "A re-press released before the delayed callback or any transition between level samples can still be missed; exact held-at-cutoff remains P1_OPEN without event-timestamp evidence."
+        "docs/evidence/T04/selection-key-monitor-utility-integration.json: latest production-timer run blocks held state as key_held (1.45ms late); the released case fails closed as key_state_unavailable (13.89ms late), so production released-cutoff continuation remains unverified",
+        "A re-press released before a delayed callback or any transition between level samples can still be missed; exact held-at-cutoff remains P1_OPEN without event-timestamp evidence.",
+        "tests/tasks/T04/selection-key-deadline.test.cjs: cross-clock classification; a lagging GetTickCount64 cannot reopen the cutoff and an early coarse tick fails closed"
       ]
     },
     {
@@ -460,8 +518,8 @@
       ],
       "evidence": [
         "tests/tasks/T04/selection-key-deadline.test.cjs: exact-cutoff latch, fresh pre-cutoff samples, jitter, stale samples, and delayed-callback boundaries",
-        "docs/evidence/T04/selection-key-monitor-utility-integration.json: production default timer I10 scenarios fail closed on stale samples; released cutoff and zero-budget path remain NOT_CLOSED",
-        "Independent review: a released sample up to 5 ms before cutoff cannot exclude a re-press held through cutoff; polling-only state has no transition timestamp, so exact held-at-cutoff remains a P1 open gate"
+        "docs/evidence/T04/selection-key-monitor-utility-integration.json: latest production default-timer run blocks held keys as key_held and fails the late released callback closed as key_state_unavailable; no released continuation or zero-budget request was observed",
+        "Independent review: a released sample before cutoff cannot exclude a re-press held through cutoff; polling-only state has no transition timestamp, so exact held-at-cutoff remains a P1 open gate."
       ]
     },
     {

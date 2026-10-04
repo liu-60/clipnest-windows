@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "recordType": "read_only_gdiplus_system32_redirection_identity_and_acl_audit",
+  "checkedDate": "2026-10-05",
+  "source": {
+    "commit": "b9593a54a09fbf4553903f31de85bb4149920eef",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "priorProbeEvidence": "docs/evidence/T04/gdiplus-jpeg-memory-route-probe.json"
+  },
+  "result": "STOP_FILE_ID_MISMATCH",
+  "scope": {
+    "readOnly": true,
+    "productionFilesChanged": false,
+    "dependenciesInstalled": false,
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "gdiPlusDecodeOrApiInvoked": false
+  },
+  "module": {
+    "pathReportedByGetModuleFileNameW": "C:\\Windows\\WinSxS\\amd64_microsoft.windows.gdiplus_6595b64144ccf1df_1.1.22621.6783_none_57ff9bc6ce13cde1\\gdiplus.dll",
+    "canonicalPath": true,
+    "matchesRequiredWinSxSArchitectureAndComponentPattern": true,
+    "version": "10.0.22621.6783 (WinBuild.160101.0800)",
+    "lengthBytes": 1810432,
+    "authenticode": {
+      "signatureType": "Catalog",
+      "status": "Valid",
+      "statusMessage": "Signature verified.",
+      "signerSubject": "CN=Microsoft Windows, O=Microsoft Corporation, L=Redmond, S=Washington, C=US",
+      "signerThumbprint": "FACDE3D80E99AFCC15E08AC5A69BD22785287F79"
+    },
+    "sha256": "1bd86a3efc18922e0d6703875774269631743b71ec9d1d5bb2d16a8cbe811da1",
+    "ntfsFileIdentity": {
+      "volumeSerial": "560F7B12",
+      "fileIndex": "000400000003B962"
+    }
+  },
+  "system32Comparison": {
+    "path": "C:\\Windows\\System32\\gdiplus.dll",
+    "version": "10.0.22621.6783 (WinBuild.160101.0800)",
+    "lengthBytes": 1810432,
+    "authenticode": {
+      "signatureType": "Catalog",
+      "status": "Valid",
+      "statusMessage": "Signature verified.",
+      "signerSubject": "CN=Microsoft Windows, O=Microsoft Corporation, L=Redmond, S=Washington, C=US",
+      "signerThumbprint": "FACDE3D80E99AFCC15E08AC5A69BD22785287F79"
+    },
+    "sha256": "1bd86a3efc18922e0d6703875774269631743b71ec9d1d5bb2d16a8cbe811da1",
+    "ntfsFileIdentity": {
+      "volumeSerial": "560F7B12",
+      "fileIndex": "0003000000046FD5"
+    },
+    "sha256MatchesWinSxSModule": true,
+    "versionAndLengthMatchWinSxSModule": true,
+    "ntfsFileIdentityMatchesWinSxSModule": false
+  },
+  "directoryAcl": {
+    "owner": "NT SERVICE\\TrustedInstaller",
+    "directoriesChecked": [
+      "C:\\Windows\\WinSxS\\amd64_microsoft.windows.gdiplus_6595b64144ccf1df_1.1.22621.6783_none_57ff9bc6ce13cde1",
+      "C:\\Windows\\WinSxS"
+    ],
+    "ordinaryUserGroups": [
+      {
+        "sid": "S-1-5-32-545",
+        "name": "BUILTIN\\Users",
+        "access": "Allow ReadAndExecute (RX) only",
+        "writeGranted": false
+      },
+      {
+        "sid": "S-1-1-0",
+        "name": "Everyone",
+        "explicitOrInheritedAceFound": false,
+        "writeGranted": false
+      },
+      {
+        "sid": "S-1-5-11",
+        "name": "Authenticated Users",
+        "explicitOrInheritedAceFound": false,
+        "writeGranted": false
+      }
+    ],
+    "icaclsConfirmedUsersReadExecuteOnly": true,
+    "aclAllowsOrdinaryUserWrite": false
+  },
+  "verification": {
+    "loaderInvocationFromPriorProbe": "LoadLibraryExW(\"gdiplus.dll\", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32)",
+    "moduleLocationObservedWith": "GetModuleFileNameW(handle)",
+    "signatureAndPublisherGatePassed": true,
+    "pathAndAclGatePassed": true,
+    "binaryHashIdentityGatePassed": true,
+    "fileObjectIdentityGatePassed": false,
+    "allRequestedIdentityChecksPassed": false,
+    "gateDecision": "Keep the probe stopped; do not widen the path gate or invoke GDI+ until the WinSxS/System32 file-ID mismatch is resolved or the identity acceptance rule is clarified.",
+    "nextProbeStageReached": "none; stop before GdiplusStartup, stream creation, image decode, LockBits, pixel oracle and decode-memory measurement"
+  },
+  "limitations": [
+    "The WinSxS and System32 files have matching Authenticode catalog signature, Microsoft Windows signer, version, size and SHA-256, but their NTFS volume/file-index identities differ. The strict requirement to match the file ID therefore did not pass.",
+    "This read-only audit establishes that the WinSxS component directory and WinSxS root grant BUILTIN\\Users read/execute only; TrustedInstaller owns both directories. It does not establish that the two DLL paths refer to the same NTFS file object.",
+    "No GDI+ startup/export, memory-stream, LockBits, pixel-oracle, decoder memory or timing test was run after this audit. The prior probe evidence remains stopped at the module-path gate."
+  ]
+}

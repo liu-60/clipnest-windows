@@ -153,7 +153,7 @@
     {
       "command": "ELECTRON_OVERRIDE_DIST_PATH=<Electron 40.10.2 dist>; node tests/tasks/T04/run-image-selection-electron.cjs (production timer monitor integration)",
       "status": "PASS_WITH_LIMITATIONS",
-      "result": "Real Electron default setTimeout plus performance.now and a real utilityProcess verified production selection cancellation, timer cleanup, worker rejection and process exit. For both fake held and released I10 states, timer lateness was 3.05/5.54 ms and the latest pre-cutoff key sample was 12.97/11.03 ms old; the monitor failed closed with key_state_unavailable and added no helper or OS-boundary effects. The released cutoff did not continue preparation or send selectionBudgetMs=0, so that path remains NOT_CLOSED. See docs/evidence/T04/selection-key-monitor-utility-integration.json."
+      "result": "Historical first I10 integration run: Real Electron default setTimeout plus performance.now and a real utilityProcess verified production selection cancellation, timer cleanup, worker rejection and process exit. Its fake held and released cases returned key_state_unavailable with 3.05/5.54 ms timer lateness and 12.97/11.03 ms pre-cutoff sample ages. The latest rerun is recorded in docs/evidence/T04/selection-key-monitor-utility-integration.json: held blocked as key_held 1.45 ms late; released failed closed as key_state_unavailable 13.89 ms late and did not send selectionBudgetMs=0."
     },
     {
       "command": "pnpm test:unit -- selection-key-deadline.test.cjs clipboard-sequence-gate.test.cjs",
@@ -184,6 +184,21 @@
       "command": "node --check tests/tasks/T04/run-image-selection-electron.cjs",
       "status": "PASS",
       "result": "The current Electron probe parses successfully; it then ran in the real Electron 40.10.2 browser process with fake clipboard/helper/panel/input boundaries."
+    },
+    {
+      "command": "pnpm test:unit (after cross-clock selection-deadline fix)",
+      "status": "PASS",
+      "result": "The main TypeScript build succeeded and all 163 tests passed. The first full run caught a legacy two-argument helper-contract regression; a compatibility overload restored the T03 contract, and the latest rerun passed 163/163 including both clock-skew boundaries and the main-orchestration fake. No real clipboard, physical input, or target window was used."
+    },
+    {
+      "command": "pnpm test:unit -- selection-key-deadline.test.cjs main-image-preparation-failure.test.cjs (cross-clock regression)",
+      "status": "PASS",
+      "result": "Main build passed and 24/24 focused fake tests passed. The lagging-tick case runs through main orchestration; an early coarse tick is separately verified to return unavailable before the high-resolution cutoff. No early-tick main-orchestration fake was added."
+    },
+    {
+      "command": "pnpm lint (after cross-clock selection-deadline fix)",
+      "status": "PASS",
+      "result": "Main and renderer TypeScript no-emit checks passed."
     }
   ],
   "implementedAndCovered": [
@@ -202,7 +217,8 @@
     "An isolated Electron main-process diagnostic exercised the production NativeImage PNG-to-JPEG fallback and matching Base64/SHA-256 operation on a deterministic synthetic 9 MP bitmap. When that synchronous work delayed the original 500 ms monitor past its cutoff, the overdue poll failed closed with key_state_unavailable, made no fresh stale-key assumption, and produced zero simulated side effects; the diagnostic does not invoke the OS clipboard/input or content-provider P15 path.",
     "The production copySelectedItem image path now fails closed before Electron clipboard fallback if image snapshot/preparation fails, the helper is unavailable, or the clipboard-sequence baseline cannot be sampled before helper clipboard commit. The P17/T04-I04 production VM fake maps image_worker_capacity_exceeded to zero Electron fallback writes, helper registration/commit_write/paste, and panel hides, while retaining the original image; helper-unavailable and baseline-unavailable image paths have the same zero-effect checks. Non-image copy-only fallback and post-commit authorization_denied degradation remain covered.",
     "Supplementary real-Electron selection scenarios cancel a pending UtilityImageWorker request or expire an 8000ms test-only selection deadline after the utilityProcess emitted a decoded response; both observe worker rejection and process exit before helper registration, with no new cache entry or fake side effects. The response is gated after decode, so this does not establish interruption of CPU-bound decode.",
-    "The production default selection-key monitor was integrated with a real Electron timer and utilityProcess. A cutoff callback within one poll interval samples once more and blocks if the key is still held; fake regression covers a 499ms re-press still held when the delayed callback runs. The monitor cannot reconstruct a re-press released before that callback or brief transitions between samples, so P1/I10 exact-held-at-cutoff remains open. The latest Electron probe also verifies the actual 3000ms selection-start timeout and warm utilityProcess retirement; see image-selection-production-3000ms-timeout.json."
+    "The production default selection-key monitor was integrated with a real Electron timer and utilityProcess. A cutoff callback within one poll interval samples once more and blocks if the key is still held; fake regression covers a 499ms re-press still held when the delayed callback runs. The monitor cannot reconstruct a re-press released before that callback or brief transitions between samples, so P1/I10 exact-held-at-cutoff remains open. The latest Electron probe also verifies the actual 3000ms selection-start timeout and warm utilityProcess retirement; see image-selection-production-3000ms-timeout.json.",
+    "The helper deadline handoff uses performance.now at commit to classify an expired original selection cutoff. If high-resolution time is past the cutoff while GetTickCount64 lags, main sends a zero-budget check-only request and omits the stale absolute tick. If the coarse tick reaches its deadline first, main fails closed before sending an expired tick deadline or continuing early. Fake-clock regressions cover both directions, and a two-argument overload preserves the existing T03 contract."
   ],
   "notVerified": [
     "Complete large-image, progressive JPEG, EXIF/orientation/ICC/color and exact-source fidelity acceptance remains incomplete; the installed production PNG/JPEG path has real utility-process and v2 ASAR smoke evidence.",
@@ -216,7 +232,9 @@
     "The main-process orchestration VM fixture is PASS (8 tests); actual Electron IPC, complete final-helper target-visible input and T05 100-run controlled benchmark remain unaccepted.",
     "The integrated cutoff-to-utility-worker/helper cancellation path remains NOT_RUN for helper cancellation/exit after registration and clipboard/panel/input effects. The selection probe separately covers a pending worker request canceled after decode emitted a gated response and an 8000ms test-only deadline; it does not establish cancellation during decode CPU work or deadline behavior under real clipboard load. Static review indicates pre-registration cancellation avoids helper restart, and unconfirmed registered cancellation keeps the clipboard fence/job fail-closed.",
     "Successful image selection, malformed-PNG CRC failure, pending-request cancellation, and test-only deadline retirement now have real Electron utilityProcess integration through the production NativeContentProvider, recorded in image-selection-provider-integration.json and image-selection-worker-cancel-timeout.json. A real BrowserWindow, OS clipboard, actual panel effects, physical input, and final target-visible paste remain NOT_RUN; the probe fakes helper, clipboard, panel, and input boundaries.",
-    "The real-timer I10 probe did not observe a released cutoff continuing preparation or sending selectionBudgetMs=0: both released and held fake-key runs returned key_state_unavailable because the pre-cutoff sample was 11.03/12.97 ms old. Fresh released/held samples and the 5 ms jitter bound are covered only by deterministic fakes. Independent review also found that a released sample up to 5 ms before cutoff cannot exclude a re-press held through cutoff; exact held-at-cutoff semantics remain a P1 open gate because the polling key-state API has no transition timestamp. Physical key state, cutoff behavior under desktop load, helper continuation and the non-atomic gap between key checks and OS operations remain unverified."
+    "The latest real-timer I10 probe blocked the held-key case as key_held with a callback 1.45 ms late; the released-key case failed closed as key_state_unavailable with a callback 13.89 ms late, so it did not observe preparation continuing or selectionBudgetMs=0. Fresh released/held samples and the 5 ms jitter bound are covered only by deterministic fakes. Independent review also found that a released sample before cutoff cannot exclude a re-press held through cutoff; exact held-at-cutoff semantics remain a P1 open gate because the polling key-state API has no transition timestamp. Physical key state, cutoff behavior under desktop load, helper continuation and the non-atomic gap between key checks and OS operations remain unverified.",
+    "The coarse-clock-ahead mismatch intentionally fails closed; it can reject a selection slightly before the high-resolution cutoff due to GetTickCount64 quantization. Cross-clock tests use fakes and do not establish physical key timing or full desktop behavior.",
+    "The early coarse-tick branch intentionally fails closed and is covered at the helper decision level; there is no separate main-orchestration fake for that branch. It can reject a selection slightly before the high-resolution cutoff due to GetTickCount64 quantization."
   ],
   "interimReview": {
     "result": "PASS_WITH_LIMITATIONS",
@@ -306,7 +324,8 @@
     "PureJsImage 0.17.0 candidate feasibility spike: one fresh utilityProcess sample decoded each synthetic 16 MP baseline 4:2:0 and 4:4:4 JPEG near the 20 MiB source limit and materialized full RGBA below the observed 256 MiB target. Decoder AbortSignal was ineffective; repeated distributions, output IPC, ASAR, and independent pixel oracle remain open. The exact registry tarball integrity and archive inventory are now recorded in docs/evidence/T04/purejsimage-dependency-subcard.json; the HEVC/H.265 distribution decision and complete notice/legal review remain open. Candidate is not installed or approved. This does not close the general image-memory or T04 gate.",
     "Independent final static review passed with limitations; it does not close P15, actual keyboard timing, full Electron/helper clipboard/paste acceptance or full T04 acceptance. The latest compressed IPC code passed an isolated ASAR worker smoke, which is not installation or end-user UI acceptance.",
     "The latest production real-timer probe uses performance.now for the selection cutoff and sample age. The held fake-key case resumed 1.45ms late and blocked as key_held; the released case resumed 13.89ms late and failed closed as key_state_unavailable. A released sample still cannot rule out a re-press after the sample or transitions between polls, so real released-cutoff continuation/helper zero-budget behavior remain NOT_CLOSED and exact held-at-cutoff remains P1_OPEN.",
-    "Production duplicate-sequence polling is now covered by a VM regression extracted from main.ts; after the first synthetic image is captured, a repeated DWORD sequence causes no additional format/image read, dimension read, PNG/JPEG encode, Base64 conversion, SHA-256, or history update. This fake does not access the OS clipboard."
+    "Production duplicate-sequence polling is now covered by a VM regression extracted from main.ts; after the first synthetic image is captured, a repeated DWORD sequence causes no additional format/image read, dimension read, PNG/JPEG encode, Base64 conversion, SHA-256, or history update. This fake does not access the OS clipboard.",
+    "The test-only GDI+ JPEG route probe stopped before GDI+ startup/decode: WinSxS and System32 DLL signatures, Microsoft publisher, version, size, SHA-256, and protected-directory ACL match, but NTFS file IDs differ. No pixel-oracle or decoder-memory measurement was produced; see gdiplus-jpeg-memory-route-probe.json and gdiplus-jpeg-system-path-audit.json."
   ],
   "artifacts": [
     "tests/tasks/T04/fixture-plan.json",
@@ -344,6 +363,11 @@
     "docs/evidence/T04/selection-key-monitor-utility-integration.json",
     "src/main/clipboard/selection-key-deadline.ts",
     "tests/tasks/T04/selection-key-deadline.test.cjs",
-    "tests/tasks/T04/run-image-selection-electron.cjs"
+    "tests/tasks/T04/run-image-selection-electron.cjs",
+    "docs/evidence/T04/gdiplus-jpeg-memory-route-probe.json",
+    "docs/evidence/T04/gdiplus-jpeg-system-path-audit.json",
+    "tests/tasks/T04/run-gdiplus-jpeg-memory-probe.cjs",
+    "tests/tasks/T04/gdiplus-jpeg-memory-child.ps1",
+    "tests/tasks/T04/gdiplus-jpeg-fixture.ps1"
   ]
 }
