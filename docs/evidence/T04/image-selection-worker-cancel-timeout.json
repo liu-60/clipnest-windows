@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "fixtures": ["T04-I04", "T04-I05"],
+  "status": "PASS_WITH_LIMITATIONS",
+  "environment": {
+    "os": "Windows",
+    "architecture": "x64",
+    "node": "v24.16.0",
+    "electron": "40.10.2"
+  },
+  "source": {
+    "commit": "d240dc83789e44547e2d83f7abca004e60b34aa8",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "productionSourcesChanged": false
+  },
+  "probe": "tests/tasks/T04/run-image-selection-electron.cjs",
+  "command": "$env:ELECTRON_OVERRIDE_DIST_PATH=(Resolve-Path -LiteralPath 'node_modules/.pnpm/electron@40.10.2/node_modules/electron/dist').Path; node tests/tasks/T04/run-image-selection-electron.cjs",
+  "result": "PASS",
+  "buildCheck": {
+    "status": "REUSED_PRIOR_BUILD",
+    "evidence": "docs/evidence/T04/image-selection-provider-integration.json",
+    "reason": "This change only extends the integration probe; production sources and the previously verified main-process build are unchanged."
+  },
+  "scenarios": {
+    "selectionCancellation": {
+      "status": "PASS_WITH_LIMITATIONS",
+      "trigger": "The test monitor resolves the production selection cutoff as selection_cancelled after the real utilityProcess has sent a decoded response.",
+      "responseGate": "The probe temporarily gates the real UtilityImageWorker message handler, leaving its decode request pending until the production cancellation signal aborts it.",
+      "gatedWorkerResponseType": "decoded",
+      "selectionResult": { "status": "cancelled", "reasonCode": "selection_cancelled" },
+      "workerDecodeRejection": "image_cancelled",
+      "realUtilityProcessExitObserved": true,
+      "helperRequestsAdded": 0,
+      "clipboardPasteFallbackAndPanelEffectsAdded": 0,
+      "retainedOriginalAndPreviewUnchanged": true,
+      "decodedCacheEntriesAfterScenario": 1
+    },
+    "preparationDeadline": {
+      "status": "PASS_WITH_LIMITATIONS",
+      "testOnlyDeadlineMs": 8000,
+      "trigger": "The VM copy of IMAGE_LIMITS shortens the selection preparation deadline to 8000 ms; the fake selection monitor remains pending while a decoded response from the cold-started real utilityProcess is gated.",
+      "gatedWorkerResponseType": "decoded",
+      "selectionResult": { "status": "blocked", "reasonCode": "image_prepare_timeout" },
+      "workerDecodeRejection": "image_prepare_timeout",
+      "realUtilityProcessExitObserved": true,
+      "helperRequestsAdded": 0,
+      "clipboardPasteFallbackAndPanelEffectsAdded": 0,
+      "retainedOriginalAndPreviewUnchanged": true,
+      "decodedCacheEntriesAfterScenario": 1
+    }
+  },
+  "testBoundary": {
+    "real": [
+      "production copySelectedItem orchestration extracted from src/main/main.ts",
+      "production NativeContentProvider",
+      "production ImagePreparationService and its absolute deadline/abort handling",
+      "real Electron utilityProcess decoder response and child-process exit after cancellation/timeout"
+    ],
+    "fake": [
+      "selection key-release monitor and cutoff decision",
+      "native helper protocol",
+      "system clipboard and sequence boundary",
+      "panel visibility/hide boundary",
+      "physical keyboard/input and target-visible paste"
+    ],
+    "browserWindowCount": 0,
+    "operatedSystemClipboard": false,
+    "sentPhysicalInput": false
+  },
+  "limitations": [
+    "The test intercepts a response after the utilityProcess has completed decoding and emitted the message, but before UtilityImageWorker handles it. It verifies that a real pending request is aborted and its child is terminated; it does not prove cancellation interrupts decoder CPU work in progress.",
+    "The timeout integration uses an 8000 ms VM-only deadline to allow cold utilityProcess startup after cancellation retires the prior process. It exercises the production ImagePreparationService deadline path with the resulting absolute deadline, not a real 3000 ms deadline under clipboard load.",
+    "The key-release monitor, helper, clipboard, panel, and input boundaries are fakes. No real key timing, BrowserWindow behavior, helper cancellation after registration, OS clipboard, panel side effect, physical input, or target-visible paste was tested.",
+    "P15 repeated Base64 decoding/hashing in src/main/native/content-provider.ts remains outside the user-approved T04 scope and remains open."
+  ]
+}

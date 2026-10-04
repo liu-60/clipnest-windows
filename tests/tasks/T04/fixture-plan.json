@@ -56,7 +56,14 @@
       "artifact": "docs/evidence/T04/image-selection-provider-integration.json",
       "probe": "tests/tasks/T04/run-image-selection-electron.cjs",
       "scope": "Production selection orchestration and NativeContentProvider reach a real Electron utilityProcess decoder; helper, clipboard, panel, and input boundaries are fakes",
-      "realWorkerFailure": "PASS_WITH_LIMITATIONS: a corrupted PNG IDAT CRC reaches the real utilityProcess and blocks selection before helper registration; cancellation/timeout are not covered",
+      "realWorkerFailure": "PASS_WITH_LIMITATIONS: a corrupted PNG IDAT CRC reaches the real utilityProcess and blocks selection before helper registration",
+      "realWorkerCancellationAndTimeout": {
+        "status": "PASS_WITH_LIMITATIONS",
+        "artifact": "docs/evidence/T04/image-selection-worker-cancel-timeout.json",
+        "relatedFixtures": ["T04-I04", "T04-I05"],
+        "result": "Production selection cancellation and an 8000ms test-only preparation deadline abort a pending UtilityImageWorker request, retire the real utilityProcess, and settle before helper registration; the gated response is a decoded message emitted after decoding completed.",
+        "limitations": "This is supplementary evidence, not full fixture acceptance. It does not prove interruption of decoder CPU work, a production 3000ms deadline under clipboard load, helper/OS clipboard/panel/input effects, or T04-I08/T04-I10 key-monitor cutoff/timer behavior."
+      },
       "pairedRendererFakeRun": {
         "status": "PASS",
         "command": "pnpm test:unit -- keyboard-renderer.test.cjs main-image-preparation-failure.test.cjs",
@@ -283,7 +290,8 @@
       ],
       "evidence": [
         "tests/tasks/T04/main-image-preparation-failure.test.cjs: image preparation capacity failure leaves clipboard and panel untouched",
-        "tests/tasks/T04/main-image-preparation-failure.test.cjs: helper unavailable and clipboard sequence baseline unavailable image cases also fail closed before snapshot/fallback"
+        "tests/tasks/T04/main-image-preparation-failure.test.cjs: helper unavailable and clipboard sequence baseline unavailable image cases also fail closed before snapshot/fallback",
+        "docs/evidence/T04/image-selection-worker-cancel-timeout.json: supplementary production selection cancellation aborts a pending real utilityProcess request after it emits a decoded response; helper and OS boundaries remain fake, and I08/I10 timer/cutoff assertions are not covered"
       ]
     },
     {
@@ -298,6 +306,10 @@
         "the original absolute deadline returns image_prepare_timeout and aborts the worker signal",
         "the timed-out worker is disposed and is not reused for the next decode",
         "timeout leaves no decoded cache entry and never reports ready"
+      ],
+      "evidence": [
+        "tests/tasks/T04/clipboard-image-preparation.test.cjs: fake deadline abort and retirement semantics",
+        "docs/evidence/T04/image-selection-worker-cancel-timeout.json: complementary real utilityProcess process-exit evidence through production selection, using an 8000ms test-only deadline and post-decode response gate"
       ]
     },
     {

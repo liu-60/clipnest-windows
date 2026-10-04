@@ -45,6 +45,21 @@ if (!process.versions.electron) {
     return { promise, resolve, reject };
   }
 
+  async function waitWithin(promise, milliseconds, message) {
+    const timeout = deferred();
+    const timer = setTimeout(() => timeout.resolve({ timedOut: true }), milliseconds);
+    try {
+      const result = await Promise.race([
+        promise.then((value) => ({ timedOut: false, value })),
+        timeout.promise,
+      ]);
+      assert.equal(result.timedOut, false, message);
+      return result.value;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   function plain(value) {
     return JSON.parse(JSON.stringify(value));
   }
@@ -61,6 +76,7 @@ if (!process.versions.electron) {
       "parseNativeTriggerKeys",
       "resultForNativeStatus",
       "finishSelectionMetrics",
+      "cancelNativePasteJob",
       "copySelectedItem",
     ];
     const declarations = names.map((name) => {
@@ -91,11 +107,22 @@ if (!process.versions.electron) {
     const realWorkerDecodeFinished = deferred();
     const realWorkerDecodeFailure = deferred();
     const releasePreparationResponse = deferred();
+    const cancellationResponseCaptured = deferred();
+    const cancellationDecodeRejected = deferred();
+    const cancellationWorkerExited = deferred();
+    const timeoutResponseCaptured = deferred();
+    const timeoutDecodeRejected = deferred();
+    const timeoutWorkerExited = deferred();
+    const heldWorkerResponses = new Map([
+      [3, { name: "cancel", captured: cancellationResponseCaptured, exited: cancellationWorkerExited }],
+      [4, { name: "timeout", captured: timeoutResponseCaptured, exited: timeoutWorkerExited }],
+    ]);
     let realWorkerDecodeCount = 0;
     let context;
     let visible = true;
     let nextIdentity = 0;
     let helperExited = false;
+    let activeSelectionCutoff = new Promise(() => {});
     const clockOrigin = performance.now();
     const bridge = {
       getMonotonicTickMs: () => Math.floor(10_000 + performance.now() - clockOrigin),
@@ -111,16 +138,43 @@ if (!process.versions.electron) {
         const realWorker = createUtilityProcessImageWorker();
         return {
           async decode(input, signal) {
-            realWorkerDecodeCount += 1;
-            events.push("worker-decode-start");
+            const decodeIndex = ++realWorkerDecodeCount;
+            events.push(`worker-decode-start-${decodeIndex}`);
+            const heldResponse = heldWorkerResponses.get(decodeIndex);
+            const originalOnMessage = heldResponse ? realWorker.onMessage : null;
+            if (heldResponse) {
+              assert.equal(typeof originalOnMessage, "function", "the integration gate wraps the real worker response handler");
+              realWorker.onMessage = (raw) => {
+                if (raw && raw.requestId === input.jobId) {
+                  events.push(`worker-response-held-${heldResponse.name}`);
+                  heldResponse.captured.resolve({ requestId: raw.requestId, type: raw.type });
+                  return;
+                }
+                originalOnMessage.call(realWorker, raw);
+              };
+            }
+            const decodePromise = realWorker.decode(input, signal);
+            if (heldResponse) {
+              const child = realWorker.child;
+              assert.ok(child, "a real Electron utilityProcess must exist before the held response is observed");
+              heldResponse.child = child;
+              child.once("exit", () => {
+                events.push(`worker-process-exit-${heldResponse.name}`);
+                heldResponse.exited.resolve();
+              });
+            }
             let decoded;
             try {
-              decoded = await realWorker.decode(input, signal);
+              decoded = await decodePromise;
             } catch (error) {
               events.push("worker-decode-failed");
-              if (realWorkerDecodeCount === 1) realWorkerDecodeFinished.reject(error);
-              else realWorkerDecodeFailure.resolve(error);
+              if (decodeIndex === 1) realWorkerDecodeFinished.reject(error);
+              else if (decodeIndex === 2) realWorkerDecodeFailure.resolve(error);
+              else if (decodeIndex === 3) cancellationDecodeRejected.resolve(error);
+              else if (decodeIndex === 4) timeoutDecodeRejected.resolve(error);
               throw error;
+            } finally {
+              if (originalOnMessage) realWorker.onMessage = originalOnMessage;
             }
             events.push("worker-decode-finished");
             realWorkerDecodeFinished.resolve();
@@ -181,7 +235,7 @@ if (!process.versions.electron) {
     };
 
     const selectionMonitor = {
-      cutoff: new Promise(() => {}),
+      get cutoff() { return activeSelectionCutoff; },
       waitForPreparation: async () => ({ kind: "continue", operationBudgetMs: SELECTION_KEY_RELEASE_WINDOW_MS }),
       cancel() { events.push("selection-monitor-cancelled"); },
     };
@@ -320,7 +374,120 @@ if (!process.versions.electron) {
       assert.equal(imagePreparationService.getCacheStats().bytes, 8);
       assert.ok(events.includes("worker-decode-failed"));
       assert.equal(selectionSettled, true);
-      process.stdout.write("PASS: production image selection/provider path covered real utilityProcess success and decode failure; helper, clipboard, panel, and input boundaries were faked\n");
+
+      const cancellationCutoff = deferred();
+      activeSelectionCutoff = cancellationCutoff.promise;
+      const cancellationPixels = Buffer.from([20, 80, 160, 255, 170, 60, 30, 128]);
+      const cancellationPng = PNG.sync.write({ width: 2, height: 1, data: cancellationPixels });
+      const cancellationItem = {
+        id: "worker-integration-cancelled-image",
+        type: "image",
+        content: `data:image/png;base64,${cancellationPng.toString("base64")}`,
+        preview: "取消时保留的图片预览",
+      };
+      const cancellationContent = cancellationItem.content;
+      const cancellationPreview = cancellationItem.preview;
+      history.push(cancellationItem);
+      const requestsBeforeCancellation = requests.length;
+      const effectsBeforeCancellation = { ...effects };
+      selectionSettled = false;
+      const cancelledSelection = context.copySelectedItem(7, true, cancellationItem.id, [], GENERATION, "image-worker-cancel")
+        .then((result) => { selectionSettled = true; return plain(result); });
+
+      phase = "wait for real worker response held for selection cancellation";
+      const cancellationReply = await waitWithin(
+        cancellationResponseCaptured.promise,
+        5_000,
+        "the real utilityProcess must reply before the cancellation gate is released",
+      );
+      assert.equal(cancellationReply.requestId, "image-3");
+      assert.equal(cancellationReply.type, "decoded", "cancellation gates a successful response emitted by the real decoder");
+      assert.equal(selectionSettled, false, "the production selection remains pending while its real worker response is gated");
+      cancellationCutoff.resolve({ kind: "blocked", reasonCode: "selection_cancelled" });
+      phase = "wait for production selection cancellation";
+      const cancellationResult = await cancelledSelection;
+      assert.deepEqual(cancellationResult, { status: "cancelled", reasonCode: "selection_cancelled" },
+        `cancellation must win the preparation race; events=${events.join(",")}`);
+      const cancellationError = await waitWithin(
+        cancellationDecodeRejected.promise,
+        2_000,
+        "the real worker request must reject after production cancellation",
+      );
+      assert.equal(cancellationError.message, "image_cancelled");
+      await waitWithin(cancellationWorkerExited.promise, 5_000, "the cancelled real utilityProcess must exit");
+      assert.equal(requests.length, requestsBeforeCancellation, "cancellation before snapshot completion never registers content with the helper");
+      assert.deepEqual(effects, effectsBeforeCancellation, "selection cancellation has no clipboard, paste, fallback, or panel effects");
+      assert.equal(visible, true, "cancelled selection leaves the panel visible");
+      assert.equal(cancellationItem.content, cancellationContent);
+      assert.equal(cancellationItem.preview, cancellationPreview);
+      assert.equal(history[2], cancellationItem);
+      assert.equal(imagePreparationService.getCacheStats().entries, 1, "cancelled decode creates no cache entry");
+      assert.equal(imagePreparationService.getCacheStats().bytes, 8);
+      assert.ok(events.includes("worker-response-held-cancel"));
+      assert.ok(events.includes("worker-process-exit-cancel"));
+      assert.equal(BrowserWindow.getAllWindows().length, 0);
+
+      activeSelectionCutoff = new Promise(() => {});
+      // Cancellation retired the previous process, so leave room for a cold
+      // utilityProcess startup before the test-only deadline begins to win.
+      context.IMAGE_LIMITS = Object.freeze({ ...IMAGE_LIMITS, contentPrepareTimeoutMs: 8_000 });
+      const timeoutPixels = Buffer.from([90, 10, 230, 255, 5, 210, 70, 255]);
+      const timeoutPng = PNG.sync.write({ width: 2, height: 1, data: timeoutPixels });
+      const timeoutItem = {
+        id: "worker-integration-timeout-image",
+        type: "image",
+        content: `data:image/png;base64,${timeoutPng.toString("base64")}`,
+        preview: "超时时保留的图片预览",
+      };
+      const timeoutContent = timeoutItem.content;
+      const timeoutPreview = timeoutItem.preview;
+      history.push(timeoutItem);
+      helperExited = false;
+      visible = true;
+      context.panelGeneration = GENERATION;
+      context.panelTarget = TARGET;
+      context.pendingPanelGeneration = null;
+      context.openingGuardUntil = 0;
+      const requestsBeforeTimeout = requests.length;
+      const effectsBeforeTimeout = { ...effects };
+      selectionSettled = false;
+      const timedOutSelection = context.copySelectedItem(7, true, timeoutItem.id, [], GENERATION, "image-worker-timeout")
+        .then((result) => { selectionSettled = true; return plain(result); });
+
+      phase = "wait for real worker response held for preparation timeout";
+      const timeoutReply = await waitWithin(
+        timeoutResponseCaptured.promise,
+        5_000,
+        "the real utilityProcess must reply before the preparation timeout expires",
+      );
+      assert.equal(timeoutReply.requestId, "image-4");
+      assert.equal(timeoutReply.type, "decoded", "timeout gates a successful response emitted by the real decoder");
+      assert.equal(selectionSettled, false, "the production selection remains pending with a real worker response gated");
+      phase = "wait for production image preparation timeout";
+      assert.deepEqual(await waitWithin(timedOutSelection, 12_000, "the production selection timeout must settle"), {
+        status: "blocked",
+        reasonCode: "image_prepare_timeout",
+      });
+      const timeoutError = await waitWithin(
+        timeoutDecodeRejected.promise,
+        2_000,
+        "the real worker request must reject after the service deadline expires",
+      );
+      assert.equal(timeoutError.message, "image_prepare_timeout");
+      await waitWithin(timeoutWorkerExited.promise, 5_000, "the timed-out real utilityProcess must be retired and exit");
+      assert.equal(requests.length, requestsBeforeTimeout, "timeout before snapshot completion never registers content with the helper");
+      assert.deepEqual(effects, effectsBeforeTimeout, "preparation timeout has no clipboard, paste, fallback, or panel effects");
+      assert.equal(visible, true, "timed-out selection leaves the panel visible");
+      assert.equal(timeoutItem.content, timeoutContent);
+      assert.equal(timeoutItem.preview, timeoutPreview);
+      assert.equal(history[3], timeoutItem);
+      assert.equal(imagePreparationService.getCacheStats().entries, 1, "timed-out decode creates no cache entry");
+      assert.equal(imagePreparationService.getCacheStats().bytes, 8);
+      assert.ok(events.includes("worker-response-held-timeout"));
+      assert.ok(events.includes("worker-process-exit-timeout"));
+      assert.equal(BrowserWindow.getAllWindows().length, 0);
+      assert.equal(selectionSettled, true);
+      process.stdout.write("PASS: production selection/provider path covered real utilityProcess success, decode failure, cancellation, and deadline retirement; helper, clipboard, panel, and input boundaries were faked\n");
     } finally {
       releasePreparationResponse.resolve();
       await selection.catch(() => undefined);
