@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "check": "Local Windows Tauri/MSVC toolchain readiness",
+  "result": "MSVC_TOOLCHAIN_NOT_READY",
+  "date": "2026-10-05",
+  "environment": {
+    "platform": "Windows x64",
+    "repositoryBranch": "codex/v2-clipboard",
+    "repositoryFilesChangedByProbe": false,
+    "preexistingUntrackedFilePreserved": "docs/progress.json.tmp"
+  },
+  "observations": {
+    "msvcRustTargetStandardLibrary": "NOT_FOUND",
+    "gnuRustTargetStandardLibrary": "PRESENT",
+    "clExeOnPath": false,
+    "vswhereOnPath": false,
+    "standardVisualStudioCppBuildToolsLocations": "NOT_FOUND",
+    "webView2EvergreenRuntime": {
+      "status": "PRESENT",
+      "version": "154.0.4258.53",
+      "registryKey": "HKLM\\SOFTWARE\\WOW6432Node\\Microsoft\\EdgeUpdate\\Clients\\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
+    }
+  },
+  "probeInterruption": {
+    "command": "rustup toolchain list -v",
+    "outcome": "Unexpectedly triggered channel sync and component downloads for 1.99.0-x86_64-pc-windows-gnu during the local readiness probe.",
+    "process": "The rustup process was terminated; no install-complete/success output was observed.",
+    "localRustupState": "Three complete download files and one .partial file remain, along with an incomplete GNU toolchain component directory. MSVC target standard library remains absent.",
+    "cleanupPerformed": false,
+    "futureProbeConstraint": "Do not invoke rustup again or clean these local files as part of this evidence update."
+  },
+  "gateEffect": {
+    "tauriWindowsBuildReadiness": "BLOCKED_MISSING_MSVC_AND_CPP_BUILD_TOOLS",
+    "webView2Gate": "PRESENT_ONLY",
+    "gnuTargetSatisfiesTauriWindowsRequirement": false,
+    "tauriPoC": "NOT_RUN",
+    "t06Status": "in_progress"
+  },
+  "limitations": [
+    "This is a local toolchain inventory only; no download or installation was intended, and no Tauri build was attempted.",
+    "The rustup query caused an unintended partial sync/download before it was stopped. Treat the toolchain as incomplete and do not infer installation success.",
+    "No MSVC target, Visual Studio C++ Build Tools, Tauri app, or Windows PoC was validated."
+  ]
+}
