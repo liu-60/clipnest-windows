@@ -31,6 +31,7 @@ if (!process.versions.electron) {
   const {
     raceSelectionPreparation,
     selectionHelperDeadlineAtCommit,
+    startSelectionKeyReleaseMonitor,
     SELECTION_KEY_RELEASE_WINDOW_MS,
   } = require("../../../dist-electron/main/clipboard/selection-key-deadline.js");
 
@@ -113,24 +114,41 @@ if (!process.versions.electron) {
     const timeoutResponseCaptured = deferred();
     const timeoutDecodeRejected = deferred();
     const timeoutWorkerExited = deferred();
+    const heldCutoffResponseCaptured = deferred();
+    const heldCutoffDecodeRejected = deferred();
+    const heldCutoffWorkerExited = deferred();
+    const releasedCutoffResponseCaptured = deferred();
+    const releasedCutoffDecodeRejected = deferred();
+    const releasedCutoffWorkerExited = deferred();
+    const releaseCutoffWorkerResponse = deferred();
     const heldWorkerResponses = new Map([
-      [3, { name: "cancel", captured: cancellationResponseCaptured, exited: cancellationWorkerExited }],
-      [4, { name: "timeout", captured: timeoutResponseCaptured, exited: timeoutWorkerExited }],
+      [3, { name: "cancel", captured: cancellationResponseCaptured, rejected: cancellationDecodeRejected, exited: cancellationWorkerExited }],
+      [4, { name: "timeout", captured: timeoutResponseCaptured, rejected: timeoutDecodeRejected, exited: timeoutWorkerExited }],
+      [5, { name: "held-cutoff", captured: heldCutoffResponseCaptured, rejected: heldCutoffDecodeRejected, exited: heldCutoffWorkerExited }],
+      [6, { name: "released-cutoff", captured: releasedCutoffResponseCaptured, rejected: releasedCutoffDecodeRejected, exited: releasedCutoffWorkerExited, release: releaseCutoffWorkerResponse }],
     ]);
     let realWorkerDecodeCount = 0;
     let context;
     let visible = true;
+    let keyStateReleased = true;
+    let keyStateReadCount = 0;
+    let helperRegisterCount = 0;
     let nextIdentity = 0;
     let helperExited = false;
-    let activeSelectionCutoff = new Promise(() => {});
-    const clockOrigin = performance.now();
+    let monitorMode = "production";
+    const selectionMonitors = [];
+    const selectionMonitorDiagnostics = [];
+    const monitorEvidence = {
+      scheduler: "production default setTimeout on Electron main event loop",
+      monotonicClock: "same node:perf_hooks performance.now source for VM and bridge ticks",
+    };
     const bridge = {
-      getMonotonicTickMs: () => Math.floor(10_000 + performance.now() - clockOrigin),
+      getMonotonicTickMs: () => Math.floor(performance.now()),
       getClipboardSequenceNumber: () => 41,
       getProcessIdentity(pid) { return { pid, processCreatedAt: "2200" }; },
       getForegroundWindow: () => HOST,
       allowSetForegroundWindow: (pid) => pid === 22,
-      areKeysReleased: () => true,
+      areKeysReleased: () => { keyStateReadCount += 1; return keyStateReleased; },
     };
 
     const imagePreparationService = new ImagePreparationService({
@@ -148,6 +166,12 @@ if (!process.versions.electron) {
                 if (raw && raw.requestId === input.jobId) {
                   events.push(`worker-response-held-${heldResponse.name}`);
                   heldResponse.captured.resolve({ requestId: raw.requestId, type: raw.type });
+                  if (heldResponse.release) {
+                    heldResponse.release.promise.then(() => {
+                      events.push(`worker-response-released-${heldResponse.name}`);
+                      originalOnMessage.call(realWorker, raw);
+                    });
+                  }
                   return;
                 }
                 originalOnMessage.call(realWorker, raw);
@@ -167,11 +191,10 @@ if (!process.versions.electron) {
             try {
               decoded = await decodePromise;
             } catch (error) {
-              events.push("worker-decode-failed");
+              events.push("worker-decode-failed", `worker-decode-failed-${heldResponse?.name ?? decodeIndex}`);
               if (decodeIndex === 1) realWorkerDecodeFinished.reject(error);
               else if (decodeIndex === 2) realWorkerDecodeFailure.resolve(error);
-              else if (decodeIndex === 3) cancellationDecodeRejected.resolve(error);
-              else if (decodeIndex === 4) timeoutDecodeRejected.resolve(error);
+              else heldResponse?.rejected.resolve(error);
               throw error;
             } finally {
               if (originalOnMessage) realWorker.onMessage = originalOnMessage;
@@ -207,6 +230,7 @@ if (!process.versions.electron) {
         requests.push(command);
         events.push(`helper-${command.kind}`);
         if (command.kind === "register_content") {
+          helperRegisterCount += 1;
           assert.equal(command.contentType, "image");
           assert.equal(command.totalBytes, 48);
           assert.ok(command.inlineBase64, "the small production DIB should use the inline helper payload");
@@ -214,7 +238,10 @@ if (!process.versions.electron) {
           assert.equal(dib.readUInt32LE(0), 40);
           assert.equal(dib.readInt32LE(4), 2);
           assert.equal(dib.readInt32LE(8), -1, "the DIB retains the original one-row image dimensions");
-          assert.deepEqual([...dib.subarray(40)], [137, 147, 247, 255, 240, 100, 5, 255]);
+          assert.equal(dib.length, 48);
+          if (helperRegisterCount === 1) {
+            assert.deepEqual([...dib.subarray(40)], [137, 147, 247, 255, 240, 100, 5, 255]);
+          }
           assert.equal(command.totalHash, createHash("sha256").update(dib).digest("hex"));
           return { status: "content_registered", jobId: command.jobId };
         }
@@ -234,10 +261,32 @@ if (!process.versions.electron) {
       },
     };
 
-    const selectionMonitor = {
-      get cutoff() { return activeSelectionCutoff; },
-      waitForPreparation: async () => ({ kind: "continue", operationBudgetMs: SELECTION_KEY_RELEASE_WINDOW_MS }),
-      cancel() { events.push("selection-monitor-cancelled"); },
+    const startIntegratedSelectionMonitor = (input) => {
+      if (monitorMode === "pending") {
+        return {
+          cutoff: new Promise(() => {}),
+          waitForPreparation: async () => ({ kind: "continue", operationBudgetMs: SELECTION_KEY_RELEASE_WINDOW_MS }),
+          cancel() {},
+        };
+      }
+      // Use the production default setTimeout scheduler and the same monotonic
+      // performance clock that copySelectedItem captured at selection start.
+      const diagnostic = {
+        deadlineAt: input.selectionDeadlineAt,
+        deadlineTickMs: input.selectionDeadlineTickMs,
+        keySamples: [],
+      };
+      selectionMonitorDiagnostics.push(diagnostic);
+      const monitor = startSelectionKeyReleaseMonitor({
+        ...input,
+        keysReleased: () => {
+          const released = input.keysReleased();
+          diagnostic.keySamples.push({ at: performance.now(), tickMs: Math.floor(performance.now()), released });
+          return released;
+        },
+      });
+      selectionMonitors.push(monitor);
+      return monitor;
     };
     context = vm.createContext({
       Error,
@@ -279,7 +328,7 @@ if (!process.versions.electron) {
       captureClipboardBaseline,
       raceSelectionPreparation,
       selectionHelperDeadlineAtCommit,
-      startSelectionKeyReleaseMonitor: () => selectionMonitor,
+      startSelectionKeyReleaseMonitor: startIntegratedSelectionMonitor,
       SELECTION_KEY_RELEASE_WINDOW_MS,
       IMAGE_LIMITS,
       imagePreparationService,
@@ -375,8 +424,7 @@ if (!process.versions.electron) {
       assert.ok(events.includes("worker-decode-failed"));
       assert.equal(selectionSettled, true);
 
-      const cancellationCutoff = deferred();
-      activeSelectionCutoff = cancellationCutoff.promise;
+      keyStateReleased = false;
       const cancellationPixels = Buffer.from([20, 80, 160, 255, 170, 60, 30, 128]);
       const cancellationPng = PNG.sync.write({ width: 2, height: 1, data: cancellationPixels });
       const cancellationItem = {
@@ -403,11 +451,23 @@ if (!process.versions.electron) {
       assert.equal(cancellationReply.requestId, "image-3");
       assert.equal(cancellationReply.type, "decoded", "cancellation gates a successful response emitted by the real decoder");
       assert.equal(selectionSettled, false, "the production selection remains pending while its real worker response is gated");
-      cancellationCutoff.resolve({ kind: "blocked", reasonCode: "selection_cancelled" });
+      const cancellationMonitor = selectionMonitors.at(-1);
+      assert.ok(cancellationMonitor, "the production key-release monitor must be installed for the selection");
+      const keyReadsBeforePoll = keyStateReadCount;
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      assert.ok(keyStateReadCount > keyReadsBeforePoll, "the production default timer performs a real event-loop key-state poll");
+      monitorEvidence.cancellationPollReads = keyStateReadCount - keyReadsBeforePoll;
+      const jobToCancel = context.nativePasteJob;
+      const cancellationQuiescent = context.cancelNativePasteJob(jobToCancel);
       phase = "wait for production selection cancellation";
       const cancellationResult = await cancelledSelection;
       assert.deepEqual(cancellationResult, { status: "cancelled", reasonCode: "selection_cancelled" },
         `cancellation must win the preparation race; events=${events.join(",")}`);
+      assert.equal(await waitWithin(cancellationQuiescent, 2_000, "production cancellation cleanup must settle"), true);
+      assert.deepEqual(await waitWithin(cancellationMonitor.cutoff, 100, "cancellation must settle the production monitor"), {
+        kind: "blocked",
+        reasonCode: "selection_cancelled",
+      });
       const cancellationError = await waitWithin(
         cancellationDecodeRejected.promise,
         2_000,
@@ -425,12 +485,21 @@ if (!process.versions.electron) {
       assert.equal(imagePreparationService.getCacheStats().bytes, 8);
       assert.ok(events.includes("worker-response-held-cancel"));
       assert.ok(events.includes("worker-process-exit-cancel"));
+      const keyReadsAfterCancellation = keyStateReadCount;
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      assert.equal(keyStateReadCount, keyReadsAfterCancellation, "production cancellation clears the real polling timer");
+      monitorEvidence.keyReadsAfterCancellationWait = keyStateReadCount - keyReadsAfterCancellation;
+      assert.equal(context.nativePasteJob, null, "quiescent pre-registration cancellation retires the selection job");
       assert.equal(BrowserWindow.getAllWindows().length, 0);
 
-      activeSelectionCutoff = new Promise(() => {});
+      keyStateReleased = true;
       // Cancellation retired the previous process, so leave room for a cold
       // utilityProcess startup before the test-only deadline begins to win.
       context.IMAGE_LIMITS = Object.freeze({ ...IMAGE_LIMITS, contentPrepareTimeoutMs: 8_000 });
+      // Keep the existing 8000ms image-service timeout scenario isolated from
+      // the 500ms monitor; the production default timer is exercised below by
+      // the dedicated held/released cutoff integrations.
+      monitorMode = "pending";
       const timeoutPixels = Buffer.from([90, 10, 230, 255, 5, 210, 70, 255]);
       const timeoutPng = PNG.sync.write({ width: 2, height: 1, data: timeoutPixels });
       const timeoutItem = {
@@ -487,7 +556,223 @@ if (!process.versions.electron) {
       assert.ok(events.includes("worker-process-exit-timeout"));
       assert.equal(BrowserWindow.getAllWindows().length, 0);
       assert.equal(selectionSettled, true);
-      process.stdout.write("PASS: production selection/provider path covered real utilityProcess success, decode failure, cancellation, and deadline retirement; helper, clipboard, panel, and input boundaries were faked\n");
+      monitorMode = "production";
+
+      const heldCutoffPixels = Buffer.from([30, 130, 210, 255, 220, 70, 10, 255]);
+      const heldCutoffPng = PNG.sync.write({ width: 2, height: 1, data: heldCutoffPixels });
+      const heldCutoffItem = {
+        id: "worker-integration-held-cutoff-image",
+        type: "image",
+        content: `data:image/png;base64,${heldCutoffPng.toString("base64")}`,
+        preview: "截止时仍按住按键的图片预览",
+      };
+      const heldCutoffContent = heldCutoffItem.content;
+      history.push(heldCutoffItem);
+      keyStateReleased = false;
+      helperExited = false;
+      visible = true;
+      context.panelGeneration = GENERATION;
+      context.panelTarget = TARGET;
+      context.pendingPanelGeneration = null;
+      context.openingGuardUntil = 0;
+      const requestsBeforeHeldCutoff = requests.length;
+      const registerCountBeforeHeldCutoff = helperRegisterCount;
+      const effectsBeforeHeldCutoff = { ...effects };
+      selectionSettled = false;
+      const heldCutoffStartedAt = performance.now();
+      const heldCutoffSelection = context.copySelectedItem(7, true, heldCutoffItem.id, [], GENERATION, "image-held-cutoff")
+        .then((result) => { selectionSettled = true; return plain(result); });
+
+      phase = "wait for real worker response held at the key cutoff";
+      const heldCutoffReply = await waitWithin(
+        heldCutoffResponseCaptured.promise,
+        5_000,
+        "the real utilityProcess must emit its decoded response before the fake key cutoff",
+      );
+      assert.equal(heldCutoffReply.requestId, "image-5");
+      assert.equal(heldCutoffReply.type, "decoded");
+      assert.equal(selectionSettled, false, "held-at-cutoff starts with production image preparation pending");
+      assert.equal(requests.length, requestsBeforeHeldCutoff, "no helper registration occurs while snapshot preparation is pending");
+      const heldCutoffMonitor = selectionMonitors.at(-1);
+      const heldCutoffDiagnostic = selectionMonitorDiagnostics.at(-1);
+      const heldCutoffDecision = await waitWithin(
+        heldCutoffMonitor.cutoff,
+        1_500,
+        "the production default scheduler must reach its real 500ms held-key cutoff",
+      );
+      const heldCutoffElapsedMs = performance.now() - heldCutoffStartedAt;
+      assert.ok(heldCutoffElapsedMs >= SELECTION_KEY_RELEASE_WINDOW_MS - 10, "held cutoff elapsed against the real monotonic clock");
+      monitorEvidence.heldCutoffElapsedMs = Math.round(heldCutoffElapsedMs * 100) / 100;
+      const heldSample = [...heldCutoffDiagnostic.keySamples]
+        .filter((sample) => sample.at < heldCutoffDiagnostic.deadlineAt && sample.tickMs < heldCutoffDiagnostic.deadlineTickMs)
+        .at(-1);
+      monitorEvidence.heldCutoffTimerLateAtMs = Math.round((performance.now() - heldCutoffDiagnostic.deadlineAt) * 100) / 100;
+      monitorEvidence.heldCutoffLastPreCutoffSampleAgeMs = heldSample
+        ? Math.round((heldCutoffDiagnostic.deadlineAt - heldSample.at) * 100) / 100
+        : null;
+      monitorEvidence.heldCutoffLastPreCutoffSampleAgeTickMs = heldSample
+        ? heldCutoffDiagnostic.deadlineTickMs - heldSample.tickMs
+        : null;
+      assert.equal(heldCutoffDecision.kind, "blocked");
+      assert.ok(["key_held", "key_state_unavailable"].includes(heldCutoffDecision.reasonCode));
+      monitorEvidence.heldCutoffDecision = heldCutoffDecision;
+      phase = "wait for held-key cutoff cancellation and utilityProcess retirement";
+      assert.deepEqual(await waitWithin(heldCutoffSelection, 2_000, "held-at-cutoff selection must settle"), {
+        status: "blocked",
+        reasonCode: heldCutoffDecision.reasonCode,
+      });
+      const heldCutoffError = await waitWithin(
+        heldCutoffDecodeRejected.promise,
+        2_000,
+        "held-at-cutoff must abort the pending real worker request",
+      );
+      assert.equal(heldCutoffError.message, "image_cancelled");
+      await waitWithin(heldCutoffWorkerExited.promise, 5_000, "held-at-cutoff must retire the real utilityProcess");
+      const keyReadsAfterHeldCutoff = keyStateReadCount;
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      assert.equal(keyStateReadCount, keyReadsAfterHeldCutoff, "the held terminal cutoff leaves no real polling timer");
+      assert.equal(requests.length, requestsBeforeHeldCutoff, "held-at-cutoff never registers content with the helper");
+      assert.equal(helperRegisterCount, registerCountBeforeHeldCutoff);
+      assert.deepEqual(effects, effectsBeforeHeldCutoff, "held-at-cutoff has no clipboard, paste, fallback or panel effects");
+      assert.equal(heldCutoffItem.content, heldCutoffContent);
+      assert.equal(visible, true);
+      assert.equal(imagePreparationService.getCacheStats().entries, 1);
+      assert.equal(imagePreparationService.getCacheStats().bytes, 8);
+      assert.ok(events.includes("worker-response-held-held-cutoff"));
+      assert.ok(events.includes("worker-process-exit-held-cutoff"));
+
+      const releasedCutoffPixels = Buffer.from([70, 180, 15, 255, 10, 30, 225, 192]);
+      const releasedCutoffPng = PNG.sync.write({ width: 2, height: 1, data: releasedCutoffPixels });
+      const releasedCutoffItem = {
+        id: "worker-integration-released-cutoff-image",
+        type: "image",
+        content: `data:image/png;base64,${releasedCutoffPng.toString("base64")}`,
+        preview: "截止时已松开按键的图片预览",
+      };
+      const releasedCutoffContent = releasedCutoffItem.content;
+      history.push(releasedCutoffItem);
+      keyStateReleased = true;
+      helperExited = false;
+      visible = true;
+      context.panelGeneration = GENERATION;
+      context.panelTarget = TARGET;
+      context.pendingPanelGeneration = null;
+      context.openingGuardUntil = 0;
+      const requestsBeforeReleasedCutoff = requests.length;
+      const effectsBeforeReleasedCutoff = { ...effects };
+      selectionSettled = false;
+      const releasedCutoffStartedAt = performance.now();
+      const releasedCutoffSelection = context.copySelectedItem(7, true, releasedCutoffItem.id, [], GENERATION, "image-released-cutoff")
+        .then((result) => { selectionSettled = true; return plain(result); });
+
+      phase = "wait for real worker response held at the released-key cutoff";
+      const releasedCutoffReply = await waitWithin(
+        releasedCutoffResponseCaptured.promise,
+        5_000,
+        "the real utilityProcess must emit its decoded response before the released-key cutoff",
+      );
+      assert.equal(releasedCutoffReply.requestId, "image-6");
+      assert.equal(releasedCutoffReply.type, "decoded");
+      assert.equal(selectionSettled, false, "released-at-cutoff starts with production image preparation pending");
+      assert.equal(requests.length, requestsBeforeReleasedCutoff, "no helper registration occurs before gated preparation completes");
+      const releasedCutoffMonitor = selectionMonitors.at(-1);
+      const releasedCutoffDiagnostic = selectionMonitorDiagnostics.at(-1);
+      const releasedCutoffDecision = await waitWithin(
+        releasedCutoffMonitor.cutoff,
+        1_500,
+        "the production default scheduler must reach its real 500ms released-key cutoff",
+      );
+      const releasedCutoffElapsedMs = performance.now() - releasedCutoffStartedAt;
+      assert.ok(releasedCutoffElapsedMs >= SELECTION_KEY_RELEASE_WINDOW_MS - 10, "released cutoff elapsed against the real monotonic clock");
+      monitorEvidence.releasedCutoffElapsedMs = Math.round(releasedCutoffElapsedMs * 100) / 100;
+      const releasedSample = [...releasedCutoffDiagnostic.keySamples]
+        .filter((sample) => sample.at < releasedCutoffDiagnostic.deadlineAt && sample.tickMs < releasedCutoffDiagnostic.deadlineTickMs)
+        .at(-1);
+      monitorEvidence.releasedCutoffTimerLateAtMs = Math.round((performance.now() - releasedCutoffDiagnostic.deadlineAt) * 100) / 100;
+      monitorEvidence.releasedCutoffLastPreCutoffSampleAgeMs = releasedSample
+        ? Math.round((releasedCutoffDiagnostic.deadlineAt - releasedSample.at) * 100) / 100
+        : null;
+      monitorEvidence.releasedCutoffLastPreCutoffSampleAgeTickMs = releasedSample
+        ? releasedCutoffDiagnostic.deadlineTickMs - releasedSample.tickMs
+        : null;
+      monitorEvidence.releasedCutoffDecision = releasedCutoffDecision;
+      assert.ok(
+        (releasedCutoffDecision.kind === "continue" && releasedCutoffDecision.operationBudgetMs === SELECTION_KEY_RELEASE_WINDOW_MS) ||
+        (releasedCutoffDecision.kind === "blocked" && releasedCutoffDecision.reasonCode === "key_state_unavailable"),
+        "a late production timer must fail closed; otherwise a released key continues",
+      );
+      let zeroBudgetCommit = null;
+      if (releasedCutoffDecision.kind === "continue") {
+        assert.equal(selectionSettled, false, "released-at-cutoff keeps waiting for the gated image preparation");
+        assert.equal(requests.length, requestsBeforeReleasedCutoff, "the helper is untouched while released preparation remains pending");
+        assert.deepEqual(effects, effectsBeforeReleasedCutoff);
+        assert.ok(!events.includes("worker-decode-failed-released-cutoff"), "the released cutoff does not abort the pending worker response");
+        assert.ok(!events.includes("worker-process-exit-released-cutoff"), "the released cutoff keeps the worker alive");
+
+        releaseCutoffWorkerResponse.resolve();
+        phase = "wait for released-cutoff preparation and continuation";
+        assert.deepEqual(await waitWithin(releasedCutoffSelection, 5_000, "released-at-cutoff selection must continue after preparation"), {
+          status: "input_submitted",
+        });
+        assert.equal(selectionSettled, true);
+        assert.equal(imagePreparationService.getCacheStats().entries, 2, "released preparation completes and admits its decoded cache entry");
+        assert.equal(imagePreparationService.getCacheStats().bytes, 16);
+        assert.equal(releasedCutoffItem.content, releasedCutoffContent);
+        assert.deepEqual(requests.slice(requestsBeforeReleasedCutoff).map((request) => request.kind), [
+          "register_content", "prepare", "commit_write", "paste",
+        ]);
+        zeroBudgetCommit = requests.slice(requestsBeforeReleasedCutoff).find((request) => request.kind === "commit_write");
+        assert.equal(zeroBudgetCommit.selectionBudgetMs, 0, "main passes zero after preparation completes at the original cutoff");
+        assert.equal("selectionDeadlineTickMs" in zeroBudgetCommit, false, "an expired cutoff does not restart its absolute deadline");
+        assert.equal(requests.slice(requestsBeforeReleasedCutoff).some((request) => request.kind === "cancel"), false,
+          "released-at-cutoff continuation does not invoke helper cancellation");
+        assert.deepEqual({
+          clipboardCommits: effects.clipboardCommits - effectsBeforeReleasedCutoff.clipboardCommits,
+          pasteRequests: effects.pasteRequests - effectsBeforeReleasedCutoff.pasteRequests,
+          fallbackWrites: effects.fallbackWrites - effectsBeforeReleasedCutoff.fallbackWrites,
+          panelHides: effects.panelHides - effectsBeforeReleasedCutoff.panelHides,
+        }, { clipboardCommits: 1, pasteRequests: 1, fallbackWrites: 0, panelHides: 1 },
+        "only fake protocol/window boundaries acknowledge the eventual continuation");
+        assert.ok(events.includes("worker-response-released-released-cutoff"));
+        assert.ok(!events.includes("worker-decode-failed-released-cutoff"));
+      } else {
+        phase = "wait for real-timer late-cutoff fail-closed cancellation";
+        assert.deepEqual(await waitWithin(releasedCutoffSelection, 2_000, "late released cutoff must fail closed"), {
+          status: "blocked",
+          reasonCode: "key_state_unavailable",
+        });
+        const releasedCutoffError = await waitWithin(
+          releasedCutoffDecodeRejected.promise,
+          2_000,
+          "late released cutoff must abort its pending real worker request",
+        );
+        assert.equal(releasedCutoffError.message, "image_cancelled");
+        await waitWithin(releasedCutoffWorkerExited.promise, 5_000, "late released cutoff must retire its utilityProcess");
+        assert.equal(requests.length, requestsBeforeReleasedCutoff, "late cutoff fails closed before helper registration");
+        assert.deepEqual(effects, effectsBeforeReleasedCutoff);
+        assert.equal(imagePreparationService.getCacheStats().entries, 1);
+        assert.equal(imagePreparationService.getCacheStats().bytes, 8);
+        assert.equal(releasedCutoffItem.content, releasedCutoffContent);
+      }
+      monitorEvidence.releasedCutoffContinued = releasedCutoffDecision.kind === "continue";
+      const keyReadsAfterReleasedCompletion = keyStateReadCount;
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      assert.equal(keyStateReadCount, keyReadsAfterReleasedCompletion, "terminal completion leaves no real selection-monitor poll scheduled");
+      monitorEvidence.keyReadsAfterReleasedCompletionWait = keyStateReadCount - keyReadsAfterReleasedCompletion;
+      assert.equal(BrowserWindow.getAllWindows().length, 0);
+      process.stdout.write(`${JSON.stringify({
+        result: monitorEvidence.releasedCutoffContinued ? "PASS" : "PASS_WITH_LIMITATIONS",
+        platform: `${process.platform}-${process.arch}`,
+        electron: process.versions.electron,
+        electronProcessType: process.type,
+        utilityProcessDecodeCount: realWorkerDecodeCount,
+        productionMonitor: monitorEvidence,
+        releasedCutoffSelectionBudgetMs: zeroBudgetCommit?.selectionBudgetMs ?? null,
+        helperClipboardPanelAndInputBoundaries: "faked",
+        browserWindowCreated: false,
+        systemClipboardReadOrWritten: false,
+        physicalInputSent: false,
+      })}\n`);
     } finally {
       releasePreparationResponse.resolve();
       await selection.catch(() => undefined);

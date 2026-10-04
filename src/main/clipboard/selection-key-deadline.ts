@@ -63,7 +63,7 @@ export async function raceSelectionPreparation<T>(input: {
 
 export type SelectionKeyReleaseScheduler = (callback: () => void, delayMs: number) => () => void;
 
-/** Starts at selection time and latches key_held at the original absolute cutoff. */
+/** Starts at selection time and latches the freshest pre-cutoff key sample. */
 export function startSelectionKeyReleaseMonitor(input: {
   readonly selectionDeadlineAt: number;
   readonly selectionDeadlineTickMs: number;
@@ -77,7 +77,7 @@ export function startSelectionKeyReleaseMonitor(input: {
     const timer = setTimeout(callback, milliseconds);
     return () => clearTimeout(timer);
   });
-  let latestKeysReleased: boolean | null = null;
+  let latestKeySample: { readonly keysReleased: boolean; readonly at: number; readonly tickMs: number } | null = null;
   let terminalDecision: SelectionKeyReleaseDecision | null = null;
   let timerCancel: (() => void) | null = null;
   let cancelled = false;
@@ -95,7 +95,7 @@ export function startSelectionKeyReleaseMonitor(input: {
     waiters.clear();
   };
 
-  const remainingMs = (): number | null => {
+  const readClock = (): { readonly at: number; readonly tickMs: number } | null => {
     const nowAt = input.nowAt();
     const nowTickMs = input.nowTickMs();
     if (
@@ -105,7 +105,13 @@ export function startSelectionKeyReleaseMonitor(input: {
       nowTickMs === null ||
       !Number.isSafeInteger(nowTickMs)
     ) return null;
-    return Math.min(input.selectionDeadlineAt - nowAt, input.selectionDeadlineTickMs - nowTickMs);
+    return { at: nowAt, tickMs: nowTickMs };
+  };
+
+  const remainingMs = (): number | null => {
+    const now = readClock();
+    if (!now) return null;
+    return Math.min(input.selectionDeadlineAt - now.at, input.selectionDeadlineTickMs - now.tickMs);
   };
 
   const continueWaiters = (): void => {
@@ -118,21 +124,45 @@ export function startSelectionKeyReleaseMonitor(input: {
   };
 
   const cutoffDecision = (): SelectionKeyReleaseDecision => {
-    const nowAt = input.nowAt();
-    const nowTickMs = input.nowTickMs();
-    const clockValid = Number.isFinite(nowAt) && nowTickMs !== null && Number.isSafeInteger(nowTickMs);
-    if (!clockValid) return { kind: "blocked", reasonCode: "selection_clock_unavailable" };
-    // If polling resumes after either absolute deadline, the last snapshot
-    // cannot prove the key state at the cutoff, so fail closed.
-    if (nowAt > input.selectionDeadlineAt || nowTickMs! > input.selectionDeadlineTickMs) {
+    const now = readClock();
+    if (!now) return { kind: "blocked", reasonCode: "selection_clock_unavailable" };
+    const lateAtMs = now.at - input.selectionDeadlineAt;
+    const lateTickMs = now.tickMs - input.selectionDeadlineTickMs;
+    if (lateAtMs > KEY_STATE_POLL_INTERVAL_MS || lateTickMs > KEY_STATE_POLL_INTERVAL_MS) {
       return { kind: "blocked", reasonCode: "key_state_unavailable" };
     }
-    const keysReleased = input.keysReleased();
-    if (keysReleased === null) return { kind: "blocked", reasonCode: "key_state_unavailable" };
-    latestKeysReleased = keysReleased;
-    return latestKeysReleased
+    const sample = latestKeySample;
+    if (
+      !sample ||
+      sample.at >= input.selectionDeadlineAt ||
+      sample.tickMs >= input.selectionDeadlineTickMs ||
+      input.selectionDeadlineAt - sample.at > KEY_STATE_POLL_INTERVAL_MS ||
+      input.selectionDeadlineTickMs - sample.tickMs > KEY_STATE_POLL_INTERVAL_MS
+    ) return { kind: "blocked", reasonCode: "key_state_unavailable" };
+    return sample.keysReleased
       ? { kind: "continue", operationBudgetMs: SELECTION_KEY_RELEASE_WINDOW_MS }
       : { kind: "blocked", reasonCode: "key_held" };
+  };
+
+  const sampleKeysBeforeCutoff = ():
+    | { readonly kind: "sample"; readonly keysReleased: boolean }
+    | { readonly kind: "cutoff" }
+    | { readonly kind: "blocked"; readonly reasonCode: "key_state_unavailable" | "selection_clock_unavailable" } => {
+    const before = readClock();
+    if (!before) return { kind: "blocked", reasonCode: "selection_clock_unavailable" };
+    if (before.at >= input.selectionDeadlineAt || before.tickMs >= input.selectionDeadlineTickMs) {
+      return { kind: "cutoff" };
+    }
+    const keysReleased = input.keysReleased();
+    const after = readClock();
+    if (!after) return { kind: "blocked", reasonCode: "selection_clock_unavailable" };
+    if (keysReleased === null) return { kind: "blocked", reasonCode: "key_state_unavailable" };
+    // A key query that straddles the deadline is not a proven pre-cutoff sample.
+    if (after.at >= input.selectionDeadlineAt || after.tickMs >= input.selectionDeadlineTickMs) {
+      return { kind: "cutoff" };
+    }
+    latestKeySample = { keysReleased, at: after.at, tickMs: after.tickMs };
+    return { kind: "sample", keysReleased };
   };
 
   const poll = (): void => {
@@ -152,14 +182,26 @@ export function startSelectionKeyReleaseMonitor(input: {
       finish(cutoffDecision());
       return;
     }
-    const keysReleased = input.keysReleased();
-    if (keysReleased === null) {
-      finish({ kind: "blocked", reasonCode: "key_state_unavailable" });
+    const sample = sampleKeysBeforeCutoff();
+    if (sample.kind === "blocked") {
+      finish({ kind: "blocked", reasonCode: sample.reasonCode });
       return;
     }
-    latestKeysReleased = keysReleased;
-    if (keysReleased) continueWaiters();
-    timerCancel = schedule(poll, Math.max(1, Math.min(KEY_STATE_POLL_INTERVAL_MS, Math.floor(remaining))));
+    if (sample.kind === "cutoff") {
+      finish(cutoffDecision());
+      return;
+    }
+    const remainingAfterSample = remainingMs();
+    if (remainingAfterSample === null) {
+      finish({ kind: "blocked", reasonCode: "selection_clock_unavailable" });
+      return;
+    }
+    if (remainingAfterSample <= 0) {
+      finish(cutoffDecision());
+      return;
+    }
+    if (sample.keysReleased) continueWaiters();
+    timerCancel = schedule(poll, Math.max(1, Math.min(KEY_STATE_POLL_INTERVAL_MS, Math.floor(remainingAfterSample))));
   };
 
   const waitForPreparation = (): Promise<SelectionKeyReleaseDecision> => {
@@ -177,13 +219,25 @@ export function startSelectionKeyReleaseMonitor(input: {
       finish(cutoffDecision());
       return Promise.resolve(terminalDecision!);
     }
-    const keysReleased = input.keysReleased();
-    if (keysReleased === null) {
-      finish({ kind: "blocked", reasonCode: "key_state_unavailable" });
+    const sample = sampleKeysBeforeCutoff();
+    if (sample.kind === "blocked") {
+      finish({ kind: "blocked", reasonCode: sample.reasonCode });
       return Promise.resolve(terminalDecision!);
     }
-    latestKeysReleased = keysReleased;
-    if (keysReleased) {
+    if (sample.kind === "cutoff") {
+      finish(cutoffDecision());
+      return Promise.resolve(terminalDecision!);
+    }
+    const remainingAfterSample = remainingMs();
+    if (remainingAfterSample === null) {
+      finish({ kind: "blocked", reasonCode: "selection_clock_unavailable" });
+      return Promise.resolve(terminalDecision!);
+    }
+    if (remainingAfterSample <= 0) {
+      finish(cutoffDecision());
+      return Promise.resolve(terminalDecision!);
+    }
+    if (sample.keysReleased) {
       continueWaiters();
       return Promise.resolve({
         kind: "continue",

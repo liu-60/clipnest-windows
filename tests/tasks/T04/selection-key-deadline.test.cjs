@@ -139,6 +139,103 @@ test("a poll delayed past both deadlines fails closed instead of trusting an old
   monitor.cancel();
 });
 
+test("a timer up to one poll interval late uses the fresh pre-cutoff held sample", async () => {
+  const clock = createFakeClock();
+  let keyStateReads = 0;
+  const monitor = startSelectionKeyReleaseMonitor({
+    selectionDeadlineAt: 500,
+    selectionDeadlineTickMs: 500,
+    nowAt: () => clock.now,
+    nowTickMs: () => clock.now,
+    keysReleased: () => {
+      keyStateReads += 1;
+      return clock.now >= 500; // The key is re-pressed after the cutoff.
+    },
+    schedule: clock.schedule,
+  });
+
+  clock.advanceTo(495);
+  const preCutoffReads = keyStateReads;
+  clock.jumpTo(503);
+
+  assert.deepEqual(await monitor.cutoff, { kind: "blocked", reasonCode: "key_held" });
+  assert.equal(keyStateReads, preCutoffReads, "the cutoff does not sample a post-deadline release");
+  assert.equal(clock.pendingTimers, 0);
+  monitor.cancel();
+});
+
+test("a timer up to one poll interval late accepts a fresh pre-cutoff released sample", async () => {
+  const clock = createFakeClock();
+  let keyStateReads = 0;
+  const monitor = startSelectionKeyReleaseMonitor({
+    selectionDeadlineAt: 500,
+    selectionDeadlineTickMs: 500,
+    nowAt: () => clock.now,
+    nowTickMs: () => clock.now,
+    keysReleased: () => {
+      keyStateReads += 1;
+      return clock.now < 500; // A post-deadline re-press cannot rewrite the sample.
+    },
+    schedule: clock.schedule,
+  });
+
+  clock.advanceTo(495);
+  const preCutoffReads = keyStateReads;
+  clock.jumpTo(503);
+
+  assert.deepEqual(await monitor.cutoff, {
+    kind: "continue",
+    operationBudgetMs: SELECTION_KEY_RELEASE_WINDOW_MS,
+  });
+  assert.equal(keyStateReads, preCutoffReads, "the cutoff does not sample a post-deadline re-press");
+  assert.equal(clock.pendingTimers, 0);
+  monitor.cancel();
+});
+
+test("a fresh sample cannot compensate for a timer more than one poll interval late", async () => {
+  const clock = createFakeClock();
+  let keyStateReads = 0;
+  const monitor = startSelectionKeyReleaseMonitor({
+    selectionDeadlineAt: 500,
+    selectionDeadlineTickMs: 500,
+    nowAt: () => clock.now,
+    nowTickMs: () => clock.now,
+    keysReleased: () => { keyStateReads += 1; return true; },
+    schedule: clock.schedule,
+  });
+
+  clock.advanceTo(495);
+  const readsBeforeLateCutoff = keyStateReads;
+  clock.jumpTo(506);
+
+  assert.deepEqual(await monitor.cutoff, { kind: "blocked", reasonCode: "key_state_unavailable" });
+  assert.equal(keyStateReads, readsBeforeLateCutoff);
+  assert.equal(clock.pendingTimers, 0);
+  monitor.cancel();
+});
+
+test("a pre-cutoff sample older than one poll interval is not reused", async () => {
+  const clock = createFakeClock();
+  let keyStateReads = 0;
+  const monitor = startSelectionKeyReleaseMonitor({
+    selectionDeadlineAt: 500,
+    selectionDeadlineTickMs: 500,
+    nowAt: () => clock.now,
+    nowTickMs: () => clock.now,
+    keysReleased: () => { keyStateReads += 1; return true; },
+    schedule: clock.schedule,
+  });
+
+  clock.jumpTo(493);
+  const readsBeforeCutoff = keyStateReads;
+  clock.jumpTo(503);
+
+  assert.deepEqual(await monitor.cutoff, { kind: "blocked", reasonCode: "key_state_unavailable" });
+  assert.equal(keyStateReads, readsBeforeCutoff);
+  assert.equal(clock.pendingTimers, 0);
+  monitor.cancel();
+});
+
 test("keys released before 500ms allow preparation to finish at 2500ms", async () => {
   const preparationMs = 2_500;
   assert.ok(preparationMs > SELECTION_KEY_RELEASE_WINDOW_MS);

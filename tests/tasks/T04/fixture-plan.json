@@ -386,6 +386,10 @@
       "assert": [
         "the pending monitor wait resolves selection_cancelled",
         "the timer is cleared and no clipboard, input, or panel-hide effect occurs"
+      ],
+      "evidence": [
+        "tests/tasks/T04/selection-key-deadline.test.cjs: cancellation clears the monitor timer",
+        "docs/evidence/T04/selection-key-monitor-utility-integration.json: production monitor cancellation aborts a pending real utilityProcess request and observes process exit; helper and OS boundaries remain fake"
       ]
     },
     {
@@ -400,6 +404,9 @@
         "the missed cutoff returns key_state_unavailable instead of trusting the stale released sample",
         "no clipboard write, input submission, or panel hide occurs",
         "this fake scheduler case does not establish behavior under a real main-process event-loop stall"
+      ],
+      "evidence": [
+        "tests/tasks/T04/selection-key-deadline.test.cjs: late callback and stale pre-cutoff key sample fail closed"
       ]
     },
     {
@@ -416,6 +423,11 @@
         "the blocked result causes zero clipboard writes, input submissions, and panel hides; no helper registration request is made while snapshot preparation is pending",
         "released-at-cutoff continues waiting for preparation and does not invoke cancellation",
         "both terminal paths clear the monitor timer"
+      ],
+      "evidence": [
+        "tests/tasks/T04/selection-key-deadline.test.cjs: exact-cutoff latch, fresh pre-cutoff samples, jitter, stale samples, and delayed-callback boundaries",
+        "docs/evidence/T04/selection-key-monitor-utility-integration.json: production default timer I10 scenarios fail closed on stale samples; released cutoff and zero-budget path remain NOT_CLOSED",
+        "Independent review: a released sample up to 5 ms before cutoff cannot exclude a re-press held through cutoff; polling-only state has no transition timestamp, so exact held-at-cutoff remains a P1 open gate"
       ]
     },
     {
