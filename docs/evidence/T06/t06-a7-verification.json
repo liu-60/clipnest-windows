@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "T06-a7",
+  "result": "PASS_MANIFEST_DISCOVERY_ONLY",
+  "recordedDate": "2026-10-05",
+  "worktree": {
+    "path": "D:/ClipNest-work/v2",
+    "branch": "codex/v2-clipboard",
+    "baseCommit": "20fcd72fa40ba2c1881a44a96f1d23435acef5dd",
+    "taskStatus": "T06 remains in progress and is not accepted."
+  },
+  "scope": {
+    "checks": [
+      "pnpm-workspace.yaml contains the required apps/* and packages/* globs",
+      "each discovered workspace directory has a parseable package.json and a non-empty name",
+      "discovered package names are unique"
+    ],
+    "implementation": "Node.js built-in modules only; read-only",
+    "dependenciesAdded": false,
+    "manifestOrLockfileChanged": false
+  },
+  "validation": [
+    {
+      "command": "node scripts/check-pnpm-workspace-manifests.cjs",
+      "status": "PASS",
+      "exitCode": 0,
+      "observed": {
+        "globs": ["apps/*", "packages/*"],
+        "packages": [
+          {"name": "clipnest", "manifest": "package.json", "private": true},
+          {"name": "@clipnest/contracts", "manifest": "packages/contracts/package.json", "private": true}
+        ]
+      }
+    },
+    {
+      "command": "pnpm -r list --depth -1 --json",
+      "status": "PASS",
+      "exitCode": 0,
+      "scope": "pnpm workspace package discovery metadata only"
+    }
+  ],
+  "limitations": [
+    "The checker supports only the current simple apps/* and packages/* glob form; unsupported YAML/glob syntax fails explicitly.",
+    "This evidence does not verify package dependency closure, lockfile integrity, TypeScript types, builds, Cargo metadata, app behavior, or platform behavior.",
+    "No tests, production build, network service, live profile, or user content were used."
+  ],
+  "openGates": [
+    "T06 dependency/license and platform toolchain gates remain open.",
+    "T06-b canonical schemas and generators and T06-c full validation scripts/CI remain unimplemented.",
+    "Full T06 acceptance and required independent adversarial review remain pending."
+  ]
+}

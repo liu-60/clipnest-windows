@@ -68,7 +68,8 @@
         "docs/evidence/T06/quicktype-tarball-audit.json",
         "docs/evidence/T06/quicktype-tarball-review.json",
         "docs/evidence/T06/schema-fixture-plan-review.json",
-        "docs/evidence/T06/t06-a6-readiness.json"
+        "docs/evidence/T06/t06-a6-readiness.json",
+        "docs/evidence/T06/t06-a7-verification.json"
       ],
       "openGates": [
         "Mobile/server, desktop/web, Tauri Windows target, and schema-tool dependency research is recorded. Zod/Ajv candidate runtime-license closure is statically surveyed and independently reviewed, but no toolchain/package is selected; verify final pnpm resolution/notices and fast-uri >=3.1.8 when locking. Quicktype npm pages confirm v26.0.0 identity/license/direct-dependency counts and release CI explains the source tag's 24.0.0 manifest, but exact tarball integrity/files and recursive licenses remain unavailable: registry requests failed TLS and auto-review rejected the proposed unpkg route, so no alternate mirror was used. No new package candidates have been installed, selected, or frozen for T06 apps/contracts; complete license and platform-optional review before freezing third-party resolutions. The current Rust GNU target is unsupported by Tauri's Windows support policy; use a separate MSVC target for Tauri and validate it in the Windows PoC before app dependencies/configuration are locked.",
@@ -76,7 +77,7 @@
         "T06-a2 clipnest-contracts, T06-a3 clipnest-core, T06-a4 clipnest-platform-windows, and T06-a5 clipnest-platform-macos are zero-dependency crate entry skeletons; offline metadata/workspace build passed, but these slices report 0 unit/doc tests and no platform behavior. Buildable app entries, Tauri/Expo configuration, module registration, and truthful FEATURE_NOT_ENABLED results remain unimplemented. packages/domain is intentionally not scaffolded: its package name is not frozen, no independent TypeScript compiler is available in the workspace, and an empty entry adds no useful interface. Current GNU-only validation does not satisfy Tauri's MSVC Windows target requirement, and does not validate macOS.",
         "T06-b canonical strict schemas, generated JSON Schema/Rust DTOs, Decimal >2^53 and strict/size fixtures, provenance, and license records remain unimplemented and NOT_RUN. Zod/quicktype/Ajv candidates are researched only; no toolchain/dialect/format plugin is selected, exact quicktype tarball metadata and transitive licenses are unaudited, and no generator has run.",
         "T06-c root validation scripts, deterministic generated-drift checks, environment template, and CI checks remain unimplemented and NOT_RUN.",
-        "Full T06 acceptance and required independent adversarial review remain pending; independent reviews of a1/a2/a3/a4/a5 slices pass with limitations but do not accept the full T06 card."
+        "Full T06 acceptance and required independent adversarial review remain pending; independent read-only slice reviews cover the combined a3/a4 entry and a5, with limitations, and do not accept the full T06 card."
       ]
     },
     "T07": {
