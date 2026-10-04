@@ -1,0 +1,91 @@
+{
+  "configVersion": 1,
+  "status": "planning-defaults-require-benchmark-validation",
+  "local": {
+    "historyDays": 30,
+    "totalBytes": 524288000,
+    "decodedImageCacheBytes": 33554432,
+    "thumbnailMaxEdgePixels": 512,
+    "webCacheBytes": 104857600,
+    "webIndexBytes": 33554432,
+    "anonymousWebSessionBytes": 33554432
+  },
+  "content": {
+    "maxTextUtf8Bytes": 2097152,
+    "maxImageBytes": 20971520,
+    "maxDecodedPixels": 16000000,
+    "maxTagsPerItem": 20,
+    "maxTagUtf8Bytes": 64,
+    "maxCollectionNameUtf8Bytes": 256,
+    "maxPreviewCharacters": 160
+  },
+  "transport": {
+    "summaryPageItems": 50,
+    "summaryPageBytes": 131072,
+    "syncBatchOperations": 50,
+    "syncBatchBytes": 1048576,
+    "inlineEncryptedPayloadBytes": 16384,
+    "inlineTextCandidateUtf8Bytes": 8192,
+    "helperFrameBytes": 65536,
+    "helperControlAckTimeoutMs": 300,
+    "panelOpeningGuardMs": 100,
+    "helperCaptureTimeoutMs": 100,
+    "helperCancelAckTimeoutMs": 50,
+    "helperReadyTimeoutMs": 5000,
+    "helperContentPrepareTimeoutMs": 3000,
+    "helperRawChunkBytes": 32768,
+    "helperBufferBytes": 262144,
+    "pasteFocusDeadlineMs": 250,
+    "pasteModifierDeadlineMs": 500,
+    "queryDebounceMs": 50,
+    "queryCancellationGeneration": true
+  },
+  "concurrency": {
+    "captureQueueItems": 64,
+    "captureWorkers": 1,
+    "imageWorkers": 1,
+    "imageWorkerPeakBytes": 268435456,
+    "databaseWriters": 1,
+    "pasteJobs": 1,
+    "attachmentUploads": 2,
+    "attachmentDownloads": 2,
+    "serverDatabasePoolPerProcess": 10
+  },
+  "cloud": {
+    "defaultEnabled": false,
+    "historyDays": 7,
+    "trialBytes": 1073741824,
+    "proCandidateBytes": 10737418240,
+    "uploadUrlSeconds": 300,
+    "downloadUrlSeconds": 60,
+    "uploadReservationSeconds": 600,
+    "trashDays": 30,
+    "versionHistoryDays": 30,
+    "offlineDeviceLeaseDays": 90,
+    "syncRetryMaxSeconds": 300,
+    "outboxSoftWarnBytes": 52428800,
+    "outboxHardLimitBytes": 209715200,
+    "snapshotTtlSeconds": 1800,
+    "snapshotMaxRows": 50000,
+    "maxLiveEntitiesPerWorkspace": 50000,
+    "maxRetiredIdsPerWorkspace": 1000000,
+    "maxVersionsPerEntity": 20,
+    "maxPendingUploadsPerWorkspace": 4,
+    "maxStoredObjectsPerWorkspace": 200000,
+    "maxOperationsPerWorkspacePerMinute": 600,
+    "operationReceiptRetentionDays": 90,
+    "keyProtocolChallengeSeconds": 300,
+    "keyProtocolMaxPendingPerAccount": 5
+  },
+  "server": {
+    "statementTimeoutMs": 2000,
+    "lockTimeoutMs": 250,
+    "snapshotStatementTimeoutMs": 2000
+  },
+  "performanceTargets": {
+    "warmWakeActionableP95Ms": 100,
+    "warmNormalTextInputSubmittedP95Ms": 150,
+    "search10000ItemsFirstPageP95Ms": 100,
+    "sameClipboardImageReencodes": 0
+  }
+}

@@ -1,0 +1,1099 @@
+{
+  "planVersion": 1,
+  "planningDate": "2026-10-03",
+  "status": "implementation-not-started",
+  "tasks": [
+    {
+      "id": "T00",
+      "title": "冻结基线与建立隔离仓库",
+      "phase": "M0",
+      "dependencies": [],
+      "repository": "baseline",
+      "risk": "high",
+      "allowedPaths": [
+        "docs/adr/**",
+        "docs/progress.json",
+        ".test-data/**",
+        "docs/evidence/T00/**",
+        "tests/tasks/T00/**",
+        "docs/spec/**"
+      ],
+      "readSections": [
+        "00",
+        "02"
+      ],
+      "validationCommands": [
+        "git status --short",
+        "pnpm --version",
+        "node --version"
+      ],
+      "status": "not_started",
+      "card": "tasks/T00.md"
+    },
+    {
+      "id": "T01",
+      "title": "L0埋点与受控基准",
+      "phase": "M0",
+      "dependencies": [
+        "T00"
+      ],
+      "repository": "l0",
+      "risk": "normal",
+      "allowedPaths": [
+        "src/main/metrics/**",
+        "src/main/main.ts",
+        "src/preload/preload.ts",
+        "src/shared/types.ts",
+        "src/renderer/App.tsx",
+        "scripts/benchmark/**",
+        "tests/**",
+        "package.json",
+        "docs/progress.json",
+        "docs/evidence/T01/**",
+        "tests/tasks/T01/**"
+      ],
+      "readSections": [
+        "04 §1/5/8",
+        "08 §4"
+      ],
+      "validationCommands": [
+        "pnpm lint",
+        "pnpm test:unit:metrics",
+        "pnpm bench:desktop -- --profile tests/tasks/T01/runtime-profile --no-input --samples 10"
+      ],
+      "status": "not_started",
+      "card": "tasks/T01.md"
+    },
+    {
+      "id": "T02",
+      "title": "常驻原生helper与提交状态机",
+      "phase": "M0",
+      "dependencies": [
+        "T01"
+      ],
+      "repository": "l0",
+      "risk": "critical",
+      "allowedPaths": [
+        "native/**",
+        "src/shared/native-contracts.ts",
+        "src/main/native/**",
+        "tests/native/**",
+        "docs/progress.json",
+        "docs/evidence/T02/**",
+        "tests/tasks/T02/**"
+      ],
+      "readSections": [
+        "04 §2—5/8"
+      ],
+      "validationCommands": [
+        "cargo test --manifest-path native/Cargo.toml",
+        "pnpm test:native -- --dry-run"
+      ],
+      "status": "not_started",
+      "card": "tasks/T02.md"
+    },
+    {
+      "id": "T03",
+      "title": "Electron接入新helper与原生授权",
+      "phase": "M0",
+      "dependencies": [
+        "T02"
+      ],
+      "repository": "l0",
+      "risk": "critical",
+      "allowedPaths": [
+        "src/main/main.ts",
+        "src/main/native/**",
+        "src/main/paste/**",
+        "src/main/window/**",
+        "src/preload/preload.ts",
+        "src/shared/types.ts",
+        "docs/progress.json",
+        "docs/evidence/T03/**",
+        "tests/tasks/T03/**"
+      ],
+      "readSections": [
+        "04 §3—5",
+        "02 §3"
+      ],
+      "validationCommands": [
+        "pnpm lint",
+        "pnpm test:unit paste",
+        "pnpm test:native -- --dry-run"
+      ],
+      "status": "not_started",
+      "card": "tasks/T03.md"
+    },
+    {
+      "id": "T04",
+      "title": "L0键盘防重与图片热路径",
+      "phase": "M0",
+      "dependencies": [
+        "T03"
+      ],
+      "repository": "l0",
+      "risk": "normal",
+      "allowedPaths": [
+        "src/renderer/App.tsx",
+        "src/renderer/styles.css",
+        "src/main/clipboard/**",
+        "src/main/main.ts",
+        "tests/renderer/**",
+        "docs/progress.json",
+        "docs/evidence/T04/**",
+        "tests/tasks/T04/**"
+      ],
+      "readSections": [
+        "01 §2",
+        "04 §6"
+      ],
+      "validationCommands": [
+        "pnpm lint",
+        "pnpm test:unit keyboard",
+        "pnpm test:unit clipboard"
+      ],
+      "status": "not_started",
+      "card": "tasks/T04.md"
+    },
+    {
+      "id": "T05",
+      "title": "L0验收与可审查发布包",
+      "phase": "M0",
+      "dependencies": [
+        "T03",
+        "T04"
+      ],
+      "repository": "l0",
+      "risk": "critical",
+      "allowedPaths": [
+        "build/**",
+        "package.json",
+        "docs/evidence/T05/**",
+        "scripts/benchmark/**",
+        "docs/progress.json",
+        "tests/tasks/T05/**"
+      ],
+      "readSections": [
+        "04 §8",
+        "08 §1/4"
+      ],
+      "validationCommands": [
+        "pnpm lint",
+        "pnpm test:unit",
+        "pnpm package:windows"
+      ],
+      "status": "not_started",
+      "card": "tasks/T05.md"
+    },
+    {
+      "id": "T06",
+      "title": "v2工作区契约与CI骨架",
+      "phase": "M1",
+      "dependencies": [
+        "T00"
+      ],
+      "repository": "v2",
+      "risk": "high",
+      "allowedPaths": [
+        "package.json",
+        "pnpm-workspace.yaml",
+        ".npmrc",
+        "Cargo.toml",
+        "rust-toolchain.toml",
+        "packages/contracts/**",
+        "crates/contracts/**",
+        "scripts/**",
+        ".github/workflows/**",
+        "docs/progress.json",
+        "docs/evidence/T06/**",
+        "tests/tasks/T06/**",
+        "pnpm-lock.yaml",
+        "Cargo.lock",
+        "tsconfig*.json",
+        ".gitignore",
+        "apps/*/package.json",
+        "apps/*/tsconfig*.json",
+        "packages/*/package.json",
+        "packages/*/tsconfig*.json",
+        "crates/*/Cargo.toml",
+        "crates/*/src/lib.rs",
+        "crates/*/src/main.rs",
+        "packages/domain/src/index.ts",
+        "packages/ui-web/src/index.ts",
+        "apps/desktop/index.html",
+        "apps/desktop/vite.config.ts",
+        "apps/desktop/src/main.tsx",
+        "apps/desktop/src/App.tsx",
+        "apps/desktop/src-tauri/Cargo.toml",
+        "apps/desktop/src-tauri/build.rs",
+        "apps/desktop/src-tauri/tauri.conf.json",
+        "apps/desktop/src-tauri/capabilities/*.json",
+        "apps/desktop/src-tauri/src/lib.rs",
+        "apps/desktop/src-tauri/src/main.rs",
+        "apps/web/index.html",
+        "apps/web/vite.config.ts",
+        "apps/web/src/main.tsx",
+        "apps/web/src/App.tsx",
+        "apps/mobile/App.tsx",
+        "apps/mobile/app.config.ts",
+        "apps/mobile/babel.config.js",
+        "apps/mobile/metro.config.js",
+        "apps/server/src/main.ts",
+        "apps/server/src/app.ts",
+        "apps/server/src/modules/index.ts",
+        "vitest.config.*",
+        "playwright.config.*",
+        ".env.example"
+      ],
+      "readSections": [
+        "02 §1—3/8",
+        "06"
+      ],
+      "validationCommands": [
+        "pnpm contracts:check",
+        "pnpm -r typecheck",
+        "cargo test -p clipnest-contracts"
+      ],
+      "status": "not_started",
+      "card": "tasks/T06.md"
+    },
+    {
+      "id": "T07",
+      "title": "SQLCipher本地仓储与对象预算",
+      "phase": "M1",
+      "dependencies": [
+        "T06"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "crates/core/src/repository/**",
+        "crates/core/src/vault/**",
+        "crates/core/migrations/**",
+        "crates/core/src/objects/**",
+        "fixtures/local/**",
+        "docs/progress.json",
+        "docs/evidence/T07/**",
+        "tests/tasks/T07/**",
+        "crates/core/src/lib.rs"
+      ],
+      "readSections": [
+        "02 §4—6",
+        "03 §5.4—6",
+        "08 §3"
+      ],
+      "validationCommands": [
+        "cargo test -p clipnest-core repository",
+        "cargo test -p clipnest-core vault"
+      ],
+      "status": "not_started",
+      "card": "tasks/T07.md"
+    },
+    {
+      "id": "T08",
+      "title": "旧数据可恢复导入",
+      "phase": "M1",
+      "dependencies": [
+        "T07"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "crates/core/src/import/**",
+        "crates/core/src/repository/import_runs.rs",
+        "apps/desktop/src/features/import/**",
+        "fixtures/legacy/**",
+        "docs/progress.json",
+        "docs/evidence/T08/**",
+        "tests/tasks/T08/**",
+        "crates/core/src/lib.rs",
+        "apps/desktop/src/App.tsx"
+      ],
+      "readSections": [
+        "00 §3",
+        "03 §2/5.5",
+        "08 §3"
+      ],
+      "validationCommands": [
+        "cargo test -p clipnest-core legacy_import",
+        "pnpm --filter @clipnest/desktop test import"
+      ],
+      "status": "not_started",
+      "card": "tasks/T08.md"
+    },
+    {
+      "id": "T09",
+      "title": "采集隐私与容量管线",
+      "phase": "M1",
+      "dependencies": [
+        "T07"
+      ],
+      "repository": "v2",
+      "risk": "high",
+      "allowedPaths": [
+        "crates/core/src/capture/**",
+        "crates/core/src/privacy/**",
+        "crates/platform-windows/src/clipboard/**",
+        "crates/core/src/limits/**",
+        "docs/progress.json",
+        "docs/evidence/T09/**",
+        "tests/tasks/T09/**",
+        "crates/core/src/lib.rs"
+      ],
+      "readSections": [
+        "02 §6/7",
+        "04 §6"
+      ],
+      "validationCommands": [
+        "cargo test -p clipnest-core capture",
+        "cargo test -p clipnest-platform-windows clipboard"
+      ],
+      "status": "not_started",
+      "card": "tasks/T09.md"
+    },
+    {
+      "id": "T10",
+      "title": "查询检索与分页API",
+      "phase": "M1",
+      "dependencies": [
+        "T07",
+        "T09"
+      ],
+      "repository": "v2",
+      "risk": "normal",
+      "allowedPaths": [
+        "crates/core/src/query/**",
+        "packages/contracts/src/query.schema.ts",
+        "fixtures/search/**",
+        "scripts/fixtures/**",
+        "docs/progress.json",
+        "docs/evidence/T10/**",
+        "tests/tasks/T10/**",
+        "crates/core/src/lib.rs"
+      ],
+      "readSections": [
+        "02 §4/5",
+        "08 §4"
+      ],
+      "validationCommands": [
+        "cargo test -p clipnest-core query",
+        "pnpm fixtures:generate -- --profile 10000-text"
+      ],
+      "status": "not_started",
+      "card": "tasks/T10.md"
+    },
+    {
+      "id": "T11",
+      "title": "Windows Tauri全链路PoC",
+      "phase": "M1",
+      "dependencies": [
+        "T05",
+        "T06",
+        "T07",
+        "T10"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "apps/desktop/src-tauri/**",
+        "crates/platform-windows/**",
+        "apps/desktop/src/adapters/**",
+        "docs/evidence/T11/**",
+        "docs/progress.json",
+        "tests/tasks/T11/**",
+        "apps/desktop/src/App.tsx"
+      ],
+      "readSections": [
+        "02 §3/7",
+        "04 §5/8"
+      ],
+      "validationCommands": [
+        "cargo test --workspace",
+        "pnpm --filter @clipnest/desktop typecheck",
+        "pnpm bench:desktop -- --profile test --no-input"
+      ],
+      "status": "not_started",
+      "card": "tasks/T11.md"
+    },
+    {
+      "id": "T12",
+      "title": "桌面正式交互与本机资料库",
+      "phase": "M1",
+      "dependencies": [
+        "T08",
+        "T10",
+        "T11"
+      ],
+      "repository": "v2",
+      "risk": "normal",
+      "allowedPaths": [
+        "apps/desktop/src/features/**",
+        "packages/ui-web/src/**",
+        "packages/domain/src/query/**",
+        "fixtures/ui/**",
+        "docs/progress.json",
+        "docs/evidence/T12/**",
+        "tests/tasks/T12/**",
+        "packages/domain/src/index.ts",
+        "packages/ui-web/src/index.ts",
+        "apps/desktop/src/App.tsx"
+      ],
+      "readSections": [
+        "01 §2/5—7",
+        "08 U01—U12"
+      ],
+      "validationCommands": [
+        "pnpm --filter @clipnest/desktop test keyboard",
+        "pnpm test:e2e -- --project desktop-renderer",
+        "pnpm -r typecheck"
+      ],
+      "status": "not_started",
+      "card": "tasks/T12.md"
+    },
+    {
+      "id": "T13",
+      "title": "macOS能力与分发验证",
+      "phase": "M1",
+      "dependencies": [
+        "T11",
+        "T12"
+      ],
+      "repository": "v2",
+      "risk": "high",
+      "allowedPaths": [
+        "crates/platform-macos/**",
+        "apps/desktop/src-tauri/capabilities/**",
+        "infra/signing/**",
+        "docs/evidence/T13/**",
+        "docs/progress.json",
+        "tests/tasks/T13/**"
+      ],
+      "readSections": [
+        "04 §7/8",
+        "01 §2"
+      ],
+      "validationCommands": [
+        "cargo test -p clipnest-platform-macos",
+        "pnpm --filter @clipnest/desktop typecheck"
+      ],
+      "status": "not_started",
+      "card": "tasks/T13.md"
+    },
+    {
+      "id": "T14",
+      "title": "账号设备与个人空间服务",
+      "phase": "M2",
+      "dependencies": [
+        "T06"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "apps/server/src/modules/auth/**",
+        "apps/server/src/modules/devices/**",
+        "apps/server/src/modules/workspaces/**",
+        "apps/server/migrations/**",
+        "packages/contracts/src/auth.schema.ts",
+        "docs/progress.json",
+        "docs/evidence/T14/**",
+        "tests/tasks/T14/**",
+        "apps/server/src/modules/index.ts"
+      ],
+      "readSections": [
+        "03 §3/5/9",
+        "07 §1"
+      ],
+      "validationCommands": [
+        "pnpm --filter @clipnest/server test auth",
+        "pnpm test:integration -- --suite tenancy"
+      ],
+      "status": "not_started",
+      "card": "tasks/T14.md"
+    },
+    {
+      "id": "T15",
+      "title": "密码封装与密钥恢复互操作",
+      "phase": "M2",
+      "dependencies": [
+        "T06",
+        "T14"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "packages/contracts/fixtures/crypto/**",
+        "packages/crypto-native/**",
+        "crates/core/src/crypto/**",
+        "apps/server/src/modules/keys/**",
+        "packages/domain/src/keys/**",
+        "docs/progress.json",
+        "docs/evidence/T15/**",
+        "tests/tasks/T15/**",
+        "crates/core/src/lib.rs",
+        "packages/domain/src/index.ts",
+        "apps/server/src/modules/index.ts"
+      ],
+      "readSections": [
+        "03 §4/5",
+        "08 §3"
+      ],
+      "validationCommands": [
+        "cargo test -p clipnest-core crypto",
+        "pnpm --filter @clipnest/crypto-native test vectors",
+        "pnpm test:integration -- --suite keys"
+      ],
+      "status": "not_started",
+      "card": "tasks/T15.md"
+    },
+    {
+      "id": "T16",
+      "title": "云CAS操作日志与租户隔离",
+      "phase": "M2",
+      "dependencies": [
+        "T14",
+        "T15"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "apps/server/src/modules/sync/**",
+        "apps/server/migrations/**",
+        "packages/contracts/src/sync.schema.ts",
+        "fixtures/sync/**",
+        "docs/progress.json",
+        "docs/evidence/T16/**",
+        "tests/tasks/T16/**",
+        "apps/server/src/modules/index.ts"
+      ],
+      "readSections": [
+        "03 §3/7.1—7.2/9"
+      ],
+      "validationCommands": [
+        "pnpm --filter @clipnest/server test sync",
+        "pnpm test:integration -- --suite sync"
+      ],
+      "status": "not_started",
+      "card": "tasks/T16.md"
+    },
+    {
+      "id": "T17",
+      "title": "桌面原子outbox与增量客户端",
+      "phase": "M2",
+      "dependencies": [
+        "T07",
+        "T15",
+        "T16"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "crates/core/src/sync/**",
+        "crates/core/src/repository/outbox.rs",
+        "fixtures/sync/**",
+        "packages/contracts/fixtures/sync/**",
+        "docs/progress.json",
+        "docs/evidence/T17/**",
+        "tests/tasks/T17/**",
+        "crates/core/src/lib.rs"
+      ],
+      "readSections": [
+        "03 §6/7"
+      ],
+      "validationCommands": [
+        "cargo test -p clipnest-core sync",
+        "pnpm test:integration -- --suite rust-sync"
+      ],
+      "status": "not_started",
+      "card": "tasks/T17.md"
+    },
+    {
+      "id": "T18",
+      "title": "云附件条件写与配额账本",
+      "phase": "M2",
+      "dependencies": [
+        "T16"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "apps/server/src/modules/attachments/**",
+        "apps/server/src/modules/usage/**",
+        "apps/server/migrations/**",
+        "infra/storage/**",
+        "fixtures/attachments/**",
+        "docs/progress.json",
+        "docs/evidence/T18/**",
+        "tests/tasks/T18/**",
+        "apps/server/src/modules/index.ts"
+      ],
+      "readSections": [
+        "03 §8",
+        "08 §3"
+      ],
+      "validationCommands": [
+        "pnpm --filter @clipnest/server test attachments",
+        "pnpm test:integration -- --suite s3-real"
+      ],
+      "status": "not_started",
+      "card": "tasks/T18.md"
+    },
+    {
+      "id": "T19",
+      "title": "快照epoch与回收worker",
+      "phase": "M2",
+      "dependencies": [
+        "T16",
+        "T18"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "apps/server/src/worker/**",
+        "apps/server/src/modules/snapshots/**",
+        "apps/server/migrations/**",
+        "fixtures/recovery/**",
+        "docs/progress.json",
+        "docs/evidence/T19/**",
+        "tests/tasks/T19/**",
+        "apps/server/src/modules/index.ts",
+        "apps/server/src/worker/index.ts"
+      ],
+      "readSections": [
+        "03 §7.3/8.3/11"
+      ],
+      "validationCommands": [
+        "pnpm --filter @clipnest/server test recovery",
+        "pnpm test:integration -- --suite snapshots-gc"
+      ],
+      "status": "not_started",
+      "card": "tasks/T19.md"
+    },
+    {
+      "id": "T20",
+      "title": "Web本地缓存与Worker检索",
+      "phase": "M2",
+      "dependencies": [
+        "T06",
+        "T15"
+      ],
+      "repository": "v2",
+      "risk": "high",
+      "allowedPaths": [
+        "apps/web/src/storage/**",
+        "apps/web/src/workers/**",
+        "apps/web/src/adapters/**",
+        "fixtures/web/**",
+        "docs/progress.json",
+        "docs/evidence/T20/**",
+        "tests/tasks/T20/**",
+        "apps/web/src/App.tsx"
+      ],
+      "readSections": [
+        "02 §4/5/7",
+        "03 §5.4/6",
+        "01 §4"
+      ],
+      "validationCommands": [
+        "pnpm --filter @clipnest/web test storage",
+        "pnpm --filter @clipnest/web test search"
+      ],
+      "status": "not_started",
+      "card": "tasks/T20.md"
+    },
+    {
+      "id": "T21",
+      "title": "Web完整资料库与TS同步引擎",
+      "phase": "M2",
+      "dependencies": [
+        "T14",
+        "T17",
+        "T19",
+        "T20"
+      ],
+      "repository": "v2",
+      "risk": "high",
+      "allowedPaths": [
+        "apps/web/src/features/**",
+        "packages/domain/src/sync/**",
+        "packages/ui-web/src/**",
+        "fixtures/ui/**",
+        "docs/progress.json",
+        "docs/evidence/T21/**",
+        "tests/tasks/T21/**",
+        "packages/domain/src/index.ts",
+        "packages/ui-web/src/index.ts",
+        "apps/web/src/App.tsx"
+      ],
+      "readSections": [
+        "01 §4—7",
+        "03 §5—7",
+        "08 U01—U12"
+      ],
+      "validationCommands": [
+        "pnpm --filter @clipnest/web test",
+        "pnpm test:e2e -- --project web",
+        "pnpm test:integration -- --suite web-sync"
+      ],
+      "status": "not_started",
+      "card": "tasks/T21.md"
+    },
+    {
+      "id": "T22",
+      "title": "Expo工程与手机本地仓储",
+      "phase": "M3",
+      "dependencies": [
+        "T06",
+        "T07"
+      ],
+      "repository": "v2",
+      "risk": "high",
+      "allowedPaths": [
+        "apps/mobile/**",
+        "packages/domain/src/repository/**",
+        "fixtures/mobile/**",
+        "docs/progress.json",
+        "docs/evidence/T22/**",
+        "tests/tasks/T22/**",
+        "packages/domain/src/index.ts"
+      ],
+      "readSections": [
+        "02 §1/7/8",
+        "03 §5.4—6"
+      ],
+      "validationCommands": [
+        "pnpm --filter @clipnest/mobile typecheck",
+        "pnpm --filter @clipnest/mobile exec expo install --check",
+        "pnpm --filter @clipnest/mobile test repository"
+      ],
+      "status": "not_started",
+      "card": "tasks/T22.md"
+    },
+    {
+      "id": "T23",
+      "title": "手机主动导入分享与密钥集成",
+      "phase": "M3",
+      "dependencies": [
+        "T15",
+        "T22"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "apps/mobile/src/features/**",
+        "apps/mobile/modules/**",
+        "apps/mobile/plugins/**",
+        "packages/crypto-native/**",
+        "fixtures/mobile/**",
+        "docs/progress.json",
+        "docs/evidence/T23/**",
+        "tests/tasks/T23/**",
+        "apps/mobile/App.tsx"
+      ],
+      "readSections": [
+        "01 §3/5",
+        "03 §5.4—5.5",
+        "08 §2/3"
+      ],
+      "validationCommands": [
+        "pnpm --filter @clipnest/mobile test import",
+        "pnpm --filter @clipnest/crypto-native test vectors",
+        "pnpm --filter @clipnest/mobile typecheck"
+      ],
+      "status": "not_started",
+      "card": "tasks/T23.md"
+    },
+    {
+      "id": "T24",
+      "title": "手机同步与离线复用闭环",
+      "phase": "M3",
+      "dependencies": [
+        "T21",
+        "T23"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "apps/mobile/src/adapters/sync/**",
+        "apps/mobile/src/features/sync/**",
+        "packages/domain/src/sync/**",
+        "fixtures/mobile/**",
+        "docs/progress.json",
+        "docs/evidence/T24/**",
+        "tests/tasks/T24/**",
+        "packages/domain/src/index.ts",
+        "apps/mobile/App.tsx"
+      ],
+      "readSections": [
+        "03 §6/7",
+        "01 §3/5"
+      ],
+      "validationCommands": [
+        "pnpm --filter @clipnest/mobile test sync",
+        "pnpm test:integration -- --suite mobile-sync"
+      ],
+      "status": "not_started",
+      "card": "tasks/T24.md"
+    },
+    {
+      "id": "T25",
+      "title": "跨端对抗与性能发布gate",
+      "phase": "M3",
+      "dependencies": [
+        "T13",
+        "T19",
+        "T21",
+        "T24"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "fixtures/**",
+        "scripts/benchmark/**",
+        "docs/evidence/T25/**",
+        "tests/integration/**",
+        "docs/progress.json",
+        "tests/tasks/T25/**"
+      ],
+      "readSections": [
+        "08 全部",
+        "03 §10",
+        "04 §8"
+      ],
+      "validationCommands": [
+        "pnpm test:integration -- --suite full",
+        "cargo test --workspace",
+        "pnpm test:e2e -- --project web"
+      ],
+      "status": "not_started",
+      "card": "tasks/T25.md"
+    },
+    {
+      "id": "T26",
+      "title": "统一试用权益与账本投影",
+      "phase": "M4",
+      "dependencies": [
+        "T14",
+        "T18",
+        "T19"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "apps/server/src/modules/billing/**",
+        "apps/server/src/modules/usage/**",
+        "packages/contracts/src/billing.schema.ts",
+        "apps/server/migrations/**",
+        "docs/progress.json",
+        "docs/evidence/T26/**",
+        "tests/tasks/T26/**",
+        "apps/server/src/modules/index.ts"
+      ],
+      "readSections": [
+        "07 §2/3/5",
+        "08 B01—B12"
+      ],
+      "validationCommands": [
+        "pnpm --filter @clipnest/server test entitlement",
+        "pnpm test:integration -- --suite billing"
+      ],
+      "status": "not_started",
+      "card": "tasks/T26.md"
+    },
+    {
+      "id": "T27",
+      "title": "Stripe sandbox订阅与可信通知",
+      "phase": "M4",
+      "dependencies": [
+        "T26"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "apps/server/src/modules/billing/providers/stripe/**",
+        "apps/server/src/modules/billing/routes/**",
+        "apps/web/src/features/billing/**",
+        "fixtures/billing/**",
+        "docs/progress.json",
+        "docs/evidence/T27/**",
+        "tests/tasks/T27/**",
+        "apps/server/src/modules/index.ts",
+        "apps/web/src/App.tsx"
+      ],
+      "readSections": [
+        "07 §3",
+        "08 B01—B12"
+      ],
+      "validationCommands": [
+        "pnpm --filter @clipnest/server test stripe",
+        "pnpm test:integration -- --suite stripe-sandbox"
+      ],
+      "status": "not_started",
+      "card": "tasks/T27.md"
+    },
+    {
+      "id": "T28",
+      "title": "商店购买恢复与RevenueCat",
+      "phase": "M4",
+      "dependencies": [
+        "T23",
+        "T26"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "apps/mobile/src/features/billing/**",
+        "apps/mobile/src/adapters/billing/**",
+        "apps/server/src/modules/billing/providers/revenuecat/**",
+        "fixtures/billing/**",
+        "docs/progress.json",
+        "docs/evidence/T28/**",
+        "tests/tasks/T28/**",
+        "apps/server/src/modules/index.ts",
+        "apps/mobile/App.tsx"
+      ],
+      "readSections": [
+        "07 §3",
+        "08 B01—B12"
+      ],
+      "validationCommands": [
+        "pnpm --filter @clipnest/mobile test billing",
+        "pnpm --filter @clipnest/server test revenuecat"
+      ],
+      "status": "not_started",
+      "card": "tasks/T28.md"
+    },
+    {
+      "id": "T29",
+      "title": "导出删除与灾难恢复",
+      "phase": "M4",
+      "dependencies": [
+        "T08",
+        "T19",
+        "T25"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "crates/core/src/export/**",
+        "apps/server/src/modules/deletion/**",
+        "apps/server/src/worker/deletion/**",
+        "apps/mobile/src/features/data/**",
+        "apps/web/src/features/data/**",
+        "fixtures/recovery/**",
+        "docs/progress.json",
+        "docs/evidence/T29/**",
+        "tests/tasks/T29/**",
+        "crates/core/src/lib.rs",
+        "apps/server/src/modules/index.ts",
+        "apps/server/src/worker/index.ts",
+        "apps/web/src/App.tsx",
+        "apps/mobile/App.tsx"
+      ],
+      "readSections": [
+        "03 §5.5/7.3/8.3",
+        "07 §6",
+        "08 §3/5"
+      ],
+      "validationCommands": [
+        "cargo test -p clipnest-core export",
+        "pnpm test:integration -- --suite deletion-restore"
+      ],
+      "status": "not_started",
+      "card": "tasks/T29.md"
+    },
+    {
+      "id": "T30",
+      "title": "CI签名灰度与运维支持",
+      "phase": "M4",
+      "dependencies": [
+        "T25",
+        "T27",
+        "T28",
+        "T29"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        ".github/workflows/**",
+        "infra/**",
+        "apps/desktop/src/features/update/**",
+        "scripts/release/**",
+        "docs/operations/**",
+        "docs/progress.json",
+        "docs/evidence/T30/**",
+        "tests/tasks/T30/**",
+        "apps/desktop/src/App.tsx"
+      ],
+      "readSections": [
+        "07 §4—7",
+        "08 §5"
+      ],
+      "validationCommands": [
+        "pnpm -r typecheck",
+        "cargo clippy --workspace -- -D warnings",
+        "pnpm release:check"
+      ],
+      "status": "not_started",
+      "card": "tasks/T30.md"
+    },
+    {
+      "id": "T31",
+      "title": "个人商业版上线验收",
+      "phase": "M4",
+      "dependencies": [
+        "T25",
+        "T27",
+        "T28",
+        "T29",
+        "T30"
+      ],
+      "repository": "v2",
+      "risk": "critical",
+      "allowedPaths": [
+        "docs/evidence/T31/**",
+        "docs/launch/**",
+        "infra/environments/production/**",
+        "docs/progress.json",
+        "tests/tasks/T31/**"
+      ],
+      "readSections": [
+        "00 §4—7",
+        "07 全部",
+        "08 全部"
+      ],
+      "validationCommands": [
+        "pnpm release:check",
+        "pnpm test:integration -- --suite launch"
+      ],
+      "status": "not_started",
+      "card": "tasks/T31.md"
+    },
+    {
+      "id": "T32",
+      "title": "团队版设计预研",
+      "phase": "M5",
+      "dependencies": [
+        "T31"
+      ],
+      "repository": "v2",
+      "risk": "high",
+      "allowedPaths": [
+        "docs/team/**",
+        "packages/contracts/fixtures/team/**",
+        "docs/progress.json",
+        "docs/evidence/T32/**",
+        "tests/tasks/T32/**"
+      ],
+      "readSections": [
+        "00 §6",
+        "07 §7",
+        "03 §1/2"
+      ],
+      "validationCommands": [
+        "检查设计/fixture相互一致；本卡无生产构建命令"
+      ],
+      "status": "not_started",
+      "card": "tasks/T32.md"
+    }
+  ]
+}
