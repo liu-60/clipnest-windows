@@ -1,0 +1,479 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ClipNest T05 execution report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "task",
+    "runId",
+    "status",
+    "source",
+    "dependencyGate",
+    "environment",
+    "cases",
+    "g0Runtime",
+    "measurements",
+    "packageAndRollback",
+    "notRun"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "task": { "const": "T05" },
+    "runId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "status": { "enum": ["PASS", "FAIL", "REVIEW", "NOT_RUN"] },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit", "branch", "workingTreeWasDirty"],
+      "properties": {
+        "commit": { "type": ["string", "null"] },
+        "branch": { "type": "string" },
+        "workingTreeWasDirty": { "type": "boolean" }
+      }
+    },
+    "dependencyGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["T03", "T04"],
+      "properties": {
+        "T03": { "enum": ["accepted", "review", "in_progress", "not_started"] },
+        "T04": { "enum": ["accepted", "review", "in_progress", "not_started"] }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["platform", "osVersion", "architecture", "buildMode", "dataProfile", "datasetSeed", "displayConfiguration", "powerMode", "networkCondition", "cacheState"],
+      "properties": {
+        "platform": { "type": "string" },
+        "osVersion": { "type": ["string", "null"] },
+        "architecture": { "enum": ["x64", "other"] },
+        "buildMode": { "enum": ["debug", "release", "packaged"] },
+        "dataProfile": { "const": "isolated_synthetic" },
+        "datasetSeed": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "displayConfiguration": { "type": ["string", "null"] },
+        "powerMode": { "type": ["string", "null"] },
+        "networkCondition": { "type": ["string", "null"] },
+        "cacheState": { "enum": ["cold", "warm", "mixed", "not_applicable"] }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 28,
+      "maxItems": 28,
+      "description": "必须且只能包含 P01-P28 各一次。",
+      "allOf": [
+        { "contains": { "type": "object", "properties": { "id": { "const": "P01" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P02" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P03" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P04" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P05" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P06" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P07" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P08" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P09" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P10" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P11" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P12" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P13" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P14" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P15" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P16" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P17" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P18" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P19" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P20" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P21" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P22" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P23" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P24" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P25" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P26" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P27" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "id": { "const": "P28" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 }
+      ],
+      "items": { "$ref": "#/$defs/caseResult" }
+    },
+    "g0Runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["noInteractiveBlockingSpawnSync", "noHelperProcessPerInteraction"],
+      "properties": {
+        "noInteractiveBlockingSpawnSync": { "$ref": "#/$defs/checkResult" },
+        "noHelperProcessPerInteraction": { "$ref": "#/$defs/checkResult" }
+      }
+    },
+    "measurements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["normalText", "wakeToActionable"],
+      "properties": {
+        "normalText": {
+          "allOf": [
+            { "$ref": "#/$defs/measurement" },
+            {
+              "if": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+              "then": {
+                "properties": {
+                  "p95Ms": { "type": "number", "exclusiveMaximum": 150 },
+                  "textAppearanceIndependentlyVerified": { "const": true }
+                },
+                "required": ["p95Ms", "textAppearanceIndependentlyVerified"]
+              }
+            }
+          ]
+        },
+        "wakeToActionable": {
+          "allOf": [
+            { "$ref": "#/$defs/measurement" },
+            { "if": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] }, "then": { "properties": { "p95Ms": { "type": "number", "exclusiveMaximum": 100 } } } }
+          ]
+        }
+      }
+    },
+    "packageAndRollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["localPackage", "helperResource", "lifecycle", "rollback", "dataCompatibility", "autoPaste", "evidence", "publication"],
+  "properties": {
+        "localPackage": { "$ref": "#/$defs/checkResult" },
+        "helperResource": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["result", "expectedPath", "actualPath", "expectedVersion", "actualVersion", "expectedProtocol", "actualProtocol", "expectedSha256", "actualSha256", "identityMatched", "signatureStatus", "evidence"],
+          "allOf": [
+            {
+              "if": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
+              "then": {
+                "properties": {
+                  "expectedPath": { "type": "string", "minLength": 1 },
+                  "actualPath": { "type": "string", "minLength": 1 },
+                  "expectedVersion": { "type": "string", "minLength": 1 },
+                  "actualVersion": { "type": "string", "minLength": 1 },
+                  "expectedProtocol": { "type": "string", "minLength": 1 },
+                  "actualProtocol": { "type": "string", "minLength": 1 },
+                  "expectedSha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+                  "actualSha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+                  "identityMatched": { "const": true },
+                  "signatureStatus": { "enum": ["valid", "unsigned"] },
+                  "evidence": { "minItems": 1 }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "result": { "enum": ["PASS", "FAIL", "NOT_RUN", "BLOCKED"] },
+            "expectedPath": { "type": ["string", "null"] },
+            "actualPath": { "type": ["string", "null"] },
+            "expectedVersion": { "type": ["string", "null"] },
+            "actualVersion": { "type": ["string", "null"] },
+            "expectedProtocol": { "type": ["string", "null"] },
+            "actualProtocol": { "type": ["string", "null"] },
+            "expectedSha256": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" },
+            "actualSha256": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" },
+            "identityMatched": { "type": "boolean" },
+            "signatureStatus": { "enum": ["valid", "invalid", "unsigned", "not_checked"] },
+            "evidence": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+          }
+        },
+        "lifecycle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["coldStart", "trayAvailability", "appRestart", "normalExit", "helperShutdown"],
+          "properties": {
+            "coldStart": { "$ref": "#/$defs/checkResult" },
+            "trayAvailability": { "$ref": "#/$defs/checkResult" },
+            "appRestart": { "$ref": "#/$defs/checkResult" },
+            "normalExit": { "$ref": "#/$defs/checkResult" },
+            "helperShutdown": { "$ref": "#/$defs/checkResult" }
+          }
+        },
+        "rollback": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["result", "priorVersion", "priorSha256", "rollbackVersion", "rollbackSha256", "identityMatched", "signatureStatus", "helperBinaryOnly", "evidence"],
+          "allOf": [
+            {
+              "if": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
+              "then": {
+                "properties": {
+                  "priorVersion": { "type": "string", "minLength": 1 },
+                  "priorSha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+                  "rollbackVersion": { "type": "string", "minLength": 1 },
+                  "rollbackSha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+                  "identityMatched": { "const": true },
+                  "signatureStatus": { "enum": ["valid", "unsigned"] },
+                  "helperBinaryOnly": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
+                  "evidence": { "minItems": 1 }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "result": { "enum": ["PASS", "FAIL", "NOT_RUN", "BLOCKED"] },
+            "priorVersion": { "type": ["string", "null"] },
+            "priorSha256": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" },
+            "rollbackVersion": { "type": ["string", "null"] },
+            "rollbackSha256": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" },
+            "identityMatched": { "type": "boolean" },
+            "signatureStatus": { "enum": ["valid", "invalid", "unsigned", "not_checked"] },
+            "helperBinaryOnly": { "$ref": "#/$defs/checkResult" },
+            "evidence": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+          }
+        },
+        "dataCompatibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["oldJsonReadable", "appDataPreserved"],
+          "properties": {
+            "oldJsonReadable": { "$ref": "#/$defs/checkResult" },
+            "appDataPreserved": { "$ref": "#/$defs/checkResult" }
+          }
+        },
+        "autoPaste": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["disabled", "copyAvailable"],
+          "properties": {
+            "disabled": { "$ref": "#/$defs/checkResult" },
+            "copyAvailable": { "$ref": "#/$defs/checkResult" }
+          }
+        },
+        "evidence": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "publication": { "const": "NOT_PUBLISHED" }
+      }
+    },
+    "notRun": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+      "then": {
+        "properties": {
+          "source": {
+            "properties": {
+              "commit": { "type": "string", "minLength": 1 },
+              "branch": { "type": "string", "minLength": 1 }
+            },
+            "required": ["commit", "branch"]
+          },
+          "environment": {
+            "properties": {
+              "platform": { "const": "Windows" },
+              "osVersion": { "type": "string", "minLength": 1 },
+              "architecture": { "const": "x64" },
+              "datasetSeed": { "type": "string", "minLength": 1 },
+              "displayConfiguration": { "type": "string", "minLength": 1 },
+              "powerMode": { "type": "string", "minLength": 1 },
+              "networkCondition": { "type": "string", "minLength": 1 }
+            },
+            "required": ["platform", "osVersion", "architecture", "datasetSeed", "displayConfiguration", "powerMode", "networkCondition", "cacheState"]
+          },
+          "dependencyGate": {
+            "properties": {
+              "T03": { "const": "accepted" },
+              "T04": { "const": "accepted" }
+            },
+            "required": ["T03", "T04"]
+          },
+          "cases": {
+            "items": {
+              "properties": { "result": { "const": "PASS" } },
+              "required": ["result"]
+            }
+          },
+          "g0Runtime": {
+            "properties": {
+              "noInteractiveBlockingSpawnSync": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
+              "noHelperProcessPerInteraction": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] }
+            },
+            "required": ["noInteractiveBlockingSpawnSync", "noHelperProcessPerInteraction"]
+          },
+          "measurements": {
+            "properties": {
+              "normalText": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+              "wakeToActionable": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] }
+            },
+            "required": ["normalText", "wakeToActionable"]
+          },
+          "packageAndRollback": {
+            "properties": {
+              "localPackage": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
+              "helperResource": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
+              "lifecycle": {
+                "properties": {
+                  "coldStart": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
+                  "trayAvailability": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
+                  "appRestart": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
+                  "normalExit": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
+                  "helperShutdown": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] }
+                }
+              },
+              "rollback": {
+                "properties": {
+                  "result": { "const": "PASS" },
+                  "helperBinaryOnly": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] }
+                },
+                "required": ["result", "helperBinaryOnly"]
+              },
+              "dataCompatibility": {
+                "properties": {
+                  "oldJsonReadable": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
+                  "appDataPreserved": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] }
+                }
+              },
+              "autoPaste": {
+                "properties": {
+                  "disabled": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
+                  "copyAvailable": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] }
+                }
+              },
+              "evidence": { "minItems": 1 }
+            }
+          },
+          "notRun": { "maxItems": 0 }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "caseResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "mode", "result", "assertions", "evidence"],
+      "allOf": [
+        {
+          "if": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
+          "then": {
+            "properties": {
+              "assertions": {
+                "minItems": 1,
+                "items": {
+                  "properties": { "result": { "const": "PASS" } },
+                  "required": ["result"]
+                }
+              },
+              "evidence": { "minItems": 1 }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^P(0[1-9]|1[0-9]|2[0-8])$" },
+        "mode": { "enum": ["fake", "controlled_live", "package"] },
+        "result": { "enum": ["PASS", "FAIL", "NOT_RUN", "BLOCKED"] },
+        "assertions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/checkResult" }
+        },
+        "evidence": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "reason": { "type": "string", "maxLength": 1000 }
+      }
+    },
+    "checkResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "result"],
+      "allOf": [
+        {
+          "if": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
+          "then": {
+            "properties": { "evidence": { "minItems": 1 } },
+            "required": ["evidence"]
+          }
+        }
+      ],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "result": { "enum": ["PASS", "FAIL", "NOT_RUN", "BLOCKED"] },
+        "details": { "type": "string", "maxLength": 2000 },
+        "evidence": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "observationMode", "targetSampleCount", "successfulSampleCount", "failureCount", "cancellationCount", "timeoutCount", "p50Ms", "p95Ms", "maxMs", "evidence", "samples"],
+      "description": "实际样本数以 samples.length 为准。PASS需至少100个成功样本且使用controlled_live；失败、取消和超时分别记录。status=NOT_RUN时各计数及样本数组为0、证据为空、统计量为null。唯一requestId、计数和分位数与原始样本的一致性仍需复核。",
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "enum": ["PASS", "FAIL"] } }, "required": ["status"] },
+          "then": {
+            "properties": {
+              "targetSampleCount": { "minimum": 100 },
+              "p50Ms": { "type": "number", "minimum": 0 },
+              "p95Ms": { "type": "number", "minimum": 0 },
+              "maxMs": { "type": "number", "minimum": 0 },
+              "samples": { "minItems": 100 }
+            }
+          },
+          "else": {
+            "if": { "properties": { "status": { "const": "NOT_RUN" } }, "required": ["status"] },
+            "then": {
+              "properties": {
+                "failureCount": { "const": 0 },
+                "successfulSampleCount": { "const": 0 },
+                "cancellationCount": { "const": 0 },
+                "timeoutCount": { "const": 0 },
+                "observationMode": { "const": "not_run" },
+                "evidence": { "maxItems": 0 },
+                "p50Ms": { "type": "null" },
+                "p95Ms": { "type": "null" },
+                "maxMs": { "type": "null" },
+                "samples": { "maxItems": 0 }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+          "then": {
+            "properties": {
+              "observationMode": { "const": "controlled_live" },
+              "successfulSampleCount": { "minimum": 100 },
+              "evidence": { "minItems": 1 }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "status": { "enum": ["PASS", "FAIL", "NOT_RUN", "BLOCKED"] },
+        "observationMode": { "enum": ["controlled_live", "fake", "not_run"] },
+        "targetSampleCount": { "type": "integer", "minimum": 100 },
+        "successfulSampleCount": { "type": "integer", "minimum": 0 },
+        "failureCount": { "type": "integer", "minimum": 0 },
+        "cancellationCount": { "type": "integer", "minimum": 0 },
+        "timeoutCount": { "type": "integer", "minimum": 0 },
+        "p50Ms": { "type": ["number", "null"], "minimum": 0 },
+        "p95Ms": { "type": ["number", "null"], "minimum": 0 },
+        "maxMs": { "type": ["number", "null"], "minimum": 0 },
+        "textAppearanceIndependentlyVerified": { "type": ["boolean", "null"] },
+        "evidence": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "samples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["requestId", "outcome", "result", "stageMs"],
+            "properties": {
+              "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
+              "outcome": { "enum": ["success", "failure", "cancelled", "timeout"] },
+              "result": { "type": "string", "minLength": 1, "maxLength": 64 },
+              "stageMs": {
+                "type": "object",
+                "additionalProperties": { "type": "number", "minimum": 0 }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

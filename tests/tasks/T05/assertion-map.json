@@ -1,0 +1,546 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "executionStatus": "NOT_RUN",
+  "source": {
+    "fixturePlan": "tests/tasks/T05/fixture-plan.json",
+    "fixturePlanExpectedBehavior": "<spec-workspace>/docs/spec/tasks/T05.md; <spec-workspace>/docs/spec/04-desktop-performance.md §8; <spec-workspace>/docs/spec/08-acceptance-matrix.md §1, §4",
+    "includedCases": "P01-P28",
+    "mappingRule": "Each case.assert item is copied verbatim into one record in source order; assertionId is caseId plus its two-digit ordinal within that case."
+  },
+  "purposeAndBoundary": "Static traceability map only. This file is not a test, test result, or acceptance evidence; no behavior was executed or verified.",
+  "summary": {
+    "caseCount": 28,
+    "assertionCount": 71,
+    "uniqueAssertionIdCount": 71,
+    "caseAssertionCounts": {
+      "P01": 2,
+      "P02": 2,
+      "P03": 2,
+      "P04": 1,
+      "P05": 2,
+      "P06": 2,
+      "P07": 3,
+      "P08": 2,
+      "P09": 2,
+      "P10": 2,
+      "P11": 3,
+      "P12": 2,
+      "P13": 1,
+      "P14": 2,
+      "P15": 1,
+      "P16": 3,
+      "P17": 3,
+      "P18": 2,
+      "P19": 3,
+      "P20": 3,
+      "P21": 6,
+      "P22": 2,
+      "P23": 3,
+      "P24": 3,
+      "P25": 3,
+      "P26": 3,
+      "P27": 3,
+      "P28": 5
+    }
+  },
+  "assertions": [
+    {
+      "caseId": "P01",
+      "assertionId": "P01-A01",
+      "assertionText": "target stays fixed",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P01",
+      "assertionId": "P01-A02",
+      "assertionText": "one input attempt at most",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P02",
+      "assertionId": "P02-A01",
+      "assertionText": "only the captured target may be restored",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P02",
+      "assertionId": "P02-A02",
+      "assertionText": "record focus and input calls",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P03",
+      "assertionId": "P03-A01",
+      "assertionText": "restore path is bounded",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P03",
+      "assertionId": "P03-A02",
+      "assertionText": "failure does not inject into another target",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P04",
+      "assertionId": "P04-A01",
+      "assertionText": "maximized size is preserved",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P05",
+      "assertionId": "P05-A01",
+      "assertionText": "target_invalid or copied_only",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P05",
+      "assertionId": "P05-A02",
+      "assertionText": "zero focus and input calls",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P06",
+      "assertionId": "P06-A01",
+      "assertionText": "no input until required keys are released",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P06",
+      "assertionId": "P06-A02",
+      "assertionText": "held key is not synthetically released",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P07",
+      "assertionId": "P07-A01",
+      "assertionText": "cancellation before clipboard commit yields zero clipboard writes and zero input calls",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P07",
+      "assertionId": "P07-A02",
+      "assertionText": "cancellation after clipboard commit but before input commit may retain the completed copy, but accepted cancellation prevents every later input call",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P07",
+      "assertionId": "P07-A03",
+      "assertionText": "never claim the completed clipboard write was rolled back",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P08",
+      "assertionId": "P08-A01",
+      "assertionText": "cancel ACK meets 50ms target or supervisor enters unavailable",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P08",
+      "assertionId": "P08-A02",
+      "assertionText": "no later input after accepted cancellation",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P09",
+      "assertionId": "P09-A01",
+      "assertionText": "result is too_late",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P09",
+      "assertionId": "P09-A02",
+      "assertionText": "input is attempted no more than once",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P10",
+      "assertionId": "P10-A01",
+      "assertionText": "result is unknown/helper_unavailable",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P10",
+      "assertionId": "P10-A02",
+      "assertionText": "request is never blindly resent",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P11",
+      "assertionId": "P11-A01",
+      "assertionText": "pre-write change yields zero writes",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P11",
+      "assertionId": "P11-A02",
+      "assertionText": "post-write change yields zero input calls",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P11",
+      "assertionId": "P11-A03",
+      "assertionText": "external content is never restored over",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P12",
+      "assertionId": "P12-A01",
+      "assertionText": "no extra double-click execution",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P12",
+      "assertionId": "P12-A02",
+      "assertionText": "repeat/busy events do not produce overlapping duplicate jobs",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P13",
+      "assertionId": "P13-A01",
+      "assertionText": "old ACK cannot mutate N+1 state or release its job",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P14",
+      "assertionId": "P14-A01",
+      "assertionText": "copy-only degradation is explicit",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P14",
+      "assertionId": "P14-A02",
+      "assertionText": "no false paste success and zero unauthorized input",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P15",
+      "assertionId": "P15-A01",
+      "assertionText": "image encoding count is zero after sequence comparison",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P16",
+      "assertionId": "P16-A01",
+      "assertionText": "preparing state is visible",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P16",
+      "assertionId": "P16-A02",
+      "assertionText": "worker/cache budgets hold",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P16",
+      "assertionId": "P16-A03",
+      "assertionText": "original is retained",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P17",
+      "assertionId": "P17-A01",
+      "assertionText": "capacity error is observable",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P17",
+      "assertionId": "P17-A02",
+      "assertionText": "existing content is preserved",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P17",
+      "assertionId": "P17-A03",
+      "assertionText": "no unbounded queue growth",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P18",
+      "assertionId": "P18-A01",
+      "assertionText": "old job stops",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P18",
+      "assertionId": "P18-A02",
+      "assertionText": "zero further focus-restoration and input calls",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P19",
+      "assertionId": "P19-A01",
+      "assertionText": "clipboard_changed",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P19",
+      "assertionId": "P19-A02",
+      "assertionText": "EmptyClipboard/SetClipboardData/SendInput counts are all zero",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P19",
+      "assertionId": "P19-A03",
+      "assertionText": "external content remains",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P20",
+      "assertionId": "P20-A01",
+      "assertionText": "zero input calls",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P20",
+      "assertionId": "P20-A02",
+      "assertionText": "external content is not overwritten",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P20",
+      "assertionId": "P20-A03",
+      "assertionText": "own sequence remains 42",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P21",
+      "assertionId": "P21-A01",
+      "assertionText": "before the deadline, the panel remains visible while the trigger key is held and the final input gate rechecks it",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P21",
+      "assertionId": "P21-A02",
+      "assertionText": "in run B, if the trigger key is still held when the original absolute 500ms selection deadline expires, terminate the job as key_held with zero SendInput calls",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P21",
+      "assertionId": "P21-A03",
+      "assertionText": "releasing the trigger key after that terminal deadline result does not resume the job or submit input",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P21",
+      "assertionId": "P21-A04",
+      "assertionText": "in run C, a released cutoff followed by late preparation uses a zero-budget immediate helper key check and never restarts a 500ms wait",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P21",
+      "assertionId": "P21-A05",
+      "assertionText": "a key held or re-pressed at the zero-budget check blocks clipboard commit; a later re-press blocks input",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P21",
+      "assertionId": "P21-A06",
+      "assertionText": "the deadline stays anchored to selection and image preparation never resets it",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P22",
+      "assertionId": "P22-A01",
+      "assertionText": "cancel remains serviceable within target or supervision fails closed",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P22",
+      "assertionId": "P22-A02",
+      "assertionText": "worker release causes no later focus/input call",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P23",
+      "assertionId": "P23-A01",
+      "assertionText": "before-gate cancellation prevents input",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P23",
+      "assertionId": "P23-A02",
+      "assertionText": "after-gate result is too_late",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P23",
+      "assertionId": "P23-A03",
+      "assertionText": "input count <= 1",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P24",
+      "assertionId": "P24-A01",
+      "assertionText": "payload_invalid/helper_unavailable",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P24",
+      "assertionId": "P24-A02",
+      "assertionText": "clipboard-write and input counts are zero",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P24",
+      "assertionId": "P24-A03",
+      "assertionText": "no arbitrary path is accepted",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P25",
+      "assertionId": "P25-A01",
+      "assertionText": "malformed stream rejected and token released",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P25",
+      "assertionId": "P25-A02",
+      "assertionText": "no prepare/write/input calls",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P25",
+      "assertionId": "P25-A03",
+      "assertionText": "at most one unacknowledged valid chunk",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P26",
+      "assertionId": "P26-A01",
+      "assertionText": "no automatic hide/focus recovery",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P26",
+      "assertionId": "P26-A02",
+      "assertionText": "copy result is retained",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P26",
+      "assertionId": "P26-A03",
+      "assertionText": "zero input calls",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P27",
+      "assertionId": "P27-A01",
+      "assertionText": "cancelled",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P27",
+      "assertionId": "P27-A02",
+      "assertionText": "no new SetForegroundWindow call",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P27",
+      "assertionId": "P27-A03",
+      "assertionText": "zero input calls",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P28",
+      "assertionId": "P28-A01",
+      "assertionText": "active jobs <= 1",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P28",
+      "assertionId": "P28-A02",
+      "assertionText": "pending paste jobs = 0",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P28",
+      "assertionId": "P28-A03",
+      "assertionText": "duplicate intent not committed twice",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P28",
+      "assertionId": "P28-A04",
+      "assertionText": "cancel reader remains serviceable",
+      "status": "NOT_RUN",
+      "evidence": []
+    },
+    {
+      "caseId": "P28",
+      "assertionId": "P28-A05",
+      "assertionText": "overflow enters unavailable",
+      "status": "NOT_RUN",
+      "evidence": []
+    }
+  ]
+}

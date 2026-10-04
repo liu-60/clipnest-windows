@@ -1,0 +1,58 @@
+{
+  "task": "T01",
+  "result": "FAIL_COMPONENT_BASELINE",
+  "measurement": "warm main show request to renderer readiness acknowledgement (component baseline)",
+  "trigger": "in-process isolated benchmark cycle; not a physical hotkey measurement",
+  "requestedSamples": 1,
+  "sampleCount": 1,
+  "successfulSamples": 0,
+  "failedSamples": 1,
+  "unobservedFailedSamples": 0,
+  "failures": [
+    {
+      "requestId": "e1816bac-3292-4904-bf48-b4d3a9f6bea1",
+      "outcome": "failed"
+    }
+  ],
+  "process": {
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false,
+    "launchError": null
+  },
+  "injectedMissingRendererAck": true,
+  "wakeToActionableMs": {
+    "p50": null,
+    "p95": null,
+    "samples": []
+  },
+  "previousWindowCaptureMs": {
+    "p50": 1732.915,
+    "p95": 1732.915,
+    "samples": [
+      1732.9149000000002
+    ]
+  },
+  "safety": {
+    "noInput": true,
+    "keyboardInputSent": false,
+    "systemClipboardRead": false,
+    "systemClipboardWritten": false,
+    "benchmarkWindowForegroundActivated": false,
+    "benchmarkWindowVisuallyShown": false,
+    "globalHotkeyRegistered": false,
+    "cloudSyncStarted": false,
+    "autoUpdaterStarted": false,
+    "startupConfigurationChanged": false,
+    "targetApplicationDisplayObserved": false,
+    "knownSecretEnvironmentVariablesForwarded": false
+  },
+  "environment": {
+    "platform": "win32",
+    "release": "10.0.22631",
+    "node": "v24.16.0",
+    "electron": "40.10.2",
+    "profile": "tests/tasks/T01/runtime-profile/<isolated-run>"
+  },
+  "note": "The invisible, inactive benchmark window avoids stealing focus. Wake timing excludes process start and physical hotkey dispatch; clipboard access, SendInput ACK, and target application display are not measured. This is a component baseline, not end-to-end P95."
+}

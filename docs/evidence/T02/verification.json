@@ -1,0 +1,187 @@
+{
+  "task": "T02",
+  "result": "PASS",
+  "acceptance": "Native helper implementation and fake-platform behavior accepted; live clipboard/paste measurement remains a separate NOT_RUN gate for T05.",
+  "environment": {
+    "os": "Microsoft Windows 11 Enterprise 10.0.22631",
+    "rust": "rustc 1.99.0 (isolated rustup under <tools>)",
+    "target": "x86_64-pc-windows-gnu",
+    "llvmMingwRelease": "20260922",
+    "llvmMingwArchiveSha256": "1e936a4a694fc27f9625e3311f5ec5d6d99abfeaa514fd41c52a4f8347145d1a",
+    "syntheticProfileId": "64 zero hex characters",
+    "installedAppTouched": false,
+    "currentUserClipboardReadOrChanged": false,
+    "currentUserWindowReceivedInput": false
+  },
+  "buildCommit": "91cafd765b9480e011647c9d8cd2976269f12aef",
+  "worktreeDirty": true,
+  "contractCorrections": [
+    {
+      "field": "triggerKeys",
+      "clickEncoding": "empty array means click/no physical Enter or V trigger",
+      "scope": ["commit_write", "paste"],
+      "retainedValidation": "at most two entries; only Enter/V; no duplicates; contradictory Enter+V remains rejected",
+      "failSafe": "paste still checks Ctrl/Shift/Alt/Win state when the physical trigger list is empty"
+    },
+    {
+      "field": "image payload limits",
+      "compressedSourceLimitBytes": 20971520,
+      "compressedSourceLimitEnforcedBy": "host provider before conversion; compressed source is not sent to or observable by the helper",
+      "expandedDibTransferLimitBytes": 64000040,
+      "maxPixels": 16000000,
+      "helperValidation": "BITMAPINFOHEADER BI_RGB 24/32bpp, checked dimensions and pixel count, bounded expanded bytes, exact stride and pixel span"
+    }
+  ],
+  "checks": [
+    {
+      "command": "cargo fmt --manifest-path native/Cargo.toml --all -- --check",
+      "result": "PASS"
+    },
+    {
+      "command": "cargo check --all-targets --features win32 --manifest-path native/Cargo.toml --target x86_64-pc-windows-gnu --locked --offline",
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test --all-targets --features win32 --manifest-path native/Cargo.toml --target x86_64-pc-windows-gnu --locked --offline",
+      "result": "PASS",
+      "counts": {
+        "library": 23,
+        "control": 8,
+        "protocol": 6,
+        "total": 37
+      }
+    },
+    {
+      "command": "pnpm test:native -- --dry-run",
+      "result": "PASS",
+      "counts": {
+        "library": 23,
+        "control": 8,
+        "protocol": 6,
+        "total": 37
+      },
+      "note": "The script runs cargo test; --dry-run sets its environment flag and does not skip the tests."
+    },
+    {
+      "command": "pnpm lint",
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm test:unit native-contracts",
+      "result": "PASS",
+      "counts": {
+        "tests": 4,
+        "passed": 4,
+        "failed": 0
+      }
+    },
+    {
+      "command": "cargo build --release --features win32 --manifest-path native/Cargo.toml --target x86_64-pc-windows-gnu --locked --offline",
+      "result": "PASS",
+      "artifact": "<tools>/rust/target-electron-l0/x86_64-pc-windows-gnu/release/clipnest-helper.exe",
+      "sha256": "ED6198443430E51E0D6DEF1D1AC209F58FC6EB0EDC1CDCEEC5C25D96A98B87BB",
+      "bytes": 2122752,
+      "importedDlls": [
+        "bcryptprimitives.dll",
+        "KERNEL32.dll",
+        "api-ms-win-core-synch-l1-2-0.dll",
+        "msvcrt.dll",
+        "user32.dll",
+        "WS2_32.dll",
+        "ntdll.dll",
+        "USERENV.dll"
+      ]
+    },
+    {
+      "command": "tests/tasks/T02/run-helper-smoke.ps1 -HelperPath <release helper>",
+      "result": "PASS",
+      "observed": "READY helperPid/process-created FILETIME matched the spawned process; read-only capture returned captured; stdin close exited cleanly."
+    },
+    {
+      "check": "independent adversarial review",
+      "result": "PASS",
+      "reviewer": "t02_platform_content_audit",
+      "summary": "Closed requestId replay/cache, generation transition, READY process identity, prepare wire shape, commit/cancel race, partial SendInput report, strict DIB and P27 findings."
+    },
+    {
+      "command": "cargo test --all-targets --manifest-path native/Cargo.toml --target x86_64-pc-windows-gnu --locked",
+      "result": "PASS",
+      "counts": {
+        "library": 24,
+        "control": 9,
+        "protocol": 7,
+        "total": 40
+      },
+      "note": "Includes empty triggerKeys click-path protocol and fake-platform checks; no real clipboard or input was used."
+    },
+    {
+      "command": "cargo check --all-targets --manifest-path native/Cargo.toml --target x86_64-pc-windows-gnu --features win32 --locked",
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm build:main; node tests/tasks/T02/native-contracts.test.cjs",
+      "result": "PASS",
+      "counts": {
+        "tests": 6,
+        "passed": 6,
+        "failed": 0
+      }
+    },
+    {
+      "command": "cargo test --all-targets --manifest-path native/Cargo.toml --target x86_64-pc-windows-gnu --locked --offline",
+      "result": "PASS",
+      "counts": {
+        "library": 25,
+        "control": 9,
+        "protocol": 8,
+        "total": 42
+      },
+      "note": "Includes the 16MP and expanded DIB limit regression cases; fake-platform tests only, no real image, clipboard, or input."
+    },
+    {
+      "command": "cargo fmt --manifest-path native/Cargo.toml --all -- --check",
+      "result": "PASS"
+    },
+    {
+      "command": "cargo check --all-targets --manifest-path native/Cargo.toml --target x86_64-pc-windows-gnu --features win32 --locked --offline",
+      "result": "PASS"
+    },
+    {
+      "command": "cargo test --lib --manifest-path native/Cargo.toml --target x86_64-pc-windows-gnu --features win32 --locked --offline -j 1",
+      "result": "PASS",
+      "counts": {
+        "library": 25,
+        "passed": 25,
+        "failed": 0
+      },
+      "note": "Feature-enabled library tests passed serially with test debug info disabled to fit the available Windows page file."
+    },
+    {
+      "command": "cargo test --all-targets --manifest-path native/Cargo.toml --target x86_64-pc-windows-gnu --features win32 --locked --offline",
+      "result": "ENV_LIMITATION",
+      "note": "The parallel feature-enabled all-targets test build exceeded the available Windows page file (OS error 1455). Feature-enabled all-targets cargo check, feature-enabled library tests, and the full no-feature all-targets test suite passed."
+    },
+    {
+      "command": "pnpm build:main; node tests/tasks/T02/native-contracts.test.cjs",
+      "result": "PASS",
+      "counts": {
+        "tests": 7,
+        "passed": 7,
+        "failed": 0
+      },
+      "note": "Includes the source/DIB limit separation and TS register_content boundary cases."
+    }
+  ],
+  "notRun": [
+    {
+      "check": "real conditional clipboard write and SendInput into controlled text target",
+      "result": "NOT_RUN",
+      "reason": "This run did not use an isolated interactive Windows session. Current-user clipboard and foreground/input were left untouched; WindowsSandbox.exe is unavailable. T05 must use a controlled isolated test window/session and synthetic text or keep this measurement NOT_RUN."
+    },
+    {
+      "check": "host AllowSetForegroundWindow positive path and Electron helper/content-provider integration",
+      "result": "NOT_RUN",
+      "reason": "T03 production integration is the next task; P26 and content-provider cases are prepared in tests/tasks/T03/fixture-plan.json."
+    }
+  ]
+}

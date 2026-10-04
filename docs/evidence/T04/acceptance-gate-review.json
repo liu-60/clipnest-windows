@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "reviewType": "independent_read_only_acceptance_gate_audit",
+  "reviewedDate": "2026-10-04",
+  "historicalSnapshotNote": "This audit predates the later explicitly authorized PNG/JPEG implementation, passing main orchestration VM fixture, real utility-process tests, v2/v3 ASAR probes and v3 local installation. Its original findings/decision are retained as history; current completed and remaining gates are recorded in docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json and docs/progress.json. T04 remains in_progress and T05 not_started.",
+  "reviewedArtifacts": [
+    "docs/spec/tasks/T04.md",
+    "../v2/docs/spec/04-desktop-performance.md",
+    "../v2/docs/spec/08-acceptance-matrix.md",
+    "docs/progress.json",
+    "docs/evidence/T04/verification.json",
+    "tests/tasks/T04/fixture-plan.json"
+  ],
+  "decision": "REMAINS_IN_PROGRESS",
+  "independentConclusion": "T04 cannot be accepted by carrying its missing core decoder/worker behavior into T05. T05 can cover package and controlled desktop validation only after T04's production path and required fixtures are complete.",
+  "blockingCriteria": [
+    {
+      "criterion": "Image cache-miss preparation in a production worker",
+      "status": "NOT_RUN_AND_NOT_IMPLEMENTED",
+      "evidence": "No decoder is selected or installed; the production utilityProcess worker remains fail-closed. T04 requires a visible preparing state, worker decode, retention of the original, and cache budget behavior."
+    },
+    {
+      "criterion": "P15 avoids repeating toPNG/Base64/hash after selection",
+      "status": "OPEN_SCOPE_AND_IMPLEMENTATION_GAP",
+      "evidence": "The current path in src/main/native/content-provider.ts repeats the work; that file is outside the T04 allowlist. The card/spec requires the behavior, so it cannot be deferred to T05 as a mere live-test gate."
+    },
+    {
+      "criterion": "16 MP and 256 MiB image worker limits",
+      "status": "NOT_RUN",
+      "evidence": "The T04 fixture plan records production utilityProcess, packaged Windows loading, and worker RSS as required but not run."
+    },
+    {
+      "criterion": "T04 full acceptance",
+      "status": "NOT_RUN",
+      "evidence": "Thirty module-level fake fixtures passing do not establish production utilityProcess behavior, ASAR loading, image decode, or the full T04 acceptance path."
+    }
+  ],
+  "reviewerRecommendation": "Keep T04 in_progress until the decoder route is selected/reviewed, the production worker path is implemented and covered, the P15 scope issue is resolved, and required T04 evidence/review is complete.",
+  "userDecisionsPending": [
+    "Select or defer the PNG/JPEG decoder dependency route and its distribution/license tradeoff.",
+    "Authorize or decline adding src/main/native/content-provider.ts to the T04 allowlist."
+  ],
+  "scope": {
+    "readOnly": true,
+    "noInstall": true,
+    "noTests": true,
+    "noBuild": true,
+    "noClipboardOrInput": true
+  },
+  "sources": [
+    "docs/spec/tasks/T04.md §§ allowed files, subtask b, completion criteria",
+    "../v2/docs/spec/04-desktop-performance.md §6 (image cache miss, P15, 16 MP/256 MiB)",
+    "../v2/docs/spec/06-model-runbook.md §2 (review/acceptance state)",
+    "../v2/docs/spec/08-acceptance-matrix.md §1",
+    "docs/evidence/T04/verification.json",
+    "tests/tasks/T04/fixture-plan.json",
+    "independent agent review in this task"
+  ]
+}

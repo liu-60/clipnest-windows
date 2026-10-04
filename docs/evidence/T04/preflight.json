@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "BASELINE_SNAPSHOT",
+  "observedAt": "2026-10-03",
+  "scope": "Historical preimplementation snapshot. Its static observations and NOT_RUN list describe the state before T03 acceptance and T04 implementation; docs/evidence/T04/verification.json is the current execution record.",
+  "supersededBy": "docs/evidence/T04/verification.json",
+  "commit": "91cafd765b9480e011647c9d8cd2976269f12aef",
+  "branch": "codex/m0-latency",
+  "workingTreeWasDirty": true,
+  "dependencyGate": {
+    "required": "T03 accepted",
+    "progressAtInspection": "T03 in_progress",
+    "reason": "T04 permits independent fixture preparation before T03 acceptance but blocks helper-dependent integration and behavior verification."
+  },
+  "staticObservations": [
+    {
+      "file": "src/renderer/App.tsx",
+      "lines": "294-347, 396-412, 558-566",
+      "observation": "Global Enter executes the selected item when the search input is not focused; input arrows are not routed into result navigation; Enter checks isComposing but there is no event.repeat or busy-job guard; card click executes and a separate double-click handler executes again."
+    },
+    {
+      "file": "src/main/main.ts",
+      "lines": "98, 1167-1195, 1206-1234, 1249-1253, 1975-1978, 1880-1896",
+      "observation": "Clipboard polling is 450ms; image capture resizes/encodes to PNG and fingerprints the Base64 payload before duplicate detection; selecting a stored image writes it and re-encodes PNG for its signature. No sequence-number short circuit is visible in these paths."
+    },
+    {
+      "file": "src/renderer/App.tsx",
+      "lines": "197-202",
+      "observation": "Filtering constructs lowercase searchable text from each item before checking whether the query is empty, so an empty query still scans item bodies."
+    }
+  ],
+  "notVerified": [
+    "T03 acceptance and helper-dependent wiring",
+    "keyboard, IME, repeated-event, busy-state, or double-click behavior tests",
+    "clipboard sequence, image cache, worker, queue, or memory-boundary tests",
+    "lint, unit tests, real platform behavior, and controlled target-window input"
+  ],
+  "artifacts": ["tests/tasks/T04/fixture-plan.json"]
+}

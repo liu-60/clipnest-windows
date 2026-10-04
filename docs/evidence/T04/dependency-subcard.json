@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "parentTask": "T04",
+  "subcard": "T06-sharp-win32-x64-image-decoder",
+  "status": "REVIEW",
+  "installationStatus": "NOT_INSTALLED",
+  "review": {
+    "reviewer": "independent dependency research",
+    "decision": "Preferred technical candidate recorded for review only; this record is not dependency acceptance or approval to install.",
+    "date": "2026-10-03"
+  },
+  "dependency": {
+    "name": "sharp",
+    "version": "0.35.5",
+    "pin": "exact",
+    "purpose": "PNG and JPEG decoding in the T04 single image utility process",
+    "runtimeCompatibility": {
+      "projectElectron": "40.10.2",
+      "electronBundledNode": "24.15.0",
+      "requiredRuntime": "Node-API v9 compatible runtime; Node.js >=20.9.0",
+      "assessment": "Static compatibility match: Electron 40.10.2 embeds Node 24.15.0 and Node-API v9 is supported on Node 21.0.0 and later. Actual native addon loading in this application's Electron utilityProcess has not been tested."
+    },
+    "windowsX64Packages": [
+      {
+        "name": "@img/sharp-win32-x64",
+        "version": "0.35.5",
+        "license": "Apache-2.0 AND LGPL-3.0-or-later",
+        "role": "Prebuilt sharp native addon for Windows x64"
+      },
+      {
+        "name": "@img/sharp-libvips-win32-x64",
+        "version": "1.3.4",
+        "license": "LGPL-3.0-or-later",
+        "role": "Prebuilt libvips and runtime dependencies for Windows x64"
+      }
+    ],
+    "license": {
+      "sharp": "Apache-2.0",
+      "windowsX64Runtime": "Includes LGPL-3.0-or-later components and additional third-party licenses; preserve upstream notices.",
+      "reviewRequired": "License review remains open for the Windows x64 runtime packages and bundled third-party components."
+    },
+    "maintenance": {
+      "version": "0.35.5",
+      "released": "2026-09-27",
+      "evidence": "The upstream installation/changelog and npm package metadata identify 0.35.5 as the current release."
+    }
+  },
+  "scope": {
+    "worker": "One Electron utilityProcess child, spawned with utilityProcess.fork; the child provides a Node.js environment for requiring the decoder.",
+    "formats": [
+      "PNG",
+      "JPEG"
+    ],
+    "limitsFromT04": {
+      "maxCompressedImageBytes": 20971520,
+      "maxPixels": 16000000,
+      "decodedCacheBytes": 33554432,
+      "imageWorkers": 1,
+      "imageWorkerPeakBytes": 268435456
+    },
+    "candidateConfiguration": [
+      "Set sharp input limitInputPixels to 16000000.",
+      "Set sharp concurrency to 1 and disable or bound libvips operation caching.",
+      "Keep the T04 decoded-image LRU at 33554432 bytes outside sharp's operation cache."
+    ],
+    "packaging": {
+      "requirement": "When packaged with electron-builder and ASAR, unpack sharp and its @img platform packages.",
+      "asarUnpack": [
+        "**/node_modules/sharp/**/*",
+        "**/node_modules/@img/**/*"
+      ],
+      "status": "REQUIRED_BY_UPSTREAM_GUIDE; not implemented or smoke-tested in this subcard."
+    }
+  },
+  "footprint": {
+    "status": "NOT_MEASURED",
+    "knownImpact": "Adds platform-specific native .node and libvips runtime files; the Windows x64 packages are optional platform dependencies selected by the package manager when available.",
+    "installedBytes": null,
+    "packagedInstallerDeltaBytes": null,
+    "note": "No package was installed, so exact pnpm store, unpacked, ASAR-unpacked, or installer size is unknown."
+  },
+  "installation": {
+    "status": "NOT_INSTALLED",
+    "lockfileEvidence": "The current package.json and pnpm-lock.yaml contain no sharp or @img/sharp resolution.",
+    "packageJsonChangedBySubcard": false,
+    "pnpmLockChangedBySubcard": false,
+    "worktreeNote": "The worktree already had unrelated changes before this subcard was written; this record only confirms that no sharp dependency was installed or added to the manifest/lockfile by this subcard."
+  },
+  "validation": {
+    "upstreamMetadataReview": "REVIEWED",
+    "windowsX64PrebuildDeclaredUpstream": "SUPPORTED; not installed locally",
+    "electron40NodeApiCompatibility": "STATIC_MATCH; native load not tested",
+    "utilityProcessDecode": "NOT_RUN",
+    "packagedWindowsX64Load": "NOT_RUN",
+    "pngJpegFixtures": "NOT_RUN",
+    "peakWorkerMemory256MiB": "NOT_VERIFIED; must measure worker peak RSS against maximum-size and malformed-image fixtures after an approved install. sharp pixel/concurrency/cache options do not establish a hard process-memory cap."
+  },
+  "sources": [
+    {
+      "claim": "sharp 0.35.5 metadata, Apache-2.0 license, Node >=20.9.0, and optional Windows x64 platform packages.",
+      "url": "https://github.com/lovell/sharp/blob/main/package.json"
+    },
+    {
+      "claim": "Node-API v9 runtime requirement, Windows x64 prebuilt binaries, PNG/JPEG support, and electron-builder ASAR unpack configuration.",
+      "url": "https://sharp.pixelplumbing.com/install/"
+    },
+    {
+      "claim": "Windows x64 sharp runtime package version and combined license metadata.",
+      "url": "https://www.npmjs.com/package/%40img/sharp-win32-x64/v/0.35.5"
+    },
+    {
+      "claim": "Windows x64 libvips runtime package version, LGPL license, and third-party license notices.",
+      "url": "https://www.npmjs.com/package/%40img/sharp-libvips-win32-x64/v/1.3.4"
+    },
+    {
+      "claim": "Electron 40.10.2 embeds Node.js 24.15.0.",
+      "url": "https://releases.electronjs.org/release/v40.10.2"
+    },
+    {
+      "claim": "Node-API v9 support includes Node.js 21.0.0 and later releases.",
+      "url": "https://nodejs.org/api/n-api.html"
+    },
+    {
+      "claim": "Electron utilityProcess forks a child process with Node.js integration.",
+      "url": "https://www.electronjs.org/docs/latest/api/utility-process"
+    },
+    {
+      "claim": "sharp input pixel limit option.",
+      "url": "https://sharp.pixelplumbing.com/api-constructor/"
+    },
+    {
+      "claim": "sharp operation-cache memory limit and libvips concurrency controls.",
+      "url": "https://sharp.pixelplumbing.com/api-utility/"
+    }
+  ],
+  "securityAndLimitations": {
+    "licenseReview": "Open: inspect and satisfy LGPL-3.0-or-later obligations and bundled third-party notices for the Windows x64 prebuilt runtime before approving distribution.",
+    "runtimeRisks": [
+      "The Node-API and platform metadata match statically, but sharp has not been loaded in the Electron 40.10.2 utilityProcess or packaged Windows x64 application.",
+      "Pixel limit, concurrency, and libvips operation-cache settings do not impose a hard process RSS cap; the 256 MiB worker peak remains unverified.",
+      "The Windows x64 .node/libvips package footprint and final installer delta were not measured."
+    ],
+    "notEvidenceOf": [
+      "No dependency acceptance or install approval.",
+      "No package.json or pnpm-lock.yaml update for sharp.",
+      "No decoder fixture, runtime load, package smoke, or peak-memory test."
+    ]
+  }
+}

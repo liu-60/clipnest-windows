@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "recordType": "decoder-alternatives-recheck",
+  "checkedDate": "2026-10-04",
+  "result": "PUREJSIMAGE_MIT_CANDIDATE_FOUND_STATIC_ONLY",
+  "scope": {
+    "worker": "One Electron utilityProcess child with Node integration; target runtime Electron 40.10.2 / bundled Node 24.15.0 on Windows x64.",
+    "formats": ["PNG", "JPEG"],
+    "limits": {
+      "maxEncodedBytes": 20971520,
+      "maxDecodedPixels": 16000000,
+      "workerPeakRssTargetBytes": 268435456
+    },
+    "requiredOutput": "A full-resolution Uint8Array containing 8-bit interleaved RGBA, exactly width*height*4 bytes. At 16,000,000 pixels this output alone is 64,000,000 bytes (about 61.0 MiB).",
+    "localEvidence": [
+      "docs/evidence/T04/dependency-subcard.json",
+      "docs/evidence/T04/decoder-options.json",
+      "src/main/clipboard/image-worker.ts",
+      "src/main/main.ts"
+    ]
+  },
+  "conclusion": {
+    "finding": "PureJsImage 0.17.0 is a plausible MIT, no-native-addon candidate for ordinary JPEG/PNG decoding. However, upstream says its npm package also ships an experimental HEIF/HEIC decoder in dist; importing only JPEG/PNG does not mean the published tarball contains only those codecs. This supersedes the earlier static survey's statement that no candidate was found, but does not establish distribution-license approval or T04 acceptance.",
+    "recommendation": "Keep as an additional technical candidate for user review. Before any distribution choice, inspect the exact tarball, file-level notices, optional/WASM/HEIF artifacts, and the upstream HEVC/H.265 patent notice. Do not treat Node/Windows/ASAR compatibility, 16MP speed, RGBA adapter compatibility, or the 256 MiB worker RSS target as verified.",
+    "nativeImage": "Electron nativeImage can decode PNG/JPEG but its documented process scope is Main and Renderer, not Utility Process. Moving decode to Main could avoid a third-party decoder but conflicts with the current requirement to keep decode off the Electron main event loop. The utility worker cannot rely on nativeImage as a drop-in decoder."
+  },
+  "candidates": [
+    {
+      "name": "purejsimage",
+      "version": "0.17.0",
+      "status": "PROMISING_NEEDS_LOCAL_ADAPTER_AND_RUNTIME_CHECK",
+      "license": {
+        "upstreamPackageLicense": "MIT",
+        "runtimeDependencies": "Upstream describes the published package as having no runtime dependencies; its first-party codecs have no native addon or system executable.",
+        "selectedPath": "Register only purejsimage/codecs/jpeg and purejsimage/codecs/png; do not import the optional WASM accelerator entries for the initial compatibility candidate.",
+        "completeDistributionAudit": "Not complete. The top-level MIT declaration and zero runtime-dependency claim were checked, but the exact npm tarball contents, bundled optional WASM artifacts, and all file-level notices were not inventoried. Upstream states the experimental HEIF/HEIC decoder ships in the npm package even though it is excluded from the root export and automatic registration; its HEVC/H.265 patent notice must be evaluated for distribution."
+      },
+      "runtimeAndPackaging": {
+        "nodeRequirement": "Node.js >=22; static version match for Electron 40.10.2's bundled Node.js 24.15.0.",
+        "moduleFormat": "ESM package with TypeScript declarations. Node utilityProcess provides a Node.js environment, but this application's CommonJS worker-to-ESM import path and ASAR module resolution have not been smoke-tested. If using require(ESM), Node requires the imported dependency graph to have no top-level await; dynamic import from CommonJS should also be verified.",
+        "windowsX64": "No platform-specific native package or .node binary is declared for the TypeScript path; no Windows x64 ABI rebuild is expected.",
+        "asar": "The TypeScript-only path has no native file requiring asarUnpack. Standard JS package files can be stored in ASAR according to Electron's archive behavior; the app's actual packaged module resolution remains unverified.",
+        "wasmOption": "Upstream exposes optional explicit JPEG/PNG/WebP WASM accelerators with TypeScript fallback. They are not required by the ordinary codec path. WASM file loading under this app's ASAR packaging and the full optional-artifact license inventory remain unverified."
+      },
+      "codecAndContract": {
+        "upstreamSupport": "Upstream labels ordinary JPEG and PNG codecs stable. JPEG read support includes 8-bit baseline and progressive images; PNG reads 1-16-bit inputs and documents no APNG frame decode.",
+        "limits": "The public open API accepts Uint8Array and configurable input, dimension, pixel, and decoded-byte limits. The documented general defaults are much higher than T04, so explicit limits would be required.",
+        "rgbaAdapter": "Static documentation does not establish a direct ordinary-image method that returns the exact T04 full-frame RGBA Uint8Array. The public API exposes ImageDecoder and PixelBlock primitives, and upstream examples collect pixel blocks for a separate whole-slide path; verify whether the pinned ordinary codec can yield RGBA blocks cleanly, including stride, alpha, color conversion, and buffer ownership.",
+        "fidelity": "No project-specific result for orientation, alpha/premultiplication, ICC/color, transparent PNG, or Windows clipboard pixel fidelity has been measured."
+      },
+      "maintenance": {
+        "release": "The upstream package manifest identifies 0.17.0; upstream docs mark public APIs pre-1.0. The current release is recent, but adoption is small relative to Sharp and the public API can still change.",
+        "risk": "Pin the exact package version and recheck its npm registry metadata, release notes, package contents, and complete license notices before accepting it."
+      },
+      "performanceAndMemory": {
+        "status": "NOT_MEASURED_FOR_T04",
+        "upstreamEvidence": [
+          "The upstream 2026-08-24 benchmark snapshot records 12 MP JPEG-to-resized-JPEG at 518 ms and 12 MP RGBA PNG-to-resized-PNG at 398 ms for the TypeScript path. These include resize and encode, use PureJsImage 0.16.0 on Linux x64 Node 24.16, and are not decode-only or Windows utilityProcess results.",
+          "The same upstream page reports 181.8 MiB absolute process peak RSS for its 24 MP photo pipeline versus 1189.1 MiB for Jimp. This is an upstream Linux benchmark of a different workflow/version, not evidence that a 16 MP Windows decode stays below 256 MiB.",
+          "An upstream 4000x3000 orientation measurement reports 147.69 MiB RSS using chunked memory and 90.90 MiB with optional temporary-file storage, with the file-backed path slower. This is also a transform workflow, not T04 decoder RSS."
+        ],
+        "riskAnalysis": "The required 16 MP RGBA result consumes about 61 MiB before decoder scratch, Node/Electron process baseline, encoded input, JavaScript object overhead, and any IPC copy. T04's 256 MiB target is a process RSS limit; codec limits and row/block processing do not prove a hard RSS cap. The existing worker IPC path's buffer transfer/copy cost also needs measurement."
+      },
+      "optionalWasm": {
+        "status": "DOCUMENTED_OPTIONAL_PATH_NOT_REQUIRED",
+        "support": "Upstream documents optional WASM acceleration for common full-image baseline JPEG decode and non-interlaced 8-bit PNG decode without tRNS; ineligible inputs fall back to TypeScript.",
+        "measurement": "The upstream snapshot shows WASM can be faster or slower by workload (for example, the cited 12 MP PNG workflow was slower with WASM than TypeScript). It does not establish a predictable win for T04.",
+        "assessment": "Prefer the TypeScript-only path for the initial ASAR/no-addon candidate. Consider WASM only after measuring 16 MP Windows inputs and verifying the exact built asset path, fallback behavior, and bundled artifact notices."
+      }
+    },
+    {
+      "name": "sharp",
+      "version": "0.35.5",
+      "status": "MATURE_TECHNICAL_CANDIDATE_LICENSE_OPEN",
+      "license": "Top-level Sharp is Apache-2.0, but existing T06 evidence records LGPL-3.0-or-later and additional third-party notices in the Windows x64 addon/libvips packages; therefore it is not an all-MIT/Apache runtime chain.",
+      "runtimeAndPackaging": "Existing T06 static evidence matches Node-API v9 with Electron 40.10.2 / Node 24.15.0. Windows native files need ASAR unpacking and actual utilityProcess load verification.",
+      "memoryAndPerformance": "Existing controls for input pixels, concurrency, and libvips cache do not establish a hard 256 MiB process RSS cap; no T04 16 MP Windows measurement exists.",
+      "evidence": "docs/evidence/T04/dependency-subcard.json"
+    },
+    {
+      "name": "pngjs + jpeg-js",
+      "versions": {
+        "pngjs": "7.0.0",
+        "jpeg-js": "0.4.4"
+      },
+      "status": "NO_NATIVE_BUT_LICENSE_AND_SPEED_TRADEOFF",
+      "license": "pngjs is MIT; the existing upstream review records jpeg-js decoder/encoder components under Apache-2.0 and BSD terms, so this pair is not strictly MIT/Apache-only as a complete chain.",
+      "runtimeAndPackaging": "Pure JavaScript; no native addon or WASM asset extraction requirement.",
+      "memoryAndPerformance": "jpeg-js is synchronous and CPU-bound, and its documented max-memory option is approximate; no Windows x64 16 MP process peak measurement is available.",
+      "evidence": "docs/evidence/T04/decoder-options.json"
+    },
+    {
+      "name": "@jsquash/png + @jsquash/jpeg",
+      "versions": {
+        "@jsquash/png": "3.1.1",
+        "@jsquash/jpeg": "1.6.0"
+      },
+      "status": "WASM_LICENSE_AND_NODE_PACKAGING_UNCERTAIN",
+      "license": "Existing review finds Apache-2.0 wrappers but codec/wasm implementation notices include other upstream terms; strict MIT/Apache-only completeness is not established.",
+      "runtimeAndPackaging": "WASM/ESM; Node support is described by the existing review as limited/experimental. Verify ASAR path/loader behavior and exact tarball notices.",
+      "memoryAndPerformance": "No T04 Windows latency or peak RSS evidence.",
+      "evidence": "docs/evidence/T04/decoder-options.json"
+    }
+  ],
+  "nativeImageAssessment": {
+    "officialProcessScope": "Electron documents nativeImage and NativeImage for Main and Renderer processes. The utilityProcess API documents a Node-integrated child, but nativeImage is not documented as available there.",
+    "decodeSupport": "nativeImage.createFromBuffer tries PNG/JPEG decode; toBitmap returns a copy of raw bitmap bytes. The bitmap format is platform-dependent.",
+    "mainThreadCost": "Using nativeImage in Main can avoid a new npm decoder only by doing the decode/output conversion there or passing bytes to the worker afterward. That puts image work and a full bitmap copy on the main process and conflicts with src/main/main.ts's explicit off-main decode goal.",
+    "compatibilityRisk": "The current app uses Electron 40.10.2, below the documented Electron 43 change that normalizes NativeImage.toBitmap() output to sRGB by default. NativeImage byte order, alpha behavior, color space, copy cost, and exact T04 output fidelity still require a Windows fixture test.",
+    "decision": "Not a drop-in replacement for the utilityProcess decoder under the current architecture. It remains a possible architecture change only if main-thread decode/copy costs are acceptable and measured."
+  },
+  "requiredLocalVerificationBeforeAcceptance": [
+    "Install only after license selection; pin exact PureJsImage package and inspect the actual npm tarball, integrity, all shipped codec files including experimental HEIF/HEIC, optional WASM assets, complete notices, and the HEVC/H.265 patent notice.",
+    "Build/package the current CommonJS utilityProcess entry and smoke-test the selected dynamic-import or require(ESM) path from Windows x64 ASAR; if require(ESM) is used, verify the imported ESM graph has no top-level await under bundled Node 24.15.0.",
+    "Verify a decoder adapter returns exact width*height*4 RGBA bytes, including alpha, stride, channel order, orientation, ICC/color, 16-bit/palette/transparency/interlaced PNG, baseline/progressive JPEG, malformed input, and cancellation behavior.",
+    "Measure 16 MP PNG/JPEG p50/p95 latency and process peak RSS/working set against the 268435456-byte target, including 20 MiB encoded input, output ownership, structured-clone or transfer behavior, and Electron utility-process baseline.",
+    "Measure NativeImage main-process decode/toBitmap independently if it is reconsidered; check the Electron 40.10.2 bitmap channel order, premultiplication, color, exact dimensions, responsiveness, and memory."
+  ],
+  "sources": [
+    {
+      "claim": "PureJsImage upstream package manifest: version 0.17.0, MIT license, and Node >=22 engine.",
+      "url": "https://github.com/a-r-d/PureJsImage/blob/main/package.json"
+    },
+    {
+      "claim": "PureJsImage upstream MIT license text.",
+      "url": "https://github.com/a-r-d/PureJsImage/blob/main/LICENSE"
+    },
+    {
+      "claim": "Experimental HEIF/HEIC decoder ships in the npm package but is excluded from automatic registration; its HEVC/H.265 patent notice is not covered by MIT copyright permission.",
+      "url": "https://github.com/a-r-d/PureJsImage/blob/main/heif-codec-support.md"
+    },
+    {
+      "claim": "Published package runtime dependencies, native-addon/system-binary/WASM requirements, ESM entry, Node version, input pipeline, and codec imports.",
+      "url": "https://purejsimage.com/guides/"
+    },
+    {
+      "claim": "Stable JPEG/PNG support, limits, optional WASM subset/fallbacks, and public ImageDecoder/PixelBlock interfaces.",
+      "url": "https://purejsimage.com/api/"
+    },
+    {
+      "claim": "Upstream benchmark snapshot and methodology/version context for speed and RSS values.",
+      "url": "https://purejsimage.com/performance/"
+    },
+    {
+      "claim": "The 4000x3000 orientation RSS measurements cited from the upstream Linux workflow are shown in the project README.",
+      "url": "https://github.com/a-r-d/PureJsImage"
+    },
+    {
+      "claim": "Upstream published benchmark snapshot metadata dated 2026-08-24.",
+      "url": "https://github.com/a-r-d/PureJsImage/blob/main/benchmark/results/public/web-codecs-2026-08-24T20-51-40-120Z.md"
+    },
+    {
+      "claim": "Electron nativeImage process scope and PNG/JPEG createFromBuffer support.",
+      "url": "https://www.electronjs.org/docs/latest/api/native-image"
+    },
+    {
+      "claim": "Electron NativeImage.toBitmap returns a copy and documents platform-dependent bitmap behavior and versioned color-space history.",
+      "url": "https://www.electronjs.org/docs/latest/api/native-image#imagetobitmapoptions"
+    },
+    {
+      "claim": "Electron utilityProcess is a Node.js-integrated child process.",
+      "url": "https://www.electronjs.org/docs/latest/api/utility-process"
+    },
+    {
+      "claim": "ASAR supports Node module/file access while native process.dlopen files require extraction/unpacking.",
+      "url": "https://www.electronjs.org/docs/latest/tutorial/asar-archives"
+    },
+    {
+      "claim": "Electron 40.10.2 release identifies its bundled Node.js runtime for static engine comparison.",
+      "url": "https://releases.electronjs.org/release/v40.10.2"
+    },
+    {
+      "claim": "Node.js 24.15 module documentation describes require(ESM) support and its top-level-await restriction.",
+      "url": "https://nodejs.org/download/release/v24.15.0/docs/api/modules.html"
+    }
+  ],
+  "notVerified": [
+    "No package installed; no package.json or lockfile change.",
+    "No Windows x64 utilityProcess load, ASAR package smoke, decoder fixture, or real desktop run.",
+    "No measured T04 16 MP Windows latency or 256 MiB process RSS result.",
+    "No complete audit of the exact published PureJsImage npm tarball, shipped experimental HEIF/HEIC decoder, optional WASM artifacts, file-level notices, or patent implications.",
+    "No CommonJS worker-to-ESM codec import test; require(ESM) top-level-await compatibility and ASAR module resolution remain unverified.",
+    "No acceptance of PureJsImage or change to the user's pending license choice."
+  ],
+  "independentReview": {
+    "result": "PASS_WITH_LIMITATIONS",
+    "reviewer": "Independent read-only decoder candidate reviewer",
+    "date": "2026-10-04",
+    "findings": [
+      "MIT, zero runtime dependency, Node >=22, ESM, and JPEG/PNG codec claims match upstream metadata/guides; the npm package also ships experimental HEIF/HEIC code with an HEVC/H.265 patent notice.",
+      "The CommonJS worker-to-ESM loading path requires a local smoke test; if require(ESM) is used, the imported graph must not contain top-level await.",
+      "The exact RGBA adapter and 16 MP Windows utilityProcess latency/RSS remain unverified; upstream Linux transform benchmarks are not T04 decode evidence."
+    ],
+    "reviewSources": [
+      "https://github.com/a-r-d/PureJsImage/blob/main/heif-codec-support.md",
+      "https://purejsimage.com/api/",
+      "https://nodejs.org/download/release/v24.15.0/docs/api/modules.html"
+    ],
+    "additionalSourceRecommendation": "Link the repository README for the 4000x3000 orientation RSS figures; that source URL is now included above."
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "reviewType": "independent_read_only_schema_review",
+  "reviewedDate": "2026-10-04",
+  "reviewedFiles": [
+    "tests/tasks/T05/fixture-plan.json",
+    "tests/tasks/T05/report.schema.json",
+    "docs/progress.json"
+  ],
+  "authoritativeSources": [
+    "<spec-workspace>/docs/spec/tasks/T05.md",
+    "<spec-workspace>/docs/spec/04-desktop-performance.md §8",
+    "<spec-workspace>/docs/spec/08-acceptance-matrix.md §1, §4",
+    "<spec-workspace>/docs/spec/06-model-runbook.md §7"
+  ],
+  "result": "PASS_WITH_LIMITATIONS",
+  "scope": {
+    "changedFiles": [
+      "tests/tasks/T05/fixture-plan.json",
+      "tests/tasks/T05/report.schema.json",
+      "docs/evidence/T05/report-schema-review.json",
+      "docs/progress.json"
+    ],
+    "noBehaviorExecution": true,
+    "noPackaging": true,
+    "noLiveDesktop": true,
+    "method": "Compared the L0 fixture plan, report schema, review record, and progress against the authoritative v2 T05 card and referenced §04/§08 clauses; performed static JSON and structural checks only."
+  },
+  "verified": {
+    "fixtureCases": {
+      "count": 28,
+      "ids": "P01-P28 exactly once in the fixture plan and required exactly once by the report schema.",
+      "execution": "Plan remains preflight_only; executionStatus remains NOT_RUN; no P01-P28 behavior was run."
+    },
+    "g0RuntimeGates": [
+      "Added a planned, NOT_RUN observation gate for blocking synchronous process creation on interactive paths.",
+      "Added a planned, NOT_RUN observation gate proving interactions reuse the initialized helper instead of launching a helper per interaction."
+    ],
+    "measurements": {
+      "normalText": "PASS requires at least 100 successful samples, controlled_live observation mode, evidence references, p95 <150ms, and independent confirmation that synthetic text appeared in the controlled editor.",
+      "wakeToActionable": "PASS requires at least 100 successful samples, controlled_live observation mode, evidence references, and p95 <100ms.",
+      "separateOutcomes": "The report now has distinct successfulSampleCount, failureCount, cancellationCount, and timeoutCount fields and a sample outcome category; their consistency with raw samples still requires recomputation.",
+      "environment": "A PASS report now requires Windows x64 plus nonempty OS, display, power, network, and dataset details and a nonempty source commit/branch."
+    },
+    "passGates": [
+      "T03 and T04 must both be accepted.",
+      "P01-P28 must appear exactly once and every reported result/assertion must pass with a nonempty evidence reference; the reviewer must still map all planned assertions one by one.",
+      "Both performance metrics must pass; a fake-only metric cannot satisfy a PASS report.",
+      "Both G0 runtime observation gates must pass.",
+      "Local package, helper resource, lifecycle, rollback, data compatibility, and autoPaste checks must pass with per-check evidence references.",
+      "notRun must be empty and publication must remain NOT_PUBLISHED.",
+      "Schema validity alone does not establish T05 acceptance; all manualReviewGates must be closed against actual evidence before accepting a PASS claim."
+    ],
+    "helperAndRollback": "PASS requires populated identity fields and evidence, identityMatched=true, an explicit valid or unsigned signature status, and helper-binary-only rollback. Identity equality and signature authenticity remain evidence-review responsibilities."
+  },
+  "reviewChecks": {
+    "jsonParse": "PASS; fixture plan, report schema, review record, and progress parse as JSON.",
+    "fixtureAndGateStructure": "PASS; P01-P28 remain unique and ordered, both G0 gates are planned/NOT_RUN, and progress remains T05 not_started.",
+    "draft202012Validator": "NOT_RUN; no local Ajv validator is installed and no dependency was added."
+  },
+  "schemaAuthority": "STATIC_SCHEMA_REVIEW_ONLY; a schema-valid report is not sufficient evidence for T05 acceptance or a PASS claim.",
+  "limitations": [
+    "Case IDs are constrained to P01-P28 exactly once, but the schema cannot bind each report assertion name to every exact fixture-plan assertion. A report can omit a planned assertion and still validate; the mapping remains a manual gate.",
+    "The schema cannot enforce unique sample requestIds or recompute percentiles and outcome counts from samples. successfulSampleCount, failureCount, cancellationCount, timeoutCount, p50/p95/max, and sample rows can still contradict one another until a reviewer reconciles them from raw evidence.",
+    "textAppearanceIndependentlyVerified remains a self-reported boolean. PASS now requires metric evidence references, but the schema cannot prove that the referenced evidence actually shows text in the controlled editor.",
+    "Helper and rollback expected/actual paths, versions, protocols, and hashes are reported alongside identityMatched=true, but JSON Schema cannot compare those paired values or authenticate a signature. signatureStatus still allows unsigned; the reviewer must establish whether that is acceptable for this internal artifact.",
+    "PASS checks now require nonempty per-assertion, per-check, and per-metric evidence references. The schema cannot resolve paths, establish repository locality, verify file existence/hashes, or prove that a referenced artifact contains the claimed command output.",
+    "G0 runtime results and T03/T04 dependencyGate values are report inputs; reviewers must inspect process traces and cross-check dependency status with docs/progress.json and acceptance evidence.",
+    "All P01-P28 behavior, G0 process observation, controlled desktop measurements, Windows packaging, lifecycle, rollback, clipboard/input, and publication remain NOT_RUN."
+  ],
+  "manualReviewGates": [
+    "Before accepting any case result, map every fixture-plan assertion for P01-P28 one by one to a recorded assertion and evidence item; reject missing, extra, or mismatched mappings.",
+    "For both timing metrics, inspect at least 100 unique successful run/request IDs, verify controlled_live mode and all fixed environment controls, recompute p50/p95/max and failure/cancellation/timeout totals from raw per-run measurements, and attach independent evidence of synthetic text appearing in the controlled editor.",
+    "Inspect process-creation traces for interactive paths and helper process identities across repeated requests; verify no blocking synchronous spawn call and no new helper process per interaction.",
+    "Compare helper expected identity to the actual packaged resource and rollback identity to the previously verified helper using artifact path, version, protocol, SHA-256, signature result, and command output; do not trust identityMatched alone.",
+    "Resolve every evidence reference to an existing repository-local artifact, inspect its contents, verify recorded hashes and commands, and confirm evidence is attached to the specific assertion, check, or metric it supports.",
+    "Cross-check T03/T04 accepted status against docs/progress.json and their supporting acceptance evidence; a report's dependencyGate fields or schema-valid PASS cannot substitute for this check.",
+    "Keep T05 not_started/NOT_RUN until T04 is accepted and all required behavior, controlled desktop, package, rollback, and independent review evidence is actually completed."
+  ],
+  "source": [
+    "tests/tasks/T05/fixture-plan.json",
+    "tests/tasks/T05/report.schema.json",
+    "<spec-workspace>/docs/spec/tasks/T05.md",
+    "<spec-workspace>/docs/spec/04-desktop-performance.md §8",
+    "<spec-workspace>/docs/spec/08-acceptance-matrix.md §1, §4",
+    "independent agent review in this task"
+  ]
+}

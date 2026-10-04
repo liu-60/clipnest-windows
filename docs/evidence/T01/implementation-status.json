@@ -1,0 +1,56 @@
+{
+  "task": "T01",
+  "status": "accepted",
+  "verifiedAt": "2026-10-03",
+  "branch": "codex/m0-latency",
+  "baseCommit": "91cafd765b9480e011647c9d8cd2976269f12aef",
+  "scope": "metadata-only timing recorder, no-input isolated wake component baseline, and synthetic selection timeline schema; successful target selection/display is not measured",
+  "implementation": {
+    "requestCorrelation": "main, preload, and renderer share a per-wake request ID and monotonic stage timings",
+    "privacy": "records accept only fixed stage, flow, outcome, request ID, and elapsed-time fields; clipboard text, image bytes, window title, and paths are not recorded",
+    "benchmarkIsolation": "requires the T01 synthetic profile root and --no-input; benchmark mode disables global hotkey, clipboard polling, cloud sync, updater, startup configuration, and focus activation",
+    "selectionTimeline": "selection stage names and SendInput ACK versus target display observation are covered by a deterministic schema fixture; this fixture performs no OS clipboard write or input",
+    "startupGuard": "Electron executable is validated before build or temporary profile creation; temporary profile cleanup checks its resolved parent against the verified fixture root",
+    "runtimeSetup": {
+      "version": "40.10.2",
+      "archive": "Electron win32-x64 package from the existing worktree-local cache",
+      "sha256": "25ea6cfdc06deba58dafa6a3fc1fbd6dcda9e06a14035150ee1d9f73bca2e651",
+      "verification": "matched node_modules/electron/checksums.json before extraction; package and extracted runtime versions matched"
+    }
+  },
+  "validation": [
+    { "command": "pnpm lint", "exitCode": 0, "result": "PASS" },
+    { "command": "pnpm test:unit:metrics", "exitCode": 0, "result": "PASS", "passed": 8 },
+    { "command": "pnpm build", "exitCode": 0, "result": "PASS", "via": "bench:desktop" },
+    { "command": "node --check scripts/benchmark/bench-desktop.cjs; node --check tests/tasks/T01/metrics.test.cjs; node --check tests/tasks/T01/metrics-selection-timeline.test.cjs; node --check tests/tasks/T01/run-unit-tests.cjs; node --check tests/tasks/T01/run-native-tests.cjs", "exitCode": 0, "result": "PASS" },
+    { "command": "git diff --check", "exitCode": 0, "result": "PASS" },
+    { "command": "pnpm bench:desktop -- --profile tests/tasks/T01/runtime-profile --no-input --samples 1 --simulate-no-ack --report failure-path.json", "exitCode": 1, "result": "EXPECTED_FAILURE_PATH_RECORDED", "report": "docs/evidence/T01/failure-path.json", "successfulSamples": 0, "failedSamples": 1, "note": "Expected nonzero exit confirms a missing renderer ACK becomes a bounded, reported failure instead of a 120-second hang." },
+    { "command": "pnpm bench:desktop -- --profile tests/tasks/T01/runtime-profile --no-input --samples 10", "exitCode": 0, "result": "PASS_COMPONENT_BASELINE", "successfulSamples": 10, "failedSamples": 0 }
+  ],
+  "benchmark": {
+    "report": "docs/evidence/T01/wake-baseline.json",
+    "result": "PASS_COMPONENT_BASELINE",
+    "requestedSamples": 10,
+    "successfulSamples": 10,
+    "failedSamples": 0,
+    "wakeToActionableMs": { "p50": 1605.779, "p95": 1729.41 },
+    "previousWindowCaptureMs": { "p50": 1594.524, "p95": 1719.413 },
+    "physicalHotkeyAndTargetApplicationDisplay": "not measured; successful helper ACK and actual editor display remain for T03/T05 controlled integration"
+  },
+  "safety": {
+    "benchmarkApplicationLaunched": true,
+    "benchmarkApplication": "isolated Electron process built from this checkout; installed application was not launched",
+    "systemClipboardRead": false,
+    "systemClipboardWritten": false,
+    "keyboardInputSent": false,
+    "clipnestLiveProfileContentsRead": false,
+    "clipnestLiveProfileModified": false
+  },
+  "acceptance": {
+    "t01Accepted": true,
+    "reviewStatus": "accepted_after_independent_review",
+    "nextTaskStarted": true,
+    "independentReview": "docs/evidence/T01/review.json",
+    "note": "The isolated benchmark launches its own invisible Electron process. Missing-ACK failure accounting is verified in failure-path.json; selection timeline schema is synthetic and does not claim a live editor observation. Successful target insertion/display remains a T03/T05 gate."
+  }
+}

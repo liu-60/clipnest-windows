@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "task": "T03",
+  "status": "static_review_only",
+  "head": "91cafd765b9480e011647c9d8cd2976269f12aef",
+  "progressAtReview": {
+    "T02": "in_progress",
+    "T03": "in_progress",
+    "T02AcceptanceRequiredBeforeHostWiring": true
+  },
+  "callChains": [
+    {
+      "stage": "Panel show and capture",
+      "current": [
+        "src/main/main.ts:1301-1320 capturePreviousWindowHandle uses spawnSync(powershell.exe)",
+        "src/main/main.ts:1551-1570 showPanel calls that capture synchronously before showing",
+        "src/main/main.ts:1600 emits panel:shown with requestId only",
+        "src/preload/preload.ts:14-21,55-61 receives and buffers requestId only"
+      ],
+      "replaceWith": "A nonblocking capture tied to a new panel generation; validate target HWND/PID/process-created identity and retain one fixed target for that generation. Open the copy panel with automatic paste unavailable if capture/helper is unavailable.",
+      "boundary": "Choose one authoritative pre-panel target-capture path between the T03 host bridge and T02 capture request; do not recapture an arbitrary foreground after hiding."
+    },
+    {
+      "stage": "Selection through helper result",
+      "current": [
+        "src/main/main.ts:1868-1896 history:copy finds the item, writes Electron clipboard, schedules paste, and acknowledges before input outcome",
+        "src/main/main.ts:1512-1529 hides immediately, waits 100ms, recaptures foreground, and launches paste",
+        "src/main/main.ts:1465-1508 starts a per-request PowerShell paste process"
+      ],
+      "replaceWith": "A single supervised helper client with requestId/generation/helperInstanceId correlation; await the actual terminal result, hide only after the required commit and host authorization, and never retry an unknown input result.",
+      "safetyBoundary": "Do not keep the unconditional Electron clipboard write as an automatic pre-step; use helper conditional commit_write so P11/P19/P20 can preserve external clipboard changes."
+    },
+    {
+      "stage": "Preload and shared result",
+      "current": [
+        "src/preload/preload.ts:25 copyItem forwards only an item id",
+        "src/shared/types.ts:67 copyItem is Promise<void>",
+        "src/shared/types.ts:85 onPanelShown exposes requestId|null without generation"
+      ],
+      "replaceWith": "Carry the panel generation and a typed operation result across IPC; keep content bytes, native handles, and filesystem paths out of renderer arguments."
+    },
+    {
+      "stage": "Immutable content registration",
+      "current": [
+        "src/main/main.ts history is the current in-memory item source; history:copy resolves by id but has no sender validation",
+        "src/shared/types.ts ClipboardItem has optional updatedAt but no monotonic content-version field"
+      ],
+      "replaceWith": "Validate IPC sender and item reference, take an immutable current-record snapshot, and register only itemRef/version/type/size/hash plus bounded chunks with the helper. Invalidate the object token when the record changes or the job ends.",
+      "safetyBoundary": "Do not trust updatedAt alone as a unique version; do not accept arbitrary content paths or renderer-supplied payloads."
+    }
+  ],
+  "nativeContractSnapshot": [
+    {
+      "file": "native/src/protocol.rs:46-100",
+      "current": "Strict JSON-lines request variants include capture, register_content, content_chunk, finish_content, prepare, commit_write, paste(hostWindow+target), and cancel; unknown request fields are denied."
+    },
+    {
+      "file": "src/shared/native-contracts.ts:1-57,188-287",
+      "current": "TypeScript NativeRequest mirrors the protocol and isNativeResult validates response fields plus requestId/generation/helperInstanceId correlation; no runtime NativeRequest encoder/validator is present."
+    },
+    {
+      "file": "native/src/protocol.rs:158-175; native/src/main.rs:7-13",
+      "current": "READY has startup requestId/generation and helperInstanceId only. The instance id embeds PID and a nanosecond timestamp string, but READY does not separately bind helper PID and Windows process creation time as required by T03a."
+    },
+    {
+      "file": "native/src/control.rs:394-407",
+      "current": "The controller records the first request generation and returns stale_generation for every different generation; no generation reset/advance path was found."
+    },
+    {
+      "file": "native/src/protocol.rs:78-83; src/shared/native-contracts.ts:40",
+      "current": "Both current implementations require itemRef on prepare, while docs/spec/04-desktop-performance.md defines prepare with jobId/objectToken/expectedItemVersion only. Resolve this canonical-contract difference before host wiring."
+    }
+  ],
+  "fixtureGaps": [
+    {
+      "gap": "No fixture currently checks that a newer panel generation is accepted after the old job becomes quiescent, while a delayed old-generation response is ignored.",
+      "candidate": "Extend P13 with both the new-generation success path and stale-result isolation; exercise helper restart/new instance separately."
+    },
+    {
+      "gap": "P26 checks denial but not the positive foreground-host authorization path or a mismatched/reused helper PID binding.",
+      "candidate": "Add hostForeground=true + matching READY PID/creation identity => one AllowSetForegroundWindow call; each failed precondition => zero calls and zero input."
+    },
+    {
+      "gap": "The plan does not cover malformed IPC sender/arguments or guarantee they cause zero native, clipboard, focus, and input calls.",
+      "candidate": "Add invalid sender, non-string/unknown/deleted itemRef, and stale item-version cases; all must be rejected before registration or side effects."
+    },
+    {
+      "gap": "The plan does not explicitly cover missing/malformed READY or mismatched response correlation at the Electron helper-client boundary.",
+      "candidate": "Add missing PID/creation binding, wrong helperInstanceId, wrong requestId, wrong generation, unknown status/field, and startup timeout cases; disable automatic paste and do not replay input."
+    },
+    {
+      "gap": "Content-provider snapshot immutability is implied by P24 but edit/delete between lookup, registration, and prepare is not explicit.",
+      "candidate": "Edit/delete the selected record at each boundary and assert old version/token is rejected with zero clipboard write and zero input."
+    }
+  ],
+  "safePreparationNow": [
+    "Keep the existing P05/P08/P10/P11/P13/P18-P28 plan as behavioral acceptance criteria.",
+    "Resolve the helper capture versus host bridge capture ownership and generation semantics with the T02 contract owner before writing T03 production code.",
+    "When T02 is accepted, add isolated unit fixtures for helper-client correlation, IPC sender validation, authorization gates, and immutable provider invalidation before any live Windows acceptance run."
+  ],
+  "verification": "No tests, helper process, clipboard operation, foreground activation, or keyboard input were run. This file records source/contract inspection only."
+}

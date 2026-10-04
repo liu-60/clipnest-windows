@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-04",
+  "timezone": "Asia/Shanghai",
+  "result": "PASS",
+  "kind": "controlled Windows native product-flow integration",
+  "installedVersion": "1.1.4-local.20261004.3",
+  "test": "win32::tests::windows_owned_edit_receives_one_native_paste_at_the_original_caret",
+  "source": "native/src/win32.rs",
+  "command": "<tools>/rust/rustup-home/toolchains/stable-x86_64-pc-windows-gnu/bin/cargo.exe test --manifest-path native/Cargo.toml --target x86_64-pc-windows-gnu --features win32 --locked --offline --lib -j 1 windows_owned_edit_receives_one_native_paste_at_the_original_caret -- --ignored --nocapture --test-threads=1",
+  "environment": {
+    "CARGO_HOME": "<tools>/rust/cargo-home",
+    "RUSTUP_HOME": "<tools>/rust/rustup-home",
+    "CARGO_TARGET_DIR": "<tools>/rust/target-electron-l0",
+    "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER": "<tools>/llvm-mingw/unpacked/llvm-mingw-20260922-msvcrt-x86_64/bin/x86_64-w64-mingw32-gcc.exe"
+  },
+  "execution": {
+    "exitCode": 0,
+    "testsRun": 1,
+    "passed": 1,
+    "failed": 0,
+    "testDurationSeconds": 0.38,
+    "repeatRuns": 0,
+    "releaseRebuilt": false,
+    "productionCodeChangedForThisTest": false,
+    "nativeReleaseSha256": "4F4FCA4EAAA8D97730735CE258FD78B4F4A2F4489AEC8606C0B8C81482A28788"
+  },
+  "verified": {
+    "targetAndHostWereTestOwnedEditWindows": true,
+    "targetAndHostPidMatchedTheTestProcess": true,
+    "hwndPidAndProcessCreationTimeUsedByProductionPasteSpec": true,
+    "realWindowsCaretConfirmedByGetGUIThreadInfo": true,
+    "originalCaretUtf16Offset": 4,
+    "stableClipboardSequenceAndHelperOwnerChecked": true,
+    "foregroundHostAuthorizedTheNativeProcess": true,
+    "realRunPasteAndWin32PlatformUsed": true,
+    "existingBoundedFocusWaitAndPreInputGatesUnchanged": true,
+    "actualSendInputCtrlVExecuted": true,
+    "exactSingleInsertionAtTheOriginalCaret": true,
+    "hostTextRemainedUnchanged": true
+  },
+  "syntheticFixture": {
+    "initialTargetText": "LEFT|RIGHT",
+    "clipboardText": "CLIPNEST_NATIVE_PASTE",
+    "actualAndExpectedTargetText": "LEFTCLIPNEST_NATIVE_PASTE|RIGHT"
+  },
+  "cleanup": {
+    "visibleHostWindowDestroyedAndIsWindowReturnedZero": true,
+    "visibleTargetWindowDestroyedAndIsWindowReturnedZero": true,
+    "hiddenClipboardOwnerDestroyWindowInvokedByRaii": true,
+    "allRemainingTestWindowsReleasedOnProcessExit": true,
+    "nativeTestProcessExited": true,
+    "preexistingUserWindowsControlled": false,
+    "userClipboardContentRead": false,
+    "clipboardReplacedOnlyWithTheSyntheticFixture": true
+  },
+  "stdout": "PASS: owned EDIT HWND/PID/creation identities, actual caret at 4, stable clipboard owner/sequence, authorized native focus handoff, one SendInput Ctrl+V, exact inserted text, owned windows destroyed",
+  "limits": [
+    "This verifies the production native paste flow using the test process's own windows and real input; it is not a final installed-card-click live acceptance test.",
+    "The target and host share the test process and input thread; renderer IPC, separate helper-child authorization, and an independent application's caret are outside this controlled test.",
+    "The test-only additions are excluded from the installed release binary, which was not rebuilt or replaced for this test."
+  ]
+}

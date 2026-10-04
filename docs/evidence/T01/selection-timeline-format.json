@@ -1,0 +1,21 @@
+{
+  "task": "T01",
+  "kind": "synthetic_schema_fixture",
+  "measurement": "selection helper ACK and target display are separate stages sharing one requestId and monotonic timeline",
+  "targetDisplayObserved": false,
+  "systemClipboardWritten": false,
+  "keyboardInputSent": false,
+  "events": [
+    { "requestId": "synthetic-selection-1", "flow": "selection", "stage": "request_started", "elapsedMs": 0, "stageDurationMs": 0 },
+    { "requestId": "synthetic-selection-1", "flow": "selection", "stage": "selection_received", "elapsedMs": 4, "stageDurationMs": 4 },
+    { "requestId": "synthetic-selection-1", "flow": "selection", "stage": "clipboard_written", "elapsedMs": 11, "stageDurationMs": 7 },
+    { "requestId": "synthetic-selection-1", "flow": "selection", "stage": "paste_helper_spawned", "elapsedMs": 16, "stageDurationMs": 5 },
+    { "requestId": "synthetic-selection-1", "flow": "selection", "stage": "send_input_acknowledged", "elapsedMs": 21, "stageDurationMs": 5 },
+    { "requestId": "synthetic-selection-1", "flow": "selection", "stage": "target_display_observed", "elapsedMs": 34, "stageDurationMs": 13 },
+    { "requestId": "synthetic-selection-1", "flow": "selection", "stage": "request_finished", "elapsedMs": 36, "stageDurationMs": 2, "outcome": "ok" }
+  ],
+  "limitations": [
+    "This fixture validates the event shape and stage separation only; it is not a live controlled-editor measurement.",
+    "Successful selection phases remain unmeasured until the native helper is integrated and T03/T05 runs controlled input/display verification."
+  ]
+}

@@ -1,0 +1,278 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "status": "partial_execution",
+  "executionStatus": "PARTIAL_WITH_REAL_DECODER_AND_ASAR_SMOKES",
+  "executionSummary": {
+    "moduleLevelFakeFixtures": {
+      "status": "PASS",
+      "command": "pnpm test:unit clipboard keyboard panel",
+      "passed": 30,
+      "failed": 0
+    },
+    "fullT04Acceptance": "NOT_RUN",
+    "latestTargetedFakeRun": {
+      "status": "PASS",
+      "command": "pnpm test:unit -- clipboard-image-preparation.test.cjs selection-key-deadline.test.cjs",
+      "passed": 20,
+      "failed": 0
+    },
+    "nativeHelperFakeRun": {
+      "status": "PASS",
+      "command": "pnpm test:native",
+      "passed": 56,
+      "failed": 0,
+      "scope": "Rust unit and isolated fake-platform integration tests; no desktop clipboard or input"
+    },
+    "productionDecoderFixtures": {
+      "status": "PASS",
+      "passed": 9,
+      "artifact": "tests/tasks/T04/clipboard-image-decoder.test.cjs"
+    },
+    "realUtilityProcessDecodeAndRetirement": "PASS; tests/tasks/T04/run-image-worker-electron.cjs",
+    "v2AsarDecoderLoad": "PASS; release/windows-flat-20261004/image-worker.stdout.log, package 1.1.4-local.20261004.2",
+    "finalV3AsarDecoderAndInstallation": "PASS; latest logs report 1.1.4-local.20261004.3 and installation manifest matches 82 files. Earlier v2 logs were replaced by v3; see checkpointEvidence.",
+    "latestFullUnitSuite": { "status": "PASS", "passed": 107, "failed": 0, "command": "pnpm test:unit" },
+    "checkpointEvidence": "docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json",
+    "requiredNotRun": [
+      "Real Electron window clipboard/panel integration",
+      "256 MiB image-worker peak RSS/working-set measurement",
+      "16 MP Windows decode latency and final-helper target-visible card-click acceptance"
+    ]
+  },
+  "sourceOfExpectedBehavior": "<spec-workspace>/docs/spec/tasks/T04.md; <spec-workspace>/docs/spec/01-product-and-ux.md §2; <spec-workspace>/docs/spec/04-desktop-performance.md §6, §8",
+  "executionGate": "T03 is accepted. The current user explicitly authorized the Windows repair/self-test/local package/install checkpoint, including production decoder integration. Full T04/T05 acceptance still requires the remaining behavior and performance evidence.",
+  "harnessBoundary": {
+    "platform": "renderer tests and recording fake clipboard/image worker/platform",
+    "assertions": "user-visible selection/result plus clipboard read/decode/encode/hash, worker, queue, focus, and input call counts",
+    "forbiddenDuringFixtureRuns": [
+      "real keyboard input",
+      "real clipboard read or write",
+      "real target-window activation",
+      "using a sandbox or IPC acknowledgement as live input evidence"
+    ]
+  },
+  "cases": [
+    {
+      "id": "T04-K01",
+      "references": [
+        "U01"
+      ],
+      "setup": "Search input focused with multiple results loaded.",
+      "action": "Use ArrowDown to enter result navigation, then press Enter outside IME composition.",
+      "assert": [
+        "the selected item and scrolled item agree",
+        "one user action creates at most one job",
+        "the input caret retains ordinary arrow-key behavior"
+      ]
+    },
+    {
+      "id": "T04-K02",
+      "references": [
+        "U02"
+      ],
+      "setup": "Search input is in an active IME composition; the panel is visible and a result is selected.",
+      "action": "Press Escape to cancel composition; in a separate active composition press Enter to confirm; after composition ends, press Enter again.",
+      "assert": [
+        "IME Escape cancels composition without creating a paste job or hiding the panel",
+        "composition Enter creates no paste job and does not close the panel",
+        "a later non-composing Enter creates exactly one job"
+      ]
+    },
+    {
+      "id": "T04-K03",
+      "references": [
+        "U03",
+        "P12",
+        "P28"
+      ],
+      "setup": "A card is idle, then repeat the click/double-click and held/repeated Enter sequences while a job is busy.",
+      "action": "Observe selected item, job count, and clipboard/input call counts.",
+      "assert": [
+        "a single click preserves the existing select-and-execute behavior",
+        "the dblclick handler adds no extra execution",
+        "event.repeat and busy state do not create overlapping duplicate jobs"
+      ]
+    },
+    {
+      "id": "T04-I01",
+      "references": [
+        "04 §6",
+        "P15"
+      ],
+      "setup": "Clipboard sequence is unchanged across repeated notifications or legacy polling ticks.",
+      "action": "Run clipboard capture for the unchanged sequence.",
+      "assert": [
+        "content read/decode/PNG/Base64/hash counts remain zero after sequence comparison"
+      ]
+    },
+    {
+      "id": "T04-I02",
+      "references": [
+        "04 §6",
+        "P15"
+      ],
+      "setup": "A new clipboard sequence contains an image; duplicate notifications for that sequence follow.",
+      "action": "Process the sequence and then select/copy its stored item.",
+      "assert": [
+        "the sequence is captured once",
+        "duplicate notifications and selecting the stored image do not repeat PNG/Base64/hash work"
+      ]
+    },
+    {
+      "id": "T04-I03",
+      "references": [
+        "P16"
+      ],
+      "setup": "The decoded-image cache misses for a valid image.",
+      "action": "Select it while preparation runs and then let preparation finish.",
+      "assert": [
+        "preparing is observable",
+        "the UI remains responsive",
+        "the original is retained and is not replaced by a downsampled thumbnail"
+      ]
+    },
+    {
+      "id": "T04-I04",
+      "references": [
+        "P17"
+      ],
+      "setup": "Drive worker, decoded-cache, image-size, and queue limits to and beyond their configured boundaries.",
+      "action": "Submit valid and over-budget image work, including cancellation and a permission/read failure.",
+      "assert": [
+        "fake fixtures cover the configured single-worker, 32MiB decoded-cache, and 20MiB/16MP per-image boundaries; 256MiB peak-worker RSS must be measured separately and is not established by fake limits",
+        "P07/P08 cancellation, P14 permission degradation, and P17 capacity failures are explicit",
+        "failed work does not overwrite clipboard or discard the retained original"
+      ]
+    },
+    {
+      "id": "T04-I05",
+      "references": [
+        "04 §6",
+        "04 §8"
+      ],
+      "setup": "An image cache miss starts with a fixed monotonic content-preparation deadline; the fake worker never completes until it receives abort.",
+      "action": "Allow the 3000ms deadline to expire, then submit a new image after the timed-out worker has been disposed.",
+      "assert": [
+        "the original absolute deadline returns image_prepare_timeout and aborts the worker signal",
+        "the timed-out worker is disposed and is not reused for the next decode",
+        "timeout leaves no decoded cache entry and never reports ready"
+      ]
+    },
+    {
+      "id": "T04-I06",
+      "references": [
+        "04 §4",
+        "04 §5",
+        "04 §7"
+      ],
+      "setup": "A selection starts a continuously polled trigger/modifier-key monitor at time zero alongside content preparation, with the original absolute 500ms key-release cutoff and separate 3000ms content-preparation deadline.",
+      "action": "Run these fake timelines: held through 500ms then released at 700ms with preparation ending at 800ms; initially released then re-pressed at 400ms through 500ms and released at 700ms with preparation ending at 800ms; released at 490ms with preparation ending at 2500ms.",
+      "assert": [
+        "a key held at the original 500ms cutoff latches key_held; a later release cannot resume the selection",
+        "a key re-press observed during preparation is not masked by an earlier released sample",
+        "held-at-cutoff cases produce zero clipboard writes, input submissions, and panel hides",
+        "release observed before the cutoff permits preparation to finish after 500ms but before 3000ms and continue immediately after a current key-state recheck",
+        "when preparation finishes after the released cutoff, main omits the expired helper deadline; a commit that starts before cutoff still carries the original absolute deadline"
+      ]
+    },
+    {
+      "id": "T04-I07",
+      "references": [
+        "04 §4",
+        "04 §6"
+      ],
+      "setup": "A timed-out fake worker's dispose promise never resolves.",
+      "action": "Submit later preparation requests with their own short absolute deadlines.",
+      "assert": [
+        "each request waiting for retirement returns image_prepare_timeout by its own deadline",
+        "retirement remains latched and no replacement worker is created"
+      ]
+    },
+    {
+      "id": "T04-U01",
+      "references": [
+        "01 §2",
+        "04 §6"
+      ],
+      "setup": "Multiple results are loaded and a non-first item is selected. Choose a new query that returns multiple results and still includes the previously selected item; open/close the panel with reduced motion both enabled and disabled.",
+      "action": "Change the query, then observe the selected card and viewport; navigate results by keyboard and observe the final window bounds and content transition.",
+      "assert": [
+        "after query change, selection resets to the first result in the new query and that result is visible even when the prior selection still matches",
+        "keyboard selection and scrolling stay aligned",
+        "one final bounds update is applied",
+        "reduced motion disables positional animation"
+      ]
+    },
+    {
+      "id": "T04-U02",
+      "references": [
+        "04 §6"
+      ],
+      "setup": "Search query is empty with a large fake item set.",
+      "action": "Render the initial list and count body-search calls.",
+      "assert": [
+        "empty query does not scan item bodies",
+        "the initial visible list remains correct"
+      ]
+    },
+    {
+      "id": "T04-I08",
+      "references": [
+        "04 §4",
+        "04 §5"
+      ],
+      "setup": "A selection is canceled while its key-release monitor is polling and preparation has not finished.",
+      "action": "Cancel the selection and observe the monitor wait and scheduled polling timer.",
+      "assert": [
+        "the pending monitor wait resolves selection_cancelled",
+        "the timer is cleared and no clipboard, input, or panel-hide effect occurs"
+      ]
+    },
+    {
+      "id": "T04-I09",
+      "references": [
+        "04 §4",
+        "04 §5"
+      ],
+      "setup": "The fake scheduler delays the selection monitor callback until after both absolute 500ms deadlines; the last observed key state is released, then the fake key is re-pressed before 500ms and released after 500ms.",
+      "action": "Advance the fake clock across the cutoff without running scheduled polls, then complete the selection preparation.",
+      "assert": [
+        "the missed cutoff returns key_state_unavailable instead of trusting the stale released sample",
+        "no clipboard write, input submission, or panel hide occurs",
+        "this fake scheduler case does not establish behavior under a real main-process event-loop stall"
+      ]
+    },
+    {
+      "id": "T04-I10",
+      "references": [
+        "04 §4",
+        "04 §5",
+        "04 §7"
+      ],
+      "setup": "A selection's 500ms key-release monitor reaches its cutoff while image preparation is still pending; test both a held key and a released key.",
+      "action": "For the held case, abort preparation at 500ms and make its pending promise reject later with image_prepare_timeout. For the released case, let the cutoff settle while preparation remains pending, then finish preparation.",
+      "assert": [
+        "held-at-cutoff returns key_held even when preparation later reports image_prepare_timeout, and invokes cancellation once",
+        "the blocked result causes zero clipboard writes, input submissions, and panel hides; no helper registration request is made while snapshot preparation is pending",
+        "released-at-cutoff continues waiting for preparation and does not invoke cancellation",
+        "both terminal paths clear the monitor timer"
+      ]
+    },
+    {
+      "id": "T04-I11",
+      "references": [
+        "04 §5.4",
+        "04 §5.7"
+      ],
+      "setup": "The original 500ms key-release cutoff has elapsed with a released-key sample and image preparation completes afterward.",
+      "action": "Commit through the main/helper contract with a zero selection budget; exercise released keys and a key re-press before the helper clipboard-write gate.",
+      "assert": [
+        "zero budget performs an immediate key-state check and never starts a fresh 500ms wait",
+        "released keys permit clipboard commit, while a re-pressed key blocks input submission",
+        "a key held at check-only commit blocks clipboard commit",
+        "this isolated fake does not establish physical keyboard timing or the OS-level race after the final key sample"
+      ]
+    }
+  ]
+}

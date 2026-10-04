@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "task": "T03",
+  "result": "ACCEPTED_WITH_OPEN_GATES",
+  "branch": "codex/m0-latency",
+  "baselineCommit": "91cafd765b9480e011647c9d8cd2976269f12aef",
+  "commit": null,
+  "workingTreeWasDirty": true,
+  "environment": {
+    "platform": "win32",
+    "node": "v24.16.0",
+    "pnpm": "11.19.0"
+  },
+  "implementation": {
+    "scope": [
+      "a host identity/foreground authorization bridge",
+      "b persistent helper client, generation/cancel lifecycle, Promise result handling",
+      "c immutable current-item snapshots and bounded acknowledged content streaming"
+    ],
+    "files": [
+      "src/main/main.ts",
+      "src/main/native/host-authorization.ts",
+      "src/main/native/helper-client.ts",
+      "src/main/native/content-provider.ts",
+      "src/main/native/profile-identity.ts",
+      "src/main/native/win32-host-bridge.ts",
+      "src/preload/preload.ts",
+      "src/shared/types.ts",
+      "src/shared/native-contracts.ts",
+      "src/renderer/App.tsx"
+    ],
+    "safetyBehavior": [
+      "A helper READY profile identity is derived from the selected Electron userData path and overwrites any inherited CLIPNEST_STABLE_PROFILE_ID.",
+      "At most one supervisor restart is attempted; a replacement waits for confirmed old-helper exit. An unconfirmed clipboard side effect fences every Electron clipboard write until that process exit is confirmed.",
+      "The selected item version is rechecked after prepare and immediately before clipboard commit; stale content is cancelled before writing.",
+      "Confirmed clipboard write followed by paste failure returns copied_only; a lost commit or input acknowledgement is unknown and is never resent.",
+      "Renderer maps copy outcomes to distinct notices, drops old-generation results, and forwards Enter; the user explicitly accepted the T03 scope and directed continuation.",
+      "The main process sends both the remaining selection budget and a shared monotonic tick deadline. Helper waits and commit/input boundaries enforce the earlier local or shared deadline; legacy budget-only click semantics remain compatible.",
+      "The helper rechecks local and shared deadlines after the clipboard lock and after INPUT construction immediately before sequence validation and SendInput.",
+      "Before clipboard commit, a still-current explicit selection may fall back to Electron clipboard-only. T04 now supplies bounded PNG/JPEG decoding in a production utility process; complete image auto-paste acceptance remains open."
+    ]
+  },
+  "validation": [
+    {
+      "command": "pnpm lint",
+      "result": "PASS",
+      "details": "main and renderer TypeScript checks passed after the P08/P13/P21 wiring."
+    },
+    {
+      "command": "pnpm test:unit paste",
+      "result": "PASS",
+      "passed": 2,
+      "failed": 0,
+      "details": "P10 no blind retry; helper profile identity derivation/override."
+    },
+    {
+      "command": "node --test tests/tasks/T03/*.test.cjs tests/tasks/T03/paste/*.test.cjs",
+      "result": "PASS",
+      "passed": 35,
+      "failed": 0,
+      "details": "Host bridge (including pre-hide key check), content provider, helper lifecycle/fence, P13 generation isolation, profile identity, and selection-budget protocol fixtures."
+    },
+    {
+      "command": "node --test tests/tasks/T02/native-contracts.test.cjs",
+      "result": "PASS",
+      "passed": 7,
+      "failed": 0,
+      "details": "Existing strict native contract and empty-trigger behavior remain compatible."
+    },
+    {
+      "command": "pnpm test:native -- --dry-run",
+      "result": "PASS",
+      "passed": 52,
+      "failed": 0,
+      "details": "28 library tests, 15 recording-control tests, and 9 protocol tests; includes earlier-local-budget and deadline-expiry-during-INPUT-construction fixtures.",
+      "toolchain": "repository stable x86_64-pc-windows-gnu"
+    },
+    {
+      "command": "cargo check --manifest-path native/Cargo.toml --all-targets --features win32 --target x86_64-pc-windows-gnu --locked --offline",
+      "result": "PASS",
+      "details": "Windows x64 GNU target check completed offline after the P21 changes."
+    },
+    {
+      "command": "cargo fmt --manifest-path native/Cargo.toml --all -- --check",
+      "result": "PASS",
+      "details": "Rust formatting check completed after the P21 changes."
+    },
+    {
+      "command": "helper READY identity smoke",
+      "result": "PASS",
+      "details": "Isolated helper READY PID and FILETIME matched a read-only Win32 process query; no clipboard, foreground, or input call."
+    },
+    {
+      "command": "node --test tests/tasks/T03/main-paste-orchestration.test.cjs",
+      "result": "PASS",
+      "passed": 8,
+      "failed": 0,
+      "details": "Production main functions execute in a VM with simulated OS/helper/content boundaries and the real selection-key monitor; covers ACK ordering, authorization/key failure, no retry, captured-target stability and generation preservation. Does not execute actual Electron IPC or target-visible input."
+    },
+    {
+      "command": "pnpm test:unit",
+      "result": "PASS",
+      "passed": 107,
+      "failed": 0,
+      "details": "Latest session output includes the main TypeScript build, updated orchestration fixture and production decoder regressions; see docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json."
+    }
+  ],
+  "notRun": [
+    "Real AllowSetForegroundWindow authorization and target foreground restoration.",
+    "Complete final-helper target-visible SendInput acceptance; synthetic clipboard regressions alone do not establish target input visibility.",
+    "Actual Electron IPC integration beyond the passing main/controller VM behavior fixture.",
+    "Complete real image auto-paste/cache-miss target-visible acceptance; decoder utility-process and v2 ASAR smokes are separately PASS."
+  ],
+  "independentReview": {
+    "status": "PASSED_WITH_OPEN_GATES",
+    "completedReview": {
+      "reviewer": "independent adversarial re-review",
+      "date": "2026-10-04",
+      "result": "PASS",
+      "coverage": "Earlier relative and absolute deadlines, post-lock clipboard commit checks, final SendInput boundary, and legacy empty-trigger/click semantics."
+    },
+    "priorReviewFindingsAddressed": [
+      "missing helper profile environment",
+      "no bounded helper restart after disconnect",
+      "missing item-version recheck before conditional write",
+      "paste failure after confirmed write reported as copied_only rather than blocked",
+      "unconfirmed helper exit could race an Electron clipboard fallback",
+      "renderer drops old-generation copy results",
+      "same-item/same-trigger reentry no longer resets the 500ms window",
+      "helper checks trigger and modifiers before clipboard write; main checks again before hiding the panel"
+    ],
+    "reviewerUnavailable": [
+      "Two other delegated reviewers failed with backend 403; the read-only main-integration reviewer completed follow-up."
+    ],
+    "remainingFindings": [
+      "The earlier main-process orchestration fixture gap is addressed by 8 passing VM behavior tests using production main functions and the real monitor; actual Electron IPC and target-visible Windows input remain separate acceptance gaps.",
+      "A final OS scheduling pause after the last clock sample and before SendInput cannot be excluded; the check is adjacent to the syscall and delayed construction is covered by a fake fixture."
+    ]
+  },
+  "openGates": [
+    "Actual Electron IPC and final-helper target-visible clipboard/input integration remain unaccepted; the main/controller VM fixture is PASS and synthetic clipboard tests do not close this gate.",
+    "A scheduler pause after the final deadline sample and before the SendInput syscall remains an inherent narrow boundary risk; deadline checks are adjacent and the native sequence is checked immediately before the syscall."
+  ],
+  "checkpointEvidence": "docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json",
+  "acceptanceDecision": {
+    "status": "ACCEPTED_BY_USER",
+    "date": "2026-10-03",
+    "basis": "用户明确指示 T03 通过并继续；P21 实现缺口经修复和独立复审通过。Main-process IPC/controller fixture 与真实桌面验收仍为开放/NOT_RUN 门槛。"
+  }
+}

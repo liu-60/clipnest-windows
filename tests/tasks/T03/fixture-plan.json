@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "task": "T03",
+  "status": "preflight_only",
+  "sourceOfExpectedBehavior": "../v2/docs/spec/04-desktop-performance.md",
+  "executionGate": "T02 must be accepted before connecting the Electron host to the native helper.",
+  "schemaGate": {
+    "status": "DECIDED_PENDING_T02_IMPLEMENTATION_AND_ACCEPTANCE",
+    "decisionSource": "T02 owner report received in the task thread",
+    "reason": "Wire shape is now recorded from the T02 owner's decision; fixtures remain NOT_RUN until the implementation is accepted.",
+    "notRun": true
+  },
+  "wireContract": {
+    "ready": {
+      "requiredFields": {
+        "helperPid": "number",
+        "helperProcessCreatedAt": "decimal string containing Windows process creation FILETIME"
+      },
+      "acceptOnlyWhen": "Both values bind the currently spawned helper process and its READY helperInstanceId."
+    },
+    "generationTransition": {
+      "envelopeFields": ["requestId", "generation", "helperInstanceId"],
+      "acceptNewGenerationWhen": "Prior job is terminal and released, with no in-flight worker or content acknowledgement.",
+      "earlyNewGeneration": {
+        "status": "busy",
+        "reasonCode": "generation_transition_pending",
+        "hostAction": "Wait for quiescence, then retry with a new requestId."
+      },
+      "oldGeneration": "Remains stale and cannot settle or mutate a newer panel generation."
+    },
+    "prepare": {
+      "requestFields": ["jobId", "objectToken", "expectedItemVersion"],
+      "itemRefLocation": "register_content only"
+    },
+    "registerContent": {
+      "requestFields": ["jobId", "objectToken", "itemRef", "expectedItemVersion", "contentType", "totalBytes", "totalHash"],
+      "optionalFields": ["inlineBase64"]
+    }
+  },
+  "harnessBoundary": {
+    "platform": "recording fake platform/helper only",
+    "assertions": "externally observable result, clipboard-write count, focus-call count, input-call count, and pending-job count",
+    "forbiddenDuringFixtureRuns": [
+      "real keyboard input",
+      "real clipboard read or write",
+      "real target-window activation",
+      "claiming SendInput acknowledgement proves target application behavior"
+    ]
+  },
+  "cases": [
+    {
+      "id": "P05",
+      "setup": "Captured target HWND is destroyed, or its PID/process-creation identity no longer matches.",
+      "action": "Continue a pending selection using the captured target.",
+      "assert": ["target_invalid or copied_only", "focus-call count is 0", "input-call count is 0"]
+    },
+    {
+      "id": "P08",
+      "setup": "A job is waiting for focus or modifiers and has not crossed the input commit gate.",
+      "action": "Cancel the active job.",
+      "assert": ["accepted cancel prevents all later input calls", "cancel acknowledgement is within 50ms or automation becomes unavailable", "active work is not reused before quiescence is confirmed"]
+    },
+    {
+      "id": "P10",
+      "setup": "Helper disconnects after a paste request, before its outcome is known.",
+      "action": "Observe the request outcome and subsequent supervisor behavior.",
+      "assert": ["outcome is unknown or helper_unavailable", "the input request is not automatically resent"]
+    },
+    {
+      "id": "P11",
+      "setup": "Clipboard sequence changes externally before the conditional write, or after the app's own write and before input.",
+      "action": "Continue the job to its next commit boundary.",
+      "assert": ["pre-write change causes zero clipboard writes", "post-write change causes zero input calls", "external clipboard content is never restored over"]
+    },
+    {
+      "id": "P13",
+      "schemaStatus": "DECIDED_PENDING_T02_IMPLEMENTATION_AND_ACCEPTANCE",
+      "setup": "Panel generation N has an in-flight request; its job reaches confirmed quiescence; the host opens panel generation N+1.",
+      "action": "Attempt N+1 before quiescence, wait for N terminal/resource release, retry with a new requestId, deliver a delayed N acknowledgement, then deliver the matching N+1 terminal result.",
+      "assert": ["early N+1 receives busy/generation_transition_pending and causes no paste side effect", "N+1 can start after N is quiescent using a new requestId", "late N acknowledgement cannot change N+1 UI state, release N+1 resources, or settle the N+1 copy promise", "only a matching N+1 result can settle N+1"],
+      "notRun": true
+    },
+    {
+      "id": "P18",
+      "setup": "A paste job is restoring its captured target.",
+      "action": "Activate a different external application before input commit.",
+      "assert": ["job is cancelled", "no further target-restoration call is made", "input-call count is 0"]
+    },
+    {
+      "id": "P19",
+      "setup": "Baseline clipboard sequence is 41; external content changes it to 42 while content preparation is pending.",
+      "action": "Complete preparation and request conditional clipboard commit.",
+      "assert": ["clipboard_changed", "clipboard-write count is 0", "input-call count is 0", "external content remains current"]
+    },
+    {
+      "id": "P20",
+      "setup": "Conditional write returns own sequence 42; external content changes the sequence to 43 before input commit.",
+      "action": "Run final input preconditions.",
+      "assert": ["input-call count is 0", "external content is not overwritten", "sequence 43 is not recorded as the app's own write"]
+    },
+    {
+      "id": "P21",
+      "setup": "Image preparation is delayed; Enter or V is initially released and is pressed again before preparation completes.",
+      "action": "Finish preparation and evaluate the original 500ms absolute selection deadline.",
+      "assert": ["panel is not hidden while the trigger key is held", "key_held or cancelled result", "input-call count is 0 until all key checks pass"]
+    },
+    {
+      "id": "P22",
+      "setup": "A recording focus API blocks on a worker while the control channel remains available.",
+      "action": "Cancel, then release the blocked API after observing its acknowledgement.",
+      "assert": ["cancel is handled within 50ms or automation becomes unavailable", "worker release causes no later focus or input call"]
+    },
+    {
+      "id": "P23",
+      "setup": "Run once with cancel immediately before the input commit gate and once immediately after it.",
+      "action": "Race cancellation with the single input commit transition.",
+      "assert": ["before-gate accepted cancel produces zero input calls", "after-gate cancel is too_late", "input-call count never exceeds 1"]
+    },
+    {
+      "id": "P24",
+      "setup": "After prepare, independently change item version, profile, and helper instance.",
+      "action": "Replay the prior prepare token for each changed identity.",
+      "assert": ["payload_invalid or helper_unavailable", "clipboard-write count is 0", "input-call count is 0", "no arbitrary filesystem path is accepted"]
+    },
+    {
+      "id": "P25",
+      "setup": "Register oversized, missing, reordered, duplicate, or hash-mismatched content chunks.",
+      "action": "Submit each malformed stream to the recording helper boundary.",
+      "assert": ["stream is rejected and token is invalidated", "prepare/write/input call counts are 0", "valid transfer has at most one unacknowledged chunk"]
+    },
+    {
+      "id": "P26",
+      "schemaStatus": "DECIDED_PENDING_T02_IMPLEMENTATION_AND_ACCEPTANCE",
+      "readyBinding": {
+        "helperPid": "number",
+        "helperProcessCreatedAt": "decimal FILETIME string"
+      },
+      "setup": "Run positive and negative authorization cases: (a) READY.helperPid and READY.helperProcessCreatedAt match the spawned helper while ClipNest is foreground, then submit two consecutive paste intents for that same helper; (b) after one successful authorization, ClipNest is no longer foreground for the next paste intent; (c) PID is reused or process creation time mismatches; (d) helper restarts but only the old READY binding is available; (e) after restart, a new READY matches the new helper while ClipNest is foreground.",
+      "action": "Request host-mediated foreground authorization separately for each paste intent.",
+      "assert": ["case (a) rechecks READY/process identity and foreground for each intent, then calls AllowSetForegroundWindow twice with the currently bound helperPid", "case (b) returns host_not_foreground and makes zero additional AllowSetForegroundWindow calls after focus is lost", "cases (c)-(d) make zero authorization calls", "case (e) revalidates and authorizes the new helper once", "denied cases do not hide the panel for automatic paste and retain the copy fallback", "denied cases make zero input calls"],
+      "notRun": true,
+      "realWin32Status": "NOT_RUN"
+    },
+    {
+      "id": "P27",
+      "setup": "A different application becomes foreground after the panel hides and before focus preparation finishes.",
+      "action": "Continue the original fixed-target job.",
+      "assert": ["job is cancelled", "no new SetForegroundWindow call is made", "input-call count is 0"]
+    },
+    {
+      "id": "P28",
+      "setup": "One job is active while duplicate Enter/show intents arrive and protocol output is backpressured.",
+      "action": "Submit duplicates and exceed the configured transport buffer in separate runs.",
+      "assert": ["active paste count is at most 1", "pending paste count is 0", "same intent is not committed twice", "cancel remains serviceable", "over-capacity enters unavailable"]
+    },
+    {
+      "id": "T03-CONTENT-01",
+      "schemaStatus": "DECIDED_PENDING_T02_IMPLEMENTATION_AND_ACCEPTANCE",
+      "setup": "Invoke the content-provider IPC through an untrusted sender, then with malformed, non-string, unknown, or deleted item references.",
+      "action": "Attempt to resolve/register content for each invalid sender or parameter case.",
+      "assert": ["request is rejected before content registration", "helper request count is 0", "clipboard-write, focus-authorization, and input-call counts are all 0"],
+      "notRun": true
+    },
+    {
+      "id": "T03-CONTENT-02",
+      "schemaStatus": "DECIDED_PENDING_T02_IMPLEMENTATION_AND_ACCEPTANCE",
+      "setup": "Pause content flow at lookup, registration, and prepare boundaries; independently edit or delete the selected record at each boundary.",
+      "action": "Register using the selected itemRef and expectedItemVersion, then request prepare using only jobId, objectToken, and expectedItemVersion after each intervening edit/delete.",
+      "assert": ["a stale version is not prepared or committed", "old object authorization is invalidated", "no clipboard write occurs for an invalidated version", "input-call count is 0", "the new record content is not silently substituted into the old selection job"],
+      "notRun": true
+    }
+  ]
+}

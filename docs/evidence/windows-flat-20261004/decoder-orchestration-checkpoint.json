@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-04",
+  "result": "PARTIAL_NOT_FULL_ACCEPTANCE",
+  "scope": "Existing session evidence only; this record does not rerun tests or launch processes. v3 package/module and installation checks are recorded separately from unverified final card-click target-visible paste.",
+  "taskStatus": { "T03": "accepted", "T04": "in_progress", "T05": "not_started" },
+  "decoder": {
+    "status": "IMPLEMENTED_AND_SMOKE_VERIFIED",
+    "dependencies": { "pngjs": "7.0.0", "jpeg-js": "0.4.4", "@types/pngjs": "6.0.5" },
+    "distribution": "pngjs MIT; jpeg-js BSD-3-Clause package with upstream component notices retained. Pure JavaScript, no decoder native addon or WASM runtime.",
+    "productionEntry": "src/main/clipboard/image-worker.ts uses process.parentPort and loads src/main/clipboard/image-decoder.ts only in the utility-process entry.",
+    "behavior": "Strict width*height*4 RGBA; full PNG chunk CRC and actual dimension validation; bounded ordinary/Adam7 inflate and estimated working-set admission; strict JPEG decoding with maxResolutionInMP=16 and maxMemoryUsageInMB=256. All cancellation reasons reject and quarantine the child until exit.",
+    "unitVerification": {
+      "command": "node --test tests/tasks/T04/clipboard-image-decoder.test.cjs tests/tasks/T04/clipboard-image-preparation.test.cjs tests/tasks/T04/clipboard-image-payload.test.cjs",
+      "status": "PASS", "passed": 25, "failed": 0,
+      "evidenceBasis": "Completed command output in this session; 9 new real-decoder/protocol/cancellation regressions plus 16 existing preparation/payload tests."
+    },
+    "realUtilityProcessVerification": {
+      "command": "$env:ELECTRON_OVERRIDE_DIST_PATH = (Resolve-Path -LiteralPath 'node_modules/.pnpm/electron@40.10.2/node_modules/electron/dist').Path; node tests/tasks/T04/run-image-worker-electron.cjs",
+      "status": "PASS",
+      "runtime": "Electron 40.10.2, Windows x64",
+      "evidenceBasis": "Completed command output in this session: real PNG/JPEG decode, CRC failure, cancellation, retirement; no BrowserWindow and no system clipboard/input."
+    },
+    "v2AsarVerification": {
+      "status": "PASS",
+      "packageVersion": "1.1.4-local.20261004.2",
+      "script": "release/windows-flat-20261004/probe-packaged-image-worker.cjs",
+      "evidence": "release/windows-flat-20261004/image-worker.stdout.log",
+      "pngPixelsExact": true, "jpegPixelsWithinTolerance": true, "workerLoadedFromAsar": true,
+      "clipboardContentRead": false, "inputSent": false,
+      "historicalSnapshot": "The v2 PASS was read before the referenced logs were replaced with the final v3 results; current log contents are covered by finalV3Verification below.",
+      "limitation": "This v2 decoder smoke does not verify the later sequence/focus helper changes or target-visible paste."
+    },
+    "v2PackagedModuleVerification": {
+      "status": "PASS",
+      "evidence": ["release/windows-flat-20261004/probe.stdout.log", "release/windows-flat-20261004/installed-probe.stdout.log"],
+      "packageVersion": "1.1.4-local.20261004.2",
+      "ffiNativeModuleLoaded": true, "decodersIncluded": true,
+      "clipboardContentRead": false, "inputSent": false,
+      "historicalSnapshot": "v2 outputs were read before final v3 replaced these log files."
+    }
+  },
+  "mainOrchestrationFixture": {
+    "status": "PASS", "passed": 8, "failed": 0,
+    "command": "node --test tests/tasks/T03/main-paste-orchestration.test.cjs",
+    "artifact": "tests/tasks/T03/main-paste-orchestration.test.cjs",
+    "coverage": "Production main function ordering with simulated OS/helper/content boundaries and the real selection-key monitor: host visibility until ACK, authorization denial, late modifier, unavailable key state before commit, no retry after lost ACK, captured-target stability, and generation preservation.",
+    "limitation": "VM behavior coverage does not execute actual Electron IPC or prove target-visible Windows input."
+  },
+  "latestUnitSuite": {
+    "command": "pnpm test:unit", "status": "PASS", "passed": 107, "failed": 0, "skipped": 0,
+    "evidenceBasis": "Completed main TypeScript build and full unit-suite output in this session."
+  },
+  "finalV3Verification": {
+    "status": "PASS_FOR_RECORDED_SMOKES_AND_FILE_MATCH",
+    "packageVersion": "1.1.4-local.20261004.3",
+    "evidence": [
+      "release/windows-flat-20261004/probe.stdout.log",
+      "release/windows-flat-20261004/image-worker.stdout.log",
+      "release/windows-flat-20261004/installed-probe.stdout.log",
+      "release/windows-flat-20261004/installed-manifest.json"
+    ],
+    "observedLogResults": "All three final v3 probes PASS; Electron 40.10.2 x64, ffi native module and decoders loaded, PNG exact pixels, JPEG within tolerance, utility worker loaded from ASAR; probes do not read clipboard content or send input.",
+    "installation": "Main task reports v3 installed at <local-install> with all 82 package files matching the installation manifest; helper SHA-256 recorded there is 4F4FCA4EAAA8D97730735CE258FD78B4F4A2F4489AEC8606C0B8C81482A28788.",
+    "helperSmoke": "PASS reported by the main task for final v3; no additional process was launched by this evidence update.",
+    "cardClickUiAcceptance": "NOT_VERIFIED: UI tool app-server exited before the final card-click retest. A native controlled-editor integration, if completed, must be recorded as a distinct scope."
+  },
+  "openGates": [
+    "Final helper sequence/focus changes still require actual card-click target-visible paste verification; passing v3 probes and matching installation files do not establish this UI behavior.",
+    "16 MP Windows decode latency and the 256 MiB worker peak RSS/working-set target remain unmeasured; decoder options and estimates are not a hard process-memory cap.",
+    "Main-process encoding/Base64/hash/RGBA-to-DIB responsiveness, P15 image hot path, complete T04 acceptance, and T05 P01-P28/100-sample performance and release acceptance remain incomplete."
+  ]
+}

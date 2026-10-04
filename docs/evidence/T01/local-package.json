@@ -1,0 +1,32 @@
+{
+  "task": "T01",
+  "verifiedAt": "2026-10-03",
+  "branch": "codex/m0-latency",
+  "sourceState": "uncommitted working tree",
+  "buildCommand": "pnpm exec electron-builder --win dir --x64 --publish never",
+  "result": "PASS",
+  "packageVersion": "1.1.4",
+  "installationType": "unpacked side-by-side acceptance copy; no NSIS installer or existing-install upgrade was run",
+  "artifactDirectory": "release/win-unpacked",
+  "executable": {
+    "path": "release/win-unpacked/ClipNest.exe",
+    "bytes": 213922304,
+    "fileVersion": "1.1.4"
+  },
+  "applicationArchive": {
+    "path": "release/win-unpacked/resources/app.asar",
+    "bytes": 29739334
+  },
+  "acceptanceLauncher": "release/win-unpacked/Run-ClipNest-Acceptance.cmd",
+  "acceptanceReadme": "release/win-unpacked/ACCEPTANCE-README.txt",
+  "profileIsolation": "The launcher sets CLIPNEST_DATA_DIR to release/win-unpacked/acceptance-profile; the app applies that override to appData and userData.",
+  "appLaunched": false,
+  "systemClipboardRead": false,
+  "systemClipboardWritten": false,
+  "existingInstallModified": false,
+  "systemInstallerRegistrationPerformed": false,
+  "notes": [
+    "The build output remains version 1.1.4 because the source package version has not been bumped; this is the M0/T01 branch build, not the completed V2 performance implementation.",
+    "On first launch, the normal app behavior monitors the system clipboard and defaults to enabling Windows startup; this build step did not launch the app or apply that startup setting."
+  ]
+}

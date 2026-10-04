@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "status": "preflight_only",
+  "executionStatus": "NOT_RUN",
+  "sourceOfExpectedBehavior": "<spec-workspace>/docs/spec/tasks/T05.md; <spec-workspace>/docs/spec/04-desktop-performance.md §8; <spec-workspace>/docs/spec/08-acceptance-matrix.md §1, §4",
+  "executionGate": "T03 and T04 must be accepted before release-gate behavior or packaging verification.",
+  "harnessBoundary": {
+    "platform": "recording FakePlatform for P01-P28; dedicated controlled test window and synthetic text only for authorized live samples",
+    "assertions": "externally observable result, clipboard/focus/input call counts, active/pending jobs, stage timings, package resource/hash/protocol identity, and rollback/data compatibility",
+    "forbiddenDuringFixtureRuns": [
+      "user clipboard content or personal data",
+      "typing into the user's current application",
+      "treating SendInput acknowledgement as proof text appeared",
+      "automatic publication or update release"
+    ]
+  },
+  "g0RuntimeGates": [
+    {
+      "id": "g0-no-interactive-blocking-spawnSync",
+      "input": "Synthetic T05 interaction requests after the helper is already available.",
+      "action": "Instrument process creation and synchronous child-process APIs while exercising representative hotkey, selection, and action paths.",
+      "expected": "No interactive path calls spawnSync or another blocking process-spawn API.",
+      "observation": "Record the instrumented API call trace and correlate it with request IDs; startup/package setup is outside the interactive interval.",
+      "specLinks": ["<spec-workspace>/docs/spec/08-acceptance-matrix.md §1", "<spec-workspace>/docs/spec/tasks/T05.md"],
+      "status": "planned",
+      "executionStatus": "NOT_RUN"
+    },
+    {
+      "id": "g0-no-helper-process-per-interaction",
+      "input": "One already-running helper instance and repeated synthetic interaction requests.",
+      "action": "Record helper process identity before and after each interaction and count helper launches during the interaction interval.",
+      "expected": "Interaction handling reuses the existing helper; no new helper process is created per interaction.",
+      "observation": "Record process IDs/creation identities and launch counts alongside request IDs; helper startup/shutdown lifecycle remains separately covered by package checks.",
+      "specLinks": ["<spec-workspace>/docs/spec/08-acceptance-matrix.md §1", "<spec-workspace>/docs/spec/tasks/T05.md"],
+      "status": "planned",
+      "executionStatus": "NOT_RUN"
+    }
+  ],
+  "cases": [
+    {"id":"P01","setup":"Target is already foreground and ready.","action":"Select normal text and execute without waiting for focus restoration.","assert":["target stays fixed","one input attempt at most"]},
+    {"id":"P02","setup":"Captured target needs restoration.","action":"Execute with the captured target.","assert":["only the captured target may be restored","record focus and input calls"]},
+    {"id":"P03","setup":"Captured target is minimized.","action":"Execute with that target.","assert":["restore path is bounded","failure does not inject into another target"]},
+    {"id":"P04","setup":"Captured target is maximized.","action":"Execute and inspect resulting window geometry.","assert":["maximized size is preserved"]},
+    {"id":"P05","setup":"Captured HWND is destroyed or process identity no longer matches.","action":"Continue the selection.","assert":["target_invalid or copied_only","zero focus and input calls"]},
+    {"id":"P06","setup":"A trigger modifier such as Shift is physically held.","action":"Attempt execution.","assert":["no input until required keys are released","held key is not synthetically released"]},
+    {"id":"P07","setup":"Exercise cancellation once before clipboard commit, then in a separate run after successful clipboard commit but before the input commit gate.","action":"Cancel at each boundary and record clipboard-write and input call counts separately.","assert":["cancellation before clipboard commit yields zero clipboard writes and zero input calls","cancellation after clipboard commit but before input commit may retain the completed copy, but accepted cancellation prevents every later input call","never claim the completed clipboard write was rolled back"]},
+    {"id":"P08","setup":"Job is waiting for focus/modifiers before commit.","action":"Cancel while waiting.","assert":["cancel ACK meets 50ms target or supervisor enters unavailable","no later input after accepted cancellation"]},
+    {"id":"P09","setup":"Input commit gate has already been crossed.","action":"Cancel after commit.","assert":["result is too_late","input is attempted no more than once"]},
+    {"id":"P10","setup":"Helper disconnects after request while result is unknown.","action":"Observe supervisor and request outcome.","assert":["result is unknown/helper_unavailable","request is never blindly resent"]},
+    {"id":"P11","setup":"External clipboard sequence changes before or after the app's conditional write.","action":"Continue to the next commit boundary.","assert":["pre-write change yields zero writes","post-write change yields zero input calls","external content is never restored over"]},
+    {"id":"P12","setup":"Rapid card double-click and repeated Enter events.","action":"Observe intent/job and platform call counts.","assert":["no extra double-click execution","repeat/busy events do not produce overlapping duplicate jobs"]},
+    {"id":"P13","setup":"Generation N has an in-flight request; panel generation N+1 opens.","action":"Deliver delayed ACK tagged N.","assert":["old ACK cannot mutate N+1 state or release its job"]},
+    {"id":"P14","setup":"Target has higher integrity or foreground authorization is denied.","action":"Execute a paste request.","assert":["copy-only degradation is explicit","no false paste success and zero unauthorized input"]},
+    {"id":"P15","setup":"Same clipboard image sequence is notified repeatedly.","action":"Process unchanged sequence.","assert":["image encoding count is zero after sequence comparison"]},
+    {"id":"P16","setup":"Image is not in decoded cache.","action":"Select image and observe preparation.","assert":["preparing state is visible","worker/cache budgets hold","original is retained"]},
+    {"id":"P17","setup":"Queue or configured memory/object budget is full.","action":"Submit additional work.","assert":["capacity error is observable","existing content is preserved","no unbounded queue growth"]},
+    {"id":"P18","setup":"User switches to a different foreground application during target restoration.","action":"Continue original job.","assert":["old job stops","zero further focus-restoration and input calls"]},
+    {"id":"P19","setup":"Clipboard sequence baseline 41; external write changes it to 42 while preparation is pending.","action":"Finish preparation and request conditional write.","assert":["clipboard_changed","EmptyClipboard/SetClipboardData/SendInput counts are all zero","external content remains"]},
+    {"id":"P20","setup":"Conditional write returns own sequence 42; external write changes it to 43 before input.","action":"Evaluate final input gate.","assert":["zero input calls","external content is not overwritten","own sequence remains 42"]},
+    {"id":"P21","setup":"Image preparation is delayed. Run A presses Enter or V again while preparation completes before the original 500ms deadline; run B keeps the trigger key held through that deadline and releases it only afterward; run C is released at the cutoff but preparation completes after it.","action":"Finish preparation in separate runs before and after the original selection-relative 500ms deadline; record the terminal job result, helper budget, clipboard and input calls through the post-deadline state recheck.","assert":["before the deadline, the panel remains visible while the trigger key is held and the final input gate rechecks it","in run B, if the trigger key is still held when the original absolute 500ms selection deadline expires, terminate the job as key_held with zero SendInput calls","releasing the trigger key after that terminal deadline result does not resume the job or submit input","in run C, a released cutoff followed by late preparation uses a zero-budget immediate helper key check and never restarts a 500ms wait","a key held or re-pressed at the zero-budget check blocks clipboard commit; a later re-press blocks input","the deadline stays anchored to selection and image preparation never resets it"]},
+    {"id":"P22","setup":"Recording focus API blocks on worker while control reader remains available.","action":"Cancel, observe ACK, then release blocked worker.","assert":["cancel remains serviceable within target or supervision fails closed","worker release causes no later focus/input call"]},
+    {"id":"P23","setup":"Cancel races final input gate.","action":"Cancel immediately before and immediately after gate in separate runs.","assert":["before-gate cancellation prevents input","after-gate result is too_late","input count <= 1"]},
+    {"id":"P24","setup":"Prepare token exists; item/version, profile, or helper instance changes.","action":"Replay old token for each identity change.","assert":["payload_invalid/helper_unavailable","clipboard-write and input counts are zero","no arbitrary path is accepted"]},
+    {"id":"P25","setup":"Frames/chunks are oversized, missing, reordered, duplicated, or hash-mismatched.","action":"Submit each malformed stream and a valid bounded stream.","assert":["malformed stream rejected and token released","no prepare/write/input calls","at most one unacknowledged valid chunk"]},
+    {"id":"P26","setup":"Host is not foreground, authorization fails, or helper PID/creation identity changes.","action":"Request foreground authorization and continue.","assert":["no automatic hide/focus recovery","copy result is retained","zero input calls"]},
+    {"id":"P27","setup":"Another app becomes foreground after panel hides but before focus preparation ends.","action":"Continue the fixed-target job.","assert":["cancelled","no new SetForegroundWindow call","zero input calls"]},
+    {"id":"P28","setup":"One job active; duplicate Enter/show intents arrive while stdout consumption is backpressured.","action":"Submit duplicate intents and separately exceed transport buffer.","assert":["active jobs <= 1","pending paste jobs = 0","duplicate intent not committed twice","cancel reader remains serviceable","overflow enters unavailable"]}
+  ],
+  "measurements": {
+    "normalTextSampleCount": 100,
+    "wakeToActionableSampleCount": 100,
+    "normalScenarioRule": "Each normal timing scenario reported under §8, including normalText and wakeToActionable, requires at least 100 unique successful run/request IDs. Failed, cancelled, and timed-out runs are reported separately. A PASS requires controlled-live evidence; fake-only timings cannot satisfy it. A normalText PASS also requires independent verification that synthetic text appeared in the controlled editor.",
+    "normalTextTarget": "inputSubmitted p95 < 150ms for a small text selection, released modifiers, and a valid controlled target; separately verify synthetic text appeared in the controlled editor",
+    "wakeTarget": "prewarmed hotkey-to-list_actionable p95 < 100ms including capture, show, and first frame",
+    "report": ["actual sample count derived from samples.length", "at least 100 unique successful requestIds for each PASS metric", "sample outcome category", "p50", "p95", "max", "separate failureCount, cancellationCount, and timeoutCount reconciled against raw samples", "stage timings keyed by requestId", "controlled-live mode and evidence references for PASS"],
+    "controlVariables": ["test machine and OS", "displays", "power mode", "build mode", "dataset seed", "cache state", "network condition"],
+    "clockRule": "Use each process's monotonic durations; do not subtract uncalibrated clocks across processes."
+  },
+  "packageAndRollbackChecks": [
+    "Packaged Windows x64 helper resource resolves to the expected path and matches recorded version, protocol, and SHA-256/signature metadata.",
+    "Run cold startup, tray availability, app restart, normal exit, and helper shutdown from the packaged artifact.",
+    "Confirm old JSON data remains readable and app data is not deleted on uninstall/rollback.",
+    "Disable autoPaste and verify copy remains available; rollback helper binary without changing persisted data format.",
+    "Build a local internal artifact only; do not publish or release it."
+  ]
+}

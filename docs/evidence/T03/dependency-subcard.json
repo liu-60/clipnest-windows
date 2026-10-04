@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "parentTask": "T03",
+  "subcard": "T06-ffi-rs-win32-host-bridge",
+  "status": "APPROVED_FOR_SCOPED_T03_USE",
+  "review": {
+    "reviewer": "root (independent dependency review; approval sent in task coordination)",
+    "decision": "Conditionally approved for one private, fixed-symbol Windows host bridge; no generic FFI surface.",
+    "date": "2026-10-03"
+  },
+  "dependency": {
+    "name": "ffi-rs",
+    "version": "1.3.7",
+    "pin": "exact",
+    "license": "MIT",
+    "api": "Node-API 6",
+    "consumerBinary": "The published ffi-rs@1.3.7 npm metadata declares the optional @yuuang/ffi-rs-win32-x64-msvc@1.3.7 package. The current GitHub master/package.json instead lists 1.0.55; this source-vs-registry discrepancy was checked and the lockfile follows the published npm metadata at 1.3.7.",
+    "rustMsrv": "No MSRV is declared in upstream Cargo.toml. The application consumes the published optional MSVC binary and does not compile the dependency from Rust source; upstream source uses Rust edition 2021.",
+    "upstreamEvidence": [
+      "https://github.com/zhangyuang/node-ffi-rs/blob/master/package.json",
+      "https://github.com/zhangyuang/node-ffi-rs/blob/master/Cargo.toml",
+      "https://github.com/zhangyuang/node-ffi-rs/blob/master/LICENSE",
+      "https://github.com/zhangyuang/node-ffi-rs#readme",
+      "https://www.npmjs.com/package/ffi-rs/v/1.3.7",
+      "https://www.npmjs.com/package/@yuuang/ffi-rs-win32-x64-msvc/v/1.3.7"
+    ]
+  },
+  "scope": {
+    "sourcePath": "src/main/native/win32-host-bridge.ts",
+    "packageChanges": ["package.json exact ffi-rs dependency", "pnpm-lock.yaml resolution and Windows x64 optional sidecar"],
+    "fixedWin32Symbols": [
+      "kernel32!OpenProcess",
+      "kernel32!GetProcessTimes",
+      "kernel32!CloseHandle",
+      "user32!GetForegroundWindow",
+      "user32!GetWindowThreadProcessId",
+      "user32!AllowSetForegroundWindow",
+      "user32!GetClipboardSequenceNumber"
+    ],
+    "typesAndLifetime": [
+      "Win32 BOOL values use I32; process/window/thread IDs use U32.",
+      "HANDLE values use ffi-rs External pointers; handles from OpenProcess are closed in finally.",
+      "Each FILETIME buffer is allocated and restored as ffi-rs DataType.BigInt (64-bit), then serialized as a decimal string; no Number conversion of process-creation identity values.",
+      "GetClipboardSequenceNumber returning zero is unavailable/fail-closed; the baseline is sampled at selection time before content preparation."
+    ],
+    "buildAndPackaging": [
+      "No new custom native build script or project Cargo toolchain is introduced.",
+      "The exact dependency and lockfile are the only package-manager changes; pnpm-lock.yaml resolves the registry-published win32-x64-msvc optional sidecar at 1.3.7, despite the current GitHub master package.json showing 1.0.55.",
+      "Electron remains pinned at 40.10.2; T03/T05 must smoke-test the addon under Electron 40 and packaged Windows x64 output.",
+      "Do not update Electron as part of this subcard."
+    ]
+  },
+  "securityAndLimitations": {
+    "forbidden": [
+      "No renderer imports or IPC-configurable DLL path, library handle, symbol name, function signature, raw pointer, or arbitrary FFI dispatch.",
+      "No environment-derived SystemRoot path, arbitrary relative path, UNC path, drive path, or traversal path; bridge opens only the allowlisted kernel32.dll and user32.dll KnownDLL basenames.",
+      "No PowerShell, helper self-authorization, or success-only stub in place of the Win32 calls."
+    ],
+    "runtimeRisks": [
+      "ffi-rs N-API compatibility does not remove the need to verify its optional MSVC binary loads in Electron 40.10.2.",
+      "Electron 40 is EOL per the independent review; this remains a known runtime risk and is not permission to upgrade Electron here.",
+      "The bridge calls are synchronous and must remain limited to bounded identity/foreground/clipboard-sequence APIs; image decoding must enforce compressed-byte and output-size bounds and run off the Electron main event loop."
+    ],
+    "notEvidenceOf": [
+      "No actual AllowSetForegroundWindow invocation has been observed yet.",
+      "No helper launch, target activation, clipboard access/write, keyboard input, or packaged Windows smoke is claimed by this subcard."
+    ]
+  }
+}

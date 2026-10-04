@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "planVersion": 1,
+  "branch": "codex/m0-latency",
+  "baselineCommit": "91cafd765b9480e011647c9d8cd2976269f12aef",
+  "tasks": {
+    "T00": {
+      "status": "accepted",
+      "commit": null,
+      "evidence": [
+        "../v2/docs/evidence/T00/verification.json"
+      ],
+      "openGates": []
+    },
+    "T01": {
+      "status": "accepted",
+      "commit": null,
+      "evidence": [
+        "docs/evidence/T01/implementation-status.json",
+        "docs/evidence/T01/wake-baseline.json",
+        "docs/evidence/T01/failure-path.json",
+        "docs/evidence/T01/selection-timeline-format.json",
+        "docs/evidence/T01/local-package.json",
+        "docs/evidence/T01/review.json"
+      ],
+      "openGates": []
+    },
+    "T02": {
+      "status": "accepted",
+      "commit": null,
+      "contractCorrection": "triggerKeys=[] denotes click/no physical trigger for commit_write/paste; all modifier checks remain active. Rust/TS and fake-platform checks recorded in T02 verification evidence.",
+      "imageLimitCorrection": "The 20 MiB compressed-source limit is upstream before conversion; helper register_content transports a bounded DIB up to 16,000,000 pixels × 4 + 40 bytes (64,000,040). Helper independently enforces pixel count, dimensions, and exact DIB span. Windows-target Rust/TS checks are recorded in T02 verification evidence; no real image, clipboard, or input was used.",
+      "evidence": [
+        "docs/evidence/T02/verification.json",
+        "docs/evidence/T02/dependency-subcard.json",
+        "tests/tasks/T02/native-contracts.test.cjs",
+        "tests/tasks/T02/run-helper-smoke.ps1"
+      ],
+      "openGates": [
+        "本会话3项真实Windows clipboard序列回归及1项自建EDIT窗口原caret SendInput产品流程集成已PASS（docs/evidence/windows-flat-20261004/native-caret-integration.json）。该集成同进程/同输入线程，独立helper/目标程序与最终卡片点击整链仍未验收；T05完整受控桌面门保持开放。"
+      ]
+    },
+    "T03": {
+      "status": "accepted",
+      "commit": null,
+      "evidence": [
+        "docs/evidence/T03/preflight.json",
+        "docs/evidence/T03/step-a-host-gate.json",
+        "docs/evidence/T03/dependency-subcard.json",
+        "docs/evidence/T03/verification.json",
+        "tests/tasks/T03/fixture-plan.json",
+        "tests/tasks/T03/interface-audit.json",
+        "tests/tasks/T03/main-paste-orchestration.test.cjs",
+        "docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json"
+      ],
+      "openGates": [
+        "Main-process编排行为VM fixture已通过8项并使用真实selection-key monitor；真实Electron IPC与最终helper的目标可见点击粘贴尚未验收。",
+        "最终Win32焦点/SendInput整条链路及100条文本live benchmark仍未完成；已通过的合成clipboard回归不等于目标输入可见性。"
+      ]
+    },
+    "T04": {
+      "status": "in_progress",
+      "commit": null,
+      "evidence": [
+        "docs/evidence/T04/preflight.json",
+        "docs/evidence/T04/dependency-subcard.json",
+        "docs/evidence/T04/decoder-options.json",
+        "docs/evidence/T04/decoder-alternatives-recheck.json",
+        "docs/evidence/T04/verification.json",
+        "docs/evidence/T04/acceptance-gate-review.json",
+        "tests/tasks/T04/fixture-plan.json",
+        "tests/tasks/T04/clipboard-image-payload.test.cjs",
+        "tests/tasks/T04/clipboard-image-preparation.test.cjs",
+        "tests/tasks/T04/selection-key-deadline.test.cjs",
+        "tests/tasks/T04/clipboard-sequence-gate.test.cjs",
+        "tests/tasks/T04/keyboard-renderer.test.cjs",
+        "tests/tasks/T04/panel-presentation.test.cjs",
+        "tests/tasks/T04/clipboard-image-decoder.test.cjs",
+        "tests/tasks/T04/run-image-worker-electron.cjs",
+        "native/tests/control.rs",
+        "native/tests/protocol.rs",
+        "docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json"
+      ],
+      "openGates": [
+        "pngjs 7.0.0/jpeg-js 0.4.4已安装并接入production utilityProcess；真实PNG/JPEG、CRC失败、取消/exit与v2 ASAR加载probe均通过。16MP Windows延迟及256 MiB worker峰值RSS/working-set仍未测，解码配置和工作集预估不证明硬进程内存上限。",
+        "3000ms准备截止、retirement等待与selection启动的500ms键释放监测已有fake覆盖，真实utilityProcess取消/退出已通过；完整Electron图片粘贴、面板响应性和最终helper焦点/sequence修复后的目标可见点击验收仍未完成。延迟调度fake不模拟真实main event-loop同步编码/剪贴板阻塞。",
+        "P15 选图仍在 src/main/native/content-provider.ts 重复 Base64 解码/SHA-256；该文件不在 T04 allowlist，是否扩范围待用户回复。",
+        "最近一次完整pnpm test:unit（本次race补丁之前）为107/107通过，含8项main编排VM与9项真实decoder回归；v3包/安装模块及ASAR decoder probe已通过，<local-install>安装82文件hash一致，最终卡片UI点击粘贴因工具退出尚未复测。clipboard.readImage()后主进程toPNG/toJPEG、Base64/hash及RGBA→BGRA/DIB响应性和deadline stall仍未测；JPEG fallback有损，完整像素/色彩保真、U01实际窗口与T04整体验收仍未完成。",
+        "本次selection准备竞速补丁的定向验证已通过：pnpm build:main / TypeScript 编译成功，20/20 fake tests 通过（图像准备11、selection截止9）；pnpm test:native 的56项 Rust 单元/隔离fake集成测试也通过。新增 0ms helper check-only：截止后即时检查按键，不重开500ms窗口，并在剪贴板/输入门前复核；native/tests/control.rs 和 protocol.rs 覆盖此契约。独立静态复核确认实现与证据一致，同时指出采样与 EmptyClipboard/SendInput 非原子，按键在最后采样后到 OS 调用前转换的竞态仍未排除。真实 Electron/utilityProcess/helper 取消竞速、物理按键、系统剪贴板/输入或面板行为仍未运行。静态路径显示预注册取消不重启 helper；已登记取消未确认时锁存 clipboard fence 并保留 job，直至 helper 退出确认。"
+      ]
+    },
+    "T05": {
+      "status": "not_started",
+      "commit": null,
+      "evidence": [
+        "docs/evidence/T05/preflight.json",
+        "tests/tasks/T05/fixture-plan.json",
+        "tests/tasks/T05/assertion-map.json",
+        "tests/tasks/T05/report.schema.json",
+        "docs/evidence/T05/report-schema-review.json"
+      ],
+      "openGates": [
+        "T05任务状态保持not_started；用户已授权的v3本地检查点打包、ASAR/模块probe及安装文件一致性检查已通过，不等于T04 accepted或P01-P28发布门验收；最终卡片UI点击与完整性能验收仍未完成。",
+        "当前本地检查点已通过3项真实clipboard序列回归和1项自建EDIT原caret真实SendInput/合成文字可见性集成；不等于T05受控独立目标整链输入验收。最终卡片点击、图像外部粘贴及wake-to-actionable 100样本基准仍NOT_RUN，T05执行需隔离桌面。",
+        "fixture已增加G0交互路径无阻塞spawnSync、无每次交互新建helper的观察门；两项均planned/NOT_RUN，需用进程调用追踪与helper身份实证。",
+        "report.schema.json现要求PASS提供非空commit、Windows x64与完整性能控制变量，并要求两个指标为controlled_live、至少100个成功样本和证据引用；requestId唯一性、原始样本与计数/分位数一致性仍须人工重算，所有指标目前NOT_RUN。",
+        "已为P01-P28计划中的71条断言建立逐项原文映射（tests/tasks/T05/assertion-map.json），当前全部NOT_RUN且证据为空；PASS断言、通用检查及指标仍须各自提供可核验引用。schema不解析路径或验证内容，PASS前须逐条对照映射审查报告断言与实际证据，不能只凭schema通过。",
+        "helper/rollback的expected与actual路径、版本、协议、SHA-256是否相等仍由报告自填identityMatched表示，schema无法比较或验签；且允许unsigned。PASS前须人工核对实际打包资源、回滚前后身份、签名结果及逐项命令证据。",
+        "dependencyGate的T03/T04 accepted是报告自填值；PASS前须跨文件核对docs/progress.json及其验收证据。schema校验通过不能单独作为T05 PASS或accepted依据。当前 main.ts 期望 resourcesPath/native/clipnest-helper.exe，但 package.json files/asarUnpack 未声明 helper 或 extraResources；本地v3检查点不能替代最终包内路径、版本、协议、SHA-256及签名核对，内部包是否接受 unsigned 也需在PASS前明确。"
+      ]
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "task": "T01",
+  "reviewType": "independent_adversarial_review",
+  "result": "ACCEPTED",
+  "reviewedAt": "2026-10-03",
+  "reviewer": "independent task agent",
+  "findingsClosed": [
+    "Missing renderer ACK is bounded, counted as a failed sample, and written to a report before the benchmark exits nonzero.",
+    "Benchmark evidence accurately states that an isolated Electron process was launched.",
+    "Failure reports can be written to a validated JSON filename under docs/evidence/T01 without replacing the passing baseline."
+  ],
+  "acceptedScope": [
+    "Metadata-only timing recorder and no-input wake component baseline.",
+    "Synthetic selection timeline schema distinguishes SendInput ACK from target-display observation without reading or writing the system clipboard or sending input."
+  ],
+  "deferredGates": [
+    "Successful helper/selection path and actual controlled-editor display are not measured by T01; validate in T03/T05.",
+    "Physical hotkey and end-to-end wake latency remain unmeasured; do not claim G0 performance acceptance from the component baseline."
+  ]
+}

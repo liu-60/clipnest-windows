@@ -1,0 +1,283 @@
+{
+  "scope": "production-renderer-visual-only",
+  "rendering": "Electron offscreen BrowserWindow, hardware acceleration disabled",
+  "electron": "40.10.2",
+  "screenshot": {
+    "file": "renderer-flat.png",
+    "width": 1440,
+    "height": 315
+  },
+  "productionIndexSha256": "c58d918c78d4c630047bed1cd678150f8317f96f5dff29c4dc35aedbff131a27",
+  "clipnestApi": "fixture read-only stubs; clipboard, input and mutations unavailable",
+  "realWindowsWindowClickVerification": "IN PROGRESS: main flow recovered native window screenshot after restarting; real click verification is separate",
+  "realPreviousCaretPaste": "NOT VERIFIED BY THIS HARNESS",
+  "failures": [],
+  "metrics": {
+    "viewport": {
+      "width": 1440,
+      "height": 315,
+      "devicePixelRatio": 1
+    },
+    "toolbar": {
+      "x": 1,
+      "y": 1,
+      "width": 1438,
+      "height": 52,
+      "color": "rgb(48, 44, 55)",
+      "background": "rgb(228, 226, 235)",
+      "fontSize": "16px",
+      "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+      "borderRadius": "0px",
+      "boxShadow": "none"
+    },
+    "shell": {
+      "color": "rgb(48, 44, 55)",
+      "background": "rgb(228, 226, 235)",
+      "fontSize": "16px",
+      "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+      "borderRadius": "5px",
+      "boxShadow": "none"
+    },
+    "cards": [
+      {
+        "x": 17,
+        "y": 59,
+        "width": 220,
+        "height": 232,
+        "color": "rgb(48, 44, 55)",
+        "background": "rgb(247, 244, 251)",
+        "fontSize": "16px",
+        "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+        "borderRadius": "4px",
+        "boxShadow": "none",
+        "title": "文本",
+        "header": {
+          "color": "rgb(22, 77, 98)",
+          "background": "rgb(75, 193, 233)",
+          "fontSize": "16px",
+          "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+          "borderRadius": "0px",
+          "boxShadow": "none"
+        },
+        "preview": "CLIPNEST_CLICK_TEST",
+        "previewStyle": {
+          "color": "rgb(48, 44, 55)",
+          "background": "rgba(0, 0, 0, 0)",
+          "fontSize": "14px",
+          "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+          "borderRadius": "0px",
+          "boxShadow": "none"
+        },
+        "footer": "19 B#01",
+        "image": null
+      },
+      {
+        "x": 253,
+        "y": 59,
+        "width": 220,
+        "height": 232,
+        "color": "rgb(48, 44, 55)",
+        "background": "rgb(247, 244, 251)",
+        "fontSize": "16px",
+        "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+        "borderRadius": "4px",
+        "boxShadow": "none",
+        "title": "图片",
+        "header": {
+          "color": "rgb(97, 64, 14)",
+          "background": "rgb(244, 171, 57)",
+          "fontSize": "16px",
+          "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+          "borderRadius": "0px",
+          "boxShadow": "none"
+        },
+        "preview": null,
+        "previewStyle": null,
+        "footer": "320 × 180#02",
+        "image": {
+          "complete": true,
+          "width": 320,
+          "height": 180,
+          "objectFit": "contain"
+        }
+      },
+      {
+        "x": 489,
+        "y": 59,
+        "width": 220,
+        "height": 232,
+        "color": "rgb(48, 44, 55)",
+        "background": "rgb(247, 244, 251)",
+        "fontSize": "16px",
+        "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+        "borderRadius": "4px",
+        "boxShadow": "none",
+        "title": "图片",
+        "header": {
+          "color": "rgb(97, 64, 14)",
+          "background": "rgb(244, 171, 57)",
+          "fontSize": "16px",
+          "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+          "borderRadius": "0px",
+          "boxShadow": "none"
+        },
+        "preview": null,
+        "previewStyle": null,
+        "footer": "320 × 180#03",
+        "image": {
+          "complete": true,
+          "width": 320,
+          "height": 180,
+          "objectFit": "contain"
+        }
+      },
+      {
+        "x": 725,
+        "y": 59,
+        "width": 220,
+        "height": 232,
+        "color": "rgb(48, 44, 55)",
+        "background": "rgb(247, 244, 251)",
+        "fontSize": "16px",
+        "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+        "borderRadius": "4px",
+        "boxShadow": "none",
+        "title": "链接",
+        "header": {
+          "color": "rgb(22, 77, 98)",
+          "background": "rgb(75, 193, 233)",
+          "fontSize": "16px",
+          "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+          "borderRadius": "0px",
+          "boxShadow": "none"
+        },
+        "preview": "https://example.org/clipnest-test",
+        "previewStyle": {
+          "color": "rgb(40, 125, 255)",
+          "background": "rgba(0, 0, 0, 0)",
+          "fontSize": "14px",
+          "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+          "borderRadius": "0px",
+          "boxShadow": "none"
+        },
+        "footer": "33 B#04",
+        "image": null
+      },
+      {
+        "x": 961,
+        "y": 59,
+        "width": 220,
+        "height": 232,
+        "color": "rgb(48, 44, 55)",
+        "background": "rgb(247, 244, 251)",
+        "fontSize": "16px",
+        "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+        "borderRadius": "4px",
+        "boxShadow": "none",
+        "title": "文本",
+        "header": {
+          "color": "rgb(22, 77, 98)",
+          "background": "rgb(75, 193, 233)",
+          "fontSize": "16px",
+          "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+          "borderRadius": "0px",
+          "boxShadow": "none"
+        },
+        "preview": "Windows 扁平界面验收\n点击卡片，插入之前的光标位置。",
+        "previewStyle": {
+          "color": "rgb(48, 44, 55)",
+          "background": "rgba(0, 0, 0, 0)",
+          "fontSize": "14px",
+          "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+          "borderRadius": "0px",
+          "boxShadow": "none"
+        },
+        "footer": "72 B#05",
+        "image": null
+      },
+      {
+        "x": 1197,
+        "y": 59,
+        "width": 220,
+        "height": 232,
+        "color": "rgb(48, 44, 55)",
+        "background": "rgb(247, 244, 251)",
+        "fontSize": "16px",
+        "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+        "borderRadius": "4px",
+        "boxShadow": "none",
+        "title": "文本",
+        "header": {
+          "color": "rgb(22, 77, 98)",
+          "background": "rgb(75, 193, 233)",
+          "fontSize": "16px",
+          "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+          "borderRadius": "0px",
+          "boxShadow": "none"
+        },
+        "preview": "第二条测试内容",
+        "previewStyle": {
+          "color": "rgb(48, 44, 55)",
+          "background": "rgba(0, 0, 0, 0)",
+          "fontSize": "14px",
+          "fontFamily": "\"Segoe UI Variable\", \"Microsoft YaHei UI\", \"Segoe UI\", system-ui, sans-serif",
+          "borderRadius": "0px",
+          "boxShadow": "none"
+        },
+        "footer": "21 B#06",
+        "image": null
+      }
+    ],
+    "filters": [
+      {
+        "text": "历史6",
+        "x": 259,
+        "y": 13,
+        "width": 71.875,
+        "height": 28
+      },
+      {
+        "text": "常用0",
+        "x": 334.875,
+        "y": 13,
+        "width": 71.875,
+        "height": 28
+      },
+      {
+        "text": "文本3",
+        "x": 410.75,
+        "y": 13,
+        "width": 71.875,
+        "height": 28
+      },
+      {
+        "text": "链接1",
+        "x": 486.625,
+        "y": 13,
+        "width": 71.875,
+        "height": 28
+      },
+      {
+        "text": "图片2",
+        "x": 562.5,
+        "y": 13,
+        "width": 71.875,
+        "height": 28
+      }
+    ],
+    "settingsVisible": true,
+    "closeVisible": true,
+    "hint": "←→ 选择 · ↵ 粘贴到原输入位置"
+  },
+  "visualReview": {
+    "result": "PASS — production renderer visual scope only",
+    "reference": "User provided Windows UI screenshot, 1440 × 315",
+    "layout": "PASS: 52 px single toolbar; six 220 × 232 cards on one row; 16 px gaps; no overlaps or card shadow",
+    "typography": "PASS: Chinese and Latin preview text readable at 14 px; Segoe UI / Microsoft YaHei UI system font stack",
+    "colors": "PASS: lavender gray panel, cyan text/link headers and orange image headers; dark header text intentionally improves contrast",
+    "images": "PASS: PNG and JPEG fixtures decoded and shown at their natural 320 × 180 ratio with contain",
+    "content": "PASS: text, Chinese multiline and URL fixture previews appear in their corresponding cards; metadata footer retained",
+    "screenshotInspected": true,
+    "behaviorClaim": "No real clipboard writes, real card clicks, external input, native window capture or previous-caret paste tested by this harness"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-04",
+  "purpose": "提交前复核当前源码；不替代 Windows 完整卡片点击或 T05 发布门验收",
+  "branch": "codex/m0-latency",
+  "checks": [
+    { "command": "pnpm lint", "status": "PASS" },
+    { "command": "pnpm test:unit", "status": "PASS", "passed": 111, "failed": 0 },
+    {
+      "command": "cargo test --manifest-path native/Cargo.toml --target x86_64-pc-windows-gnu --features win32 --locked --offline -- --test-threads=1",
+      "status": "PASS",
+      "passed": 56,
+      "failed": 0,
+      "ignored": 4,
+      "groups": { "library": 31, "control": 16, "protocol": 9 },
+      "ignoredScope": "3项系统剪贴板测试和1项自建输入框真实SendInput测试没有在提交复核中重跑；既有独立执行结果保留在历史记录中"
+    },
+    { "command": "git diff --check", "status": "PASS" }
+  ],
+  "correctionsDuringReview": [
+    "main编排VM fixture补齐真实raceSelectionPreparation和selectionHelperDeadlineAtCommit函数注入，未以替代逻辑绕过失败",
+    "修正TypeScript共享契约，使0ms即时键检查与当前Rust协议一致；新增跨deadline函数与请求验证器的回归，先观察失败，再确认通过",
+    "修复renderer一处缩进；忽略本地测试profile/cache及Rust构建产物"
+  ],
+  "scopeLimits": [
+    "未重跑系统剪贴板写入、真实卡片点击、外部应用图片粘贴或100样本性能验收",
+    "当前源码包含后续selection竞态修复；此前1.1.4-local.20261004.3安装包是较早的已验证检查点，不包含全部后续改动",
+    "本次只提交并推送源码和证据，不重新打包、安装、合并main或发布新版本"
+  ],
+  "excludedFromGit": ["node_modules", "dist", "dist-electron", "release", "outputs", ".test-data", "native/target", "native/target-*"],
+  "machinePathsAbstracted": true,
+  "originalLocalEvidenceRetainedUnder": "release/git-submit-local-evidence"
+}

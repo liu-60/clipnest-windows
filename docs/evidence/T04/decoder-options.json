@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "PNGJS_JPEG_JS_SELECTED_INSTALLED_SMOKE_VERIFIED",
+  "checkedDate": "2026-10-04",
+  "candidates": [
+    {
+      "name": "sharp",
+      "versions": { "sharp": "0.35.5", "win32-x64": "0.35.5", "libvips": "1.3.4" },
+      "license": "sharp Apache-2.0; Windows prebuilt libvips/addon includes LGPL-3.0-or-later and other notices.",
+      "runtime": "Static Node-API v9 match for Electron 40.10.2 / Node 24.15.0; unpack native runtime from ASAR and verify packaged utilityProcess loading.",
+      "risk": "No 16MP Windows decode benchmark or measured 256MiB process RSS cap.",
+      "sources": ["https://github.com/lovell/sharp/blob/main/package.json", "https://github.com/lovell/sharp-libvips/blob/main/THIRD-PARTY-NOTICES.md", "https://sharp.pixelplumbing.com/install/#electron", "https://sharp.pixelplumbing.com/api-constructor/"]
+    },
+    {
+      "name": "pngjs + jpeg-js",
+      "versions": { "pngjs": "7.0.0", "jpeg-js": "0.4.4" },
+      "license": "pngjs MIT; jpeg-js package BSD-3-Clause plus Apache-2.0 decoder and Adobe BSD encoder code. Not MIT-only.",
+      "runtime": "Pure JavaScript; no native addon or WASM extraction from ASAR.",
+      "risk": "jpeg-js is synchronous/CPU-bound and slower than native alternatives; memory limit is approximate; Windows performance remains unmeasured.",
+      "sources": ["https://github.com/pngjs/pngjs", "https://github.com/pngjs/pngjs/blob/main/CHANGELOG.md", "https://github.com/jpeg-js/jpeg-js", "https://github.com/jpeg-js/jpeg-js/releases"]
+    },
+    {
+      "name": "@jsquash/png + @jsquash/jpeg",
+      "versions": { "@jsquash/png": "3.1.1", "@jsquash/jpeg": "1.6.0" },
+      "license": "Apache-2.0 wrappers; PNG codec carries Rust dependency licenses; MozJPEG includes IJG/libjpeg-turbo, modified BSD and applicable zlib terms; include IJG acknowledgment.",
+      "runtime": "ESM/WASM; upstream says Node support is limited/experimental and WASM is not optimized for Node; verify ASAR path/locateFile.",
+      "risk": "No Windows latency, memory, orientation/color, or packaged-load evidence; pinned tarball notice completeness unverified.",
+      "sources": ["https://github.com/jamsinclair/jSquash", "https://github.com/jamsinclair/jSquash/tree/main/packages/png", "https://github.com/jamsinclair/jSquash/tree/main/packages/jpeg", "https://github.com/mozilla/mozjpeg/blob/master/LICENSE.md", "https://github.com/mozilla/mozjpeg/blob/master/README.ijg"]
+    },
+    {
+      "name": "@napi-rs/image",
+      "version": "1.14.0",
+      "license": "Top-level MIT; native codec dependencies need a fixed-release SBOM/notice review.",
+      "runtime": "Windows x64 MSVC package and rawPixels API; unpack .node from ASAR and verify Electron load.",
+      "risk": "No complete pinned transitive license audit or project-specific 16MP/256MiB measurement.",
+      "sources": ["https://image.napi.rs/docs/api", "https://github.com/Brooooooklyn/Image/blob/main/packages/binding/Cargo.toml"]
+    }
+  ],
+  "sharedNotVerified": ["16MP Windows latency and peak RSS", "EXIF/color and exact-source fidelity", "complete pinned distribution/component notice audit"],
+  "decision": {
+    "status": "implemented_with_open_acceptance_gates",
+    "installed": true,
+    "lockfileChanged": true,
+    "selected": "pngjs 7.0.0 + jpeg-js 0.4.4; @types/pngjs 6.0.5 for build declarations",
+    "authorization": "Current user explicitly requested fixing card-content auto-paste, self-testing, packaging and local installation; this supersedes the earlier default decoder-decision pause for this implementation.",
+    "evidence": "docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json",
+    "remainingGates": ["Measured 16MP Windows latency and 256MiB peak RSS.", "Complete final card-click target-visible image acceptance and T04/T05 release/performance acceptance."]
+  }
+}

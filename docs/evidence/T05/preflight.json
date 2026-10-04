@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "result": "NOT_RUN",
+  "scope": "Static preflight refresh only. No package:windows build, P01-P28 release acceptance, full release test, controlled desktop run, clipboard/input action, rollback check, or publication was performed.",
+  "commit": "91cafd765b9480e011647c9d8cd2976269f12aef",
+  "branch": "codex/m0-latency",
+  "workingTreeWasDirty": true,
+  "historicalSnapshotNote": "The original staticObservations describe the earlier preflight. Current user-authorized local v3 packaging/ASAR-module probes and installation file matching are PASS; this does not execute or accept the T05 release gate. See docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json.",
+  "dependencyGate": {
+    "required": [
+      "T03 accepted",
+      "T04 accepted"
+    ],
+    "progressAtInspection": {
+      "T03": "accepted",
+      "T04": "in_progress",
+      "T05": "not_started"
+    },
+    "t03AcceptanceBasis": "T03 remains accepted by user instruction; the production main-function VM fixture now passes 8 cases with the real selection monitor. Actual Electron IPC, final card-click target-visible input and complete controlled benchmark remain separate open gates.",
+    "t04OpenGates": [
+      "Production PNG/JPEG, real utility-process cancellation/exit and v3 ASAR/module load are PASS; full real image/card-click acceptance remains incomplete.",
+      "P15/P16 hot-path responsiveness, 16 MP latency and measured 256 MiB worker peak memory remain incomplete."
+    ],
+    "blockedActions": [
+      "P01-P28 T05 release behavior acceptance"
+    ],
+    "reason": "T04 remains in_progress and T05 not_started. The user's explicitly authorized local checkpoint package/install work has proceeded; the complete T05 release/performance acceptance gate remains unexecuted."
+  },
+  "staticObservations": [
+    {
+      "file": "docs/progress.json",
+      "lines": "54-75",
+      "observation": "T03 is accepted by the user's explicit direction; P21 deadline drift is fixed and independently reviewed PASS, while the main-process IPC/controller fixture and real Win32 authorization, isolated clipboard/SendInput, and 100-run live benchmark remain open/NOT_RUN. T04 is in_progress with decoder and image memory/P15/P16 gates open. T05 is not_started and explicitly blocks package verification/release behavior acceptance until T04 is accepted."
+    },
+    {
+      "file": "../v2/docs/spec/tasks/T05.md",
+      "lines": "3-5, 18-30, 32-45",
+      "observation": "The T05 card requires T03/T04 dependencies, separates P01-P28 plus controlled text measurements, Windows x64 helper packaging, and independent review/rollback, and prohibits claiming PASS for unmeasured platform/sandbox behavior. This refresh records static status only."
+    },
+    {
+      "file": "package.json",
+      "lines": "20, 43-59, 61-75",
+      "observation": "The package:windows script builds NSIS and directory x64 artifacts with --publish never. The explicit packaged files are dist, dist-electron, build/icon.png, and package.json; asarUnpack includes only build/icon.png. No native helper resource, extraResources rule, helper hash, or protocol metadata is configured. The package has not been built, so packaged output contents remain unverified."
+    },
+    {
+      "file": "src/main/main.ts",
+      "lines": "1371-1379, 1444-1486",
+      "observation": "The current source resolves the packaged helper at process.resourcesPath/native/clipnest-helper.exe; development candidates are app/native/target-electron-l0/.../release/clipnest-helper.exe and the adjacent .tools/Rust build path. It creates the Win32 bridge/content provider and starts NativeHelperClient with READY process-identity checks and failure handling. This is source integration only; package.json currently has no rule to place the packaged candidate in resources."
+    },
+    {
+      "file": "src/main/main.ts",
+      "lines": "2083-2240",
+      "observation": "The current selection path uses the native helper for content registration, conditional clipboard commit, host authorization, and paste request; it retains copy-only fallbacks when the helper/host prerequisites are unavailable. No real clipboard write, foreground authorization, or input was performed during this preflight."
+    },
+    {
+      "file": "src/main/main.ts",
+      "lines": "1418-1455",
+      "observation": "The old source comment/dependency snapshot is historical: package.json now lists pinned pngjs 7.0.0 and jpeg-js 0.4.4; T04 records production utility-process decoder and v3 ASAR probe PASS in its evidence/checkpoint. This does not close T04 acceptance or establish full packaged helper resources, real image clipboard acceptance, 16 MP latency, or measured 256 MiB worker memory."
+    },
+    {
+      "file": "<tools>/rust/target-electron-l0/x86_64-pc-windows-gnu/release/clipnest-helper.exe",
+      "lines": "not_applicable",
+      "observation": "The external local helper candidate exists at inspection, is 2,122,752 bytes, and has SHA-256 ED6198443430E51E0D6DEF1D1AC209F58FC6EB0EDC1CDCEEC5C25D96A98B87BB. It is outside the configured packaged file/resource paths; packaged path, protocol/hash match, signature, startup, and shutdown have not been verified."
+    }
+  ],
+  "requiredLiveEvidence": [
+    "After dependencies are accepted, P01-P28 FakePlatform call-count results with externally observable assertions; fixture registration alone is not a test run.",
+    "100 controlled synthetic-text runs with fixed machine/OS/display/power/build/seed/cache/network and p50/p95/max/failure counts.",
+    "Wake-to-actionable p95 including capture/show/first frame; selection-to-inputSubmitted timed separately, with target text appearance observed independently.",
+    "Packaged Windows x64 helper path/version/hash/signature/protocol verification plus cold start, tray, restart, normal exit, and helper shutdown.",
+    "Rollback to the prior helper binary while preserving existing JSON data, and immediate autoPaste disable behavior."
+  ],
+  "notVerified": [
+    "T04 accepted behavior, complete P15/P16 hot-path acceptance, measured 16 MP latency and image worker memory budget.",
+    "Actual Electron IPC beyond the passing 8-case main orchestration VM fixture, final card-click target-visible Win32 input, and 100-run live benchmark.",
+    "P01-P28 T05 release behavior acceptance and controlled 100-run benchmark.",
+    "Complete release-level Windows x64 package/signature/protocol/startup/tray/restart/exit acceptance beyond passing local v3 module/decoder probes and installation file matching.",
+    "Rollback and prior JSON data compatibility.",
+    "T05 independent critical review."
+  ],
+  "artifacts": [
+    "tests/tasks/T05/fixture-plan.json",
+    "tests/tasks/T05/assertion-map.json",
+    "tests/tasks/T05/report.schema.json"
+  ]
+}

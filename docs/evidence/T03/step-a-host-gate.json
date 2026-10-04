@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "task": "T03",
+  "subtask": "a-host-ready-authorization-gate",
+  "status": "IMPLEMENTED_REVIEW",
+  "commit": null,
+  "workingTreeWasDirty": true,
+  "implementation": {
+    "files": [
+      "src/main/native/host-authorization.ts",
+      "src/main/native/win32-host-bridge.ts",
+      "src/main/native/profile-identity.ts",
+      "tests/tasks/T03/host-authorization.test.cjs",
+      "tests/tasks/T03/win32-host-bridge.test.cjs"
+    ],
+    "behavior": "The fixed Win32 bridge captures foreground HWND/PID/process creation time, reads helper identity, reads clipboard sequence, and calls AllowSetForegroundWindow only after the exact live READY identity and foreground host are revalidated for each paste intent. Helper profile identity is derived from the Electron userData path."
+  },
+  "validation": {
+    "command": "pnpm lint; node --test tests/tasks/T03/host-authorization.test.cjs tests/tasks/T03/win32-host-bridge.test.cjs",
+    "result": "PASS",
+    "details": "TypeScript checks and fake-bridge authorization/identity/cleanup cases passed in the T03 suite."
+  },
+  "notRun": [
+    "Real Win32 AllowSetForegroundWindow authorization remains NOT_RUN; the test suite uses only an injected fake bridge.",
+    "No target foreground activation, clipboard operation, or keyboard input was run."
+  ],
+  "blocker": null
+}

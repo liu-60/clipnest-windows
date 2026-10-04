@@ -1,0 +1,221 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "PARTIAL",
+  "status": "in_progress",
+  "verificationDate": "2026-10-04",
+  "baselineCommit": "91cafd765b9480e011647c9d8cd2976269f12aef",
+  "branch": "codex/m0-latency",
+  "workingTreeWasDirty": true,
+  "environment": {
+    "os": "Windows",
+    "architecture": "x64",
+    "node": "v24.16.0",
+    "pnpm": "11.19.0",
+    "electronPackage": "40.10.2"
+  },
+  "checks": [
+    {
+      "command": "pnpm lint",
+      "status": "PASS",
+      "result": "Main and renderer TypeScript checks passed after the full-resolution capture change."
+    },
+    {
+      "command": "pnpm test:unit clipboard keyboard panel",
+      "status": "PASS",
+      "result": "Main build passed; 30 module-level fake-fixture tests passed, 0 failed (5 image payload, 9 image preparation/parser, 7 clipboard sequence gate, 6 renderer keyboard/search, 3 fake panel presentation). This is partial fixture evidence, not full T04 acceptance or real Electron integration."
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS",
+      "result": "No whitespace errors; Git emitted only existing LF/CRLF normalization warnings."
+    },
+    {
+      "command": "pnpm test:unit -- clipboard-image-preparation.test.cjs",
+      "status": "PASS",
+      "result": "Main TypeScript build passed; all 10 tests in the targeted T04 image-preparation fixture file passed. The new timeout fixture verifies the 3000ms absolute deadline, abort, worker disposal before replacement, no cache admission, and rejection of an already-expired selection deadline. This does not verify an actual Electron utilityProcess exit or the selection-level panel/clipboard behavior."
+    },
+    {
+      "command": "pnpm test:unit -- clipboard-image-preparation.test.cjs selection-key-deadline.test.cjs",
+      "status": "PASS",
+      "result": "The command ran pnpm build:main (tsc -p tsconfig.main.json) and then the targeted T04 fixtures; all 15 passed, 0 failed (11 image-preparation/parser and 4 selection-deadline tests). This covers a 2500ms preparation with released keys, an 800ms preparation with a held key and zero clipboard/input/hide effects, release polling against the original 500ms cutoff, cancellation during key polling, and a never-resolving worker retirement bounded by each request deadline. It does not verify real Electron or utilityProcess behavior."
+    },
+    {
+      "command": "pnpm test:unit -- clipboard-image-preparation.test.cjs selection-key-deadline.test.cjs",
+      "status": "PASS",
+      "result": "pnpm build:main (tsc -p tsconfig.main.json) passed and all 17 targeted T04 tests passed (11 image-preparation/parser and 6 selection-monitor). Selection fakes start polling at selection time, latch held at 500ms despite a 700ms release, reject an early released state followed by a 400ms re-press held through the cutoff, fail closed with key_state_unavailable when the fake scheduler resumes after both absolute deadlines, permit release at 490ms with preparation finishing at 2500ms, wait for a pre-cutoff release, and clear polling on cancellation. Held-at-cutoff and missed-cutoff cases assert zero clipboard, input, and panel-hide effects. The delayed-scheduler fake does not reproduce real main-process event-loop stalls during clipboard conversion or image work; real Electron utilityProcess, clipboard, and panel behavior remain NOT_RUN."
+    },
+    {
+      "command": "node --test tests/tasks/T04/clipboard-image-decoder.test.cjs tests/tasks/T04/clipboard-image-preparation.test.cjs tests/tasks/T04/clipboard-image-payload.test.cjs",
+      "status": "PASS",
+      "result": "25/25 passed, including 9 real PNG/JPEG decoder, compiled production-entry protocol and cancellation-retirement regressions. PNG output/CRC/dimensions/palette/16-bit/Adam7/bounded inflate and JPEG RGBA/error/limits are covered."
+    },
+    {
+      "command": "ELECTRON_OVERRIDE_DIST_PATH=<existing Electron 40.10.2 dist>; node tests/tasks/T04/run-image-worker-electron.cjs",
+      "status": "PASS",
+      "result": "Real Windows x64 Electron utility-process PNG/JPEG, CRC failure, timeout cancellation and retirement passed, with no BrowserWindow or system clipboard/input action. Production entry uses process.parentPort."
+    },
+    {
+      "command": "Existing v2 packaged decoder/module probes; no rerun during this evidence update",
+      "status": "PASS",
+      "result": "Earlier 1.1.4-local.20261004.2 outputs recorded exact PNG pixels, JPEG pixels within tolerance, workerLoadedFromAsar=true, ffiNativeModuleLoaded=true and decodersIncluded=true. Those same log paths now contain the final v3 results recorded below. The historical v2 smokes alone did not prove later final-helper changes or final installation."
+    },
+    {
+      "command": "pnpm test:unit",
+      "status": "PASS",
+      "result": "Latest main TypeScript build and all 107 unit tests passed, including the 8 main orchestration VM tests with the real selection monitor; this is not full T04/T05 acceptance."
+    },
+    {
+      "command": "Existing final v3 packaged decoder/module probes and installation manifest; no rerun during this evidence update",
+      "status": "PASS",
+      "result": "Latest probe.stdout.log, image-worker.stdout.log and installed-probe.stdout.log all report PASS for 1.1.4-local.20261004.3. Main task reports <local-install> installation matches all 82 manifest files and v3 helper smoke PASS. Final card-click UI target-visible paste remains unverified because the UI app-server exited."
+    },
+    {
+      "command": "T04 selection-race verification attempt (this turn): pnpm test:unit -- clipboard-image-preparation.test.cjs selection-key-deadline.test.cjs",
+      "status": "BLOCKED",
+      "result": "The command stopped in its pnpm build:main stage before the test runner. Node v24.16.0 failed with EPERM opening <repo>/node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/bin/tsc. The three new selection-race/deadline fakes and all other selected fixtures were not run; prior PASS entries predate this patch. Later conditional-deadline edits in this turn also remain unbuilt. The parent subsequently reported C: free space at 0 bytes; do not retry until space is restored and the compiler access failure is resolved."
+    },
+    {
+      "command": "T04 main-build attempt (this turn): pnpm build:main",
+      "status": "BLOCKED",
+      "result": "The command stopped before TypeScript compilation: Node v24.16.0 failed with EPERM opening <repo>/node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/bin/tsc. Subsequent source edits in this turn remain unbuilt. The parent subsequently reported C: free space at 0 bytes; do not retry until space is restored and the compiler access failure is resolved."
+    },
+    {
+      "command": "git diff --check (after T04 race patch)",
+      "status": "PASS",
+      "result": "Exit code 0. Git emitted existing LF/CRLF normalization warnings for dirty working-tree files; no whitespace errors were reported."
+    },
+    {
+      "command": "pnpm test:unit -- clipboard-image-preparation.test.cjs selection-key-deadline.test.cjs (rerun after disk cleanup)",
+      "status": "PASS",
+      "result": "pnpm build:main ran tsc -p tsconfig.main.json successfully; all 20 selected T04 tests passed (11 image-preparation/parser and 9 selection-deadline). This verifies compilation and fakes only. The earlier EPERM/disk-full attempts are historical and resolved; no real Electron integration, system clipboard/input, or helper cancellation race was exercised."
+    },
+    {
+      "command": "pnpm test:native",
+      "status": "PASS",
+      "result": "All 56 Rust unit and isolated fake-platform integration tests passed (31 unit, 16 control integration, 9 protocol integration). The zero-budget check-only path verifies immediate key checks without a fresh 500ms wait, clipboard gating, and recheck before input. This does not exercise a physical keyboard, OS clipboard/input, or the full Electron/helper path."
+    }
+  ],
+  "implementedAndCovered": [
+    "Keyboard/search fixtures cover single execution, IME/repeat/busy guards, stale-generation acknowledgements, delayed image-preparation status, query-change selection reset, simulated virtual-list scrolling that keeps the new first result visible, and empty-query body-read avoidance.",
+    "Clipboard sequence fixtures cover stable-sequence short-circuiting, unstable/failed reads, helper/app writes, persistence retry, and duplicate notifications.",
+    "Image-preparation fixtures cover decoded LRU bounds, oversized cache bypass, single active worker, cancellation, stale-item rejection, fail-closed missing decoder, and PNG/JPEG header/size validation.",
+    "The 3000ms content-preparation deadline is anchored to selection and runs independently from the 500ms key-release monitor, which starts at selection. Six selection fakes cover release before 500ms with preparation completing at 2500ms, held at 500ms followed by a 700ms release, released-at-start then re-pressed at 400ms through the cutoff, delayed scheduler wake after both deadlines, waiting for a pre-cutoff release, and cancellation cleanup; held-at-cutoff and missed-cutoff cases have zero clipboard, input, and panel-hide effects. A never-resolving worker-retirement fake verifies each request ends at its own absolute deadline and no replacement starts.",
+    "Clipboard image capture applies the specified 16 MP and 20 MiB cap to the app's encoded payload after clipboard.readImage(); over-budget PNG may use same-dimension JPEG. The capture path does not downsample; JPEG fallback is lossy, so byte/pixel-identical original fidelity is not claimed or measured. Five fake-source tests cover the 20 MiB boundary, fallback, and rejection behavior.",
+    "Panel presentation fixtures exercise the production helper used by renderPanel: one final setBounds call, reduced-motion suppression, rich-animation gating, and fail-closed system-settings errors. These use a recording fake rather than an Electron window.",
+    "When preparation finishes after a released 500ms cutoff, selectionBudgetMs=0 enters native check-only mode. It performs immediate key-state checks without opening a fresh wait window; control fakes verify clipboard gating and rejection of a key re-press before input.",
+    "Production utility-process PNG/JPEG decoding is implemented with pinned pngjs 7.0.0/jpeg-js 0.4.4 and tested with real Electron cancellation/exit. The v2 ASAR decoder probe independently confirms packaged worker and decoder resolution; performance and final desktop acceptance remain open."
+  ],
+  "notVerified": [
+    "Complete large-image, progressive JPEG, EXIF/orientation/ICC/color and exact-source fidelity acceptance remains incomplete; the installed production PNG/JPEG path has real utility-process and v2 ASAR smoke evidence.",
+    "The 256 MiB image-worker peak RSS/working-set limit has not been measured; configured input/pixel/cache limits are not a hard process-memory cap.",
+    "P15 image selection still repeats Base64 decoding and hashing in src/main/native/content-provider.ts; that file is outside the T04 allowlist and scope expansion is awaiting the user.",
+    "Main-process clipboard image toPNG/toJPEG, Base64/hash work and RGBA-to-BGRA/DIB pixel-loop responsiveness were not measured. Fake scheduling does not reproduce these synchronous operations stalling the main event loop across the 500ms key deadline; real deadline timing under that load remains NOT_RUN. Actual Electron window integration was not run; virtual-list scroll and panel presentation fixtures use simulated state/recording fakes.",
+    "The earlier fixture-only runs did not use a desktop. Later decoder smokes run real Electron utility processes and v2/v3 ASAR loading without system clipboard/input; final v3 installation file matching is complete. Complete final-helper card-click target-visible paste remains unfinished.",
+    "The 3000ms deadline, deadline-bounded retirement and selection-start key monitor have fake coverage, and real utility-process cancellation/exit has passed. Full deadline behavior under actual main-process encoding/clipboard load and complete clipboard/panel effects remain unverified.",
+    "When preparation completes after a released 500ms cutoff, main sends selectionBudgetMs=0. The helper accepts zero as check-only, samples keys immediately, checks again before clipboard commit, and performs no fresh wait; Rust fake tests cover the contract. The physical-keyboard timing and full Electron/helper route remain NOT_RUN, and no fake rules out a key transition after the final state sample but before an OS operation.",
+    "Static main-process review shows pre-registration cutoff cancellation aborts preparation and never restarts the helper; registered cancellation failure latches the clipboard fence and retains the job unless helper exit is confirmed. The integrated cutoff-to-utility-worker/helper cancellation path is NOT_RUN; a kill-requested utility process or unconfirmed helper may still be exiting after the selection returns, while the worker retirement latch or helper job/fence prevents reuse and side effects.",
+    "The main-process orchestration VM fixture is PASS (8 tests); actual Electron IPC, complete final-helper target-visible input and T05 100-run controlled benchmark remain unaccepted.",
+    "The integrated cutoff-to-utility-worker/helper cancellation path remains NOT_RUN. Static review indicates pre-registration cancellation avoids helper restart, and unconfirmed registered cancellation keeps the clipboard fence/job fail-closed; real Electron worker retirement/helper exit and clipboard/panel/input effects remain unverified."
+  ],
+  "interimReview": {
+    "result": "PASS_WITH_LIMITATIONS",
+    "reviewer": "Independent read-only T04 source reviewer",
+    "date": "2026-10-04",
+    "scope": [
+      "20 MiB encoded payload cap and fake-source boundary behavior",
+      "panel presentation helper wiring in renderPanel and recording-fake bounds/reduced-motion fixtures",
+      "T04 verification/progress consistency"
+    ],
+    "findings": [
+      "The app cap is applied after clipboard.readImage() re-encoding; it is not evidence of the OS clipboard's raw compressed-source length.",
+      "Same-dimension JPEG fallback is lossy; exact source pixel/color fidelity is not measured.",
+      "Main-process image encoding/hash and RGBA-to-BGRA/DIB responsiveness, plus actual Electron window integration, remain NOT_RUN."
+    ],
+    "sourceFilesReviewed": [
+      "src/main/clipboard/image-payload.ts",
+      "src/main/clipboard/panel-presentation.ts",
+      "src/main/main.ts",
+      "tests/tasks/T04/clipboard-image-payload.test.cjs",
+      "tests/tasks/T04/panel-presentation.test.cjs"
+    ]
+  },
+  "fixturePlanReview": {
+    "result": "PASS_WITH_LIMITATIONS",
+    "reviewer": "Independent read-only T04/T05 evidence reviewer",
+    "date": "2026-10-04",
+    "scope": [
+      "T04 fixture-plan execution status compared with the verification test counts",
+      "T04 full acceptance, real Electron, utilityProcess/package decoder load, and 256 MiB peak RSS status",
+      "T05 progress and package/release gate"
+    ],
+    "findings": [
+      "The 30 module-level fake tests reconcile as 5 image payload + 9 image preparation/parser + 7 sequence + 6 keyboard/renderer + 3 panel tests.",
+      "The fixture plan and verification both retain full T04 acceptance, real Electron integration, utilityProcess decoding, packaged Windows decoder load, and 256 MiB worker peak RSS as NOT_RUN/unmeasured.",
+      "T04 remains in_progress, T05 remains not_started, and the T05 preflight correctly holds package:windows and P01-P28 behavior acceptance until T04 is accepted."
+    ],
+    "limitations": [
+      "This is an evidence consistency review; it does not independently rerun tests or validate real desktop behavior."
+    ]
+  },
+  "finalReview": {
+    "result": "PASS_WITH_LIMITATIONS",
+    "reviewer": "Independent read-only T04 protocol reviewer",
+    "date": "2026-10-04",
+    "scope": [
+      "selectionBudgetMs=0 protocol/control/paste semantics and whether a new 500ms wait can start",
+      "clipboard and input commit boundaries in the native fake-platform path",
+      "T04-I11 fixture plan, test counts, verification and progress consistency"
+    ],
+    "findings": [
+      "Expired cutoffs use immediate check-only sampling; there is no new 500ms wait. Native fake tests cover a released key, a key re-press before paste, and a key held before clipboard commit.",
+      "Clipboard key sampling is not atomic with EmptyClipboard: after the sample, Win32 still copies/fills DIB memory and opens the clipboard before EmptyClipboard. Input key sampling is not atomic with SendInput either. A key transition in either interval remains a physical OS race and is not ruled out by these fakes.",
+      "Recorded evidence is consistent at 20/20 targeted TypeScript tests and 56/56 Rust unit/isolated integration tests; T04 remains in_progress and T05 remains not_started."
+    ],
+    "sourceFilesReviewed": [
+      "src/main/main.ts",
+      "src/main/clipboard/selection-key-deadline.ts",
+      "native/src/protocol.rs",
+      "native/src/control.rs",
+      "native/src/paste.rs",
+      "native/tests/control.rs",
+      "native/tests/protocol.rs",
+      "tests/tasks/T04/fixture-plan.json",
+      "docs/evidence/T04/verification.json",
+      "docs/progress.json"
+    ],
+    "limitations": [
+      "Static review and fake-platform tests do not establish physical keyboard timing, Windows API atomicity, or full Electron/helper clipboard and paste behavior."
+    ]
+  },
+  "checkpointEvidence": "docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json",
+  "historicalReviewNote": "interimReview and fixturePlanReview retain their original inspection snapshots; current decoder/fixture status is recorded in checks and checkpointEvidence.",
+  "openGates": [
+    "Measure 16 MP Windows decode latency and the 256 MiB image-worker peak RSS/working-set target; configured limits and memory estimates are not a hard process-memory cap.",
+    "Complete real Electron image/clipboard/panel acceptance and final-helper card-click target-visible paste; passing utility-process, v3 ASAR/module smokes and installation file matching do not close these UI gates.",
+    "Validate the preparation/key deadlines under actual main-process image/clipboard load; delayed-scheduler and retirement fixtures do not reproduce this load.",
+    "The selection monitor runs concurrently from selection start and latches a key held at the 500ms cutoff. For a released cutoff followed by late preparation, zero-budget helper check-only mode prevents a fresh 500ms wait; 56 Rust fake tests pass. Physical-keyboard timing, a key transition between the final sample and EmptyClipboard/SendInput, and complete Electron/helper clipboard/paste effects remain NOT_RUN.",
+    "Decide whether src/main/native/content-provider.ts may be included in T04 to remove repeat Base64/hash and main-thread pixel-conversion work.",
+    "Independent final static review passed with limitations; physical-keyboard timing, final-sample-to-EmptyClipboard/SendInput races, full Electron/helper clipboard/paste acceptance, and complete performance acceptance remain open."
+  ],
+  "artifacts": [
+    "tests/tasks/T04/fixture-plan.json",
+    "tests/tasks/T04/clipboard-image-payload.test.cjs",
+    "tests/tasks/T04/clipboard-image-preparation.test.cjs",
+    "tests/tasks/T04/selection-key-deadline.test.cjs",
+    "tests/tasks/T04/clipboard-sequence-gate.test.cjs",
+    "tests/tasks/T04/keyboard-renderer.test.cjs",
+    "tests/tasks/T04/panel-presentation.test.cjs",
+    "tests/tasks/T04/clipboard-image-decoder.test.cjs",
+    "tests/tasks/T04/run-image-worker-electron.cjs",
+    "native/tests/control.rs",
+    "native/tests/protocol.rs",
+    "native/src/protocol.rs",
+    "native/src/control.rs",
+    "native/src/paste.rs",
+    "docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json",
+    "docs/evidence/T04/dependency-subcard.json",
+    "docs/evidence/T04/decoder-options.json",
+    "docs/evidence/T04/decoder-alternatives-recheck.json"
+  ]
+}

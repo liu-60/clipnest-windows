@@ -1,0 +1,235 @@
+{
+  "task": "T02",
+  "supportingSubcard": "T06 dependency review for the L0 Windows helper",
+  "reviewStatus": "dependency_resolution_and_metadata_review_complete; Windows helper linked and passed read-only startup/capture smoke",
+  "checkedAt": "2026-10-03",
+  "parentTaskStatus": "T06 remains not_started; this narrow prerequisite does not claim T06 completion",
+  "reviewer": "independent dependency research agent",
+  "design": {
+    "target": "x86_64-pc-windows-gnu",
+    "packagingArchitecture": "x64",
+    "rationale": "The helper uses the frozen stdin/stdout JSON-lines protocol, so its Windows ABI is separate from Electron's MSVC process ABI. The local machine has no Visual Studio/MSVC linker; the isolated Rust GNU toolchain successfully linked the actual x64 helper, and a read-only startup/capture smoke verified its READY process identity and clean shutdown before T02 acceptance.",
+    "rustVersion": "1.99.0",
+    "rustMinimumRequired": "1.85.0"
+  },
+  "dependencies": [
+    {
+      "name": "serde",
+      "version": "=1.0.229",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.56",
+      "features": [
+        "derive"
+      ],
+      "use": "strict protocol request/response DTO serialization"
+    },
+    {
+      "name": "serde_json",
+      "version": "=1.0.151",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.71",
+      "use": "bounded JSON-lines protocol parsing and output"
+    },
+    {
+      "name": "sha2",
+      "version": "=0.11.0",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.85",
+      "use": "content chunk and whole-object SHA-256 validation"
+    },
+    {
+      "name": "base64",
+      "version": "=0.23.1",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.71.0",
+      "use": "bounded inline/chunk byte transport"
+    },
+    {
+      "name": "windows-sys",
+      "version": "=0.61.2",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.71",
+      "features": [
+        "Win32_System_DataExchange",
+        "Win32_System_Memory",
+        "Win32_System_Threading",
+        "Win32_UI_Input_KeyboardAndMouse",
+        "Win32_UI_WindowsAndMessaging"
+      ],
+      "target": "cfg(windows)",
+      "use": "narrow windows-rs raw Win32 bindings for clipboard, foreground/process identity, key state, and SendInput"
+    }
+  ],
+  "resolvedRegistryPackages": [
+    {
+      "name": "base64",
+      "version": "0.23.1",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.71.0"
+    },
+    {
+      "name": "block-buffer",
+      "version": "0.12.1",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.85"
+    },
+    {
+      "name": "cfg-if",
+      "version": "1.0.5",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.32"
+    },
+    {
+      "name": "const-oid",
+      "version": "0.10.2",
+      "license": "Apache-2.0 OR MIT",
+      "rustVersion": "1.85"
+    },
+    {
+      "name": "cpufeatures",
+      "version": "0.3.1",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.85"
+    },
+    {
+      "name": "crypto-common",
+      "version": "0.2.2",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.85"
+    },
+    {
+      "name": "digest",
+      "version": "0.11.3",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.85"
+    },
+    {
+      "name": "hybrid-array",
+      "version": "0.4.15",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.85"
+    },
+    {
+      "name": "itoa",
+      "version": "1.0.18",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.68"
+    },
+    {
+      "name": "libc",
+      "version": "0.2.190",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.65"
+    },
+    {
+      "name": "memchr",
+      "version": "2.8.3",
+      "license": "Unlicense OR MIT",
+      "rustVersion": "1.61"
+    },
+    {
+      "name": "proc-macro2",
+      "version": "1.0.107",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.71"
+    },
+    {
+      "name": "quote",
+      "version": "1.0.47",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.71"
+    },
+    {
+      "name": "serde",
+      "version": "1.0.229",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.56"
+    },
+    {
+      "name": "serde_core",
+      "version": "1.0.229",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.56"
+    },
+    {
+      "name": "serde_derive",
+      "version": "1.0.229",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.71"
+    },
+    {
+      "name": "serde_json",
+      "version": "1.0.151",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.71"
+    },
+    {
+      "name": "sha2",
+      "version": "0.11.0",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.85"
+    },
+    {
+      "name": "syn",
+      "version": "3.0.6",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.71"
+    },
+    {
+      "name": "typenum",
+      "version": "1.20.1",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.41.0"
+    },
+    {
+      "name": "unicode-ident",
+      "version": "1.0.26",
+      "license": "(MIT OR Apache-2.0) AND Unicode-3.0",
+      "rustVersion": "1.71"
+    },
+    {
+      "name": "windows-link",
+      "version": "0.2.1",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.71"
+    },
+    {
+      "name": "windows-sys",
+      "version": "0.61.2",
+      "license": "MIT OR Apache-2.0",
+      "rustVersion": "1.71"
+    },
+    {
+      "name": "zmij",
+      "version": "1.0.23",
+      "license": "MIT",
+      "rustVersion": "1.71"
+    }
+  ],
+  "reviewFindings": [
+    "windows-sys is in the official microsoft/windows-rs project and matches the direct C-style Win32 API boundary; it is smaller than the typed windows umbrella crate for this binary.",
+    "cargo metadata --format-version 1 --locked resolved 24 registry packages (25 total packages including the local helper); all declared MSRVs are satisfied by Rust 1.99.0.",
+    "Cargo metadata provides SPDX license expressions for every resolved registry package. The notable expressions are memchr's Unlicense OR MIT, unicode-ident's (MIT OR Apache-2.0) AND Unicode-3.0, and zmij's MIT; see resolvedRegistryPackages for the complete set.",
+    "cargo check --all-targets --locked type-checked the helper and its Windows dependencies on the x86_64-pc-windows-gnu host; this does not link or run the helper.",
+    "The release helper imports only Windows system DLLs; helper artifact SHA-256 is recorded in docs/evidence/T02/verification.json."
+  ],
+  "validation": {
+    "isolatedRustupInstall": "PASS; stable GNU Rust 1.99.0 installed under <tools> without PATH changes",
+    "minimalWindowsX64Link": "PASS; rustc --target x86_64-pc-windows-gnu linked a minimal local executable",
+    "cargoDependencyResolution": "PASS; cargo metadata --format-version 1 --locked succeeded with 25 total packages, including 24 registry packages; versions are recorded in resolvedRegistryPackages.",
+    "windowsSysTargetCompile": "PASS; cargo check --all-targets --locked succeeded on host x86_64-pc-windows-gnu with Rust 1.99.0; this is type-checking and does not establish linking or runtime behavior.",
+    "fullLicenseScan": "PASS for declared SPDX metadata coverage; cargo metadata returned a non-empty license expression for all 24 registry packages. No source-text/license-file policy scan was run.",
+    "windowsHelperLink": "PASS; release helper linked for x86_64-pc-windows-gnu with the isolated llvm-mingw toolchain.",
+    "windowsHelperRuntimeTest": "PASS for read-only startup/capture smoke; READY helperPid and helperProcessCreatedAt matched the spawned process, capture returned captured, clean shutdown. No clipboard write or SendInput was issued."
+  },
+  "sources": [
+    "https://crates.io/api/v1/crates/serde",
+    "https://crates.io/api/v1/crates/serde_json",
+    "https://crates.io/api/v1/crates/sha2",
+    "https://crates.io/api/v1/crates/base64",
+    "https://crates.io/api/v1/crates/windows-sys",
+    "https://docs.rs/crate/windows-sys/0.61.2/source/Cargo.toml.orig",
+    "https://rust-lang.github.io/rustup/installation/windows.html",
+    "https://github.com/microsoft/windows-rs"
+  ]
+}

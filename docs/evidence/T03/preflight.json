@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "task": "T03",
+  "result": "NOT_RUN",
+  "scope": "Static preflight only; no production source changed, no helper connected, and no test/build command run.",
+  "commit": "91cafd765b9480e011647c9d8cd2976269f12aef",
+  "branch": "codex/m0-latency",
+  "workingTreeWasDirty": true,
+  "environment": {
+    "platform": "win32",
+    "node": "v24.16.0",
+    "pnpm": "11.19.0"
+  },
+  "dependencyGate": {
+    "required": "T02 accepted",
+    "progressAtInspection": "T02 in_progress",
+    "reason": "T03 permits independent fixture/interface preparation before T02 acceptance, but explicitly forbids connecting a fake-success backend."
+  },
+  "staticObservations": [
+    {
+      "file": "src/main/main.ts",
+      "lines": "1288-1318",
+      "observation": "Previous-window capture embeds PowerShell Add-Type and synchronously calls powershell.exe through spawnSync from the panel show path."
+    },
+    {
+      "file": "src/main/main.ts",
+      "lines": "1330-1463,1471-1508",
+      "observation": "Paste/focus helper is inline PowerShell/C# with Win32 P/Invoke, including Thread.Sleep(180), launched as powershell.exe."
+    },
+    {
+      "file": "src/main/main.ts",
+      "lines": "1512-1529",
+      "observation": "After hiding, a 100ms timer recaptures the current foreground and may substitute it as the paste target before starting the helper."
+    },
+    {
+      "file": "src/main/main.ts",
+      "lines": "1868-1896",
+      "observation": "history:copy writes through Electron clipboard, schedules paste, then marks IPC acknowledgement without awaiting the input outcome."
+    },
+    {
+      "file": "src/preload/preload.ts",
+      "lines": "14-25,55-61",
+      "observation": "panel:shown transports only requestId; copyItem invokes history:copy with an item id. No generation or native operation identity is exposed."
+    },
+    {
+      "file": "src/shared/types.ts",
+      "lines": "65-85",
+      "observation": "copyItem is typed Promise<void>; the shared API has no typed paste result, generation, or helper identity."
+    }
+  ],
+  "notVerified": [
+    "T02 helper protocol and native contract",
+    "helper build, runtime, process supervision, or Windows authorization behavior",
+    "real clipboard preservation, focus behavior, keyboard input, and target-application result",
+    "P05/P08/P10/P11/P13/P18-P28 behavioral fixtures",
+    "lint, unit tests, native tests, and package build"
+  ],
+  "artifacts": [
+    "tests/tasks/T03/fixture-plan.json"
+  ]
+}
