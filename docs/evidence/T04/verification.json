@@ -129,6 +129,16 @@
       "command": "temporary Electron 40.10.2 utilityProcess PureJsImage 0.17.0 16MP baseline JPEG feasibility spike; detailed results in docs/evidence/T04/purejsimage-16mp-feasibility-spike.json",
       "status": "MEASURED_WITH_LIMITATIONS",
       "result": "One fresh worker sample each for synthetic 20 MiB SOF0 4:2:0 and 4:4:4 fixtures fully materialized 64,000,000-byte RGBA in 1964.26 ms / 149.32 MiB and 2140.84 ms / 151.97 MiB PeakWorkingSet64, respectively. AbortSignal did not stop decode; iterator return completed. Package was extracted in TEMP only, not installed or integrated. This is candidate feasibility evidence only: no independent pixel oracle, parent IPC transfer, packaged ASAR, repeat distribution, or complete license/distribution review."
+    },
+    {
+      "command": "ELECTRON_OVERRIDE_DIST_PATH=<Electron 40.10.2 dist>; node tests/tasks/T04/run-image-selection-electron.cjs",
+      "status": "PASS_WITH_LIMITATIONS",
+      "result": "Production copySelectedItem and NativeContentProvider reached the real Electron utilityProcess PNG decoder and produced a verified 2x1 DIB payload with matching SHA-256. The selection remained pending while the real worker response was held at a test-only delivery gate; Electron main processed setImmediate, and the retained item's original content and preview remained unchanged. Paired with the renderer delayed-IPC fixture for visible preparing status. Fake helper, clipboard, panel, and input boundaries were used; no BrowserWindow or OS clipboard/input was accessed. See docs/evidence/T04/image-selection-provider-integration.json."
+    },
+    {
+      "command": "pnpm test:unit -- keyboard-renderer.test.cjs main-image-preparation-failure.test.cjs",
+      "status": "PASS",
+      "result": "Main build passed and 12 tests passed, 0 failed. The renderer fixture verifies the preparing status remains visible with delayed fake IPC; the paired production-function VM fakes cover fail-closed image preparation. No real window, OS clipboard, or input was used."
     }
   ],
   "implementedAndCovered": [
@@ -158,7 +168,7 @@
     "Static main-process review shows pre-registration cutoff cancellation aborts preparation and never restarts the helper; registered cancellation failure latches the clipboard fence and retains the job unless helper exit is confirmed. The integrated cutoff-to-utility-worker/helper cancellation path is NOT_RUN; a kill-requested utility process or unconfirmed helper may still be exiting after the selection returns, while the worker retirement latch or helper job/fence prevents reuse and side effects.",
     "The main-process orchestration VM fixture is PASS (8 tests); actual Electron IPC, complete final-helper target-visible input and T05 100-run controlled benchmark remain unaccepted.",
     "The integrated cutoff-to-utility-worker/helper cancellation path remains NOT_RUN. Static review indicates pre-registration cancellation avoids helper restart, and unconfirmed registered cancellation keeps the clipboard fence/job fail-closed; real Electron worker retirement/helper exit and clipboard/panel/input effects remain unverified.",
-    "The new image-preparation failure behavior is covered by a production-function VM fake only. Electron main-process integration, real worker failure through NativeContentProvider, and actual clipboard/panel effects remain NOT_RUN."
+    "Successful image selection preparation now has a real Electron utilityProcess integration through the production NativeContentProvider, recorded in image-selection-provider-integration.json. Failure through the real provider/worker, a real BrowserWindow, OS clipboard, actual panel effects, physical input, and final target-visible paste remain NOT_RUN; the new probe fakes helper, clipboard, panel, and input boundaries."
   ],
   "interimReview": {
     "result": "PASS_WITH_LIMITATIONS",

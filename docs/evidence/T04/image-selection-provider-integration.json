@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "fixture": "T04-I03",
+  "status": "PASS_WITH_LIMITATIONS",
+  "environment": {
+    "os": "Windows",
+    "architecture": "x64",
+    "node": "v24.16.0",
+    "electron": "40.10.2"
+  },
+  "probe": "tests/tasks/T04/run-image-selection-electron.cjs",
+  "command": "$env:ELECTRON_OVERRIDE_DIST_PATH=(Resolve-Path -LiteralPath 'node_modules/.pnpm/electron@40.10.2/node_modules/electron/dist').Path; node tests/tasks/T04/run-image-selection-electron.cjs",
+  "result": "PASS",
+  "observed": [
+    "Production copySelectedItem selection orchestration invoked the production NativeContentProvider and ImagePreparationService.",
+    "A real Electron utilityProcess decoded a deterministic 2x1 PNG; the resulting 48-byte DIB dimensions, pixel bytes, and SHA-256 were checked at the fake helper boundary.",
+    "While selection awaited a deliberately gated worker-result delivery, Electron main processed setImmediate and selection remained pending.",
+    "The original history item, full-resolution content data URL, and preview remained unchanged.",
+    "The paired keyboard-renderer delayed-IPC fixture verifies the preparing status remains visible while preparation is pending."
+  ],
+  "testBoundary": {
+    "real": [
+      "Electron utilityProcess image decode",
+      "production selection orchestration functions extracted from src/main/main.ts",
+      "production NativeContentProvider",
+      "production ImagePreparationService"
+    ],
+    "fake": [
+      "native helper protocol responses",
+      "clipboard commit and sequence boundary",
+      "panel visibility and hide boundary",
+      "authorization and input boundary"
+    ],
+    "browserWindowCount": 0,
+    "operatedSystemClipboard": false,
+    "sentPhysicalInput": false
+  },
+  "limitations": [
+    "The worker completes decoding before the test-only response-delivery gate is held; this demonstrates main-loop progress while selection awaits the worker result, not a decode-time performance measurement.",
+    "No real BrowserWindow, OS clipboard, physical keyboard/input, helper process, panel effect, or target-visible paste was exercised.",
+    "Real-worker failure/cancellation through NativeContentProvider remains unverified.",
+    "P15 repeated Base64 decode/hash coverage was explicitly left outside this T04 scope by the user and remains open."
+  ]
+}

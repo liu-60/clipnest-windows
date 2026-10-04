@@ -51,6 +51,18 @@
       "command": "pnpm test:unit -- main-image-preparation-failure.test.cjs main-paste-orchestration.test.cjs host-authorization.test.cjs",
       "scope": "Production copySelectedItem VM fake plus existing orchestration/authorization fakes; covers image worker capacity error, unavailable helper and clipboard baseline fail-closed paths plus preserved text/auth-degradation behavior; no real window, OS clipboard, keyboard, or input"
     },
+    "imageSelectionProviderIntegration": {
+      "status": "PASS_WITH_LIMITATIONS",
+      "artifact": "docs/evidence/T04/image-selection-provider-integration.json",
+      "probe": "tests/tasks/T04/run-image-selection-electron.cjs",
+      "scope": "Production selection orchestration and NativeContentProvider reach a real Electron utilityProcess decoder; helper, clipboard, panel, and input boundaries are fakes",
+      "pairedRendererFakeRun": {
+        "status": "PASS",
+        "command": "pnpm test:unit -- keyboard-renderer.test.cjs main-image-preparation-failure.test.cjs",
+        "passed": 12,
+        "failed": 0
+      }
+    },
     "checkpointEvidence": "docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json",
     "requiredNotRun": [
       "Real Electron window clipboard/panel integration and final-helper target-visible card-click acceptance",
@@ -248,6 +260,10 @@
         "preparing is observable",
         "the UI remains responsive",
         "the original is retained and is not replaced by a downsampled thumbnail"
+      ],
+      "evidence": [
+        "tests/tasks/T04/keyboard-renderer.test.cjs: delayed IPC fake keeps the preparing status visible in the renderer",
+        "tests/tasks/T04/run-image-selection-electron.cjs: production selection/provider path reaches a real utilityProcess decode; Electron main event loop advances while selection awaits the gated response; retained image content and preview remain unchanged"
       ]
     },
     {
