@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "result": "NOT_RUN",
+  "reviewType": "dependency and offline-preflight refresh",
+  "reviewedDate": "2026-10-05",
+  "branch": "codex/m0-latency",
+  "sourceCommit": "722d2d01d7eb6ad6c619076708a69d126edc62df",
+  "workingTreeWasDirty": false,
+  "dependencyGate": {
+    "T03": "accepted",
+    "T04": "in_progress",
+    "T05": "not_started"
+  },
+  "latestT04Evidence": {
+    "packagedAsarCompressedWorker": {
+      "status": "PASS",
+      "artifact": "docs/evidence/T04/packaged-asar-worker-smoke.json",
+      "packageVersion": "1.1.4-local.20261005.1",
+      "dimensions": "3000x3000",
+      "exactDecodedRgbaBytes": 36000000,
+      "observedIpcResponse": "decoded_compressed",
+      "installed": false
+    },
+    "mainProcessImageDeadlineDiagnostic": {
+      "status": "PASS_WITH_LIMITATIONS",
+      "artifact": "docs/evidence/T04/main-thread-image-deadline-diagnostic.json",
+      "productionTransformMs": 1951.13,
+      "originalDeadlineMs": 500,
+      "decision": "key_state_unavailable",
+      "systemClipboardRead": false,
+      "systemClipboardWritten": false,
+      "physicalInputSent": false,
+      "browserWindowCreated": false
+    },
+    "remainingT04Gates": [
+      "P15 remains open under the user-confirmed scope; content-provider.ts was not changed or invoked.",
+      "Physical keyboard, system clipboard, BrowserWindow/panel, helper lifecycle, target-visible paste and full T04 acceptance remain NOT_RUN.",
+      "The synthetic image diagnostics are not universal latency or peak-memory guarantees."
+    ]
+  },
+  "independentSchemaMetaCheck": {
+    "status": "PASS_WITH_LIMITATIONS",
+    "artifact": "docs/evidence/T05/draft2020-schema-meta-validation.json",
+    "validator": "System Python jsonschema 4.26.0 Draft202012Validator.check_schema",
+    "reportInstanceValidated": false,
+    "repositoryDependencyAdded": false
+  },
+  "allowedPreparationCompleted": [
+    "Latest compressed image-worker ASAR package smoke status refreshed.",
+    "One-off Draft 2020-12 meta-schema self-check recorded without changing project dependencies."
+  ],
+  "notRun": [
+    "P01-P28 T05 behavior/release acceptance and 100+100 controlled-live measurements.",
+    "Standard release package helper resource/signature/protocol, lifecycle, rollback, installation data and target-visible paste.",
+    "A repository-pinned schema validator or validation of a complete T05 report instance."
+  ],
+  "historicalSnapshot": "docs/evidence/T05/preflight.json and docs/evidence/T05/report-schema-review.json retain their original dated observations; current state is recorded here and in current-static-audit.json."
+}

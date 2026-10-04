@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "result": "PASS_WITH_LIMITATIONS",
+  "check": "Draft 2020-12 schema meta-validation only",
+  "date": "2026-10-05",
+  "branch": "codex/m0-latency",
+  "sourceCommit": "3d3ee51483dfcfdb15324e8a213c5e732611705a",
+  "workingTreeWasDirty": true,
+  "environment": {
+    "os": "Microsoft Windows 11 Enterprise 10.0.22631",
+    "architecture": "x64",
+    "python": "3.11.15",
+    "jsonschema": "4.26.0"
+  },
+  "command": "python -: jsonschema.Draft202012Validator.check_schema(tests/tasks/T05/report.schema.json)",
+  "schema": "tests/tasks/T05/report.schema.json",
+  "reportInstanceValidated": false,
+  "projectDependencyAdded": false,
+  "reproducibleProjectScriptAdded": false,
+  "stdout": {
+    "result": "PASS",
+    "validator": "jsonschema.Draft202012Validator",
+    "validatorVersion": "4.26.0",
+    "check": "check_schema only; validates schema against the Draft 2020-12 meta-schema",
+    "reportInstanceValidated": false,
+    "projectDependencyAdded": false
+  },
+  "limitation": "This uses the host system Python jsonschema installation as a one-off static check; it is not a repository-pinned validator or T05 report/behavior acceptance. The historical report-schema-review.json still accurately records that its 2026-10-04 review did not run a Draft 2020-12 validator."
+}

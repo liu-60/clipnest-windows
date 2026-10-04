@@ -12,7 +12,11 @@
     "tests/tasks/T05/report.schema.json",
     "docs/evidence/T05/preflight.json",
     "docs/evidence/T05/report-schema-review.json",
-    "docs/progress.json"
+    "docs/progress.json",
+    "docs/evidence/T05/draft2020-schema-meta-validation.json",
+    "docs/evidence/T05/current-gates-refresh.json",
+    "docs/evidence/T04/packaged-asar-worker-smoke.json",
+    "docs/evidence/T04/main-thread-image-deadline-diagnostic.json"
   ],
   "staticChecks": {
     "caseCount": 28,
@@ -28,15 +32,16 @@
       "T04": "in_progress",
       "T05": "not_started",
       "T05ReleaseAcceptance": "BLOCKED_UNTIL_T04_ACCEPTED"
-    }
+    },
+    "draft202012SchemaMetaValidation": "PASS_WITH_LIMITATIONS; external system Python jsonschema 4.26.0; no report instance validated"
   },
   "observations": [
     "T04 now has a five-sample, one-content synthetic 16 MP PNG diagnostic. The latest measured utility-process PeakWorkingSet64 maximum is 169066496 bytes (161.23 MiB) and request-to-RGBA p95 is 547.68 ms; this does not establish a general memory or latency guarantee.",
-    "The existing report-schema review is a historical snapshot and did not include assertion-map.json. This audit independently compared all 71 mapped assertions with the current fixture plan; it did not run a Draft 2020-12 schema validator.",
-    "The standard package:windows artifact, latest compressed-response package contents, controlled desktop measurements, helper lifecycle/rollback, and real target-visible paste remain unverified."
+    "The 2026-10-04 report-schema review remains a historical snapshot and did not include assertion-map.json. This audit independently compared all 71 mapped assertions with the current fixture plan. A later one-off system Python jsonschema 4.26.0 Draft202012Validator.check_schema check passed the schema meta-validation, but no report instance was validated and no project dependency/script was added.",
+    "The latest compressed-response worker was exercised from an isolated Windows x64 directory-package ASAR, and a synthetic main-process NativeImage PNG/JPEG/Base64/SHA-256 load delayed the 500ms monitor which then failed closed. The standard package:windows/helper resource, controlled desktop measurements, helper lifecycle/rollback, system clipboard and real target-visible paste remain unverified."
   ],
   "notRun": [
-    "Draft 2020-12 schema validation",
+    "Validation of a complete T05 report instance and a repository-pinned Draft 2020-12 validator integration; only one-off external schema meta-validation passed.",
     "P01-P28 behavior/release acceptance",
     "100-sample controlled text and wake measurements",
     "package/signature/protocol/startup/tray/restart/rollback verification",
@@ -45,6 +50,17 @@
   "limitations": [
     "The assertion-map comparison is static traceability evidence and does not execute any acceptance assertion.",
     "Schema validation cannot prove assertion-to-evidence content, unique request IDs, or independently recomputed sample statistics.",
-    "T05 remains not_started because its T04 dependency has not been accepted."
-  ]
+    "T05 remains not_started because its T04 dependency has not been accepted.",
+    "The Draft 2020-12 meta-schema check used the host Python package and did not validate a T05 report instance; project dependency/tooling remains unfrozen."
+  ],
+  "latestEvidenceRefresh": {
+    "artifact": "docs/evidence/T05/current-gates-refresh.json",
+    "sourceCommit": "722d2d01d7eb6ad6c619076708a69d126edc62df",
+    "T04": "in_progress",
+    "T05": "not_started",
+    "compressedWorkerPackageSmoke": "PASS",
+    "syntheticMainProcessDeadlineDiagnostic": "PASS_WITH_LIMITATIONS",
+    "schemaMetaValidation": "PASS_WITH_LIMITATIONS",
+    "completeT05Execution": "NOT_RUN"
+  }
 }

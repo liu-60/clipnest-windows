@@ -106,14 +106,16 @@
         "tests/tasks/T05/assertion-map.json",
         "tests/tasks/T05/report.schema.json",
         "docs/evidence/T05/report-schema-review.json",
-        "docs/evidence/T05/current-static-audit.json"
+        "docs/evidence/T05/current-static-audit.json",
+        "docs/evidence/T05/draft2020-schema-meta-validation.json",
+        "docs/evidence/T05/current-gates-refresh.json"
       ],
       "openGates": [
-        "T05任务状态保持not_started；用户已授权的v3本地检查点打包、ASAR/模块probe及安装文件一致性检查已通过，不等于T04 accepted或P01-P28发布门验收。T04已有单个合成16MP PNG的5样本诊断和最新代码的隔离ASAR worker smoke，但全内容内存/性能、完整安装包接受及最终卡片UI点击仍未验收。",
+        "T05任务状态保持not_started；T04最新压缩IPC代码已通过独立目录包ASAR worker smoke，且合成main-process图片同步转换诊断记录迟到500ms poll fail-closed；均不等于T04 accepted或P01-P28发布验收。全内容内存/性能、完整安装包/helper核验及最终卡片UI点击仍未验收。",
         "当前本地检查点已通过3项真实clipboard序列回归和1项自建EDIT原caret真实SendInput/合成文字可见性集成；不等于T05受控独立目标整链输入验收。最终卡片点击、图像外部粘贴及wake-to-actionable 100样本基准仍NOT_RUN，T05执行需隔离桌面。",
         "fixture已增加G0交互路径无阻塞spawnSync、无每次交互新建helper的观察门；两项均planned/NOT_RUN，需用进程调用追踪与helper身份实证。",
         "report.schema.json现要求PASS提供非空commit、Windows x64与完整性能控制变量，并要求两个指标为controlled_live、至少100个成功样本和证据引用；requestId唯一性、原始样本与计数/分位数一致性仍须人工重算，所有指标目前NOT_RUN。",
-        "已为P01-P28计划中的71条断言建立逐项原文映射（tests/tasks/T05/assertion-map.json），当前全部NOT_RUN且证据为空；独立静态审查确认71/71原文和顺序一致、ID唯一。PASS断言、通用检查及指标仍须各自提供可核验引用；schema不解析路径或验证内容，PASS前须逐条对照映射审查报告断言与实际证据，不能只凭schema通过。Draft 2020-12 validator仍NOT_RUN。",
+        "已为P01-P28计划中的71条断言建立逐项原文映射（tests/tasks/T05/assertion-map.json），当前全部NOT_RUN且证据为空；独立静态审查确认71/71原文和顺序一致、ID唯一。PASS断言、通用检查及指标仍须各自提供可核验引用；schema不解析路径或验证内容，PASS前须逐条对照映射审查报告断言与实际证据，不能只凭schema通过。Draft 2020-12 schema meta-check已用主机Python jsonschema 4.26.0通过，但无报告实例验证，也未添加仓库依赖/验证脚本。",
         "helper/rollback的expected与actual路径、版本、协议、SHA-256是否相等仍由报告自填identityMatched表示，schema无法比较或验签；且允许unsigned。PASS前须人工核对实际打包资源、回滚前后身份、签名结果及逐项命令证据。",
         "dependencyGate的T03/T04 accepted是报告自填值；PASS前须跨文件核对docs/progress.json及其验收证据。schema校验通过不能单独作为T05 PASS或accepted依据。当前 main.ts 期望 resourcesPath/native/clipnest-helper.exe，但 package.json files/asarUnpack 未声明 helper 或 extraResources；本地v3检查点不能替代最终包内路径、版本、协议、SHA-256及签名核对，内部包是否接受 unsigned 也需在PASS前明确。"
       ]

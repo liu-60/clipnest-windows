@@ -6,7 +6,7 @@
   "commit": "4b4ab04",
   "branch": "codex/m0-latency",
   "workingTreeWasDirty": true,
-  "historicalSnapshotNote": "The original staticObservations describe the earlier preflight. Current user-authorized local v3 packaging/ASAR-module probes and installation file matching are PASS; this does not execute or accept the T05 release gate. See docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json.",
+  "historicalSnapshotNote": "The original staticObservations describe the earlier preflight. Current user-authorized local v3 packaging/ASAR-module probes and installation file matching are PASS; this does not execute or accept the T05 release gate. See docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json. Current dependency/evidence state, including the newer compressed-worker ASAR smoke and main-process deadline diagnostic, is recorded in docs/evidence/T05/current-gates-refresh.json; this historical snapshot is superseded for current status.",
   "dependencyGate": {
     "required": [
       "T03 accepted",
