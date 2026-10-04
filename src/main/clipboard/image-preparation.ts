@@ -123,6 +123,10 @@ export class ImagePreparationService {
       const image: DecodedImage = { width: decoded.width, height: decoded.height, pixels: Uint8Array.from(decoded.pixels) };
       this.throwIfPreparationExpired(deadlineAt, controller, () => { timedOut = true; }, worker);
       const cachedNow = this.writeCache(key, input.itemRef, image);
+      // Large images cannot enter the decoded cache. Retire their worker so
+      // native/zlib allocations from one uncached decode cannot accumulate
+      // across later large-image preparations in the same utility process.
+      if (!cachedNow) this.retireWorker(worker);
       this.emit(options.onUpdate, { phase: "ready", itemRef: input.itemRef, itemVersion: input.itemVersion, cacheHit: false });
       return { image, cacheHit: false, cached: cachedNow };
     } catch (error) {

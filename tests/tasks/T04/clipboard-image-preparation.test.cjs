@@ -85,21 +85,42 @@ test("decoded cache is a 32 MiB LRU and a cache hit skips the worker", async () 
   }
 });
 
-test("images larger than the decoded cache are returned without being cached", async () => {
-  const { service } = fakeService();
+test("uncached large images retire their worker before the next preparation", async () => {
+  let created = 0;
+  const disposed = [];
+  const service = new ImagePreparationService({
+    workerFactory: () => {
+      const workerId = ++created;
+      return {
+        decode: (request) => {
+          if (workerId > 1) assert.equal(disposed[0], true, "large-image worker is disposed before its replacement decodes");
+          return Promise.resolve({
+            width: request.width,
+            height: request.height,
+            pixels: new Uint8Array(request.width * request.height * 4),
+          });
+        },
+        dispose: async () => { disposed[workerId - 1] = true; },
+      };
+    },
+  });
   try {
     const result = await service.prepare(input("large", { width: 3_000_000, height: 3 }));
     assert.equal(result.cached, false);
     assert.equal(result.image.pixels.byteLength, 36_000_000);
+    const next = await service.prepare(input("small", { width: 1024, height: 1024 }));
+    assert.equal(next.cached, true);
+    assert.equal(created, 2);
     assert.deepEqual(service.getCacheStats(), {
-      entries: 0,
-      bytes: 0,
+      entries: 1,
+      bytes: 4 * 1024 * 1024,
       limitBytes: 32 * 1024 * 1024,
       workerBusy: false,
     });
   } finally {
     await service.dispose();
   }
+  assert.deepEqual(disposed, [true, true]);
 });
 
 test("one active decode is allowed; cancellation clears the lane after the worker settles", async () => {

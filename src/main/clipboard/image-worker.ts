@@ -1,5 +1,8 @@
 import type { UtilityProcess } from "electron";
 import { join } from "node:path";
+import { createInflate, deflateSync } from "node:zlib";
+
+const IMAGE_INFLATE_CHUNK_BYTES = 1024 * 1024;
 
 export const IMAGE_LIMITS = Object.freeze({
   sourceBytes: 20 * 1024 * 1024,
@@ -78,14 +81,16 @@ export function createUtilityProcessImageWorker(): ImageDecodeWorker {
 class UtilityImageWorker implements ImageDecodeWorker {
   private child: UtilityProcess | null = null;
   private retiringChild: UtilityProcess | null = null;
-  private pending: { id: string; signal: AbortSignal; abort: () => void;
+  private pending: { id: string; width: number; height: number; signal: AbortSignal; abort: () => void;
     resolve: (image: DecodedImage) => void; reject: (error: Error) => void } | null = null;
+  private inflater: ReturnType<typeof createInflate> | null = null;
   private disposed = false;
 
   decode(input: ImageDecodeInput, signal: AbortSignal): Promise<DecodedImage> {
     if (this.disposed) return Promise.reject(new Error("image_worker_closed"));
     if (this.pending) return Promise.reject(new Error("image_worker_busy"));
     if (this.retiringChild) return Promise.reject(new Error("image_worker_terminating"));
+    if (!isDecodeInput(input)) return Promise.reject(new Error("image_request_invalid"));
     if (signal.aborted) return Promise.reject(new Error("image_decode_cancelled"));
     try { this.ensureChild(); } catch { return Promise.reject(new Error("image_worker_start_failed")); }
     return new Promise((resolve, reject) => {
@@ -98,7 +103,7 @@ class UtilityImageWorker implements ImageDecodeWorker {
         try { child?.kill(); } catch { /* Retire the worker and fail closed. */ }
         this.finish(error);
       };
-      this.pending = { id: input.jobId, signal, abort, resolve, reject };
+      this.pending = { id: input.jobId, width: input.width, height: input.height, signal, abort, resolve, reject };
       signal.addEventListener("abort", abort, { once: true });
       try {
         if (signal.aborted) abort();
@@ -138,14 +143,68 @@ class UtilityImageWorker implements ImageDecodeWorker {
   private onMessage(raw: unknown): void {
     if (!isRecord(raw) || typeof raw.requestId !== "string" || !this.pending || raw.requestId !== this.pending.id) return;
     if (raw.type === "failed" && typeof raw.reason === "string") this.finish(new Error(raw.reason));
-    else if (raw.type === "decoded" && isDecodedImage(raw.image)) this.finish(undefined, raw.image);
+    else if (raw.type === "decoded" && isDecodedImage(raw.image) &&
+        raw.image.width === this.pending.width && raw.image.height === this.pending.height &&
+        raw.image.pixels.byteLength === this.pending.width * this.pending.height * 4 &&
+        raw.image.pixels.byteLength <= IMAGE_LIMITS.decodedCacheBytes) this.finish(undefined, raw.image);
+    else if (raw.type === "decoded" || raw.type === "decoded_compressed") {
+      if (raw.type === "decoded_compressed") this.onCompressedMessage(raw);
+      else this.finish(new Error("image_worker_response_invalid"));
+    }
     else this.finish(new Error("image_worker_response_invalid"));
+  }
+
+  private onCompressedMessage(raw: Record<string, unknown>): void {
+    const pending = this.pending;
+    if (!pending) return;
+    const expectedBytes = pending.width * pending.height * 4;
+    const compressedPixels = raw.compressedPixels;
+    if (raw.width !== pending.width || raw.height !== pending.height || raw.uncompressedBytes !== expectedBytes ||
+        !(compressedPixels instanceof Uint8Array) || compressedPixels.byteLength === 0 ||
+        compressedPixels.byteLength > expectedBytes + 64 * 1024) {
+      this.finish(new Error("image_worker_response_invalid"));
+      return;
+    }
+    const source = Buffer.from(compressedPixels.buffer, compressedPixels.byteOffset, compressedPixels.byteLength);
+    const inflater = createInflate({ chunkSize: IMAGE_INFLATE_CHUNK_BYTES });
+    const pixels = Buffer.allocUnsafe(expectedBytes);
+    let outputBytes = 0;
+    this.inflater = inflater;
+    inflater.on("data", (chunk: Buffer) => {
+      if (this.pending !== pending) return;
+      if (outputBytes + chunk.byteLength > expectedBytes) {
+        this.inflater = null;
+        inflater.destroy();
+        this.finish(new Error("image_worker_response_invalid"));
+        return;
+      }
+      chunk.copy(pixels, outputBytes);
+      outputBytes += chunk.byteLength;
+    });
+    inflater.once("error", () => {
+      if (this.pending !== pending) return;
+      this.inflater = null;
+      this.finish(new Error("image_worker_response_invalid"));
+    });
+    inflater.once("end", () => {
+      if (this.pending !== pending) return;
+      this.inflater = null;
+      if (outputBytes !== expectedBytes) {
+        this.finish(new Error("image_worker_response_invalid"));
+        return;
+      }
+      this.finish(undefined, { width: pending.width, height: pending.height, pixels });
+    });
+    inflater.end(source);
   }
 
   private finish(error?: Error, image?: DecodedImage): void {
     const pending = this.pending;
     if (!pending) return;
     this.pending = null;
+    const inflater = this.inflater;
+    this.inflater = null;
+    inflater?.destroy();
     pending.signal.removeEventListener("abort", pending.abort);
     if (error) pending.reject(error);
     else if (image) pending.resolve(image);
@@ -163,7 +222,26 @@ function installProductionWorkerEntry(): void {
       parentPort.on("message", handler);
       return () => parentPort.off("message", handler);
     },
-    postMessage(message) { parentPort.postMessage(message); },
+    postMessage(message) {
+      if (message.type !== "decoded" || message.image.pixels.byteLength <= IMAGE_LIMITS.decodedCacheBytes) {
+        parentPort.postMessage(message);
+        return;
+      }
+      const maxCompressedBytes = message.image.pixels.byteLength + 64 * 1024;
+      const compressedPixels = deflateSync(message.image.pixels, {
+        level: 1,
+        maxOutputLength: maxCompressedBytes,
+        chunkSize: Math.min(maxCompressedBytes, 8 * 1024 * 1024),
+      });
+      parentPort.postMessage({
+        type: "decoded_compressed",
+        requestId: message.requestId,
+        width: message.image.width,
+        height: message.image.height,
+        uncompressedBytes: message.image.pixels.byteLength,
+        compressedPixels,
+      });
+    },
   }, decodeProductionImage);
 }
 

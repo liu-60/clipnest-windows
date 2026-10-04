@@ -23,6 +23,7 @@ const pngFilter = require("pngjs/lib/filter-parse-sync") as { process(bytes: Buf
 const pngBitmap = require("pngjs/lib/bitmapper") as { dataToBitMap(bytes: Buffer, metadata: PngMetadata): Buffer | Uint16Array };
 const normalizePng = require("pngjs/lib/format-normaliser") as
   (pixels: Buffer | Uint16Array, metadata: PngMetadata, skipRescale: boolean) => Buffer;
+const pngPaeth = require("pngjs/lib/paeth-predictor") as (left: number, up: number, upperLeft: number) => number;
 const pngInterlace = require("pngjs/lib/interlace") as {
   getImagePasses(width: number, height: number): { width: number; height: number }[];
 };
@@ -75,22 +76,69 @@ function decodePng(bytes: Buffer, input: ImageDecodeInput): DecodedImage {
   const pixels = input.width * input.height;
   // Include IDAT concatenation, inflater output/copy, filter rows/copy, and
   // the larger 16-bit intermediate where applicable, plus runtime headroom.
-  const peakBytes = bytes.byteLength * 2 + Math.max(
-    inflatedBytes * 2,
-    inflatedBytes + unfilteredBytes * 2,
-    unfilteredBytes + pixels * (metadata.depth === 16 ? 12 : 4),
-  ) + rowCount * 128 + 16 * 1024 * 1024;
+  const directRgba8 = metadata.depth === 8 && metadata.colorType === 6 && !metadata.interlace && !metadata.transColor;
+  const peakBytes = bytes.byteLength * 2 + (directRgba8
+    ? inflatedBytes + pixels * 4 + rowCount * 16 + 16 * 1024 * 1024
+    : Math.max(
+      inflatedBytes * 2,
+      inflatedBytes + unfilteredBytes * 2,
+      unfilteredBytes + pixels * (metadata.depth === 16 ? 12 : 4),
+    ) + rowCount * 128 + 16 * 1024 * 1024);
   if (peakBytes > IMAGE_LIMITS.workerPeakBytes) throw new Error("image_worker_capacity_exceeded");
-  const compressed = Buffer.concat(compressedParts);
+  const compressed = compressedParts.length === 1 ? compressedParts[0] : Buffer.concat(compressedParts);
   compressedParts.length = 0;
-  let inflated: Buffer | null = inflateSync(compressed, { maxOutputLength: inflatedBytes });
+  // zlib's synchronous helper otherwise fills 16 KiB chunks and concatenates
+  // them into a second full-size buffer. A single bounded output chunk avoids
+  // that transient copy on large images; the extra byte keeps an exact-size
+  // stream from exhausting the chunk and allocating another one.
+  let inflated: Buffer | null = inflateSync(compressed, {
+    maxOutputLength: inflatedBytes,
+    chunkSize: Math.max(64 * 1024, inflatedBytes + 1),
+  });
   if (inflated.byteLength !== inflatedBytes) throw new Error("image_source_invalid");
+  if (directRgba8) {
+    const rgba = unfilterRgba8InPlace(inflated, metadata.width, metadata.height);
+    inflated = null;
+    return { width: metadata.width, height: metadata.height, pixels: rgba };
+  }
   const filtered = pngFilter.process(inflated, metadata);
   inflated = null;
   const bitmap = pngBitmap.dataToBitMap(filtered, metadata);
   const rgba = normalizePng(bitmap, metadata, false);
   if (!(rgba instanceof Uint8Array)) throw new Error("image_decoded_invalid");
   return { width: metadata.width, height: metadata.height, pixels: rgba };
+}
+
+/**
+ * For non-interlaced 8-bit RGBA PNGs, reverse row filters in place and compact
+ * away filter bytes after the bounded inflater has produced one output buffer.
+ */
+function unfilterRgba8InPlace(data: Buffer, width: number, height: number): Buffer {
+  const rowBytes = width * 4;
+  const sourceStride = rowBytes + 1;
+  for (let row = 0; row < height; row++) {
+    const sourceOffset = row * sourceStride + 1;
+    const destinationOffset = row * rowBytes;
+    const filter = data[sourceOffset - 1];
+    if (filter === 0) {
+      data.copyWithin(destinationOffset, sourceOffset, sourceOffset + rowBytes);
+      continue;
+    }
+    if (filter < 1 || filter > 4) throw new Error("image_source_invalid");
+    const previousOffset = destinationOffset - rowBytes;
+    for (let index = 0; index < rowBytes; index++) {
+      const left = index >= 4 ? data[destinationOffset + index - 4] : 0;
+      const up = row > 0 ? data[previousOffset + index] : 0;
+      const upperLeft = row > 0 && index >= 4 ? data[previousOffset + index - 4] : 0;
+      let predictor = 0;
+      if (filter === 1) predictor = left;
+      else if (filter === 2) predictor = up;
+      else if (filter === 3) predictor = Math.floor((left + up) / 2);
+      else predictor = pngPaeth(left, up, upperLeft);
+      data[destinationOffset + index] = (data[sourceOffset + index] + predictor) & 0xff;
+    }
+  }
+  return data.subarray(0, rowBytes * height);
 }
 
 function validatePngChunks(bytes: Buffer, input: ImageDecodeInput): void {

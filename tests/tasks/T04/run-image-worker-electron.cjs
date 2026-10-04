@@ -21,7 +21,7 @@ if (!process.versions.electron) {
   const watchdog = setTimeout(() => {
     process.stderr.write("image-worker Electron verification timed out\n");
     app.exit(1);
-  }, 10_000);
+  }, 30_000);
   app.whenReady().then(async () => {
     const pixels = Buffer.from([240, 40, 20, 255, 240, 40, 20, 255]);
     const png = PNG.sync.write({ width: 2, height: 1, data: pixels });
@@ -32,6 +32,20 @@ if (!process.versions.electron) {
     const jpegResult = await worker.decode(request("electron-jpeg", "jpeg", encodedJpeg), new AbortController().signal);
     assert.deepEqual([jpegResult.width, jpegResult.height, jpegResult.pixels.length], [2, 1, 8]);
     for (let index = 0; index < pixels.length; index++) assert.ok(Math.abs(jpegResult.pixels[index] - pixels[index]) <= 2);
+    const largeWidth = 3000;
+    const largeHeight = 3000;
+    const largePixels = Buffer.alloc(largeWidth * largeHeight * 4);
+    const largePng = PNG.sync.write({ width: largeWidth, height: largeHeight, data: largePixels });
+    const largeResult = await worker.decode({
+      jobId: "electron-large-png",
+      format: "png",
+      encodedBytes: Uint8Array.from(largePng),
+      width: largeWidth,
+      height: largeHeight,
+    }, new AbortController().signal);
+    assert.deepEqual([largeResult.width, largeResult.height, largeResult.pixels.length], [largeWidth, largeHeight, largePixels.length]);
+    assert.equal(largeResult.pixels[0], 0);
+    assert.equal(largeResult.pixels[largeResult.pixels.length - 1], 0);
     const corrupt = Uint8Array.from(png);
     corrupt[16] ^= 1;
     await assert.rejects(worker.decode(request("electron-crc", "png", corrupt), new AbortController().signal), /image_png_crc_invalid/);

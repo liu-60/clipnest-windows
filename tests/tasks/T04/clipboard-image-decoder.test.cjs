@@ -34,6 +34,40 @@ function png({ width = 2, height = 1, depth = 8, colorType = 6, interlace = 0,
   ]);
 }
 
+function filteredRgbaRows(width, height, pixels) {
+  const rowBytes = width * 4;
+  const raw = Buffer.alloc((rowBytes + 1) * height);
+  const previous = Buffer.alloc(rowBytes);
+  for (let y = 0; y < height; y++) {
+    const filter = y % 5;
+    const rowOffset = y * rowBytes;
+    const rawOffset = y * (rowBytes + 1);
+    raw[rawOffset] = filter;
+    for (let index = 0; index < rowBytes; index++) {
+      const left = index >= 4 ? pixels[rowOffset + index - 4] : 0;
+      const up = y > 0 ? previous[index] : 0;
+      const upperLeft = y > 0 && index >= 4 ? previous[index - 4] : 0;
+      let predictor = 0;
+      if (filter === 1) predictor = left;
+      else if (filter === 2) predictor = up;
+      else if (filter === 3) predictor = Math.floor((left + up) / 2);
+      else if (filter === 4) predictor = testPaeth(left, up, upperLeft);
+      raw[rawOffset + 1 + index] = (pixels[rowOffset + index] - predictor) & 0xff;
+    }
+    pixels.copy(previous, 0, rowOffset, rowOffset + rowBytes);
+  }
+  return raw;
+}
+
+function testPaeth(left, up, upperLeft) {
+  const prediction = left + up - upperLeft;
+  const leftDistance = Math.abs(prediction - left);
+  const upDistance = Math.abs(prediction - up);
+  const upperLeftDistance = Math.abs(prediction - upperLeft);
+  return leftDistance <= upDistance && leftDistance <= upperLeftDistance ? left
+    : upDistance <= upperLeftDistance ? up : upperLeft;
+}
+
 function request(format, bytes, width = 2, height = 1) {
   return { jobId: "real-image", format, encodedBytes: Uint8Array.from(bytes), width, height };
 }
@@ -47,6 +81,17 @@ test("production PNG decoder returns exact unpremultiplied RGBA and preserves en
   assert.ok(result.pixels instanceof Uint8Array);
   assert.deepEqual([...result.pixels], [255, 0, 0, 255, 0, 255, 0, 128]);
   assert.deepEqual(input.encodedBytes, before);
+});
+
+test("8-bit RGBA PNG in-place path reverses every row filter exactly", async () => {
+  const pixels = Buffer.from(Array.from({ length: 2 * 5 * 4 }, (_value, index) => (index * 53 + 17) & 0xff));
+  const source = png({ width: 2, height: 5, raw: filteredRgbaRows(2, 5, pixels) });
+  const image = await decode(request("png", source, 2, 5));
+  assert.deepEqual([...image.pixels], [...pixels]);
+
+  // Build a validly compressed one-row image with an unsupported filter byte.
+  const invalidFilter = png({ width: 2, height: 1, raw: Buffer.from([5, ...pixels.subarray(0, 8)]) });
+  await assert.rejects(decode(request("png", invalidFilter, 2, 1)), /image_source_invalid/);
 });
 
 test("PNG decoder expands RGB and palette transparency, and rescales 16-bit grayscale to RGBA", async () => {
@@ -137,12 +182,86 @@ test("compiled utility-process production entry decodes PNG through its real par
   loadWorker({ parentPort: port }, true);
   const input = request("png", png());
   port.emit("message", { data: { type: "decode", requestId: input.jobId, input } });
-  await new Promise((resolve) => setImmediate(resolve));
+  await waitFor(() => responses.length === 1);
   assert.equal(responses.length, 1);
   assert.equal(responses[0].type, "decoded");
   assert.equal(responses[0].requestId, input.jobId);
   assert.deepEqual([...responses[0].image.pixels], [255, 0, 0, 255, 0, 255, 0, 128]);
 });
+
+test("utility worker restores bounded compressed image responses and rejects excess pixels", async () => {
+  const children = [];
+  const { createUtilityProcessImageWorker } = loadWorker({ utilityProcess: { fork() {
+    const child = new EventEmitter();
+    child.kill = () => true;
+    child.postMessage = (message) => { child.request = message; };
+    children.push(child);
+    return child;
+  } } }, false);
+  const worker = createUtilityProcessImageWorker();
+  const pixels = Buffer.from([255, 0, 0, 255, 0, 255, 0, 128]);
+  const first = { ...request("png", png()), jobId: "compressed-good" };
+  const decoded = worker.decode(first, new AbortController().signal);
+  children[0].emit("message", { type: "decoded_compressed", requestId: first.jobId, width: 2, height: 1,
+    uncompressedBytes: pixels.byteLength, compressedPixels: deflateSync(pixels) });
+  assert.deepEqual([...(await decoded).pixels], [...pixels]);
+
+  const second = { ...first, jobId: "compressed-excess" };
+  const rejected = worker.decode(second, new AbortController().signal);
+  children[0].emit("message", { type: "decoded_compressed", requestId: second.jobId, width: 2, height: 1,
+    uncompressedBytes: pixels.byteLength, compressedPixels: deflateSync(Buffer.alloc(pixels.byteLength + 1)) });
+  await assert.rejects(rejected, /image_worker_response_invalid/);
+
+  const controller = new AbortController();
+  const third = { ...first, jobId: "compressed-abort", width: 1024, height: 1024 };
+  const cancelled = worker.decode(third, controller.signal);
+  children[0].emit("message", { type: "decoded_compressed", requestId: third.jobId, width: third.width, height: third.height,
+    uncompressedBytes: third.width * third.height * 4, compressedPixels: deflateSync(Buffer.alloc(4 * 1024 * 1024)) });
+  assert.ok(worker.inflater, "inflate stream is active before cancellation");
+  controller.abort();
+  assert.equal(worker.inflater, null, "cancellation clears the active inflater immediately");
+  await assert.rejects(cancelled, /image_decode_cancelled/);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(worker.pending, null, "late inflate events cannot settle a cancelled request again");
+  const disposed = worker.dispose();
+  children[0].emit("exit", 0);
+  await disposed;
+});
+
+test("utility worker rejects decoded responses with mismatched dimensions or pixel lengths", async () => {
+  const children = [];
+  const { createUtilityProcessImageWorker } = loadWorker({ utilityProcess: { fork() {
+    const child = new EventEmitter();
+    child.kill = () => true;
+    child.postMessage = (message) => { child.request = message; };
+    children.push(child);
+    return child;
+  } } }, false);
+  const worker = createUtilityProcessImageWorker();
+  const input = { ...request("png", png()), jobId: "decoded-invalid" };
+  for (const [width, height, byteLength] of [[1, 1, 8], [2, 1, 7], [2, 1, 9]]) {
+    const current = { ...input, jobId: `decoded-invalid-${width}-${height}-${byteLength}` };
+    const rejected = worker.decode(current, new AbortController().signal);
+    children[0].emit("message", { type: "decoded", requestId: current.jobId,
+      image: { width, height, pixels: Buffer.alloc(byteLength) } });
+    await assert.rejects(rejected, /image_worker_response_invalid/);
+  }
+  const disposed = worker.dispose();
+  children[0].emit("exit", 0);
+  await disposed;
+});
+
+function waitFor(predicate, timeoutMs = 1_000) {
+  const startedAt = Date.now();
+  return new Promise((resolve, reject) => {
+    const check = () => {
+      if (predicate()) { resolve(); return; }
+      if (Date.now() - startedAt >= timeoutMs) { reject(new Error("test_wait_timeout")); return; }
+      setTimeout(check, 1);
+    };
+    check();
+  });
+}
 
 test("all cancellation reasons quarantine the dying utility process and ignore its late response", async () => {
   for (const reason of [undefined, new Error("image_prepare_timeout")]) {
