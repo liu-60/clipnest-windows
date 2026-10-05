@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "recordType": "wic_jpeg_route_review",
+  "checkedDate": "2026-10-05",
+  "result": "WIC_CANDIDATE_NOT_MEASURED",
+  "scope": {
+    "question": "Read-only route assessment after PureJsImage 0.17.0 exceeded the 256 MiB utility-process target in the 16 MP JPEG utilityProcess/IPC probe.",
+    "inspectedRepositoryPaths": [
+      "D:/ClipNest-work/v2/docs/spec/tasks/T04.md",
+      "D:/ClipNest-work/electron-l0/src/main/clipboard/image-worker.ts",
+      "D:/ClipNest-work/electron-l0/src/main/clipboard/image-decoder.ts",
+      "D:/ClipNest-work/electron-l0/src/main/native/content-provider.ts",
+      "D:/ClipNest-work/electron-l0/src/shared/native-contracts.ts",
+      "D:/ClipNest-work/electron-l0/native/Cargo.toml",
+      "D:/ClipNest-work/electron-l0/native/src/protocol.rs",
+      "D:/ClipNest-work/electron-l0/native/src/content.rs",
+      "D:/ClipNest-work/electron-l0/native/src/control.rs",
+      "D:/ClipNest-work/electron-l0/native/src/win32.rs",
+      "D:/ClipNest-work/electron-l0/docs/evidence/T04/purejsimage-16mp-utility-ipc-followup.json"
+    ],
+    "productOrDependencyFilesChanged": false,
+    "researchEvidenceFilesCreated": [
+      "docs/evidence/T04/wic-jpeg-route-review.json",
+      "docs/progress.json (T04 evidence/openGates index)"
+    ],
+    "dependenciesInstalledOrChanged": false,
+    "performanceOrDecoderProbeRun": false,
+    "installedApplicationRun": false,
+    "clipboardOrInputUsed": false
+  },
+  "measuredContext": {
+    "artifact": "docs/evidence/T04/purejsimage-16mp-utility-ipc-followup.json",
+    "candidate": "PureJsImage 0.17.0, not installed or integrated",
+    "inputs": "Synthetic 16 MP baseline JPEG 4:2:0 and 4:4:4, each 20 MiB; five fresh utilityProcess samples per format",
+    "workerPeakWorkingSetBytes": {
+      "yuv420": 394821632,
+      "yuv444": 393969664
+    },
+    "targetBytes": 268435456,
+    "conclusion": "All ten samples exceeded the worker peak target. This is the observed PureJsImage result only; it says nothing about WIC."
+  },
+  "wicApiFindings": [
+    {
+      "finding": "WIC exposes an IWICImagingFactory decoder-from-stream path, frame access, a format converter, and IWICBitmapSource::CopyPixels. CopyPixels lets the caller provide its output buffer and an optional WICRect ROI; its stride and buffer-size arguments define the output layout. A candidate can request 32bpp BGRA and copy vertical bands directly into the pixel span of one preallocated top-down DIB, avoiding a separate full RGBA intermediate by design.",
+      "sourceUrls": [
+        "https://learn.microsoft.com/en-us/windows/win32/wic/-wic-decoder-howto-createusingstream",
+        "https://learn.microsoft.com/en-us/windows/desktop/api/wincodec/nf-wincodec-iwicbitmapsource-copypixels",
+        "https://learn.microsoft.com/en-us/windows/win32/wic/-wic-imp-iwicbitmapsource",
+        "https://learn.microsoft.com/en-us/windows/win32/wic/-wic-codec-native-pixel-formats"
+      ]
+    },
+    {
+      "finding": "CopyPixels documentation says the implementation may decode only part of a JPEG, but states the algorithm depends on the implementing object. It does not promise that WIC's JPEG decoder avoids a full-frame or large internal allocation. The WIC bitmap-source overview describes lazy transform pipelines, not a memory ceiling. Microsoft also recommends considering an in-memory IWICBitmap for repeated copies of expensive sources such as JPEG; repeated ROI-band calls may therefore add work or caching, and require measurement.",
+      "sourceUrls": [
+        "https://learn.microsoft.com/en-us/windows/desktop/api/wincodec/nf-wincodec-iwicbitmapsource-copypixels",
+        "https://learn.microsoft.com/en-us/windows/win32/wic/-wic-imp-iwicbitmapsource"
+      ]
+    },
+    {
+      "finding": "The documented GUID_WICPixelFormat32bppBGRA memory order is B, G, R, A. The existing provider expects top-down BGRA before producing a 40-byte BITMAPINFOHEADER DIB; a JPEG-only route must validate dimensions, opaque alpha handling, DIB orientation, pixel values, and color behavior against independent fixtures.",
+      "sourceUrls": [
+        "https://learn.microsoft.com/en-us/windows/win32/wic/-wic-codec-native-pixel-formats",
+        "https://learn.microsoft.com/en-us/windows/win32/wic/-wic-decoder-howto-createusingstream"
+      ]
+    },
+    {
+      "finding": "WIC documents progressive JPEG decoding on supported codecs, but this is not evidence for memory use, latency, metadata/orientation behavior, or pixel compatibility for this application.",
+      "sourceUrls": [
+        "https://learn.microsoft.com/en-us/windows/win32/wic/-wic-progressive-decoding"
+      ]
+    }
+  ],
+  "memoryEstimate": {
+    "maximumCompressedSourceBytes": 20971520,
+    "pixels": 16000000,
+    "bytesPerPixel": 4,
+    "finalDibHeaderBytes": 40,
+    "finalDibBytes": 64000040,
+    "explicitSourcePlusFinalDibBytes": 84971560,
+    "explicitSourcePlusFinalDibMiB": 81.04,
+    "interpretation": "This is only source bytes plus the required full-resolution DIB output. It excludes utility/helper baseline, WIC codec state or frame caches, IPC copies, allocator overhead, and other retained buffers. It is not an upper bound or a performance result."
+  },
+  "routeAssessment": {
+    "preferredFeasibilityRoute": "Keep decoding in an isolated Electron utilityProcess and add a JPEG-only WIC-backed decoder binding there, if scope and dependency review permit. The process boundary preserves the existing killable worker model and keeps image parsing apart from the helper's clipboard/input responsibilities.",
+    "utilityProcessBoundaries": [
+      "The current worker is pure JavaScript and returns a complete DecodedImage; its large-image path deflates the full RGBA response and the parent inflates it into another full buffer. A WIC prototype that still returns the same whole-image response may retain avoidable buffers.",
+      "Consider band messages from the worker into a parent-owned final image buffer to bound temporary worker output. Electron's documented utilityProcess transfer list transfers MessagePortMain objects, not ArrayBuffer ownership, so binary-band IPC still needs copy and back-pressure measurements.",
+      "The current ImageDecodeWorker API and content-preparation service assume one complete decoded image. Streaming bands would require an explicit API/protocol change and tests for ordering, truncation, dimensions, cancellation, worker retirement, hashing, and failure cleanup.",
+      "A native binding or another WIC bridge is not present in the current worker. The high-level Microsoft windows crate documentation exposes IWIC interfaces, but the repository currently pins windows-sys 0.61.2 and does not enable COM/WIC bindings. A new crate must go through T06; a manual COM ABI would carry substantial unsafe ownership and vtable work."
+    ],
+    "existingHelperBoundaries": [
+      "The helper currently accepts image content as an already-expanded DIB up to 64000040 bytes. The 20 MiB compressed-source limit is checked upstream; register_content/content_chunk carry bounded JSON frames with 32 KiB raw chunks and a 64 KiB frame limit.",
+      "Passing JPEG to the helper would require an explicit compressed-source request/type and independent 20 MiB source validation; overloading the existing image type would blur its DIB contract.",
+      "ContentStore processing is synchronous on the protocol controller path. Running WIC decode there could delay handling queued cancel and protocol events. Moving it into helper workers changes lifecycle and cancellation design.",
+      "The helper owns clipboard/input platform operations; its current image clipboard path clones DIB bytes. Moving decode into this process does not demonstrate compliance with the utility-worker budget and may increase helper peak memory."
+    ],
+    "taskAndDependencyConstraints": [
+      "The T04 task card at D:/ClipNest-work/v2/docs/spec/tasks/T04.md permits src/main/clipboard/**, src/main/main.ts, renderer files, docs/progress.json, docs/evidence/T04/**, and tests/tasks/T04/**. It excludes native/** and dependency manifests/locks.",
+      "A native helper implementation or Cargo configuration change is outside the current T04 allowlist. A new windows crate dependency also requires the T06 dependency review before use.",
+      "src/main/native/content-provider.ts remains outside the current T04 allowlist; the user explicitly chose to defer the P15 stored-image decode/hash gate, which stays open. This route assessment does not close P15."
+    ]
+  },
+  "recommendedNextEvidenceIfAuthorized": [
+    "Prototype only the JPEG utilityProcess route after binding and scope review; retain PNG behavior unchanged.",
+    "Measure fresh utilityProcess PeakWorkingSet64 and private-memory samples for 16 MP 20 MiB 4:2:0 and 4:4:4, with full parent IPC completion and a margin below 256 MiB; do not infer a bound from one sample.",
+    "Compare complete pixels or agreed oracle samples and exercise baseline/progressive JPEG, CMYK, EXIF/ICC/orientation, corrupt/truncated inputs, cancellation, timeout, packaged loading, and worker retirement.",
+    "Record the decoder process and IPC allocations separately from the helper and main-process buffers; a process relocation alone does not constitute a memory pass."
+  ],
+  "notVerified": [
+    "Any WIC decoder performance or memory measurement; WIC was not run.",
+    "A WIC 16 MP JPEG decode within the 256 MiB worker target or a universal process-memory bound.",
+    "WIC codec internal allocation/cache behavior, repeated ROI-call latency, progressive JPEG, CMYK, EXIF/ICC/orientation behavior, or pixel equivalence.",
+    "Rust GNU-target WIC binding build/link, native addon packaging, ASAR loading, or utilityProcess binary IPC memory.",
+    "P15, general JPEG memory acceptance, or T04 acceptance."
+  ],
+  "sources": [
+    {
+      "title": "Microsoft Learn: IWICBitmapSource::CopyPixels",
+      "url": "https://learn.microsoft.com/en-us/windows/desktop/api/wincodec/nf-wincodec-iwicbitmapsource-copypixels",
+      "supports": "Caller-provided output buffer, stride, ROI, and implementation-dependent decoding behavior."
+    },
+    {
+      "title": "Microsoft Learn: Create a Decoder Using a Stream",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/wic/-wic-decoder-howto-createusingstream",
+      "supports": "WIC factory, memory-backed stream, decoder, frame 0, and JPEG single-frame example."
+    },
+    {
+      "title": "Microsoft Learn: Implementing IWICBitmapSource",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/wic/-wic-imp-iwicbitmapsource",
+      "supports": "Bitmap-source and lazy transform pipeline behavior; repeated expensive-source copy note."
+    },
+    {
+      "title": "Microsoft Learn: Native pixel formats overview",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/wic/-wic-codec-native-pixel-formats",
+      "supports": "BGRA byte ordering and native JPEG decoder pixel formats."
+    },
+    {
+      "title": "Microsoft Learn: Progressive Decoding Overview",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/wic/-wic-progressive-decoding",
+      "supports": "WIC progressive JPEG decoding conditions."
+    },
+    {
+      "title": "Microsoft windows crate generated docs: IWICBitmapSource (0.62.2)",
+      "url": "https://microsoft.github.io/windows-docs-rs/doc/windows/Win32/Graphics/Imaging/struct.IWICBitmapSource.html",
+      "supports": "Rust CopyPixels wrapper shape and !Send/!Sync traits."
+    },
+    {
+      "title": "Microsoft windows crate generated docs: IWICImagingFactory (0.62.2)",
+      "url": "https://microsoft.github.io/windows-docs-rs/doc/windows/Win32/Graphics/Imaging/struct.IWICImagingFactory.html",
+      "supports": "Rust CreateDecoderFromStream and CreateFormatConverter interfaces."
+    },
+    {
+      "title": "Microsoft windows crate generated docs: IWICFormatConverter (0.62.2)",
+      "url": "https://microsoft.github.io/windows-docs-rs/doc/windows/Win32/Graphics/Imaging/struct.IWICFormatConverter.html",
+      "supports": "Rust converter initialization API."
+    },
+    {
+      "title": "docs.rs windows-sys 0.61.2: Win32 Graphics module",
+      "url": "https://docs.rs/windows-sys/0.61.2/windows_sys/Win32/Graphics/index.html",
+      "supports": "Current pinned low-level crate's documented Graphics module inventory; no WIC Imaging module is listed."
+    },
+    {
+      "title": "Microsoft Learn: Initializing the COM Library",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/learnwin32/initializing-the-com-library",
+      "supports": "COM initialization is per calling thread and successful initialization requires matching CoUninitialize."
+    },
+    {
+      "title": "Electron utilityProcess API",
+      "url": "https://www.electronjs.org/docs/latest/api/utility-process",
+      "supports": "Utility child-process boundary, postMessage transfer-list scope, and kill lifecycle."
+    },
+    {
+      "title": "Electron process model",
+      "url": "https://www.electronjs.org/docs/latest/tutorial/process-model",
+      "supports": "Utility processes as hosts for CPU-intensive or crash-prone tasks."
+    }
+  ],
+  "taskStatus": "T04 remains in_progress; this research does not establish WIC feasibility or acceptance."
+}
