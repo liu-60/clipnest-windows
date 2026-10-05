@@ -176,7 +176,8 @@
         "docs/evidence/T04/jpeg-table-count-boundary-regression.json",
         "docs/evidence/T04/jpeg-marker-segment-boundary-regression.json",
         "docs/evidence/T04/jpeg-postscan-marker-regression.json",
-        "docs/evidence/T04/jpeg-postscan-production-stream-regression.json"
+        "docs/evidence/T04/jpeg-postscan-production-stream-regression.json",
+        "docs/evidence/T04/jpeg-postscan-utilityprocess-integration.json"
       ],
       "openGates": [
         "新增 opt-in production ImagePreparationService/utilityProcess 阶段计时（由 T04_IMAGE_STAGE_PROFILE=1 触发；未传 sink 时不额外读取时钟，worker 默认 IPC 与 service 返回键形不变）。同一 16MP/20MiB SOF0 4:4:4 合成fixture单样本 service=2989.89ms：worker冷启动204.93ms、JPEG preflight 71.08ms、stream plan parse 0.74ms、Huffman/IDCT/组件写入1980.96ms、render 267.58ms、worker chunk send/ACK 365.10ms、主进程chunk组装52.90ms、service输入/最终复制7.55/37.64ms。该样本在数值上低于3000ms，但使用30s诊断期限、启用了插桩且仅单次，不能证明产品期限或重复性；依赖的raw-chunk 5样本证据未重跑。3000ms产品期限门仍开放。完整单次profile和限制见docs/evidence/T04/image-preparation-16mp-stage-profile.json。",
@@ -209,7 +210,7 @@
         "JPEG COM累计字节边界补充合成回归：有效8×8 SOF0灰阶JPEG在SOS前含1 MiB分段COM时通过并返回预期像素，1 MiB+1字节以image_worker_capacity_exceeded拒绝；主进程构建成功，clipboard-image-decoder定向测试29/29通过。该证据只覆盖COM累计阈值，不证明所有JPEG元数据/格式/硬RSS或T04验收。详情：docs/evidence/T04/jpeg-com-comment-boundary-regression.json。",
         "JPEG DQT/DHT定义数量边界增加小型合成回归：各64个定义（含base JPEG原有定义）解码到预期灰度像素；各65个在容量预检处以image_worker_capacity_exceeded拒绝。目标测试文件30/30通过，包含COM与Huffman回归。此证据仅验证累计表定义数阈值，不证明其他元数据、内存、完整JPEG或T04验收。详情：docs/evidence/T04/jpeg-table-count-boundary-regression.json。",
         "JPEG marker segment数量边界增加有效灰阶SOF0回归：基础DQT/SOF0/DHT/SOS共4段，加入4092个空APP2后总计4096段仍解码并逐像素正确；4097段以image_worker_capacity_exceeded拒绝。主进程构建成功，目标测试文件31/31通过。该证据只覆盖此fixture的marker计数边界，不证明通用JPEG或T04验收。详情：docs/evidence/T04/jpeg-marker-segment-boundary-regression.json。",
-        "流式JPEG解码器在完整scan后继续接受有界APP0–APP15/COM段及重复FF填充字节，直到EOI；额外SOS、损坏/截断segment和孤立FF仍拒绝。直接流解析和小图生产fallback回归见docs/evidence/T04/jpeg-postscan-marker-regression.json。2026-10-06新增4000×4000 SOF0 4:2:0生产decoder入口回归：按当前公式计算的峰值估算下界445,440,512B，显著高于256MiB门；独立复核确认容量、段计数与路径断言正确。诊断顺序为jpegPreflightParseMs→jpegStreamPlanParseMs→jpegHuffmanIdctWriteMs。尾随APP1与1MiB/17段COM及FF填充后，全16MP输出逐像素为不透明中性灰；1MiB+1被预检拒绝且未启动流解码。主进程构建成功，定向测试35/35通过。此项仍是in-process decoder测试，不证明真实utilityProcess、IPC、ASAR、worker RSS或期限。P15仍按用户决定不扩围，4:2:0 fidelity和完整T04验收门继续开放。证据：docs/evidence/T04/jpeg-postscan-production-stream-regression.json。"
+        "流式JPEG解码器在完整scan后继续接受有界APP0–APP15/COM段及重复FF填充字节，直到EOI；额外SOS、损坏/截断segment和孤立FF仍拒绝。直接流解析和小图生产fallback回归见docs/evidence/T04/jpeg-postscan-marker-regression.json。2026-10-06新增4000×4000 SOF0 4:2:0生产decoder入口回归：峰值估算下界445,440,512B，高于256MiB门；独立复核确认容量、段计数和阶段顺序。诊断顺序为jpegPreflightParseMs→jpegStreamPlanParseMs→jpegHuffmanIdctWriteMs。尾随APP1与1MiB/17段COM及FF填充后，全16MP输出逐像素为不透明中性灰；1MiB+1被预检拒绝且未启动流解码。主进程构建成功，定向测试35/35通过。随后Electron 40.10.2真实utilityProcess对16MP SOF0灰阶尾随APP1/1MiB COM成功解码，直接观察到62个有序decoded_chunk消息及1个decoded_end，workerChunkSendAckMs与mainChunkAssemblyMs阶段完成并组装64,000,000B输出，utilityProcess正常退出(code=0)；无窗口、剪贴板、helper或输入副作用。该集成未采样worker RSS，未覆盖ASAR/安装包或产品期限。P15仍按用户决定不扩围，4:2:0 fidelity和完整T04验收门继续开放。证据：docs/evidence/T04/jpeg-postscan-production-stream-regression.json、docs/evidence/T04/jpeg-postscan-utilityprocess-integration.json。"
       ]
     },
     "T05": {

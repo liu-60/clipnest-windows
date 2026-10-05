@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "PASS_SYNTHETIC_UTILITY_PROCESS_SMOKE",
+  "checkedDate": "2026-10-06",
+  "source": {
+      "commit": "c0aa1adf062be264bb3bcc2f3678e1eaa86ffbaa",
+      "branch": "codex/m0-latency",
+      "workingTreeWasDirty": true,
+      "changedFiles": {
+        "tests/tasks/T04/run-image-postscan-stream-electron.cjs": "49B4F376740412117085A052C74D57EF3A5AF88E3691A54B309D9B674A3E8CEE"
+    }
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "nodeVersion": "v24.16.0",
+    "pnpmVersion": "11.19.0",
+    "electronVersion": "40.10.2"
+  },
+  "execution": {
+    "command": "$env:ELECTRON_OVERRIDE_DIST_PATH = (Resolve-Path -LiteralPath 'node_modules/.pnpm/electron@40.10.2/node_modules/electron/dist').Path; node --check tests/tasks/T04/run-image-postscan-stream-electron.cjs; node tests/tasks/T04/run-image-postscan-stream-electron.cjs",
+    "exitCode": 0,
+    "output": "PASS: Electron 40.10.2 utilityProcess decoded 4000x4000 post-scan APP1/1MiB COM JPEG; observed 62/62 ordered bounded chunks, one decoded_end, chunk/ACK and assembly stages; worker exit={\"code\":0,\"signal\":null}; stages=workerColdStartMs,mainChunkAssemblyMs,workerDecodeMs,workerChunkSendAckMs,jpegPreflightParseMs,jpegStreamPlanParseMs,jpegHuffmanIdctWriteMs,jpegHuffmanDecodeSampledMs,jpegInverseDctSampledMs,jpegBandWriteSampledMs,jpegRenderMs"
+  },
+  "scope": {
+    "fixture": "Synthetic 4000x4000 8-bit SOF0 grayscale JPEG; 250000 zero-DC/EOB blocks; APP1 after the scan contains FF D9 bytes; 1 MiB COM payload in 17 legal segments follows before EOI; repeated FF marker-fill bytes surround the metadata.",
+    "sourceBytesWithin20MiB": true,
+    "decodedPixels": 16000000,
+    "rgbaBytes": 64000000,
+    "verifiedOutput": "Every RGBA pixel is [128,128,128,255].",
+    "diagnosticStages": [
+      "jpegPreflightParseMs",
+      "jpegStreamPlanParseMs",
+      "jpegHuffmanIdctWriteMs",
+      "workerChunkSendAckMs",
+      "mainChunkAssemblyMs"
+    ],
+    "transfer": {
+      "decodedCacheLimitBytes": 33554432,
+      "chunkBytes": 1048576,
+      "chunkCountForReturnedFrame": 62,
+      "completed": true,
+      "observedDecodedChunkMessages": 62,
+      "observedOrderedSequence": "0..61",
+      "observedDecodedEndMessages": 1,
+      "workerExit": { "code": 0, "signal": null }
+    },
+    "windowsCreated": 0
+  },
+  "limitations": [
+    "This is one synthetic utilityProcess smoke; it does not sample worker or whole-application RSS and does not establish a hard memory bound or the 3000ms ImagePreparationService deadline.",
+    "The runner uses the local built worker files, not ASAR or an installer; it does not verify package loading, JPEG color fidelity beyond the neutral-gray fixture, or full T04 acceptance."
+  ],
+  "sideEffects": {
+    "desktopClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "nativeHelperRun": false,
+    "browserWindowCreated": false,
+    "productionSourceChanged": false
+  }
+}
