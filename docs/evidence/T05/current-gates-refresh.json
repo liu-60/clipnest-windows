@@ -5,7 +5,7 @@
   "reviewType": "dependency and offline-preflight refresh",
   "reviewedDate": "2026-10-05",
   "branch": "codex/m0-latency",
-  "sourceCommit": "df028bbc73a3a0deb9ff1b6fa00a71168a99537b",
+  "sourceCommit": "274fe3806524610e7b789ac9f47b7975ee00d412",
   "workingTreeWasDirty": false,
   "dependencyGate": {
     "T03": "accepted",
@@ -40,7 +40,7 @@
     },
     "remainingT04Gates": [
       "P15 remains open under the user-confirmed scope; src/main/native/content-provider.ts was not changed or invoked.",
-      "The 4:2:0 JPEG fidelity gate remains open. Same-input WPF/WIC and GDI+ agree at all 4096 selected ROI points, while worker/jpeg-js differ by the recorded amounts; agreement does not establish JPEG ground truth or codec independence. Each ROI is one selected synthetic sample and the 8-channel threshold is not calibrated for 4:2:0.",
+      "The 4:2:0 JPEG fidelity gate remains open. Same-input WPF/WIC and GDI+ agree at all 4096 selected ROI points while worker/jpeg-js differ, but that agreement is not ground truth. The new source-ROI diagnostic shows lower worker MAE to the pre-JPEG source in four selected synthetic ROIs (4096 points total); each is one sample, and the lossy source metric is not a normative JPEG oracle or calibrated acceptance threshold.",
       "Production JPEG memory acceptance remains open. The WPF/WIC candidate is a PowerShell STA probe, not production Electron utilityProcess/direct IWIC integration; the production-shaped PureJsImage candidate exceeded the 256 MiB target.",
       "Exact P1/I10/I11 deadline acceptance remains open. The bounded real-timer probe failed closed and released zero-budget continuation was NOT_OBSERVED; physical keyboard, system clipboard, BrowserWindow/panel, helper lifecycle, target-visible paste and packaged application acceptance remain NOT_RUN.",
       "Synthetic image diagnostics do not establish universal latency, format behavior, or a process-memory ceiling; full T04 acceptance remains NOT_RUN."
@@ -160,7 +160,7 @@
     "sameInputThreeWayRoiDiagnostic": {
       "result": "DIAGNOSTIC_WITH_LIMITATIONS",
       "artifact": "docs/evidence/T04/jpeg-420-three-way-oracle.json",
-      "sourceCommit": "df028bbc73a3a0deb9ff1b6fa00a71168a99537b",
+      "sourceCommit": "274fe3806524610e7b789ac9f47b7975ee00d412",
       "measurementSourceCommit": "6303ad20e4c04f6c7b7d1c3422d94998f2039f1f",
       "measurementHarnessSha256": "10bf2c71e5cef71ae612ad2b7b231e9d29e5ceaaf16ca2241fdf8110040312d8",
       "wicOracleSha256": "fab4f2d2a13edd75225be58d4c62d326100abb6f0e712f5b80396350470fc19a",
@@ -314,12 +314,159 @@
           }
         }
       ],
-      "pinnedJpegJsIsIndependentOracle": true,
+      "pinnedJpegJsIsIndependentOracle": false,
       "thresholdCalibratedFor420": false,
       "systemClipboardReadOrWritten": false,
       "inputSent": false,
       "displayOrForegroundAppUsed": false,
       "interpretation": "WPF/WIC agrees with GDI+ at these selected points, but this is not JPEG ground truth or proof that decoder internals are independent. Each result is one selected synthetic ROI sample; the 4:2:0 fidelity gate remains open."
+    },
+    "sourceRoiReconstructionDiagnostic": {
+      "result": "DIAGNOSTIC_WITH_LIMITATIONS",
+      "artifact": "docs/evidence/T04/jpeg-420-source-roi-reconstruction.json",
+      "sourceCommit": "274fe3806524610e7b789ac9f47b7975ee00d412",
+      "measurementSourceCommit": "33d5cbfde2fb7aa44d8eecc39bc5bd55402ab6e4",
+      "measurementHarnessSha256": "9404a4396c1f0d8ab497903d96369bb98839baf96575484246a34b80a7611ccd",
+      "fixtureCount": 4,
+      "comparedPointsTotal": 4096,
+      "cases": [
+        {
+          "fixturePattern": "high-entropy",
+          "fixtureSha256": "c9362e8411a710e82c8ead5e41295c0f6902bf8f5eac9cf40ac25915abb68ab1",
+          "sourceRgbaSha256": "0fb25d469c13ea9882d1291a17b105a7eb11ea13ec553ca7453930d468542fff",
+          "roi": {
+            "x": 984,
+            "y": 2984,
+            "width": 32,
+            "height": 32
+          },
+          "sourceVsWorker": {
+            "meanAbsoluteChannelError": 44.75,
+            "maxRgbDifference": 243,
+            "pixelsOver8": 1013
+          },
+          "sourceVsGdiPlus": {
+            "meanAbsoluteChannelError": 47.26,
+            "maxRgbDifference": 239,
+            "pixelsOver8": 1017
+          },
+          "sourceVsWic": {
+            "meanAbsoluteChannelError": 47.26,
+            "maxRgbDifference": 239,
+            "pixelsOver8": 1017
+          },
+          "workerVsWic": {
+            "comparedPixelCount": 1024,
+            "pixelsOver8": 900,
+            "maxRgbDifference": 70,
+            "alphaMismatchCount": 0
+          }
+        },
+        {
+          "fixturePattern": "chroma-edge-phases",
+          "fixtureSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+          "sourceRgbaSha256": "612249341ea42367098929b069941faeefd0bdc56d4c75f6d2d5828c2318d907",
+          "roi": {
+            "x": 960,
+            "y": 2960,
+            "width": 32,
+            "height": 32
+          },
+          "sourceVsWorker": {
+            "meanAbsoluteChannelError": 32.67,
+            "maxRgbDifference": 255,
+            "pixelsOver8": 512
+          },
+          "sourceVsGdiPlus": {
+            "meanAbsoluteChannelError": 52.73,
+            "maxRgbDifference": 229,
+            "pixelsOver8": 1024
+          },
+          "sourceVsWic": {
+            "meanAbsoluteChannelError": 52.73,
+            "maxRgbDifference": 229,
+            "pixelsOver8": 1024
+          },
+          "workerVsWic": {
+            "comparedPixelCount": 1024,
+            "pixelsOver8": 1000,
+            "maxRgbDifference": 120,
+            "alphaMismatchCount": 0
+          }
+        },
+        {
+          "fixturePattern": "chroma-edge-phases",
+          "fixtureSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+          "sourceRgbaSha256": "612249341ea42367098929b069941faeefd0bdc56d4c75f6d2d5828c2318d907",
+          "roi": {
+            "x": 992,
+            "y": 2960,
+            "width": 32,
+            "height": 32
+          },
+          "sourceVsWorker": {
+            "meanAbsoluteChannelError": 32.67,
+            "maxRgbDifference": 255,
+            "pixelsOver8": 512
+          },
+          "sourceVsGdiPlus": {
+            "meanAbsoluteChannelError": 52.7,
+            "maxRgbDifference": 236,
+            "pixelsOver8": 1024
+          },
+          "sourceVsWic": {
+            "meanAbsoluteChannelError": 52.7,
+            "maxRgbDifference": 236,
+            "pixelsOver8": 1024
+          },
+          "workerVsWic": {
+            "comparedPixelCount": 1024,
+            "pixelsOver8": 1008,
+            "maxRgbDifference": 136,
+            "alphaMismatchCount": 0
+          }
+        },
+        {
+          "fixturePattern": "chroma-edge-phases",
+          "fixtureSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+          "sourceRgbaSha256": "612249341ea42367098929b069941faeefd0bdc56d4c75f6d2d5828c2318d907",
+          "roi": {
+            "x": 1024,
+            "y": 2960,
+            "width": 32,
+            "height": 32
+          },
+          "sourceVsWorker": {
+            "meanAbsoluteChannelError": 0.5,
+            "maxRgbDifference": 1,
+            "pixelsOver8": 0
+          },
+          "sourceVsGdiPlus": {
+            "meanAbsoluteChannelError": 36.67,
+            "maxRgbDifference": 147,
+            "pixelsOver8": 768
+          },
+          "sourceVsWic": {
+            "meanAbsoluteChannelError": 36.67,
+            "maxRgbDifference": 147,
+            "pixelsOver8": 768
+          },
+          "workerVsWic": {
+            "comparedPixelCount": 1024,
+            "pixelsOver8": 768,
+            "maxRgbDifference": 147,
+            "alphaMismatchCount": 0
+          }
+        }
+      ],
+      "allWorkerOutputsMatchPinnedJpegJsFullFrame": true,
+      "pinnedJpegJsIsIndependentOracle": false,
+      "thresholdCalibratedFor420": false,
+      "allIsolatedProfileCleanupsVerified": true,
+      "systemClipboardReadOrWritten": false,
+      "inputSent": false,
+      "displayOrForegroundAppUsed": false,
+      "interpretation": "Worker output is closer to the pre-JPEG synthetic logical source by sampled ROI MAE in these four selected cases. This source is a fixture-specific diagnostic, not normative JPEG ground truth; the 4:2:0 fidelity gate remains open."
     }
   },
   "draft202012InstanceValidation": {
@@ -340,7 +487,8 @@
     "P01-P28 T05 behavior/release acceptance and 100+100 controlled-live measurements.",
     "Standard release package helper resource/signature/protocol, lifecycle, rollback, installation data and target-visible paste.",
     "A repository-pinned Draft 2020-12 validator; current full instance validation used the host Python package and remains an optional check.",
-    "Production WIC decoder integration in utilityProcess with IPC, the full JPEG corpus, complete application packaging/lifecycle behavior, physical-input acceptance, and target-visible paste acceptance remain NOT_RUN; this does not refer to the limited hardened ASAR worker smoke recorded above."
+    "Production WIC decoder integration in utilityProcess with IPC, the full JPEG corpus, complete application packaging/lifecycle behavior, physical-input acceptance, and target-visible paste acceptance remain NOT_RUN; this does not refer to the limited hardened ASAR worker smoke recorded above.",
+    "T04 source-pixel ROI diagnostics are exploratory and do not constitute T04 acceptance or authorize T05 behavior/release acceptance."
   ],
   "historicalSnapshot": "docs/evidence/T05/preflight.json and docs/evidence/T05/report-schema-review.json retain their original dated observations; current state is recorded here and in current-static-audit.json."
 }
