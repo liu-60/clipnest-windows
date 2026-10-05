@@ -31,6 +31,9 @@ export type ImageDiagnosticTimingStage =
   | "jpegPreflightParseMs"
   | "jpegStreamPlanParseMs"
   | "jpegHuffmanIdctWriteMs"
+  | "jpegHuffmanDecodeSampledMs"
+  | "jpegInverseDctSampledMs"
+  | "jpegBandWriteSampledMs"
   | "jpegRenderMs"
   | "workerDecodeMs"
   | "workerChunkSendAckMs"
@@ -54,7 +57,9 @@ export interface ImageWorkerEndpoint {
     { type: "decoded_end"; requestId: string; width: number; height: number; chunkCount: number;
       byteLength: number; stageTimings?: {
         decodeMs: number; chunkSendMs: number; jpegPreflightParseMs?: number;
-        jpegStreamPlanParseMs?: number; jpegHuffmanIdctWriteMs?: number; jpegRenderMs?: number;
+        jpegStreamPlanParseMs?: number; jpegHuffmanIdctWriteMs?: number;
+        jpegHuffmanDecodeSampledMs?: number; jpegInverseDctSampledMs?: number;
+        jpegBandWriteSampledMs?: number; jpegRenderMs?: number;
       } } |
     { type: "failed"; requestId: string; reason: string }): void;
 }
@@ -334,6 +339,9 @@ class UtilityImageWorker implements ImageDecodeWorker {
         if (isFiniteDuration(timings.jpegPreflightParseMs)) emitDiagnosticTiming(pending.onDiagnosticTiming, "jpegPreflightParseMs", timings.jpegPreflightParseMs);
         if (isFiniteDuration(timings.jpegStreamPlanParseMs)) emitDiagnosticTiming(pending.onDiagnosticTiming, "jpegStreamPlanParseMs", timings.jpegStreamPlanParseMs);
         if (isFiniteDuration(timings.jpegHuffmanIdctWriteMs)) emitDiagnosticTiming(pending.onDiagnosticTiming, "jpegHuffmanIdctWriteMs", timings.jpegHuffmanIdctWriteMs);
+        if (isFiniteDuration(timings.jpegHuffmanDecodeSampledMs)) emitDiagnosticTiming(pending.onDiagnosticTiming, "jpegHuffmanDecodeSampledMs", timings.jpegHuffmanDecodeSampledMs);
+        if (isFiniteDuration(timings.jpegInverseDctSampledMs)) emitDiagnosticTiming(pending.onDiagnosticTiming, "jpegInverseDctSampledMs", timings.jpegInverseDctSampledMs);
+        if (isFiniteDuration(timings.jpegBandWriteSampledMs)) emitDiagnosticTiming(pending.onDiagnosticTiming, "jpegBandWriteSampledMs", timings.jpegBandWriteSampledMs);
         if (isFiniteDuration(timings.jpegRenderMs)) emitDiagnosticTiming(pending.onDiagnosticTiming, "jpegRenderMs", timings.jpegRenderMs);
       }
     }

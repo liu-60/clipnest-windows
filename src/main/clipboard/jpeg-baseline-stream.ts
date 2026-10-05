@@ -52,6 +52,7 @@ interface HuffmanTable {
   readonly maxCode: Int32Array;
   readonly valueOffset: Int32Array;
   readonly values: Uint8Array;
+  readonly shortCodeLookup: Uint16Array;
 }
 
 interface Component {
@@ -88,6 +89,15 @@ interface ScanPlan {
   readonly mcuRows: number;
 }
 
+interface SampledBlockTimings {
+  blockOrdinal: number;
+  huffmanDecodeMs: number;
+  inverseDctMs: number;
+  bandWriteMs: number;
+}
+
+const BLOCK_TIMING_SAMPLE_EVERY = 128;
+
 /**
  * Decodes only high-memory, 8-bit SOF0 JPEGs with one full interleaved scan.
  * A null result means the existing jpeg-js path must retain its old behavior.
@@ -109,7 +119,8 @@ export function decodeLargeBaselineJpeg(
 }
 
 function reportDiagnosticTiming(sink: ImageDiagnosticTimingSink,
-  stage: "jpegStreamPlanParseMs" | "jpegHuffmanIdctWriteMs" | "jpegRenderMs", durationMs: number): void {
+  stage: "jpegStreamPlanParseMs" | "jpegHuffmanIdctWriteMs" | "jpegHuffmanDecodeSampledMs" |
+    "jpegInverseDctSampledMs" | "jpegBandWriteSampledMs" | "jpegRenderMs", durationMs: number): void {
   try { sink(stage, Math.round(durationMs * 100) / 100); }
   catch { /* Diagnostics cannot change image decoding. */ }
 }
@@ -253,6 +264,7 @@ function buildHuffmanTable(counts: Uint8Array, values: Uint8Array): HuffmanTable
   const minCode = new Int32Array(17).fill(-1);
   const maxCode = new Int32Array(17).fill(-1);
   const valueOffset = new Int32Array(17);
+  const shortCodeLookup = new Uint16Array(1 << 4);
   let code = 0;
   let valueIndex = 0;
   for (let length = 1; length <= 16; length++) {
@@ -262,12 +274,25 @@ function buildHuffmanTable(counts: Uint8Array, values: Uint8Array): HuffmanTable
       minCode[length] = code;
       maxCode[length] = code + count - 1;
       valueOffset[length] = valueIndex - code;
+      if (length <= 4) {
+        for (let codeValue = code; codeValue < code + count; codeValue++) {
+          const symbol = values[valueIndex + codeValue - code];
+          const prefix = codeValue << (4 - length);
+          const suffixCount = 1 << (4 - length);
+          const entry = (length << 8) | symbol;
+          for (let suffix = 0; suffix < suffixCount; suffix++) {
+            const lookupIndex = prefix | suffix;
+            if (shortCodeLookup[lookupIndex] !== 0) throw new Error("image_source_invalid");
+            shortCodeLookup[lookupIndex] = entry;
+          }
+        }
+      }
       valueIndex += count;
     }
     code = (code + count) << 1;
   }
   if (valueIndex !== values.length) throw new Error("image_source_invalid");
-  return { minCode, maxCode, valueOffset, values };
+  return { minCode, maxCode, valueOffset, values, shortCodeLookup };
 }
 
 class EntropyReader {
@@ -289,6 +314,16 @@ class EntropyReader {
       this.remaining = 8;
     }
     return (this.current >>> --this.remaining) & 1;
+  }
+
+  peekFourBits(): number | undefined {
+    if (this.remaining < 4) return undefined;
+    return (this.current >>> (this.remaining - 4)) & 0x0f;
+  }
+
+  consumeBits(count: number): void {
+    if (!Number.isInteger(count) || count < 1 || count > this.remaining) throw new Error("image_source_invalid");
+    this.remaining -= count;
   }
 
   readRestart(expected: number): void {
@@ -326,6 +361,9 @@ function decodePlan(bytes: Buffer, plan: ScanPlan, onDiagnosticTiming?: ImageDia
   let decodedMcus = 0;
   let huffmanIdctWriteMs = 0;
   let renderMs = 0;
+  const sampledBlockTimings: SampledBlockTimings | undefined = onDiagnosticTiming
+    ? { blockOrdinal: 0, huffmanDecodeMs: 0, inverseDctMs: 0, bandWriteMs: 0 }
+    : undefined;
 
   for (let mcuY = 0; mcuY < plan.mcuRows; mcuY++) {
     const decodeRowStartedAt = onDiagnosticTiming ? performance.now() : 0;
@@ -334,8 +372,15 @@ function decodePlan(bytes: Buffer, plan: ScanPlan, onDiagnosticTiming?: ImageDia
         const component = scanComponent.component;
         for (let blockY = 0; blockY < component.v; blockY++) {
           for (let blockX = 0; blockX < component.h; blockX++) {
-            decodeBlock(reader, component, coefficients, work, samples);
-            writeBlock(component, mcuX, blockX, blockY, sampleRows);
+            let blockTimings: SampledBlockTimings | undefined;
+            if (sampledBlockTimings) {
+              sampledBlockTimings.blockOrdinal++;
+              if (sampledBlockTimings.blockOrdinal % BLOCK_TIMING_SAMPLE_EVERY === 0) {
+                blockTimings = sampledBlockTimings;
+              }
+            }
+            decodeBlock(reader, component, coefficients, work, samples, blockTimings);
+            writeBlock(component, mcuX, blockX, blockY, sampleRows, blockTimings);
           }
         }
       }
@@ -354,6 +399,9 @@ function decodePlan(bytes: Buffer, plan: ScanPlan, onDiagnosticTiming?: ImageDia
   reader.requireEndOfImage();
   if (onDiagnosticTiming) {
     reportDiagnosticTiming(onDiagnosticTiming, "jpegHuffmanIdctWriteMs", huffmanIdctWriteMs);
+    reportDiagnosticTiming(onDiagnosticTiming, "jpegHuffmanDecodeSampledMs", sampledBlockTimings?.huffmanDecodeMs ?? 0);
+    reportDiagnosticTiming(onDiagnosticTiming, "jpegInverseDctSampledMs", sampledBlockTimings?.inverseDctMs ?? 0);
+    reportDiagnosticTiming(onDiagnosticTiming, "jpegBandWriteSampledMs", sampledBlockTimings?.bandWriteMs ?? 0);
     reportDiagnosticTiming(onDiagnosticTiming, "jpegRenderMs", renderMs);
   }
   return { width: frame.width, height: frame.height, pixels };
@@ -365,11 +413,13 @@ function decodeBlock(
   coefficients: Int32Array,
   work: Int32Array,
   samples: Uint8Array,
+  sampledTimings?: SampledBlockTimings,
 ): void {
   const dcTable = component.dcTable;
   const acTable = component.acTable;
   const quantization = component.quantization;
   if (!dcTable || !acTable || !quantization) throw new Error("image_source_invalid");
+  const huffmanStartedAt = sampledTimings ? performance.now() : 0;
   coefficients.fill(0);
   const dcCategory = decodeHuffman(reader, dcTable);
   if (dcCategory > 11) throw new Error("image_source_invalid");
@@ -393,10 +443,21 @@ function decodeBlock(
     if (coefficient >= 64) throw new Error("image_source_invalid");
     coefficients[ZIG_ZAG[coefficient++]] = receiveExtended(reader, size);
   }
+  const inverseDctStartedAt = sampledTimings ? performance.now() : 0;
+  if (sampledTimings) sampledTimings.huffmanDecodeMs += inverseDctStartedAt - huffmanStartedAt;
   inverseDct(coefficients, quantization, work, samples);
+  if (sampledTimings) sampledTimings.inverseDctMs += performance.now() - inverseDctStartedAt;
 }
 
 function decodeHuffman(reader: EntropyReader, table: HuffmanTable): number {
+  const prefix = reader.peekFourBits();
+  if (prefix !== undefined) {
+    const entry = table.shortCodeLookup[prefix];
+    if (entry !== 0) {
+      reader.consumeBits(entry >>> 8);
+      return entry & 0xff;
+    }
+  }
   let code = 0;
   for (let length = 1; length <= 16; length++) {
     code = (code << 1) | reader.readBit();
@@ -418,15 +479,18 @@ function receiveExtended(reader: EntropyReader, length: number): number {
   return value >= threshold ? value : value - ((1 << length) - 1);
 }
 
-function writeBlock(component: Component, mcuX: number, blockX: number, blockY: number, sampleRows: Uint8Array[]): void {
+function writeBlock(component: Component, mcuX: number, blockX: number, blockY: number, sampleRows: Uint8Array[],
+  sampledTimings?: SampledBlockTimings): void {
   const band = component.band;
   if (!band) throw new Error("image_source_invalid");
+  const startedAt = sampledTimings ? performance.now() : 0;
   const xStart = mcuX * component.h * 8 + blockX * 8;
   const yStart = blockY * 8;
   for (let y = 0; y < 8; y++) {
     const destination = (yStart + y) * component.bandWidth + xStart;
     band.set(sampleRows[y], destination);
   }
+  if (sampledTimings) sampledTimings.bandWriteMs += performance.now() - startedAt;
 }
 
 function renderMcuRow(frame: Frame, pixels: Buffer, mcuY: number): void {

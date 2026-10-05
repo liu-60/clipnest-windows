@@ -9,8 +9,12 @@ const os = require("node:os");
 const path = require("node:path");
 
 const ROOT = path.resolve(__dirname, "../../..");
+const EVIDENCE_SUFFIX = process.env.T04_DEADLINE_EVIDENCE_SUFFIX ?? "";
+if (EVIDENCE_SUFFIX && !/^[a-z0-9-]{1,48}$/.test(EVIDENCE_SUFFIX)) {
+  throw new Error("invalid_evidence_suffix");
+}
 const EVIDENCE_PATH = path.join(ROOT, "docs", "evidence", "T04",
-  "image-preparation-16mp-default-deadline-5-sample.json");
+  `image-preparation-16mp-default-deadline${EVIDENCE_SUFFIX ? `-${EVIDENCE_SUFFIX}` : ""}-5-sample.json`);
 const WIDTH = 4000;
 const HEIGHT = 4000;
 const PIXELS = WIDTH * HEIGHT;

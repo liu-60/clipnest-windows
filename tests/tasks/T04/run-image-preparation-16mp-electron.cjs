@@ -8,10 +8,13 @@ const os = require("node:os");
 const path = require("node:path");
 
 const ROOT = path.resolve(__dirname, "../../..");
-const STAGE_TIMING_ENABLED = process.env.T04_IMAGE_STAGE_PROFILE === "1";
-const EVIDENCE_PATH = path.join(ROOT, "docs", "evidence", "T04", STAGE_TIMING_ENABLED
-  ? "image-preparation-16mp-stage-profile.json"
-  : "image-preparation-16mp-service-integration.json");
+const STAGE_PROFILE_MODE = process.env.T04_IMAGE_STAGE_PROFILE ?? "";
+const STAGE_TIMING_ENABLED = STAGE_PROFILE_MODE === "1" || STAGE_PROFILE_MODE === "block-breakdown";
+const EVIDENCE_PATH = path.join(ROOT, "docs", "evidence", "T04", STAGE_PROFILE_MODE === "block-breakdown"
+  ? "image-preparation-16mp-block-breakdown.json"
+  : STAGE_TIMING_ENABLED
+    ? "image-preparation-16mp-stage-profile.json"
+    : "image-preparation-16mp-service-integration.json");
 const WIDTH = 4000;
 const HEIGHT = 4000;
 const PIXELS = WIDTH * HEIGHT;
@@ -62,7 +65,7 @@ function runLauncher() {
       T04_SESSION_DATA_PATH: sessionDataPath,
       T04_FIXTURE_PATH: fixturePath,
       T04_FIXTURE_METADATA_PATH: fixtureMetadataPath,
-      ...(STAGE_TIMING_ENABLED ? { T04_IMAGE_STAGE_PROFILE: "1" } : {}),
+      ...(STAGE_TIMING_ENABLED ? { T04_IMAGE_STAGE_PROFILE: STAGE_PROFILE_MODE } : {}),
     });
     // The fixture generator runs in this outer Node process so its 64 MB
     // source pixel allocation is outside the Electron service memory samples.
@@ -275,14 +278,18 @@ function runElectronProbe() {
       measurementType: "production_ImagePreparationService_real_utilityProcess_16MP_cache_and_retirement",
       measuredAt: new Date().toISOString(),
       ...(STAGE_TIMING_ENABLED ? { diagnosticProfile: {
-        optIn: "T04_IMAGE_STAGE_PROFILE=1",
-        timingSource: "optional ImagePreparationService diagnostic sink; utility worker detailed IPC is enabled only for the opted-in decode request",
+        optIn: `T04_IMAGE_STAGE_PROFILE=${STAGE_PROFILE_MODE}`,
+        timingSource: "optional ImagePreparationService diagnostic sink; utility worker detailed IPC is enabled only for the opted-in decode request; block breakdown samples one of every 128 JPEG blocks and adds timing overhead to that diagnostic run",
         stages: {
           workerColdStartMs: "utilityProcess fork until its production entry installed the decode listener and reported diagnostic_ready",
           serviceInputCopyMs: "ImagePreparationService encoded-byte copy before worker.decode",
           jpegPreflightParseMs: "production JPEG frame/metadata scan, dimension validation, and worker-capacity estimate",
           jpegStreamPlanParseMs: "stream decoder marker/table/scan-plan parse before entropy decoding",
           jpegHuffmanIdctWriteMs: "sum across MCU rows of Huffman/coefficient/IDCT decode plus component-band writes",
+          jpegHuffmanDecodeSampledMs: "unscaled subtotal from one of every 128 blocks; includes coefficient clearing and entropy/Huffman decode",
+          jpegInverseDctSampledMs: "unscaled subtotal from the same sampled blocks' inverse DCTs",
+          jpegBandWriteSampledMs: "unscaled subtotal from the same sampled blocks' component-band row writes",
+          jpegBlockSampling: "only every 128th block is timed; sampled subtotals are not extrapolated to the full frame",
           jpegRenderMs: "sum across MCU rows of RGB/RGBA rendering",
           workerDecodeMs: "utility worker request receipt through completed decoder result; includes JPEG stages above",
           workerChunkSendAckMs: "worker 1 MiB raw pixel chunk creation/send through final chunk ACK receipt",

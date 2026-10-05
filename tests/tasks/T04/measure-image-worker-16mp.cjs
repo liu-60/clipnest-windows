@@ -52,9 +52,7 @@ if (!process.versions.electron) {
     env.T04_USER_DATA_PATH = userDataPath;
     env.T04_SESSION_DATA_PATH = sessionDataPath;
     env.T04_WORKER_STAGE_TIMING = "1";
-    const electronBinary = process.env.T04_ELECTRON_BIN
-      ? path.resolve(process.env.T04_ELECTRON_BIN)
-      : require("electron");
+    const electronBinary = resolveElectronBinary();
     const result = spawnSync(electronBinary, [`--user-data-dir=${userDataPath}`, __filename], {
       cwd: ROOT,
       env,
@@ -1101,6 +1099,30 @@ function measurementOutputPath() {
     ? `image-worker-16mp-fresh-worker${tagSuffix}-${SAMPLE_COUNT}-sample-measurement.json`
     : `image-worker-${PIXELS}-pixel-jpeg-${JPEG_ENCODER === "jpeg-js" ? "" : "native-image-"}20mib-fresh-worker${tagSuffix}-${SAMPLE_COUNT}-sample-measurement.json`;
   return path.join(ROOT, "docs", "evidence", "T04", outputName);
+}
+
+function resolveElectronBinary() {
+  if (process.env.T04_ELECTRON_BIN) {
+    const binary = path.resolve(process.env.T04_ELECTRON_BIN);
+    if (!fs.existsSync(binary)) throw new Error("configured_electron_binary_missing");
+    return binary;
+  }
+  const indexedPath = require("electron");
+  if (fs.existsSync(indexedPath)) return indexedPath;
+  const storeRoot = path.join(ROOT, "node_modules", ".pnpm");
+  for (const entry of fs.readdirSync(storeRoot).filter((name) => name.startsWith("electron@"))) {
+    const packageRoot = path.join(storeRoot, entry, "node_modules", "electron");
+    const packageInfoPath = path.join(packageRoot, "package.json");
+    if (!fs.existsSync(packageInfoPath)) continue;
+    const packageInfo = JSON.parse(fs.readFileSync(packageInfoPath, "utf8"));
+    for (const relative of ["dist/electron.exe", "dist/dist/electron.exe"]) {
+      const binary = path.join(packageRoot, relative);
+      if (!fs.existsSync(binary)) continue;
+      const version = spawnSync(binary, ["--version"], { encoding: "utf8", windowsHide: true, timeout: 10_000 });
+      if (version.status === 0 && version.stdout.trim() === `v${packageInfo.version}`) return binary;
+    }
+  }
+  throw new Error("pinned_electron_runtime_missing");
 }
 
 function recordProfileCleanup(file) {
