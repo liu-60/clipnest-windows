@@ -75,7 +75,8 @@
         "docs/evidence/T06/candidate-compatibility-2026-10-05.json",
         "docs/evidence/T06/candidate-package-graph-audit.json",
         "docs/evidence/T06/t06-a8-app-workspace-identities.json",
-        "docs/evidence/T06/t06-a9-workspace-name-contract.json"
+        "docs/evidence/T06/t06-a9-workspace-name-contract.json",
+        "docs/evidence/T06/t06-a10-server-module-registry.json"
       ],
       "openGates": [
         "本机 Windows toolchain readiness preflight：WebView2 Evergreen 154.0.4258.53 存在，但 cl.exe、vswhere、常见 Visual Studio C++ Build Tools 路径和 MSVC Rust target 标准库未发现；GNU 标准库不能满足 Tauri Windows target。探测中的 rustup toolchain list -v 意外触发 GNU 1.99.0 channel sync/下载；进程已停止，没有安装成功输出，但 rustup home 留有不完整下载/组件目录。该状态已记录于 docs/evidence/T06/tauri-msvc-toolchain-readiness.json，不视为工具链就绪；未修改仓库文件或清理本地缓存。",
@@ -85,7 +86,8 @@
         "T06-b canonical strict schemas, generated JSON Schema/Rust DTOs, Decimal >2^53 and strict/size fixtures, provenance, and license records remain unimplemented and NOT_RUN. The 2026-10-05 isolated compatibility probe demonstrated partial Zod 4.6.5 → Draft 2020-12 → Ajv 8.20.0 agreement for a synthetic const/$ref/strict-object fixture and successful quicktype 26.0.0 Rust DTO generation; candidate is not selected. quicktype DTO emits ordinary bool/f64 for consts, has no unknown-field rejection, and was not compiled, so Rust boundary behavior remains open. The probe factored a local $ref from Zod's inline nested schema and did not test registry-native reference output. Four quicktype 26.0.0 entry tarballs' registry digests, sizes, file counts, manifests and direct dependencies are verified. A separate isolated temporary npm package-lock graph with 114 installed entries and 149 edges is now persisted in docs/evidence/T06/candidate-package-graph-audit.json and independently reviewed; it is not the final product pnpm resolution or dependency selection. pnpm resolution, complete notices/license obligations, platform-optional review and canonical generator compatibility remain open. quicktype-core published engines.node >=20.0.0 differs from the v26 release-note embedder floor >=20.19.0; retain this runtime policy risk. No canonical generator has run.",
         "T06-c root validation scripts, deterministic generated-drift checks, environment template, and CI checks remain unimplemented and NOT_RUN.",
         "Full T06 acceptance and required independent adversarial review remain pending; independent read-only slice reviews cover the combined a3/a4 entry and a5, with limitations, and do not accept the full T06 card.",
-        "隔离临时npm候选项目的package-lock/package元数据审计：114个安装条目与149条依赖边逐项匹配并经独立复核；license字段计数为MIT 90、ISC 7、Apache-2.0 6、BSD-3-Clause 6、BlueOak-1.0.0 5。3个Apache-2.0包根缺LICENSE/COPYING，5个BlueOak许可包需单独审阅；锁文件SRI未重算。此图不是产品pnpm解析，不构成法律批准或依赖选定。证据：docs/evidence/T06/candidate-package-graph-audit.json。"
+        "隔离临时npm候选项目的package-lock/package元数据审计：114个安装条目与149条依赖边逐项匹配并经独立复核；license字段计数为MIT 90、ISC 7、Apache-2.0 6、BSD-3-Clause 6、BlueOak-1.0.0 5。3个Apache-2.0包根缺LICENSE/COPYING，5个BlueOak许可包需单独审阅；锁文件SRI未重算。此图不是产品pnpm解析，不构成法律批准或依赖选定。证据：docs/evidence/T06/candidate-package-graph-audit.json。",
+        "T06-a10 服务端模块登记骨架完成：apps/server/src/modules/index.ts 注册 auth/devices/workspaces/keys/sync/attachments/usage/billing，全部 enabled=false；调用与未知模块均返回 FEATURE_NOT_ENABLED，没有成功路径。Node合成回归3/3通过；当前无 TypeScript 编译器，故未做类型检查，app入口/package module配置仍开放。workspaces依据为03 workspace模型/API及T14模块路径；02 §2目录摘要未列该目录。T06仍in_progress，证据 docs/evidence/T06/t06-a10-server-module-registry.json。"
       ]
     },
     "T07": {
@@ -241,18 +243,18 @@
     "T17": {
       "status": "not_started",
       "commit": null,
-    "evidence": [
-      "tests/tasks/T17/fixture-plan.json",
-      "docs/evidence/T17/fixture-plan-static-check.json",
-      "docs/evidence/T17/fixture-plan-independent-review.json"
+      "evidence": [
+        "tests/tasks/T17/fixture-plan.json",
+        "docs/evidence/T17/fixture-plan-static-check.json",
+        "docs/evidence/T17/fixture-plan-independent-review.json"
       ],
       "openGates": [
-      "仅完成32项synthetic fixture计划、自检及独立计划复审PASS_WITH_LIMITATIONS；T17仍not_started，全部fixture、2条命令、7个验收gate均NOT_RUN。fixture与gate已建立86条双向映射。",
+        "仅完成32项synthetic fixture计划、自检及独立计划复审PASS_WITH_LIMITATIONS；T17仍not_started，全部fixture、2条命令、7个验收gate均NOT_RUN。fixture与gate已建立86条双向映射。",
         "依赖门：T07、T15、T16均未accepted；传递依赖T06当前in_progress、T14未accepted。禁止实现Rust outbox/sync行为、运行行为测试或连接假成功后端。",
         "OPEN_QUESTION：canonical push DTO序列化/hash与wire_size；T07 SQLCipher事务/崩溃持久化与local.totalBytes/WAL/共享引用字节公式；ACKED中间行生命周期；终态receipt/错误到CONFLICT/BLOCKED/draft映射；冲突合并/用户确认；随机退避细节；T17 snapshot客户端与T19服务端contract/验收边界；在途push取消语义。",
         "核心实现仍未开始：crates/core/src仅有lib.rs占位。SQLCipher本地原子性、精确字节重放、receipt后ACK/清队列、冲突与删除保护、epoch/租约恢复、游标/水位、snapshot catchup与原子namespace发布均NOT_RUN。",
         "新增CURSOR_EXPIRED恢复fixture：afterSeq=80低于min_retained_seq=90，保持priorSeenHighWater=120及旧outbox，使用H=90 snapshot catch-up至120后才原子发布；本地错误状态映射仍由OQ-04保留为OPEN_QUESTION。",
-      "独立审查仅覆盖fixture计划，不是行为验收；未来critical实现仍需按T17任务卡完成关键审查及行为证据。"
+        "独立审查仅覆盖fixture计划，不是行为验收；未来critical实现仍需按T17任务卡完成关键审查及行为证据。"
       ]
     },
     "T18": {
