@@ -225,7 +225,8 @@
         "docs/evidence/T05/helper-path-contract-static.json",
         "docs/evidence/T05/unsigned-signature-policy-static.json",
         "docs/evidence/T05/caller-identity-manifest-static.json",
-        "docs/evidence/T05/rollback-distinct-helper-identity-static.json"
+        "docs/evidence/T05/rollback-distinct-helper-identity-static.json",
+        "docs/evidence/T05/recording-fake-platform-fixture-preparation.json"
       ],
       "openGates": [
         "T05任务保持not_started；T04压缩IPC worker的隔离ASAR smoke及合成main-process deadline诊断已记录。当前utilityProcess图片解码器对合成16MP/20MiB SOF0 baseline 4:2:0和4:4:4各5/5成功，PeakWorkingSet64峰值207.87/208.57MiB；该窄布局证据不证明所有JPEG格式、通用硬RSS上限、完整生产选择/打包路径或T04 accepted。WPF/WIC的10样本是候选探针，不是生产路径；PureJsImage候选超过256MiB。完整包/helper核验、最终卡片点击及受控live验收仍未完成。",
@@ -240,7 +241,8 @@
         "T05 helper 路径契约已离线固定为 unpacked Windows x64 app root 下 resources/native/clipnest-helper.exe，与 main.ts 的 process.resourcesPath/native/clipnest-helper.exe 一致；fixture plan/schema 静态检查及真实合成文件+哈希回归通过（1/1 verifier、17/17 preparation）。但 package.json 未配置 helper extraResources/asarUnpack，最终包路径未证实；版本/协议/签名与回滚仍须独立核验，T05保持not_started/NOT_RUN。证据：docs/evidence/T05/helper-path-contract-static.json。",
         "T05 unsigned 签名政策仍未决；为 fail-closed，root PASS 的 helper/rollback signatureStatus=unsigned 被拒，FAIL/REVIEW/NOT_RUN仍可记录unsigned。26/26 verifier、19/19 preparation、静态准备及Draft2020-12 NOT_RUN/schema负例检查通过。valid仍是报告字段，未执行Authenticode密码学验证；最终包与P01-P28受控验收仍NOT_RUN，T05保持not_started。证据：docs/evidence/T05/unsigned-signature-policy-static.json。",
         "新增调用者独立身份清单CLI（--identity-manifest）：清单规范路径须与报告不同且位于--artifact-root之外，sourceCommit绑定report.source.commit；root PASS 的 helper expected/actual path、SHA-256、version、protocol以及rollback prior身份须匹配调用者清单，helper/prior/restored文件哈希仍从artifactRoot字节重算。48/48定向回归、静态准备及Draft2020-12 NOT_RUN检查通过。该清单由调用者信任，verifier不认证来源；未生成生产基线且未作Authenticode验证。package.json仍未声明helper打包路径，T04仍in_progress；T05保持not_started，报告示例NOT_RUN。回滚 prior/restored 也按 Windows stat dev+ino 拒绝 NTFS 硬链接别名；硬链接合成回归通过，身份不可用时 fail-closed。 证据：docs/evidence/T05/caller-identity-manifest-static.json。",
-        "T05 root-PASS verifier 现要求 caller manifest 中 rollbackPrior.sha256 与当前 helper.sha256 大小写不敏感地不同；独立路径和文件身份、但字节相同的 prior/restored 合成负例被专用错误码拒绝。另有正例确认版本字符串相同但 prior 字节不同仍可通过身份门。fixture、准备校验与 report schema 说明保持一致；T05 定向回归48/48通过，静态准备检查覆盖28 cases、71 assertions、2个G0 gates。此离线一致性校验不认证 caller manifest，不包含真实包、签名或回滚运行验收；T04 尚未 accepted，T05 继续 not_started。证据：docs/evidence/T05/rollback-distinct-helper-identity-static.json。"
+        "T05 root-PASS verifier 现要求 caller manifest 中 rollbackPrior.sha256 与当前 helper.sha256 大小写不敏感地不同；独立路径和文件身份、但字节相同的 prior/restored 合成负例被专用错误码拒绝。另有正例确认版本字符串相同但 prior 字节不同仍可通过身份门。fixture、准备校验与 report schema 说明保持一致；T05 定向回归48/48通过，静态准备检查覆盖28 cases、71 assertions、2个G0 gates。此离线一致性校验不认证 caller manifest，不包含真实包、签名或回滚运行验收；T04 尚未 accepted，T05 继续 not_started。证据：docs/evidence/T05/rollback-distinct-helper-identity-static.json。",
+        "P01–P28已建立仅含合成初始状态与刺激、无预期结果的RecordingFakePlatform准备夹具（46个run seed）；fixture-only自检7/7通过并核对28 cases/71条映射，所有断言仍NOT_RUN且证据为空。仅记录内存描述符；无生产模块、窗口、helper、系统剪贴板、物理输入、网络或持久化行为。此PREPARATION_ONLY证据不证明P01–P28/G0/时延/打包/controlled-live行为，T05维持not_started。证据：docs/evidence/T05/recording-fake-platform-fixture-preparation.json。"
       ]
     }
   }

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "result": "PREPARATION_ONLY",
+  "evidenceType": "fixture_preparation_self_check",
+  "source": {
+    "commit": "c4a34799bb02fb0658d48a2bdafcd4fa62d2286b",
+    "branch": "codex/m0-latency",
+    "runtime": "Node.js v24.16.0",
+    "files": [
+      {
+        "path": "tests/tasks/T05/recording-fake-platform-fixtures.cjs",
+        "sha256": "9f18d4004a44b6eec6f0d0d99d0f9a8dadebab61e36f5617b0f6e1d5365fd7d2"
+      },
+      {
+        "path": "tests/tasks/T05/recording-fake-platform-fixtures.test.cjs",
+        "sha256": "a49b5bbea520b1416fa92c87d66eca8d50e77b353098a5067535686ff26e9039"
+      }
+    ],
+    "workingTreeWasDirty": true
+  },
+  "command": "node --test tests/tasks/T05/recording-fake-platform-fixtures.test.cjs",
+  "selfCheck": {
+    "tests": 7,
+    "passed": 7,
+    "failed": 0,
+    "caseCount": 28,
+    "syntheticScenarioRunCount": 46,
+    "mappedAssertionCount": 71,
+    "assertionStatuses": [
+      "NOT_RUN"
+    ],
+    "assertionEvidenceArraysRemainEmpty": true
+  },
+  "boundary": {
+    "classification": "PREPARATION_ONLY",
+    "productBehaviorExecuted": false,
+    "productionModulesImported": false,
+    "helperLaunched": false,
+    "desktopWindowCreated": false,
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "networkUsed": false,
+    "applicationPersistentStateWritten": false
+  },
+  "scope": "The fixture catalog contains inert synthetic initial states and stimuli for P01-P28, including separate run seeds for multi-boundary cases. RecordingFakePlatform stores only explicitly supplied in-memory descriptors and returns no simulated result. The self-check verifies catalog traceability, NOT_RUN preservation, descriptor copying, and instance isolation.",
+  "limitations": [
+    "This is not execution or acceptance evidence for any P01-P28 behavior assertion.",
+    "No expected product outcomes or predicted platform call traces are supplied by the scenario catalog.",
+    "The check does not establish helper, package, G0, latency, controlled-live, or desktop integration behavior."
+  ]
+}
