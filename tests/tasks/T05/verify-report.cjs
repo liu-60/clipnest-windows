@@ -36,7 +36,7 @@ import json
 import sys
 
 def emit(payload):
-    print(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+    print(json.dumps(payload, ensure_ascii=True, separators=(",", ":")))
 
 try:
     from jsonschema import Draft202012Validator
@@ -45,7 +45,8 @@ except Exception as exc:
     raise SystemExit(0)
 
 try:
-    payload = json.load(sys.stdin)
+    # Node serializes UTF-8; Windows Python may default stdin to a legacy code page.
+    payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
     schema = payload["schema"]
     instance = payload["instance"]
 except Exception as exc:
@@ -148,7 +149,7 @@ function validateDraft202012Instance(instance, schema, options = {}) {
   let unavailableReason = "no Python interpreter candidate was available";
   for (const executable of pythonExecutables) {
     const result = spawnSync(executable, ["-c", PYTHON_DRAFT202012_VALIDATOR], {
-      input,
+      input: Buffer.from(input, "utf8"),
       encoding: "utf8",
       windowsHide: true,
       timeout: 30000,
@@ -485,6 +486,8 @@ function collectReportErrors(report, context = loadVerifierContext(), validation
     }
   }
 
+  validateG0Runtime(report.g0Runtime, errors);
+
   for (const [name, measurement] of Object.entries(report.measurements ?? {})) {
     validateMeasurement(measurement, `$.measurements.${name}`, errors, METRIC_CONTRACTS[name] ?? null);
   }
@@ -573,6 +576,204 @@ function requirePass(value, location, errors) {
   if (!isRecord(value) || value.result !== "PASS") {
     addError(errors, "PASS_REQUIREMENT_MISSING", location, "top-level PASS requires this check to be PASS");
   }
+}
+
+function validateG0Runtime(g0Runtime, errors) {
+  if (!isRecord(g0Runtime)) return;
+
+  const blockingSpawnSync = g0Runtime.noInteractiveBlockingSpawnSync;
+  if (isRecord(blockingSpawnSync) && blockingSpawnSync.result === "PASS") {
+    const location = "$.g0Runtime.noInteractiveBlockingSpawnSync";
+    validateG0CheckFields(blockingSpawnSync, location, errors);
+    const observation = blockingSpawnSync.observation;
+    if (!isRecord(observation)) {
+      addError(errors, "G0_BLOCKING_SPAWNSYNC_OBSERVATION_REQUIRED", `${location}.observation`, "PASS requires structured interaction and instrumented-call observations");
+    } else {
+      const observationLocation = `${location}.observation`;
+      validateExactFields(
+        observation,
+        ["requestIds", "callsByRequestId", "instrumentedBlockingSpawnSyncCalls"],
+        observationLocation,
+        "G0_BLOCKING_SPAWNSYNC_OBSERVATION_FIELDS",
+        errors,
+      );
+      const requestIds = validateG0RequestIds(
+        observation.requestIds,
+        `${observationLocation}.requestIds`,
+        1,
+        errors,
+      );
+      const callsByRequestId = observation.callsByRequestId;
+      if (!isRecord(callsByRequestId)) {
+        addError(errors, "G0_BLOCKING_SPAWNSYNC_CALL_MAP_REQUIRED", `${observationLocation}.callsByRequestId`, "PASS requires a blocking API trace map keyed by request ID");
+      } else {
+        const traceRequestIds = Object.keys(callsByRequestId);
+        if (traceRequestIds.length < 1) {
+          addError(errors, "G0_BLOCKING_SPAWNSYNC_CALL_MAP_COUNT", `${observationLocation}.callsByRequestId`, "PASS requires at least one per-request trace entry");
+        }
+        validateG0RequestIdSet(requestIds, traceRequestIds, `${observationLocation}.callsByRequestId`, "G0_BLOCKING_SPAWNSYNC_CALL_IDS_MISMATCH", errors);
+        let spawnSyncCallCount = 0;
+        for (const [requestId, calls] of Object.entries(callsByRequestId)) {
+          const traceLocation = `${observationLocation}.callsByRequestId.${requestId}`;
+          validateG0RequestId(requestId, traceLocation, errors);
+          if (!Array.isArray(calls)) {
+            addError(errors, "G0_BLOCKING_SPAWNSYNC_TRACE_INVALID", traceLocation, "each request ID must map to an array of blocking API calls");
+            continue;
+          }
+          for (const [index, apiName] of calls.entries()) {
+            if (!isG0String(apiName, 128)) {
+              addError(errors, "G0_BLOCKING_SPAWNSYNC_TRACE_INVALID", `${traceLocation}[${index}]`, "blocking API trace entries must be nonempty strings of at most 128 characters");
+            }
+            if (apiName === "spawnSync") spawnSyncCallCount += 1;
+          }
+          if (calls.length > 0) {
+            addError(errors, "G0_BLOCKING_SPAWN_API_CALLS", traceLocation, "PASS requires an empty blocking process-spawn API trace for every interaction");
+          }
+        }
+        if (observation.instrumentedBlockingSpawnSyncCalls !== spawnSyncCallCount) {
+          addError(errors, "G0_BLOCKING_SPAWNSYNC_COUNT_MISMATCH", `${observationLocation}.instrumentedBlockingSpawnSyncCalls`, `counter must equal the ${spawnSyncCallCount} spawnSync call(s) in the per-request traces`);
+        }
+      }
+      if (observation.instrumentedBlockingSpawnSyncCalls !== 0) {
+        addError(errors, "G0_BLOCKING_SPAWNSYNC_COUNT", `${observationLocation}.instrumentedBlockingSpawnSyncCalls`, "PASS requires zero instrumented blocking spawnSync calls");
+      }
+    }
+  }
+
+  const helperReuse = g0Runtime.noHelperProcessPerInteraction;
+  if (isRecord(helperReuse) && helperReuse.result === "PASS") {
+    const location = "$.g0Runtime.noHelperProcessPerInteraction";
+    validateG0CheckFields(helperReuse, location, errors);
+    const observation = helperReuse.observation;
+    if (!isRecord(observation)) {
+      addError(errors, "G0_HELPER_REUSE_OBSERVATION_REQUIRED", `${location}.observation`, "PASS requires structured per-interaction helper identity observations");
+      return;
+    }
+
+    const observationLocation = `${location}.observation`;
+    validateExactFields(
+      observation,
+      ["requestIds", "observationsByRequestId"],
+      observationLocation,
+      "G0_HELPER_REUSE_OBSERVATION_FIELDS",
+      errors,
+    );
+    const requestIds = validateG0RequestIds(
+      observation.requestIds,
+      `${observationLocation}.requestIds`,
+      2,
+      errors,
+    );
+    const observations = observation.observationsByRequestId;
+    if (!isRecord(observations)) {
+      addError(errors, "G0_HELPER_OBSERVATIONS_REQUIRED", `${observationLocation}.observationsByRequestId`, "PASS requires a per-request helper observation map");
+      return;
+    }
+
+    const observationIds = Object.keys(observations);
+    if (observationIds.length < 2) {
+      addError(errors, "G0_HELPER_OBSERVATION_COUNT", `${observationLocation}.observationsByRequestId`, "PASS requires at least two interaction observations");
+    }
+    validateG0RequestIdSet(requestIds, observationIds, `${observationLocation}.observationsByRequestId`, "G0_HELPER_OBSERVATION_IDS_MISMATCH", errors);
+
+    for (const [requestId, item] of Object.entries(observations)) {
+      const itemLocation = `${observationLocation}.observationsByRequestId.${requestId}`;
+      validateG0RequestId(requestId, itemLocation, errors);
+      if (!isRecord(item)) {
+        addError(errors, "G0_HELPER_OBSERVATION_SHAPE", itemLocation, "helper observation must be an object");
+        continue;
+      }
+      validateExactFields(item, ["helperBefore", "helperAfter", "helperLaunchCount"], itemLocation, "G0_HELPER_OBSERVATION_FIELDS", errors);
+      const before = item.helperBefore;
+      const after = item.helperAfter;
+      const beforeValid = validateHelperProcessIdentity(before, `${itemLocation}.helperBefore`, errors);
+      const afterValid = validateHelperProcessIdentity(after, `${itemLocation}.helperAfter`, errors);
+      if (beforeValid && afterValid &&
+          (before.pid !== after.pid || before.creationIdentity !== after.creationIdentity)) {
+        addError(errors, "G0_HELPER_PROCESS_IDENTITY_MISMATCH", itemLocation, "helper PID and creation identity must remain unchanged across the interaction");
+      }
+      if (item.helperLaunchCount !== 0) {
+        addError(errors, "G0_HELPER_LAUNCH_COUNT", `${itemLocation}.helperLaunchCount`, "PASS requires zero helper launches during each interaction");
+      }
+    }
+  }
+}
+
+function validateG0CheckFields(check, location, errors) {
+  validateExactFields(check, ["name", "result", "details", "evidence", "observation"], location, "G0_CHECK_FIELDS", errors);
+  if (!isG0String(check.name, 256)) {
+    addError(errors, "G0_CHECK_NAME_INVALID", `${location}.name`, "G0 PASS check requires a nonempty name of at most 256 characters");
+  }
+  if (check.details !== undefined &&
+      (typeof check.details !== "string" || unicodeCodePointLength(check.details) > 2000)) {
+    addError(errors, "G0_CHECK_DETAILS_INVALID", `${location}.details`, "G0 check details must be a string of at most 2000 characters");
+  }
+}
+
+function validateExactFields(value, allowedFields, location, errorCode, errors) {
+  const extras = Object.keys(value).filter((field) => !allowedFields.includes(field));
+  if (extras.length > 0) {
+    addError(errors, errorCode, location, `unexpected field(s): ${extras.join(", ")}`);
+  }
+}
+
+function validateG0RequestIdSet(requestIds, observedIds, location, errorCode, errors) {
+  if (requestIds === null) return;
+  const observed = new Set(observedIds);
+  if (requestIds.size !== observedIds.length || observedIds.some((requestId) => !requestIds.has(requestId)) || observed.size !== observedIds.length) {
+    addError(errors, errorCode, location, "per-request observations must match each request ID exactly once with no extra IDs");
+  }
+}
+
+function validateG0RequestIds(requestIds, location, minimumCount, errors) {
+  if (!Array.isArray(requestIds)) {
+    addError(errors, "G0_REQUEST_IDS_REQUIRED", location, "PASS requires a request ID array for observed interactions");
+    return null;
+  }
+  if (requestIds.length < minimumCount) {
+    addError(errors, "G0_REQUEST_ID_COUNT", location, `PASS requires at least ${minimumCount} interaction request${minimumCount === 1 ? "" : "s"}`);
+  }
+
+  const seen = new Set();
+  for (const [index, requestId] of requestIds.entries()) {
+    if (!isG0String(requestId, 128)) {
+      addError(errors, "G0_REQUEST_ID_INVALID", `${location}[${index}]`, "interaction request IDs must be nonempty strings of at most 128 characters");
+      continue;
+    }
+    if (seen.has(requestId)) {
+      addError(errors, "G0_REQUEST_ID_DUPLICATE", `${location}[${index}]`, `duplicate interaction request ID ${requestId}`);
+    }
+    seen.add(requestId);
+  }
+  return seen;
+}
+
+function validateG0RequestId(requestId, location, errors) {
+  if (!isG0String(requestId, 128)) {
+    addError(errors, "G0_REQUEST_ID_INVALID", location, "interaction request IDs must be nonempty strings of at most 128 characters");
+  }
+}
+
+function isG0String(value, maxLength) {
+  return typeof value === "string" && unicodeCodePointLength(value) <= maxLength && value.trim() !== "";
+}
+
+function unicodeCodePointLength(value) {
+  return [...value].length;
+}
+
+function validateHelperProcessIdentity(value, location, errors) {
+  if (!isRecord(value)) {
+    addError(errors, "G0_HELPER_PROCESS_IDENTITY_INVALID", location, "helper process identity must be an object");
+    return false;
+  }
+  validateExactFields(value, ["pid", "creationIdentity"], location, "G0_HELPER_PROCESS_IDENTITY_FIELDS", errors);
+  const valid = Number.isInteger(value.pid) && value.pid >= 1 && value.pid <= 0xffffffff &&
+    isG0String(value.creationIdentity, 256);
+  if (!valid) {
+    addError(errors, "G0_HELPER_PROCESS_IDENTITY_INVALID", location, "helper identity requires a positive 32-bit PID and a nonempty creation identity of at most 256 characters");
+  }
+  return valid;
 }
 
 function validateRootPassRequirements(report, context, errors) {

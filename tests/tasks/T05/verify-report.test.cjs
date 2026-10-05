@@ -52,6 +52,43 @@ function errorsFor(report, overrides = {}, validationOptions = {}) {
   return collectReportErrors(report, { ...context, ...overrides }, validationOptions);
 }
 
+function syntheticG0PassReport() {
+  const report = clone(example);
+  report.status = "REVIEW";
+  report.notRun = report.notRun.filter((item) => !item.includes("Both G0 runtime observation gates"));
+  report.g0Runtime.noInteractiveBlockingSpawnSync = {
+    name: "noInteractiveBlockingSpawnSync",
+    result: "PASS",
+    evidence: [],
+    observation: {
+      requestIds: ["synthetic-spawn-request-1"],
+      callsByRequestId: { "synthetic-spawn-request-1": [] },
+      instrumentedBlockingSpawnSyncCalls: 0,
+    },
+  };
+  report.g0Runtime.noHelperProcessPerInteraction = {
+    name: "noHelperProcessPerInteraction",
+    result: "PASS",
+    evidence: [],
+    observation: {
+      requestIds: ["synthetic-helper-request-1", "synthetic-helper-request-2"],
+      observationsByRequestId: {
+        "synthetic-helper-request-1": {
+          helperBefore: { pid: 1200, creationIdentity: "synthetic-helper-created-at-1" },
+          helperAfter: { pid: 1200, creationIdentity: "synthetic-helper-created-at-1" },
+          helperLaunchCount: 0,
+        },
+        "synthetic-helper-request-2": {
+          helperBefore: { pid: 1200, creationIdentity: "synthetic-helper-created-at-1" },
+          helperAfter: { pid: 1200, creationIdentity: "synthetic-helper-created-at-1" },
+          helperLaunchCount: 0,
+        },
+      },
+    },
+  };
+  return report;
+}
+
 test("NOT_RUN example is reproducible and maps all cases and assertion IDs", () => {
   const inputs = loadPreparationInputs();
   const generated = buildNotRunReport({
@@ -108,6 +145,107 @@ test("a forged root PASS is rejected while current dependency T04 is not accepte
   assert.ok(errors.some((error) => error.code === "DEPENDENCY_MISMATCH"));
   assert.ok(errors.some((error) => error.code === "PASS_BLOCKED_UNACCEPTED_DEPENDENCY"));
   assert.ok(errors.some((error) => error.code === "PASS_CASE_REQUIRED"));
+});
+
+test("G0 PASS rejects evidence-only claims and validates synthetic structure without runtime evidence", () => {
+  const weakReport = syntheticG0PassReport();
+  weakReport.g0Runtime.noInteractiveBlockingSpawnSync.evidence = ["tests/tasks/T05/fixture-plan.json"];
+  weakReport.g0Runtime.noHelperProcessPerInteraction.evidence = ["tests/tasks/T05/fixture-plan.json"];
+  delete weakReport.g0Runtime.noInteractiveBlockingSpawnSync.observation;
+  delete weakReport.g0Runtime.noHelperProcessPerInteraction.observation;
+  const weakCodes = new Set(errorsFor(weakReport).map((error) => error.code));
+  assert.ok(weakCodes.has("G0_BLOCKING_SPAWNSYNC_OBSERVATION_REQUIRED"));
+  assert.ok(weakCodes.has("G0_HELPER_REUSE_OBSERVATION_REQUIRED"));
+
+  const acceptedReport = syntheticG0PassReport();
+  acceptedReport.dependencyGate = { T03: "accepted", T04: "accepted" };
+  const acceptedProgress = clone(context.progress);
+  acceptedProgress.tasks.T03.status = "accepted";
+  acceptedProgress.tasks.T04.status = "accepted";
+  const acceptedCodes = errorsFor(acceptedReport, { progress: acceptedProgress }).map((error) => error.code);
+  assert.equal(acceptedCodes.filter((code) => code.startsWith("G0_")).length, 0);
+  assert.equal(acceptedCodes.filter((code) => code === "PASS_EVIDENCE_REQUIRED").length, 2);
+});
+
+test("G0 PASS recomputes spawn counts, request ID uniqueness, and helper identity across interactions", () => {
+  const base = syntheticG0PassReport();
+  const mismatches = [
+    (report) => { report.g0Runtime.noInteractiveBlockingSpawnSync.observation.instrumentedBlockingSpawnSyncCalls = 1; },
+    (report) => { report.g0Runtime.noInteractiveBlockingSpawnSync.observation.requestIds.push("synthetic-spawn-request-1"); },
+    (report) => { report.g0Runtime.noHelperProcessPerInteraction.observation.requestIds[1] = "synthetic-helper-request-1"; },
+    (report) => { report.g0Runtime.noHelperProcessPerInteraction.observation.observationsByRequestId["synthetic-helper-request-1"].helperLaunchCount = 1; },
+    (report) => { report.g0Runtime.noHelperProcessPerInteraction.observation.observationsByRequestId["synthetic-helper-request-1"].helperAfter.pid += 1; },
+    (report) => { report.g0Runtime.noHelperProcessPerInteraction.observation.observationsByRequestId["synthetic-helper-request-1"].helperAfter.creationIdentity = "synthetic-helper-created-at-2"; },
+  ];
+  const expectedCodes = [
+    "G0_BLOCKING_SPAWNSYNC_COUNT",
+    "G0_REQUEST_ID_DUPLICATE",
+    "G0_REQUEST_ID_DUPLICATE",
+    "G0_HELPER_LAUNCH_COUNT",
+    "G0_HELPER_PROCESS_IDENTITY_MISMATCH",
+    "G0_HELPER_PROCESS_IDENTITY_MISMATCH",
+  ];
+
+  for (const [index, mutate] of mismatches.entries()) {
+    const report = clone(base);
+    mutate(report);
+    assert.ok(errorsFor(report).some((error) => error.code === expectedCodes[index]));
+  }
+});
+
+test("G0 spawn traces require exact request coverage, empty calls, and bounded fields", () => {
+  const base = syntheticG0PassReport();
+  const mismatches = [
+    [(report) => { delete report.g0Runtime.noInteractiveBlockingSpawnSync.observation.callsByRequestId; }, "G0_BLOCKING_SPAWNSYNC_CALL_MAP_REQUIRED"],
+    [(report) => { report.g0Runtime.noInteractiveBlockingSpawnSync.observation.callsByRequestId = {}; }, "G0_BLOCKING_SPAWNSYNC_CALL_IDS_MISMATCH"],
+    [(report) => { report.g0Runtime.noInteractiveBlockingSpawnSync.observation.callsByRequestId.extra = []; }, "G0_BLOCKING_SPAWNSYNC_CALL_IDS_MISMATCH"],
+    [(report) => { report.g0Runtime.noInteractiveBlockingSpawnSync.observation.callsByRequestId["synthetic-spawn-request-1"] = ["spawnSync"]; }, "G0_BLOCKING_SPAWN_API_CALLS"],
+    [(report) => { report.g0Runtime.noInteractiveBlockingSpawnSync.observation.extra = true; }, "G0_BLOCKING_SPAWNSYNC_OBSERVATION_FIELDS"],
+    [(report) => {
+      const longId = "x".repeat(129);
+      const observation = report.g0Runtime.noInteractiveBlockingSpawnSync.observation;
+      observation.requestIds = [longId];
+      observation.callsByRequestId = { [longId]: [] };
+    }, "G0_REQUEST_ID_INVALID"],
+    [(report) => { report.g0Runtime.noHelperProcessPerInteraction.observation.observationsByRequestId["synthetic-helper-request-1"].helperBefore.extra = true; }, "G0_HELPER_PROCESS_IDENTITY_FIELDS"],
+    [(report) => { report.g0Runtime.noHelperProcessPerInteraction.observation.observationsByRequestId["synthetic-helper-request-1"].extra = true; }, "G0_HELPER_OBSERVATION_FIELDS"],
+    [(report) => { report.g0Runtime.noHelperProcessPerInteraction.observation.observationsByRequestId["synthetic-helper-request-1"].helperBefore.creationIdentity = "x".repeat(257); }, "G0_HELPER_PROCESS_IDENTITY_INVALID"],
+    [(report) => { report.g0Runtime.noHelperProcessPerInteraction.observation.requestIds[1] = "unobserved-request"; }, "G0_HELPER_OBSERVATION_IDS_MISMATCH"],
+  ];
+
+  for (const [mutate, expectedCode] of mismatches) {
+    const report = clone(base);
+    mutate(report);
+    assert.ok(errorsFor(report).some((error) => error.code === expectedCode), `expected ${expectedCode}`);
+  }
+});
+
+test("G0 string limits count Unicode code points like Draft 2020-12 maxLength", () => {
+  const report = syntheticG0PassReport();
+  report.g0Runtime.noInteractiveBlockingSpawnSync.details = "😀".repeat(2000);
+  const requestIdAtLimit = "😀".repeat(128);
+  const spawnObservation = report.g0Runtime.noInteractiveBlockingSpawnSync.observation;
+  spawnObservation.requestIds = [requestIdAtLimit];
+  spawnObservation.callsByRequestId = { [requestIdAtLimit]: [] };
+  const helperObservation = report.g0Runtime.noHelperProcessPerInteraction.observation;
+  helperObservation.observationsByRequestId["synthetic-helper-request-1"].helperBefore.creationIdentity = "😀".repeat(256);
+  helperObservation.observationsByRequestId["synthetic-helper-request-1"].helperAfter.creationIdentity = "😀".repeat(256);
+
+  let g0Errors = errorsFor(report).filter((error) => error.code.startsWith("G0_"));
+  assert.deepEqual(g0Errors, [], "128/256 astral code points are valid at the schema boundary");
+
+  report.g0Runtime.noInteractiveBlockingSpawnSync.details = "😀".repeat(2001);
+  assert.ok(errorsFor(report).some((error) => error.code === "G0_CHECK_DETAILS_INVALID"));
+
+  report.g0Runtime.noInteractiveBlockingSpawnSync.details = "😀".repeat(2000);
+  spawnObservation.requestIds = ["😀".repeat(129)];
+  spawnObservation.callsByRequestId = { [spawnObservation.requestIds[0]]: [] };
+  assert.ok(errorsFor(report).some((error) => error.code === "G0_REQUEST_ID_INVALID"));
+
+  spawnObservation.requestIds = [requestIdAtLimit];
+  spawnObservation.callsByRequestId = { [requestIdAtLimit]: [] };
+  helperObservation.observationsByRequestId["synthetic-helper-request-1"].helperBefore.creationIdentity = "😀".repeat(257);
+  assert.ok(errorsFor(report).some((error) => error.code === "G0_HELPER_PROCESS_IDENTITY_INVALID"));
 });
 
 test("root PASS requires the complete recorded environment", () => {

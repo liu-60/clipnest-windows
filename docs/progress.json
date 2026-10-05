@@ -152,15 +152,16 @@
         "docs/evidence/T05/current-static-audit.json",
         "docs/evidence/T05/draft2020-schema-meta-validation.json",
         "docs/evidence/T05/current-gates-refresh.json",
-        "docs/evidence/T05/static-preparation-verification.json",
-        "docs/evidence/T05/report-verifier-static-validation.json",
-        "docs/evidence/T05/report-identity-consistency-regression.json"
+      "docs/evidence/T05/static-preparation-verification.json",
+      "docs/evidence/T05/report-verifier-static-validation.json",
+      "docs/evidence/T05/report-identity-consistency-regression.json",
+      "docs/evidence/T05/g0-report-contract-static-verification.json"
       ],
       "openGates": [
         "T05任务状态保持not_started；T04最新压缩IPC代码已通过独立目录包ASAR worker smoke，且合成main-process图片同步转换诊断记录迟到500ms poll fail-closed；均不等于T04 accepted或P01-P28发布验收。全内容内存/性能、完整安装包/helper核验及最终卡片UI点击仍未验收。",
         "当前本地检查点已通过3项真实clipboard序列回归和1项自建EDIT原caret真实SendInput/合成文字可见性集成；不等于T05受控独立目标整链输入验收。最终卡片点击、图像外部粘贴及wake-to-actionable 100样本基准仍NOT_RUN，T05执行需隔离桌面。",
         "fixture已增加G0交互路径无阻塞spawnSync、无每次交互新建helper的观察门；两项均planned/NOT_RUN，需用进程调用追踪与helper身份实证。",
-        "report.schema.json要求PASS提供非空commit、Windows x64与完整性能控制变量，并要求两个指标为controlled_live、至少100个成功样本和证据引用。verify-report.cjs会重算requestId唯一性、样本结果/阶段键、outcome计数与nearest-rank分位数；默认Node校验不依赖Python，完整Draft 2020-12实例检查通过显式--validate-schema调用主机Python jsonschema 4.26.0，NOT_RUN样例通过且8个无效实例被拒绝（其中6个覆盖指标契约），未添加锁定依赖。测量仍全部NOT_RUN；可移植validator依赖留待T06审查。",
+      "report.schema.json要求PASS提供非空commit、Windows x64与完整性能控制变量，并要求两个指标为controlled_live、至少100个成功样本和证据引用。verify-report.cjs会重算requestId唯一性、样本结果/阶段键、outcome计数与nearest-rank分位数；G0 PASS还必须提供逐request观察，Node校验会拒绝缺失或不匹配的requestId追踪映射。Windows UTF-8 Python桥接、Unicode code point边界及合成G0结构自检通过：38/38定向单测、14个schema无效实例与6个G0负例均通过；Draft本身不能表达requestIds数组与任意对象键集合相等，该关系由Node校验器强制。完整Draft 2020-12检查仍通过显式--validate-schema使用主机Python jsonschema 4.26.0，未添加锁定依赖。测量和真实G0观察仍全部NOT_RUN，证据为PREPARATION_ONLY；可移植validator依赖留待T06审查。",
         "T05静态准备校验已通过：15/15回归与28个case、71条断言、2个G0 gate的traceability/schema检查通过，结果为PREPARATION_ONLY；未运行行为，也不改变T05 not_started状态。证据：docs/evidence/T05/static-preparation-verification.json。",
         "已为P01-P28计划中的71条断言建立逐项原文映射（tests/tasks/T05/assertion-map.json），当前全部NOT_RUN且证据为空；独立静态审查确认71/71原文和顺序一致、ID唯一。报告一致性检查器核对断言映射、requestId、样本计数/统计和仓库内证据路径；完整Draft 2020-12实例自检通过，但主机Python/jsonschema未锁定且不能证明证据内容支持声明。PASS前仍须逐条独立审查映射与实际证据。",
         "verify-report.cjs的root PASS路径会独立比较helper expected/actual路径、版本、协议、SHA-256及rollback版本/hash；新增回归覆盖identityMatched伪报、匹配身份正向通过、字段不匹配与非字符串SHA-256，并将畸形hash作为身份错误处理（34/34 T05定向单测通过，见docs/evidence/T05/report-identity-consistency-regression.json）。该校验仍不直接读取/哈希最终安装包资源或密码学验证签名；PASS前须人工核对实际打包资源、回滚前后身份、签名结果及逐项命令证据，且内部包是否接受unsigned仍待明确。",

@@ -40,6 +40,40 @@ function reportWithSuccessfulSample(metricName, sampleOverrides) {
   return report;
 }
 
+function reportWithSyntheticG0Pass() {
+  const report = clone(example);
+  report.status = "REVIEW";
+  const evidence = ["PREPARATION_ONLY synthetic structure; not runtime evidence"];
+  const spawnRequestId = "😀".repeat(128);
+  report.g0Runtime.noInteractiveBlockingSpawnSync = {
+    name: "noInteractiveBlockingSpawnSync",
+    result: "PASS",
+    details: "😀".repeat(2000),
+    evidence,
+    observation: {
+      requestIds: [spawnRequestId],
+      callsByRequestId: { [spawnRequestId]: [] },
+      instrumentedBlockingSpawnSyncCalls: 0,
+    },
+  };
+  const helperRequestIds = ["synthetic-helper-request-1", "synthetic-helper-request-2"];
+  const helperIdentity = { pid: 1200, creationIdentity: "😀".repeat(256) };
+  report.g0Runtime.noHelperProcessPerInteraction = {
+    name: "noHelperProcessPerInteraction",
+    result: "PASS",
+    evidence,
+    observation: {
+      requestIds: helperRequestIds,
+      observationsByRequestId: Object.fromEntries(helperRequestIds.map((requestId) => [requestId, {
+        helperBefore: helperIdentity,
+        helperAfter: helperIdentity,
+        helperLaunchCount: 0,
+      }])),
+    },
+  };
+  return report;
+}
+
 function expectInvalidInstance(instance, label) {
   const result = validateDraft202012Instance(instance, context.reportSchema);
   assert.equal(result.kind, "invalid_instance", label);
@@ -55,6 +89,48 @@ function main() {
     return;
   }
   assert.equal(valid.kind, "valid", "current NOT_RUN example must satisfy the complete schema");
+
+  const syntheticG0Pass = reportWithSyntheticG0Pass();
+  const syntheticG0Valid = validateDraft202012Instance(syntheticG0Pass, context.reportSchema);
+  assert.equal(syntheticG0Valid.kind, "valid",
+    `synthetic G0 observation structure at Unicode limits must satisfy Draft 2020-12: ${JSON.stringify(syntheticG0Valid.errors ?? [])}`);
+  const syntheticNodeReport = clone(syntheticG0Pass);
+  syntheticNodeReport.g0Runtime.noInteractiveBlockingSpawnSync.evidence = [];
+  syntheticNodeReport.g0Runtime.noHelperProcessPerInteraction.evidence = [];
+  const syntheticNodeCodes = collectReportErrors(syntheticNodeReport, context).map((error) => error.code);
+  assert.equal(syntheticNodeCodes.filter((code) => code.startsWith("G0_")).length, 0);
+  assert.equal(syntheticNodeCodes.filter((code) => code === "PASS_EVIDENCE_REQUIRED").length, 2,
+    "default Node consistency validation must still block acceptance because synthetic G0 checks have empty evidence");
+
+  const missingSpawnMap = clone(syntheticG0Pass);
+  delete missingSpawnMap.g0Runtime.noInteractiveBlockingSpawnSync.observation.callsByRequestId;
+  expectInvalidInstance(missingSpawnMap, "G0 PASS without per-request spawn trace map must fail the schema");
+
+  const nonemptySpawnTrace = clone(syntheticG0Pass);
+  const spawnRequestId = nonemptySpawnTrace.g0Runtime.noInteractiveBlockingSpawnSync.observation.requestIds[0];
+  nonemptySpawnTrace.g0Runtime.noInteractiveBlockingSpawnSync.observation.callsByRequestId[spawnRequestId] = ["spawnSync"];
+  const nonemptyTraceValidation = expectInvalidInstance(nonemptySpawnTrace, "G0 PASS with a blocking spawn trace must fail the schema");
+  const expectedUnicodeErrorPath = `$.g0Runtime.noInteractiveBlockingSpawnSync.observation.callsByRequestId.${spawnRequestId}`;
+  assert.ok(nonemptyTraceValidation.errors.some((issue) => issue.path === expectedUnicodeErrorPath),
+    "Draft bridge must preserve non-ASCII request IDs in invalid-instance paths");
+
+  const extraHelperField = clone(syntheticG0Pass);
+  extraHelperField.g0Runtime.noHelperProcessPerInteraction.observation.observationsByRequestId["synthetic-helper-request-1"].helperBefore.extra = true;
+  expectInvalidInstance(extraHelperField, "G0 helper identity with an extra field must fail the schema");
+
+  const overlongUnicodeRequestId = clone(syntheticG0Pass);
+  const longUnicodeRequestId = "😀".repeat(129);
+  overlongUnicodeRequestId.g0Runtime.noInteractiveBlockingSpawnSync.observation.requestIds = [longUnicodeRequestId];
+  overlongUnicodeRequestId.g0Runtime.noInteractiveBlockingSpawnSync.observation.callsByRequestId = { [longUnicodeRequestId]: [] };
+  expectInvalidInstance(overlongUnicodeRequestId, "129 astral code points must exceed the 128-code-point request ID limit");
+
+  const overlongUnicodeCreationIdentity = clone(syntheticG0Pass);
+  overlongUnicodeCreationIdentity.g0Runtime.noHelperProcessPerInteraction.observation.observationsByRequestId["synthetic-helper-request-1"].helperBefore.creationIdentity = "😀".repeat(257);
+  expectInvalidInstance(overlongUnicodeCreationIdentity, "257 astral code points must exceed the 256-code-point helper identity limit");
+
+  const overlongUnicodeDetails = clone(syntheticG0Pass);
+  overlongUnicodeDetails.g0Runtime.noInteractiveBlockingSpawnSync.details = "😀".repeat(2001);
+  expectInvalidInstance(overlongUnicodeDetails, "2001 astral code points must exceed the 2000-code-point G0 details limit");
 
   const missingRunId = clone(example);
   delete missingRunId.runId;
@@ -142,7 +218,12 @@ function main() {
     validator: valid.validator,
     validatorVersion: valid.validatorVersion,
     validNotRunReport: "PASS",
-    schemaInvalidInstanceCases: 8,
+    schemaInvalidInstanceCases: 14,
+    syntheticG0DraftSchemaCases: {
+      positive: "PASS_AT_UNICODE_CODE_POINT_LIMITS; SYNTHETIC_ONLY",
+      negative: 6,
+      nodeAcceptanceBlockedByEmptyEvidence: "PASS_EVIDENCE_REQUIRED",
+    },
     metricContractInvalidCases: 6,
     invalidSchemaDefinition: "DISTINCT_FROM_INSTANCE_INVALID",
     missingValidator: "DISTINCT_UNAVAILABLE_ERROR",

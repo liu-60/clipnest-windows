@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "result": "PREPARATION_ONLY",
+  "reviewType": "G0 per-request report contract and UTF-8 Draft validation",
+  "checkedDate": "2026-10-05",
+  "source": {
+    "commit": "394fbb4b6b287dc0c8c709aca551b542c4d3eb45",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "dirtyChangesWereWithinT05Allowlist": true
+  },
+  "environment": {
+    "platform": "Windows",
+    "architecture": "x64",
+    "nodeVersion": "24.16.0",
+    "pythonVersion": "3.11.15",
+    "jsonschemaVersion": "4.26.0",
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "browserWindowCreated": false,
+    "packageBuilt": false
+  },
+  "checks": [
+    {
+      "command": "node --test tests/tasks/T05/verify-report.test.cjs tests/tasks/T05/validate-preparation.test.cjs",
+      "result": "PASS",
+      "passed": 38,
+      "failed": 0
+    },
+    {
+      "command": "node tests/tasks/T05/schema-validation-self-check.cjs",
+      "result": "PASS",
+      "schemaInvalidInstanceCases": 14,
+      "syntheticG0NegativeCases": 6,
+      "syntheticG0Positive": "PASS_AT_UNICODE_CODE_POINT_LIMITS; SYNTHETIC_ONLY",
+      "nonAsciiInvalidPathRoundTrip": "PASS",
+      "emptySyntheticEvidenceBlockedBy": "PASS_EVIDENCE_REQUIRED"
+    },
+    {
+      "command": "node tests/tasks/T05/verify-report.cjs",
+      "result": "PASS",
+      "reportStatus": "NOT_RUN",
+      "t05AcceptanceImplied": false
+    },
+    {
+      "command": "node tests/tasks/T05/validate-preparation.cjs",
+      "result": "PASS",
+      "behaviorExecuted": false,
+      "t05AcceptanceImplied": false
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "independentReview": {
+    "result": "PASS",
+    "findings": [
+      "Legacy evidence-only G0 PASS is rejected by both the Node consistency checker and Draft 2020-12 validation.",
+      "Node validation requires the per-request trace map to match the request ID set and rejects missing, extra, or mismatched request IDs.",
+      "Draft JSON Schema alone cannot express equality between the request ID array and arbitrary object keys; the Node checker enforces this relation, and explicit schema mode runs both validators.",
+      "UTF-8 stdin and ASCII-safe validator output preserve Unicode boundary checks and non-ASCII invalid-instance paths on Windows."
+    ]
+  },
+  "gateEffect": {
+    "t05Status": "not_started",
+    "t05ReportStatus": "NOT_RUN",
+    "g0Status": "planned/NOT_RUN",
+    "acceptanceImplied": false,
+    "behaviorExecuted": false
+  },
+  "limitations": [
+    "Synthetic report structures validate static contracts only; they are not runtime G0 observations or evidence.",
+    "The Draft 2020-12 validator uses the host Python jsonschema package and is not repository-pinned.",
+    "This work does not execute P01-P28 behavior, helper lifecycle, rollback, performance measurements, package validation, or target-visible paste."
+  ]
+}

@@ -100,8 +100,8 @@
       "additionalProperties": false,
       "required": ["noInteractiveBlockingSpawnSync", "noHelperProcessPerInteraction"],
       "properties": {
-        "noInteractiveBlockingSpawnSync": { "$ref": "#/$defs/checkResult" },
-        "noHelperProcessPerInteraction": { "$ref": "#/$defs/checkResult" }
+        "noInteractiveBlockingSpawnSync": { "$ref": "#/$defs/g0NoInteractiveBlockingSpawnSyncCheck" },
+        "noHelperProcessPerInteraction": { "$ref": "#/$defs/g0NoHelperProcessPerInteractionCheck" }
       }
     },
     "measurements": {
@@ -454,7 +454,95 @@
         "name": { "type": "string", "minLength": 1, "maxLength": 256 },
         "result": { "enum": ["PASS", "FAIL", "NOT_RUN", "BLOCKED"] },
         "details": { "type": "string", "maxLength": 2000 },
-        "evidence": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+        "evidence": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "observation": { "type": "object" }
+      }
+    },
+    "g0NoInteractiveBlockingSpawnSyncCheck": {
+      "allOf": [
+        { "$ref": "#/$defs/checkResult" },
+        {
+          "if": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
+          "then": {
+            "required": ["observation"],
+            "properties": { "observation": { "$ref": "#/$defs/g0NoInteractiveBlockingSpawnSyncObservation" } }
+          }
+        }
+      ]
+    },
+    "g0NoInteractiveBlockingSpawnSyncObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestIds", "callsByRequestId", "instrumentedBlockingSpawnSyncCalls"],
+      "properties": {
+        "requestIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" }
+        },
+        "callsByRequestId": {
+          "type": "object",
+          "description": "Map each observed requestId to its blocking process-spawn API trace. PASS requires an empty trace for every requestId.",
+          "minProperties": 1,
+          "propertyNames": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" },
+          "additionalProperties": {
+            "type": "array",
+            "maxItems": 0,
+            "items": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" }
+          }
+        },
+        "instrumentedBlockingSpawnSyncCalls": { "type": "integer", "const": 0 }
+      }
+    },
+    "g0NoHelperProcessPerInteractionCheck": {
+      "allOf": [
+        { "$ref": "#/$defs/checkResult" },
+        {
+          "if": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
+          "then": {
+            "required": ["observation"],
+            "properties": { "observation": { "$ref": "#/$defs/g0NoHelperProcessPerInteractionObservation" } }
+          }
+        }
+      ]
+    },
+    "g0NoHelperProcessPerInteractionObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestIds", "observationsByRequestId"],
+      "properties": {
+        "requestIds": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" }
+        },
+        "observationsByRequestId": {
+          "type": "object",
+          "minProperties": 2,
+          "propertyNames": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" },
+          "additionalProperties": { "$ref": "#/$defs/g0HelperProcessInteractionObservation" }
+        }
+      }
+    },
+    "g0HelperProcessInteractionObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["helperBefore", "helperAfter", "helperLaunchCount"],
+      "properties": {
+        "helperBefore": { "$ref": "#/$defs/helperProcessIdentity" },
+        "helperAfter": { "$ref": "#/$defs/helperProcessIdentity" },
+        "helperLaunchCount": { "type": "integer", "const": 0 }
+      }
+    },
+    "helperProcessIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pid", "creationIdentity"],
+      "properties": {
+        "pid": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
+        "creationIdentity": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "\\S" }
       }
     },
     "measurement": {
