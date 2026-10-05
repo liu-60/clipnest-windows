@@ -1,0 +1,539 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "recordType": "jpeg_420_source_roi_reconstruction_diagnostic",
+  "result": "DIAGNOSTIC_WITH_LIMITATIONS",
+  "gate": "4:2:0 JPEG fidelity remains OPEN",
+  "verificationDate": "2026-10-05",
+  "source": {
+    "commit": "33d5cbfde2fb7aa44d8eecc39bc5bd55402ab6e4",
+    "branch": "codex/m0-latency",
+    "measurementHarnessPath": "tests/tasks/T04/measure-image-worker-16mp.cjs",
+    "measurementHarnessSha256": "9404a4396c1f0d8ab497903d96369bb98839baf96575484246a34b80a7611ccd",
+    "workingTreeWasDirtyForMeasurements": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "osVersion": "Windows 11 Enterprise",
+    "electronVersion": "40.10.2",
+    "nodeVersion": "24.15.0",
+    "systemClipboardReadOrWritten": false,
+    "inputSent": false,
+    "displayOrForegroundAppUsed": false,
+    "applicationPackageInstalledOrPublished": false,
+    "allIsolatedProfileCleanupsVerified": true
+  },
+  "method": {
+    "fixtureDimensions": "4000x4000",
+    "encodedSourceLimitBytes": 20971520,
+    "fixtureCount": 4,
+    "roiPointsPerCase": 1024,
+    "totalComparedRoiPoints": 4096,
+    "sourcePixelReference": "For native-image fixtures, createFromBitmap input is converted to PNG, then pngjs 7.0.0 decodes that encoder bitmap to logical RGBA before JPEG encoding. This avoids treating platform-dependent bitmap byte order as logical RGBA. The source hash covers the full 4000x4000 logical RGBA buffer; compact samples cover only each selected ROI.",
+    "decoders": {
+      "worker": "ClipNest Electron utilityProcess image worker",
+      "gdiPlus": "Windows System.Drawing / GDI+ JPEG decoder",
+      "wic": "System.Windows.Media.Imaging.JpegBitmapDecoder through WPF / Windows Imaging Component",
+      "differential": "pinned jpeg-js 0.4.4 full-frame differential reference; not independent"
+    },
+    "comparison": "RGB mean absolute channel error, RMSE, maximum per-pixel RGB channel difference, and counts over 8/16/32 are descriptive metrics only; no 4:2:0 threshold is calibrated.",
+    "cases": [
+      {
+        "measurement": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-source-roi-highentropy-1-sample-measurement.json",
+        "measurementWorkingTreeWasDirty": true,
+        "fixturePattern": "high-entropy",
+        "fixtureSha256": "c9362e8411a710e82c8ead5e41295c0f6902bf8f5eac9cf40ac25915abb68ab1",
+        "sourceLogicalRgbaSha256": "0fb25d469c13ea9882d1291a17b105a7eb11ea13ec553ca7453930d468542fff",
+        "jpegQuality": 96,
+        "encodedBytes": 20971520,
+        "samplingFactors": [
+          {
+            "horizontal": 2,
+            "vertical": 2
+          },
+          {
+            "horizontal": 1,
+            "vertical": 1
+          },
+          {
+            "horizontal": 1,
+            "vertical": 1
+          }
+        ],
+        "roi": {
+          "x": 984,
+          "y": 2984,
+          "width": 32,
+          "height": 32
+        },
+        "comparedPixels": 1024,
+        "sourceSamplesEncoding": "row-major RGBA bytes encoded as Base64",
+        "sourceSamplesRgbaBase64Sha256": "e0023cab0268be2698b5963a21174e38027022fa7831683d3e42fba59fbdd41c",
+        "sourceVsWorker": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixels": 1024,
+          "meanAbsoluteChannelError": 44.75,
+          "meanAbsoluteErrorByChannel": [
+            49.1,
+            28.16,
+            57
+          ],
+          "rootMeanSquareChannelError": 56.81,
+          "maxRgbDifference": 243,
+          "pixelsOver8": 1013,
+          "pixelsOver16": 989,
+          "pixelsOver32": 898,
+          "alphaMismatchCount": 0
+        },
+        "sourceVsGdiPlus": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixels": 1024,
+          "meanAbsoluteChannelError": 47.26,
+          "meanAbsoluteErrorByChannel": [
+            51.64,
+            29.36,
+            60.78
+          ],
+          "rootMeanSquareChannelError": 59.6,
+          "maxRgbDifference": 239,
+          "pixelsOver8": 1017,
+          "pixelsOver16": 1000,
+          "pixelsOver32": 913,
+          "alphaMismatchCount": 0
+        },
+        "sourceVsWic": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixels": 1024,
+          "meanAbsoluteChannelError": 47.26,
+          "meanAbsoluteErrorByChannel": [
+            51.64,
+            29.36,
+            60.78
+          ],
+          "rootMeanSquareChannelError": 59.6,
+          "maxRgbDifference": 239,
+          "pixelsOver8": 1017,
+          "pixelsOver16": 1000,
+          "pixelsOver32": 913,
+          "alphaMismatchCount": 0
+        },
+        "sourceVsJpegJs": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixels": 1024,
+          "meanAbsoluteChannelError": 44.75,
+          "meanAbsoluteErrorByChannel": [
+            49.1,
+            28.16,
+            57
+          ],
+          "rootMeanSquareChannelError": 56.81,
+          "maxRgbDifference": 243,
+          "pixelsOver8": 1013,
+          "pixelsOver16": 989,
+          "pixelsOver32": 898,
+          "alphaMismatchCount": 0
+        },
+        "workerVsWic": {
+          "comparedPixelCount": 1024,
+          "pixelsOver8": 900,
+          "maxRgbDifference": 70,
+          "alphaMismatchCount": 0
+        },
+        "gdiPlusVsWic": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixelCount": 1024,
+          "maxRgbDifference": 0,
+          "pixelsOver8": 0,
+          "alphaMismatchCount": 0
+        },
+        "workerVsPinnedJpegJsFullFrame": {
+          "status": "PASS",
+          "exactByteComparison": true,
+          "mismatchedChannelCount": 0,
+          "mismatchedPixelCount": 0,
+          "maxChannelDifference": 0,
+          "independentOracle": false
+        },
+        "isolatedProfileCleanupVerified": true
+      },
+      {
+        "measurement": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-source-roi-vertical-1-sample-measurement.json",
+        "measurementWorkingTreeWasDirty": true,
+        "fixturePattern": "chroma-edge-phases",
+        "fixtureSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+        "sourceLogicalRgbaSha256": "612249341ea42367098929b069941faeefd0bdc56d4c75f6d2d5828c2318d907",
+        "jpegQuality": 100,
+        "encodedBytes": 20971519,
+        "samplingFactors": [
+          {
+            "horizontal": 2,
+            "vertical": 2
+          },
+          {
+            "horizontal": 1,
+            "vertical": 1
+          },
+          {
+            "horizontal": 1,
+            "vertical": 1
+          }
+        ],
+        "roi": {
+          "x": 960,
+          "y": 2960,
+          "width": 32,
+          "height": 32
+        },
+        "comparedPixels": 1024,
+        "sourceSamplesEncoding": "row-major RGBA bytes encoded as Base64",
+        "sourceSamplesRgbaBase64Sha256": "86a5ea3e2aa7751af2ddb44a66ebc2e3402ab028df8e94aa196d45e542368865",
+        "sourceVsWorker": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixels": 1024,
+          "meanAbsoluteChannelError": 32.67,
+          "meanAbsoluteErrorByChannel": [
+            30.45,
+            2.8,
+            64.75
+          ],
+          "rootMeanSquareChannelError": 66.87,
+          "maxRgbDifference": 255,
+          "pixelsOver8": 512,
+          "pixelsOver16": 512,
+          "pixelsOver32": 512,
+          "alphaMismatchCount": 0
+        },
+        "sourceVsGdiPlus": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixels": 1024,
+          "meanAbsoluteChannelError": 52.73,
+          "meanAbsoluteErrorByChannel": [
+            48.87,
+            3.66,
+            105.67
+          ],
+          "rootMeanSquareChannelError": 74.42,
+          "maxRgbDifference": 229,
+          "pixelsOver8": 1024,
+          "pixelsOver16": 1024,
+          "pixelsOver32": 1024,
+          "alphaMismatchCount": 0
+        },
+        "sourceVsWic": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixels": 1024,
+          "meanAbsoluteChannelError": 52.73,
+          "meanAbsoluteErrorByChannel": [
+            48.87,
+            3.66,
+            105.67
+          ],
+          "rootMeanSquareChannelError": 74.42,
+          "maxRgbDifference": 229,
+          "pixelsOver8": 1024,
+          "pixelsOver16": 1024,
+          "pixelsOver32": 1024,
+          "alphaMismatchCount": 0
+        },
+        "sourceVsJpegJs": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixels": 1024,
+          "meanAbsoluteChannelError": 32.67,
+          "meanAbsoluteErrorByChannel": [
+            30.45,
+            2.8,
+            64.75
+          ],
+          "rootMeanSquareChannelError": 66.87,
+          "maxRgbDifference": 255,
+          "pixelsOver8": 512,
+          "pixelsOver16": 512,
+          "pixelsOver32": 512,
+          "alphaMismatchCount": 0
+        },
+        "workerVsWic": {
+          "comparedPixelCount": 1024,
+          "pixelsOver8": 1000,
+          "maxRgbDifference": 120,
+          "alphaMismatchCount": 0
+        },
+        "gdiPlusVsWic": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixelCount": 1024,
+          "maxRgbDifference": 0,
+          "pixelsOver8": 0,
+          "alphaMismatchCount": 0
+        },
+        "workerVsPinnedJpegJsFullFrame": {
+          "status": "PASS",
+          "exactByteComparison": true,
+          "mismatchedChannelCount": 0,
+          "mismatchedPixelCount": 0,
+          "maxChannelDifference": 0,
+          "independentOracle": false
+        },
+        "isolatedProfileCleanupVerified": true
+      },
+      {
+        "measurement": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-source-roi-horizontal-1-sample-measurement.json",
+        "measurementWorkingTreeWasDirty": true,
+        "fixturePattern": "chroma-edge-phases",
+        "fixtureSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+        "sourceLogicalRgbaSha256": "612249341ea42367098929b069941faeefd0bdc56d4c75f6d2d5828c2318d907",
+        "jpegQuality": 100,
+        "encodedBytes": 20971519,
+        "samplingFactors": [
+          {
+            "horizontal": 2,
+            "vertical": 2
+          },
+          {
+            "horizontal": 1,
+            "vertical": 1
+          },
+          {
+            "horizontal": 1,
+            "vertical": 1
+          }
+        ],
+        "roi": {
+          "x": 992,
+          "y": 2960,
+          "width": 32,
+          "height": 32
+        },
+        "comparedPixels": 1024,
+        "sourceSamplesEncoding": "row-major RGBA bytes encoded as Base64",
+        "sourceSamplesRgbaBase64Sha256": "b02ba84de79c1ef1cd9a2c9a4b743881b172e63edb2ade9e16710c08d921f129",
+        "sourceVsWorker": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixels": 1024,
+          "meanAbsoluteChannelError": 32.67,
+          "meanAbsoluteErrorByChannel": [
+            30.45,
+            2.8,
+            64.77
+          ],
+          "rootMeanSquareChannelError": 66.87,
+          "maxRgbDifference": 255,
+          "pixelsOver8": 512,
+          "pixelsOver16": 512,
+          "pixelsOver32": 512,
+          "alphaMismatchCount": 0
+        },
+        "sourceVsGdiPlus": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixels": 1024,
+          "meanAbsoluteChannelError": 52.7,
+          "meanAbsoluteErrorByChannel": [
+            48.85,
+            3.66,
+            105.58
+          ],
+          "rootMeanSquareChannelError": 74.43,
+          "maxRgbDifference": 236,
+          "pixelsOver8": 1024,
+          "pixelsOver16": 1024,
+          "pixelsOver32": 1024,
+          "alphaMismatchCount": 0
+        },
+        "sourceVsWic": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixels": 1024,
+          "meanAbsoluteChannelError": 52.7,
+          "meanAbsoluteErrorByChannel": [
+            48.85,
+            3.66,
+            105.58
+          ],
+          "rootMeanSquareChannelError": 74.43,
+          "maxRgbDifference": 236,
+          "pixelsOver8": 1024,
+          "pixelsOver16": 1024,
+          "pixelsOver32": 1024,
+          "alphaMismatchCount": 0
+        },
+        "sourceVsJpegJs": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixels": 1024,
+          "meanAbsoluteChannelError": 32.67,
+          "meanAbsoluteErrorByChannel": [
+            30.45,
+            2.8,
+            64.77
+          ],
+          "rootMeanSquareChannelError": 66.87,
+          "maxRgbDifference": 255,
+          "pixelsOver8": 512,
+          "pixelsOver16": 512,
+          "pixelsOver32": 512,
+          "alphaMismatchCount": 0
+        },
+        "workerVsWic": {
+          "comparedPixelCount": 1024,
+          "pixelsOver8": 1008,
+          "maxRgbDifference": 136,
+          "alphaMismatchCount": 0
+        },
+        "gdiPlusVsWic": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixelCount": 1024,
+          "maxRgbDifference": 0,
+          "pixelsOver8": 0,
+          "alphaMismatchCount": 0
+        },
+        "workerVsPinnedJpegJsFullFrame": {
+          "status": "PASS",
+          "exactByteComparison": true,
+          "mismatchedChannelCount": 0,
+          "mismatchedPixelCount": 0,
+          "maxChannelDifference": 0,
+          "independentOracle": false
+        },
+        "isolatedProfileCleanupVerified": true
+      },
+      {
+        "measurement": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-source-roi-checker-1-sample-measurement.json",
+        "measurementWorkingTreeWasDirty": true,
+        "fixturePattern": "chroma-edge-phases",
+        "fixtureSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+        "sourceLogicalRgbaSha256": "612249341ea42367098929b069941faeefd0bdc56d4c75f6d2d5828c2318d907",
+        "jpegQuality": 100,
+        "encodedBytes": 20971519,
+        "samplingFactors": [
+          {
+            "horizontal": 2,
+            "vertical": 2
+          },
+          {
+            "horizontal": 1,
+            "vertical": 1
+          },
+          {
+            "horizontal": 1,
+            "vertical": 1
+          }
+        ],
+        "roi": {
+          "x": 1024,
+          "y": 2960,
+          "width": 32,
+          "height": 32
+        },
+        "comparedPixels": 1024,
+        "sourceSamplesEncoding": "row-major RGBA bytes encoded as Base64",
+        "sourceSamplesRgbaBase64Sha256": "811e4d3591a2dfaf07e5738ad729e996d42a9b3cc09e13f90aa84cbe5bd2cd64",
+        "sourceVsWorker": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixels": 1024,
+          "meanAbsoluteChannelError": 0.5,
+          "meanAbsoluteErrorByChannel": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "rootMeanSquareChannelError": 0.71,
+          "maxRgbDifference": 1,
+          "pixelsOver8": 0,
+          "pixelsOver16": 0,
+          "pixelsOver32": 0,
+          "alphaMismatchCount": 0
+        },
+        "sourceVsGdiPlus": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixels": 1024,
+          "meanAbsoluteChannelError": 36.67,
+          "meanAbsoluteErrorByChannel": [
+            33.94,
+            2.87,
+            73.21
+          ],
+          "rootMeanSquareChannelError": 55.41,
+          "maxRgbDifference": 147,
+          "pixelsOver8": 768,
+          "pixelsOver16": 768,
+          "pixelsOver32": 768,
+          "alphaMismatchCount": 0
+        },
+        "sourceVsWic": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixels": 1024,
+          "meanAbsoluteChannelError": 36.67,
+          "meanAbsoluteErrorByChannel": [
+            33.94,
+            2.87,
+            73.21
+          ],
+          "rootMeanSquareChannelError": 55.41,
+          "maxRgbDifference": 147,
+          "pixelsOver8": 768,
+          "pixelsOver16": 768,
+          "pixelsOver32": 768,
+          "alphaMismatchCount": 0
+        },
+        "sourceVsJpegJs": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixels": 1024,
+          "meanAbsoluteChannelError": 0.5,
+          "meanAbsoluteErrorByChannel": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "rootMeanSquareChannelError": 0.71,
+          "maxRgbDifference": 1,
+          "pixelsOver8": 0,
+          "pixelsOver16": 0,
+          "pixelsOver32": 0,
+          "alphaMismatchCount": 0
+        },
+        "workerVsWic": {
+          "comparedPixelCount": 1024,
+          "pixelsOver8": 768,
+          "maxRgbDifference": 147,
+          "alphaMismatchCount": 0
+        },
+        "gdiPlusVsWic": {
+          "status": "DIAGNOSTIC_ONLY",
+          "comparedPixelCount": 1024,
+          "maxRgbDifference": 0,
+          "pixelsOver8": 0,
+          "alphaMismatchCount": 0
+        },
+        "workerVsPinnedJpegJsFullFrame": {
+          "status": "PASS",
+          "exactByteComparison": true,
+          "mismatchedChannelCount": 0,
+          "mismatchedPixelCount": 0,
+          "maxChannelDifference": 0,
+          "independentOracle": false
+        },
+        "isolatedProfileCleanupVerified": true
+      }
+    ]
+  },
+  "interpretation": "At these four selected source-image ROIs, the worker reconstruction had lower mean absolute channel error to the known pre-JPEG logical source than GDI+/WIC in each case: high-entropy 44.75 vs 47.26; vertical edge 32.67 vs 52.73; horizontal edge 32.67 vs 52.70; checker 0.50 vs 36.67. GDI+ and WIC match at the selected points, and the worker matches pinned jpeg-js over the full frame, but neither comparison establishes JPEG ground truth or codec independence. This is one sample per selected ROI and a synthetic lossy encoder fixture; it does not establish general decoder correctness, a whole-image error rate, or a 4:2:0 acceptance threshold.",
+  "limitations": [
+    "The pre-JPEG synthetic pixels are a known input reference, not a normative JPEG decoded-pixel oracle; JPEG encoding is lossy and the result is fixture/encoder/quality-specific.",
+    "The four 32x32 ROIs are selected points from two synthetic fixtures and each case uses one fresh utilityProcess sample.",
+    "Pinned jpeg-js matches the worker but is a differential reference, not an independent implementation.",
+    "GDI+ and WIC matching at selected points does not establish their correctness or prove independent codec internals.",
+    "The measurements exercise a synthetic decoder worker and isolated Electron profile only; system clipboard, physical input, foreground UI, installed package, and T04/T05 acceptance were not exercised.",
+    "The 4:2:0 JPEG fidelity gate, P15 scope gate, full T04 acceptance, and T05 behavior/release gates remain open.",
+    "The source PNG round-trip and retained decoded source buffer are parent-process allocations outside the measured utilityProcess RSS and may increase total process memory or machine load during the diagnostic."
+  ],
+  "independentReview": {
+    "result": "PASS_WITH_LIMITATIONS",
+    "reviewedDate": "2026-10-05",
+    "reviewType": "read-only independent review",
+    "scope": "NativeImage source-pixel provenance, ROI/sample correspondence, error-metric calculations, and the conclusions supported by the four measurements.",
+    "conclusion": "The logical RGBA readback and metric calculations are suitable for this synthetic source-reconstruction diagnostic. The observations support that the worker is closer to the source at these selected edge ROIs; they do not establish general JPEG correctness or justify an interpolation change solely to match WIC/GDI+.",
+    "limitation": "PNG readback and source buffers are parent-process allocations outside measured utilityProcess RSS; they can increase total process memory and machine load during the diagnostic."
+  }
+}

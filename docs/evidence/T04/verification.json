@@ -239,6 +239,16 @@
       "command": "T04_WIC_PIXEL_ORACLE=1; four isolated 1-sample 16MP/20MiB 4:2:0 worker + jpeg-js full-frame + GDI+ + WPF/WIC dense ROI diagnostics",
       "status": "MEASURED_WITH_LIMITATIONS",
       "result": "The final WIC-enabled harness and WPF/WIC STA script measured four synthetic Windows x64 baseline JPEG 4:2:0 cases. Each WIC child input SHA-256 matches the exact fixture consumed by the utilityProcess worker, GDI+, and jpeg-js; all ROIs contain the same 1024 row-major coordinates. WPF/WIC and GDI+ RGBA match at all 4096 selected points. The worker and pinned jpeg-js match over each full 16 MP frame; worker-vs-WIC ROI differences are 900/1024 (max 70), 1000/1024 (max 120), 1008/1024 (max 136), and 768/1024 (max 147). This is diagnostic agreement between Windows imaging paths, not source-pixel ground truth; decoder internals may not be independent, ROIs are selected single samples, and the 8-channel threshold is not calibrated for 4:2:0. Fidelity gate remains open. No clipboard, input, foreground app, or installed package was used. Static syntax checks and independent read-only data/hash review passed; reviewers did not rerun the measurements."
+    },
+    {
+      "command": "node tests/tasks/T04/measure-image-worker-16mp.cjs (four source ROI cases)",
+      "status": "PASS",
+      "result": "Four sequential 4000x4000/20MiB synthetic 4:2:0 fresh utilityProcess samples completed, all isolated profiles were cleaned, input SHA was stable within each same-input oracle run, and each worker matched pinned jpeg-js full-frame exactly. The source-ROI metrics are diagnostic only; they do not close JPEG fidelity or acceptance gates."
+    },
+    {
+      "command": "node --check tests/tasks/T04/measure-image-worker-16mp.cjs",
+      "status": "PASS",
+      "result": "The updated synthetic measurement harness parsed successfully before measurement."
     }
   ],
   "implementedAndCovered": [
@@ -369,7 +379,9 @@
     "The test-only GDI+ JPEG route probe stopped before GDI+ startup/decode: WinSxS and System32 DLL signatures, Microsoft publisher, version, size, SHA-256, and protected-directory ACL match, but NTFS file IDs differ. No pixel-oracle or decoder-memory measurement was produced; see gdiplus-jpeg-memory-route-probe.json and gdiplus-jpeg-system-path-audit.json.",
     "当前原始分块+ACK协议：requestId与input.jobId相等校验、child来源guard、busy错误退役和隔离已实现；独立只读审查通过，main TypeScript构建及decoder/worker 25/25通过。身份加固后的新ASAR smoke用合成3000×3000 PNG全像素一致（35 chunks、456.19ms），见packaged-asar-worker-chunked-hardened-smoke.json；此前未含加固补丁的smoke为478.43ms，保留在历史证据中。最终构建下合成16MP/20MiB JPEG五样本：4:4:4 p50/p95 2877.15/2986.02ms、峰值208.57MiB、GDI+最大差1、jpeg-js全帧差分0；4:2:0 p50/p95 2186.23/2262.56ms、峰值207.87MiB、jpeg-js全帧差分0，但GDI+最大差38>8，且8通道阈值仅按4:4:4校准，差异原因未决。jpeg-js oracle是parent进程差分参考并保留64,000,000字节，未计入worker峰值。以上为合成诊断，不关闭通用内存/fidelity/桌面/T04门。P15按用户决定仍开放，T05保持not_started。",
     "4:2:0 GDI+ fidelity remains open. Final-harness dense ROIs show broad differences for both same-hash high-entropy and synthetic phase-shifted chroma-edge fixtures; all worker outputs match pinned jpeg-js full-frame, but that reference is not independent and the GDI+ threshold is calibrated only for 4:4:4. Edge interiors retain substantial mismatch after trimming two pixels from ROI boundaries. This suggests chroma reconstruction/phase differences without proving correctness or a whole-image error rate. Each ROI is 32x32 with one worker sample. See docs/evidence/T04/jpeg-420-gdiplus-roi-investigation.json.",
-    "Same-input WPF/WIC ROI diagnostics agree with GDI+ at all 4096 selected points, while worker/jpeg-js differs as recorded in jpeg-420-three-way-oracle.json. Agreement is not ground truth or proof of independent codec implementations; selected single-sample ROIs and the uncalibrated 4:2:0 tolerance leave fidelity unresolved."
+    "Same-input WPF/WIC ROI diagnostics agree with GDI+ at all 4096 selected points, while worker/jpeg-js differs as recorded in jpeg-420-three-way-oracle.json. Agreement is not ground truth or proof of independent codec implementations; selected single-sample ROIs and the uncalibrated 4:2:0 tolerance leave fidelity unresolved.",
+    "编码前逻辑RGBA源ROI诊断：四个合成16MP/20MiB 4:2:0 ROI各运行一个fresh utilityProcess样本；worker相对编码前逻辑源的RGB MAE分别为高熵44.75、垂直边缘32.67、水平边缘32.67、棋盘0.50，均低于所选点的GDI+/WIC（47.26、52.73、52.70、36.67）。GDI+/WIC所选点一致，worker与pinned jpeg-js全帧一致；这些都不是真值证明。NativeImage源像素通过PNG回读恢复逻辑RGBA以排除平台字节顺序；每项仅单样本、选择性ROI和有损合成图，因此不能作为通用JPEG正确性或验收阈值，4:2:0 fidelity门保持开放。无系统剪贴板、输入、前台窗口或安装包操作。详情见docs/evidence/T04/jpeg-420-source-roi-reconstruction.json及四份source-roi测量记录。",
+    "源ROI诊断另在Electron parent中进行NativeImage PNG回读并暂存逻辑像素；这部分内存不计入utilityProcess RSS，可能增加测量期间的总进程内存/机器负载，不能将worker峰值解释为整机或应用总内存峰值。"
   ],
   "artifacts": [
     "tests/tasks/T04/fixture-plan.json",
@@ -437,6 +449,19 @@
     "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-highentropy-wic-roi-v2-1-sample-measurement.json",
     "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-edges-vertical-wic-roi-v2-1-sample-measurement.json",
     "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-edges-horizontal-wic-roi-v2-1-sample-measurement.json",
-    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-edges-checker-wic-roi-v2-1-sample-measurement.json"
-  ]
+    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-edges-checker-wic-roi-v2-1-sample-measurement.json",
+    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-source-roi-highentropy-1-sample-measurement.json",
+    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-source-roi-vertical-1-sample-measurement.json",
+    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-source-roi-horizontal-1-sample-measurement.json",
+    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-source-roi-checker-1-sample-measurement.json",
+    "docs/evidence/T04/jpeg-420-source-roi-reconstruction.json"
+  ],
+  "latestIndependentSourcePixelReview": {
+    "result": "PASS_WITH_LIMITATIONS",
+    "reviewedDate": "2026-10-05",
+    "reviewType": "read-only independent review",
+    "scope": "NativeImage source-pixel provenance, ROI/sample correspondence, error-metric calculations, and the conclusions supported by the four measurements.",
+    "conclusion": "The logical RGBA readback and metric calculations are suitable for this synthetic source-reconstruction diagnostic. The observations support that the worker is closer to the source at these selected edge ROIs; they do not establish general JPEG correctness or justify an interpolation change solely to match WIC/GDI+.",
+    "limitation": "PNG readback and source buffers are parent-process allocations outside measured utilityProcess RSS; they can increase total process memory and machine load during the diagnostic."
+  }
 }

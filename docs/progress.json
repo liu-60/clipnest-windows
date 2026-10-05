@@ -150,7 +150,12 @@
         "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-highentropy-wic-roi-v2-1-sample-measurement.json",
         "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-edges-vertical-wic-roi-v2-1-sample-measurement.json",
         "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-edges-horizontal-wic-roi-v2-1-sample-measurement.json",
-        "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-edges-checker-wic-roi-v2-1-sample-measurement.json"
+        "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-edges-checker-wic-roi-v2-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-source-roi-highentropy-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-source-roi-vertical-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-source-roi-horizontal-1-sample-measurement.json",
+        "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-source-roi-checker-1-sample-measurement.json",
+        "docs/evidence/T04/jpeg-420-source-roi-reconstruction.json"
       ],
       "openGates": [
         "WPF/WIC候选测量已完成：Windows PowerShell STA独立子进程对合成16MP、20MiB baseline JPEG 4:2:0和4:4:4各5样本（共10）完整解码、全像素oracle与GDI+九点对照均通过；PeakWorkingSet64最高169,676,800B（161.82MiB），10样本均低于256MiB目标。该值含PowerShell/.NET/WPF进程基线；探针不是生产IWIC直接调用或Electron utilityProcess，未覆盖完整IPC/deflate/helper DIB、JPEG语料与元数据、取消及打包路径，因此仅为候选初筛，不关闭生产JPEG内存门或T04验收。测量与限制见docs/evidence/T04/wic-jpeg-memory-probe.json及docs/evidence/T04/wic-jpeg-route-review.json。",
@@ -169,7 +174,9 @@
         "PureJsImage 0.17.0候选的生产形状utilityProcess/IPC全链路补测：合成16MP baseline JPEG 4:2:0与4:4:4各5/5成功解码并校验完整RGBA、cap+1均在解码前拒绝，GDI+九点抽样最大通道差为1；但worker PeakWorkingSet64分别为394,821,632B（376.53MiB）和393,969,664B（375.72MiB），10个worker样本全部超过256MiB目标，因此该候选在本测量目标上FAIL，T04与通用JPEG内存门仍开放。候选未安装、未集成，渐进JPEG/EXIF/ICC/打包/UI/目标粘贴未覆盖，P15按用户决定仍未关闭。另需保留环境说明：隔离测量前曾对release目录ClipNest.exe执行ELECTRON_RUN_AS_NODE capability probe，可能单实例转发并短暂激活现有安装程序窗口；stdout为空、未调用剪贴板或输入API、观测进程均为旧PID，但无法排除短暂激活。详见新增证据。",
         "大图utilityProcess现使用精确backing store的≤1MiB原始RGBA分块并逐块ACK。receiver核验requestId、连续安全整数序号、满块/尾块精确长度、累计字节和终止帧元数据；另补外层requestId=input.jobId校验、child来源guard，以及image_worker_busy后退役。独立协议和JPEG流复核见chunked-stream-code-review.json。当前main构建及clipboard-image-decoder定向测试25/25通过；fake覆盖不匹配ID、取消/retiring锁、旧child伪造当前requestId、busy隔离、chunk顺序/长度/结束帧。request/input ID与child来源加固后的Windows x64隔离ASAR smoke为3000×3000全像素相等、35个decoded_chunk加1个decoded_end、456.19ms，见packaged-asar-worker-chunked-hardened-smoke.json；未加固前的478.43ms历史样本见packaged-asar-worker-chunked-smoke.json。最终源码构建下的16MP/20MiB合成baseline JPEG raw-chunk五样本：4:4:4 p50 2877.15ms、p95 2986.02ms、PeakWorkingSet64 208.57MiB，GDI+九点最大差1，jpeg-js全帧差分0；4:2:0 p50 2186.23ms、p95 2262.56ms、峰值207.87MiB，jpeg-js全帧差分0但GDI+九点差38（容差8），该阈值只按4:4:4校准，4:2:0差异仍是未关闭的fidelity门。jpeg-js oracle在Electron parent保留64,000,000字节，未计入worker RSS；测量仍是合成诊断，不能证明通用内存上限/T05基准。无系统剪贴板或物理输入；P15、桌面整链与T04 acceptance保持开放。",
         "4:2:0 GDI+密集ROI复核仍未关闭fidelity门：最终harness下，相同20MiB高熵JPEG（SHA c9362e8411a710e82c8ead5e41295c0f6902bf8f5eac9cf40ac25915abb68ab1）的32×32 ROI中900/1024点差异超过8、最大70；合成色度边缘ROI在垂直/水平/棋盘图案内部（去除2像素边界）分别784/784、784/784、588/784点超过8，整个ROI最大差为120/136/147。四次worker均与pinned jpeg-js全帧逐字节一致，但该参考并非独立实现；GDI+阈值只按4:4:4校准。结果支持色度重建/相位差异这一可能解释，不能判断解码器谁正确或推导全图差错率。每项仅一个合成样本，不触系统剪贴板/输入。证据见docs/evidence/T04/jpeg-420-gdiplus-roi-investigation.json。",
-        "WIC同字节4:2:0 ROI三方诊断完成：4个合成16MP/20MiB单样本均核对输入SHA与32×32/1024点坐标；WPF/WIC与GDI+在4096个ROI点逐点一致，worker与pinned jpeg-js全帧逐字节一致，但相对WIC的差异仍为900/1024（max70）、1000/1024（max120）、1008/1024（max136）、768/1024（max147）。WIC/GDI+一致只说明这两条Windows成像路径在所选点一致，不是真值证明；JPEG 4:2:0阈值未校准、仅单样本且ROI为选择性样本，fidelity门继续开放。未触系统剪贴板、输入、前台应用或已安装包。证据见docs/evidence/T04/jpeg-420-three-way-oracle.json及四份WIC ROI记录。"
+        "WIC同字节4:2:0 ROI三方诊断完成：4个合成16MP/20MiB单样本均核对输入SHA与32×32/1024点坐标；WPF/WIC与GDI+在4096个ROI点逐点一致，worker与pinned jpeg-js全帧逐字节一致，但相对WIC的差异仍为900/1024（max70）、1000/1024（max120）、1008/1024（max136）、768/1024（max147）。WIC/GDI+一致只说明这两条Windows成像路径在所选点一致，不是真值证明；JPEG 4:2:0阈值未校准、仅单样本且ROI为选择性样本，fidelity门继续开放。未触系统剪贴板、输入、前台应用或已安装包。证据见docs/evidence/T04/jpeg-420-three-way-oracle.json及四份WIC ROI记录。",
+        "编码前逻辑RGBA源ROI诊断：四个合成16MP/20MiB 4:2:0 ROI各运行一个fresh utilityProcess样本；worker相对编码前逻辑源的RGB MAE分别为高熵44.75、垂直边缘32.67、水平边缘32.67、棋盘0.50，均低于所选点的GDI+/WIC（47.26、52.73、52.70、36.67）。GDI+/WIC所选点一致，worker与pinned jpeg-js全帧一致；这些都不是真值证明。NativeImage源像素通过PNG回读恢复逻辑RGBA以排除平台字节顺序；每项仅单样本、选择性ROI和有损合成图，因此不能作为通用JPEG正确性或验收阈值，4:2:0 fidelity门保持开放。无系统剪贴板、输入、前台窗口或安装包操作。详情见docs/evidence/T04/jpeg-420-source-roi-reconstruction.json及四份source-roi测量记录。",
+        "源ROI诊断另在Electron parent中进行NativeImage PNG回读并暂存逻辑像素；这部分内存不计入utilityProcess RSS，可能增加测量期间的总进程内存/机器负载，不能将worker峰值解释为整机或应用总内存峰值。"
       ]
     },
     "T05": {
@@ -184,16 +191,16 @@
         "docs/evidence/T05/current-static-audit.json",
         "docs/evidence/T05/draft2020-schema-meta-validation.json",
         "docs/evidence/T05/current-gates-refresh.json",
-      "docs/evidence/T05/static-preparation-verification.json",
-      "docs/evidence/T05/report-verifier-static-validation.json",
-      "docs/evidence/T05/report-identity-consistency-regression.json",
-      "docs/evidence/T05/g0-report-contract-static-verification.json"
+        "docs/evidence/T05/static-preparation-verification.json",
+        "docs/evidence/T05/report-verifier-static-validation.json",
+        "docs/evidence/T05/report-identity-consistency-regression.json",
+        "docs/evidence/T05/g0-report-contract-static-verification.json"
       ],
       "openGates": [
         "T05任务保持not_started；T04压缩IPC worker的隔离ASAR smoke及合成main-process deadline诊断已记录。WPF/WIC合成16MP JPEG候选探针10个样本均低于256MiB且像素对照通过，但不是生产utilityProcess路径，不等于JPEG生产内存门、T04 accepted或P01-P28发布验收。完整包/helper核验、最终卡片点击及受控live验收仍未完成。",
         "当前本地检查点已通过3项真实clipboard序列回归和1项自建EDIT原caret真实SendInput/合成文字可见性集成；不等于T05受控独立目标整链输入验收。最终卡片点击、图像外部粘贴及wake-to-actionable 100样本基准仍NOT_RUN，T05执行需隔离桌面。",
         "fixture已增加G0交互路径无阻塞spawnSync、无每次交互新建helper的观察门；两项均planned/NOT_RUN，需用进程调用追踪与helper身份实证。",
-      "report.schema.json要求PASS提供非空commit、Windows x64与完整性能控制变量，并要求两个指标为controlled_live、至少100个成功样本和证据引用。verify-report.cjs会重算requestId唯一性、样本结果/阶段键、outcome计数与nearest-rank分位数；G0 PASS还必须提供逐request观察，Node校验会拒绝缺失或不匹配的requestId追踪映射。Windows UTF-8 Python桥接、Unicode code point边界及合成G0结构自检通过：38/38定向单测、14个schema无效实例与6个G0负例均通过；Draft本身不能表达requestIds数组与任意对象键集合相等，该关系由Node校验器强制。完整Draft 2020-12检查仍通过显式--validate-schema使用主机Python jsonschema 4.26.0，未添加锁定依赖。测量和真实G0观察仍全部NOT_RUN，证据为PREPARATION_ONLY；可移植validator依赖留待T06审查。",
+        "report.schema.json要求PASS提供非空commit、Windows x64与完整性能控制变量，并要求两个指标为controlled_live、至少100个成功样本和证据引用。verify-report.cjs会重算requestId唯一性、样本结果/阶段键、outcome计数与nearest-rank分位数；G0 PASS还必须提供逐request观察，Node校验会拒绝缺失或不匹配的requestId追踪映射。Windows UTF-8 Python桥接、Unicode code point边界及合成G0结构自检通过：38/38定向单测、14个schema无效实例与6个G0负例均通过；Draft本身不能表达requestIds数组与任意对象键集合相等，该关系由Node校验器强制。完整Draft 2020-12检查仍通过显式--validate-schema使用主机Python jsonschema 4.26.0，未添加锁定依赖。测量和真实G0观察仍全部NOT_RUN，证据为PREPARATION_ONLY；可移植validator依赖留待T06审查。",
         "T05静态准备校验已通过：15/15回归与28个case、71条断言、2个G0 gate的traceability/schema检查通过，结果为PREPARATION_ONLY；未运行行为，也不改变T05 not_started状态。证据：docs/evidence/T05/static-preparation-verification.json。",
         "已为P01-P28计划中的71条断言建立逐项原文映射（tests/tasks/T05/assertion-map.json），当前全部NOT_RUN且证据为空；独立静态审查确认71/71原文和顺序一致、ID唯一。报告一致性检查器核对断言映射、requestId、样本计数/统计和仓库内证据路径；完整Draft 2020-12实例自检通过，但主机Python/jsonschema未锁定且不能证明证据内容支持声明。PASS前仍须逐条独立审查映射与实际证据。",
         "verify-report.cjs的root PASS路径会独立比较helper expected/actual路径、版本、协议、SHA-256及rollback版本/hash；新增回归覆盖identityMatched伪报、匹配身份正向通过、字段不匹配与非字符串SHA-256，并将畸形hash作为身份错误处理（34/34 T05定向单测通过，见docs/evidence/T05/report-identity-consistency-regression.json）。该校验仍不直接读取/哈希最终安装包资源或密码学验证签名；PASS前须人工核对实际打包资源、回滚前后身份、签名结果及逐项命令证据，且内部包是否接受unsigned仍待明确。",
