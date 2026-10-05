@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "fixture": "T04-I04 / P14",
+  "title": "图片快照读取失败与权限降级 VM fake 回归",
+  "status": "PASS_WITH_LIMITATIONS",
+  "source": {
+    "commit": "4db9416e1f5c14d2874f617a928d98dc46cfcac7",
+    "workingTreeWasDirty": true,
+    "productionSourcesChanged": false,
+    "testFile": "tests/tasks/T04/main-image-preparation-failure.test.cjs",
+    "testFileSha256": "55B26CB995CB4C256B882946B2EB87EB883F90C77469F2EF44AA14A4242FA016"
+  },
+  "validation": {
+    "command": "pnpm test:unit -- main-image-preparation-failure.test.cjs clipboard-image-preparation.test.cjs",
+    "result": "PASS",
+    "mainBuild": "PASS: pnpm build:main (tsc -p tsconfig.main.json)",
+    "passed": 20,
+    "failed": 0,
+    "nodeVersion": "v24.16.0"
+  },
+  "testBoundary": {
+    "productionCode": "copySelectedItem extracted from src/main/main.ts and executed in a Node VM",
+    "readFailure": "Fake NativeContentProvider.snapshot rejects with content_item_not_found, a production snapshot lookup error",
+    "permissionDenial": "Fake Win32HostBridge.allowSetForegroundWindow returns false",
+    "windowClipboardAndHelper": "VM fakes only",
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "browserWindowCreated": false
+  },
+  "scenarios": [
+    {
+      "id": "image_snapshot_read_failure",
+      "result": {
+        "status": "blocked",
+        "reasonCode": "content_item_not_found"
+      },
+      "asserted": {
+        "snapshotCalls": 1,
+        "helperPreparationCalls": 0,
+        "helperRequests": 0,
+        "helperClipboardCommitWrites": 0,
+        "electronClipboardFallbackWrites": 0,
+        "pasteOrInputRequests": 0,
+        "panelHides": 0,
+        "panelRemainsVisible": true,
+        "originalImageContentRetained": true,
+        "originalPreviewRetained": true
+      }
+    },
+    {
+      "id": "P14_authorization_denial_copy_only",
+      "result": {
+        "status": "copied_only",
+        "reasonCode": "authorization_denied"
+      },
+      "asserted": {
+        "fakeHelperClipboardCommitWrites": 1,
+        "electronClipboardFallbackWrites": 0,
+        "authorizationChecks": 1,
+        "pasteOrInputRequests": 0,
+        "panelHides": 0,
+        "panelRemainsVisible": true,
+        "originalImageContentRetained": true,
+        "originalPreviewRetained": true
+      },
+      "copySideEffectMeaning": "The one helper clipboard commit is the intended copy-only degradation; this scenario does not have zero total effects."
+    }
+  ],
+  "limitations": [
+    "The read failure is injected at the provider snapshot boundary; no real file, OS clipboard, or NativeContentProvider read was performed.",
+    "The permission denial is a fake AllowSetForegroundWindow result; it does not exercise a real higher-integrity target or UIPI behavior.",
+    "These regressions cover the stated fake boundaries only; I04 queue/cache/capacity edges, cancellation under a real CPU-bound decode, real platform permissions, and full T04 acceptance remain open."
+  ]
+}

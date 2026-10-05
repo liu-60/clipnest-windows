@@ -158,7 +158,8 @@
         "docs/evidence/T04/jpeg-420-source-roi-reconstruction.json",
         "docs/evidence/T04/jpeg-stream-current-memory-status.json",
         "docs/evidence/T04/image-preparation-16mp-service-integration.json",
-        "docs/evidence/T04/image-preparation-expired-deadline-fake-regression.json"
+        "docs/evidence/T04/image-preparation-expired-deadline-fake-regression.json",
+        "docs/evidence/T04/image-preparation-failure-boundaries-fake-regression.json"
       ],
       "openGates": [
         "WPF/WIC候选测量已完成：Windows PowerShell STA独立子进程对合成16MP、20MiB baseline JPEG 4:2:0和4:4:4各5样本（共10）完整解码、全像素oracle与GDI+九点对照均通过；PeakWorkingSet64最高169,676,800B（161.82MiB），10样本均低于256MiB目标。该值含PowerShell/.NET/WPF进程基线；探针不是生产IWIC直接调用或Electron utilityProcess，未覆盖完整IPC/deflate/helper DIB、JPEG语料与元数据、取消及打包路径，因此仅为候选初筛，不关闭生产JPEG内存门或T04验收。测量与限制见docs/evidence/T04/wic-jpeg-memory-probe.json及docs/evidence/T04/wic-jpeg-route-review.json。",
@@ -181,7 +182,7 @@
         "编码前逻辑RGBA源ROI诊断：四个合成16MP/20MiB 4:2:0 ROI各运行一个fresh utilityProcess样本；worker相对编码前逻辑源的RGB MAE分别为高熵44.75、垂直边缘32.67、水平边缘32.67、棋盘0.50，均低于所选点的GDI+/WIC（47.26、52.73、52.70、36.67）。GDI+/WIC所选点一致，worker与pinned jpeg-js全帧一致；这些都不是真值证明。NativeImage源像素通过PNG回读恢复逻辑RGBA以排除平台字节顺序；每项仅单样本、选择性ROI和有损合成图，因此不能作为通用JPEG正确性或验收阈值，4:2:0 fidelity门保持开放。无系统剪贴板、输入、前台窗口或安装包操作。详情见docs/evidence/T04/jpeg-420-source-roi-reconstruction.json及四份source-roi测量记录。",
         "源ROI诊断另在Electron parent中进行NativeImage PNG回读并暂存逻辑像素；这部分内存不计入utilityProcess RSS，可能增加测量期间的总进程内存/机器负载，不能将worker峰值解释为整机或应用总内存峰值。",
         "当前16MP/20MiB SOF0 baseline流式decoder测量已成功（4:4:4、4:2:0各5/5），覆盖范围限于这两种合成布局；渐进/非SOF0、元数据边界、全JPEG输入与硬RSS保证仍开放。旧jpeg-js预检capacity-reject记录属于流式route之前，见docs/evidence/T04/jpeg-stream-current-memory-status.json。",
-        "新增I04真实service集成诊断（单样本）：生产ImagePreparationService经真实utilityProcess解码合成16MP/20MiB SOF0 4:4:4，返回完整64,000,000B RGBA，大图cache miss且缓存保持0；真实大图worker退出后，由新worker准备2×1 PNG并缓存8B，复取命中且未再解码。50ms同查询采样记录utilityProcess PeakWorkingSet64 215,232,512B、Electron主进程301,572,096B，同期采样工作集峰和450,711,552B；各进程高水位未相加。仪器化运行使用30,000ms诊断期限，observed service elapsed为3174.24ms，高于产品3000ms配置，默认期限成功门未证明并保持开放。无BrowserWindow、系统剪贴板、物理输入、helper或安装包操作；其他I04 fake边界/取消/权限和T04完整验收仍未关闭。证据见docs/evidence/T04/image-preparation-16mp-service-integration.json。",
+        "新增I04真实service集成诊断（单样本）：生产ImagePreparationService经真实utilityProcess解码合成16MP/20MiB SOF0 4:4:4，返回完整64,000,000B RGBA，大图cache miss且缓存保持0；真实大图worker退出后，由新worker准备2×1 PNG并缓存8B，复取命中且未再解码。50ms同查询采样记录utilityProcess PeakWorkingSet64 215,232,512B、Electron主进程301,572,096B，同期采样工作集峰和450,711,552B；各进程高水位未相加。仪器化运行使用30,000ms诊断期限，observed service elapsed为3174.24ms，高于产品3000ms配置，默认期限成功门未证明并保持开放。无BrowserWindow、系统剪贴板、物理输入、helper或安装包操作；I04其余容量/队列边界、真实解码中的取消、真实OS权限/读取行为和T04完整验收仍未关闭；另有VM fake回归覆盖content_item_not_found图片snapshot读取失败（保留content/preview、helper/两种clipboard/paste/hide为0）与P14 authorization_denied（保留content/preview、一次fake helper clipboard commit、零fallback/paste/hide）。该fake不代表真实OS权限或读取行为，详见docs/evidence/T04/image-preparation-failure-boundaries-fake-regression.json。证据见docs/evidence/T04/image-preparation-16mp-service-integration.json。",
         "补充T04-I05过期 deadline fake 回归：3000ms默认配置超时后不发ready、不入cache；deadlineAt=-1请求不增加factory/decode/cache且只发preparing/failed；后续请求等待旧fake dispose完成才创建新worker（定向项1/1、clipboard-image-preparation整文件11/11通过）。该证据只验证ImagePreparationService fake排序，不证明真实CPU解码中断/OS进程退出或16MP在3s内成功；T04仍in_progress。详情：docs/evidence/T04/image-preparation-expired-deadline-fake-regression.json。"
       ]
     },

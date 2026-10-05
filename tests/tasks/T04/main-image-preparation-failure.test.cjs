@@ -239,6 +239,25 @@ test("image preparation capacity failure leaves clipboard and panel untouched", 
   assert.deepEqual(harness.requests, []);
 });
 
+test("image snapshot read failure preserves the retained source and has zero external side effects", async () => {
+  const harness = makeHarness({ snapshotError: "content_item_not_found" });
+
+  assert.deepEqual(plain(await harness.select()), {
+    status: "blocked",
+    reasonCode: "content_item_not_found",
+  });
+  assert.equal(harness.effects.snapshotCalls, 1);
+  assert.equal(harness.effects.helperPreparationCalls, 0, "a failed snapshot never registers helper content");
+  assert.equal(harness.effects.nativeClipboardWrites, 0, "a failed snapshot never reaches helper commit_write");
+  assert.equal(harness.effects.electronFallbackWrites, 0, "a failed image read never uses Electron clipboard fallback");
+  assert.equal(harness.effects.pasteRequests, 0, "a failed image read never sends input");
+  assert.equal(harness.effects.panelHides, 0, "a failed image read leaves the panel open");
+  assert.equal(harness.isVisible(), true);
+  assert.equal(harness.item.content, "data:image/png;base64,AA==", "the retained image source remains available");
+  assert.equal(harness.item.preview, "预览", "the retained image preview remains available");
+  assert.deepEqual(harness.requests, [], "no helper command is sent after a failed image read");
+});
+
 test("image selection fails closed when the helper is unavailable before preparation", async () => {
   const harness = makeHarness({ helperState: "unavailable" });
 
@@ -370,4 +389,6 @@ test("helper authorization denial keeps the existing image copy-only degradation
   assert.equal(harness.effects.pasteRequests, 0, "permission denial never sends input");
   assert.equal(harness.effects.panelHides, 0);
   assert.equal(harness.isVisible(), true);
+  assert.equal(harness.item.content, "data:image/png;base64,AA==", "the original image remains in history");
+  assert.equal(harness.item.preview, "预览", "the original preview remains available");
 });
