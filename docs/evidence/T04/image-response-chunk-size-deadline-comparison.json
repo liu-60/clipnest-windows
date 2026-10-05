@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "MEASURED_WITH_LIMITATIONS",
+  "measuredAt": "2026-10-06",
+  "question": "Does increasing the raw RGBA IPC response chunk size improve the production image preparation deadline result for the pinned synthetic fixture?",
+  "control": {
+    "commit": "c0a2de22892e9333239e65463cd5ef579b24a681",
+    "fixture": {
+      "width": 4000,
+      "height": 4000,
+      "rgbaBytes": 64000000,
+      "encodedBytes": 20971520,
+      "jpegSampling": "SOF0 4:4:4",
+      "inputSha256": "5f5178ce761193b569130af082740669cd16071de9ea733aa8968f4f8e9dc6a3",
+      "expectedOutputRgbaSha256": "f6f1c8619e4adc31a55adc532c5219ab7408bca3cafdcf677d0dde2a0fce83dc"
+    },
+    "runner": "tests/tasks/T04/run-image-preparation-16mp-default-deadline-5-sample.cjs",
+    "samplesPerRun": 5,
+    "deadlineMs": 3000,
+    "deadlineStart": "Immediately before each ImagePreparationService.prepare call; this is later than the product selection start.",
+    "instrumentation": "Diagnostic timing sink and worker stage timing were disabled. Each sample used a fresh ImagePreparationService and real Electron utilityProcess; the next sample waited for the prior worker to exit.",
+    "executionOrder": ["2 MiB", "4 MiB"],
+    "productDefaultRetainedBytes": 1048576
+  },
+  "candidates": [
+    {
+      "responseChunkBytes": 2097152,
+      "expectedChunkCountFromArithmetic": 31,
+      "expectedTailChunkBytesFromArithmetic": 1085440,
+      "actualChunkTelemetryRecorded": false,
+      "workerOrMainPeakRssRecorded": false,
+      "sourceFileSha256": "0d50274bcfb7218711542d2234581c4df5ed7fc4bbf161265130ffb579685094",
+      "builtWorkerSha256": "590149522e79ca0dffa454e008a6667e62cfbc82cf2581a0b169cc3ebd32fa37",
+      "evidenceFile": "docs/evidence/T04/image-preparation-16mp-default-deadline-chunk-2m-5-sample.json",
+      "sampleCount": 5,
+      "successCount": 5,
+      "timeoutCount": 0,
+      "serviceWallTimeMs": {
+        "min": 2723.48,
+        "median": 2775.99,
+        "max": 2848.73,
+        "values": [2848.73, 2724.77, 2835.99, 2775.99, 2723.48]
+      },
+      "successfulOutputRgbaSha256": "f6f1c8619e4adc31a55adc532c5219ab7408bca3cafdcf677d0dde2a0fce83dc",
+      "allWorkersExitedBeforeNextSample": true,
+      "recordedWorkerExitCode": 0
+    },
+    {
+      "responseChunkBytes": 4194304,
+      "expectedChunkCountFromArithmetic": 16,
+      "expectedTailChunkBytesFromArithmetic": 1085440,
+      "actualChunkTelemetryRecorded": false,
+      "workerOrMainPeakRssRecorded": false,
+      "sourceFileSha256": "13dbd60d3a94e56bbdc91081b2d6cfb1c6dee535947cece219cd9f83c987e27b",
+      "builtWorkerSha256": "a76d2b09346339b566322f63b7cd3c4a45d2666df7b36074c5ae0950ccfb610e",
+      "evidenceFile": "docs/evidence/T04/image-preparation-16mp-default-deadline-chunk-4m-5-sample.json",
+      "sampleCount": 5,
+      "successCount": 4,
+      "timeoutCount": 1,
+      "serviceWallTimeMs": {
+        "min": 2862.41,
+        "median": 2903.87,
+        "max": 3004.65,
+        "values": [2862.41, 2932.36, 2903.87, 2901.39, 3004.65]
+      },
+      "successfulOutputRgbaSha256": "f6f1c8619e4adc31a55adc532c5219ab7408bca3cafdcf677d0dde2a0fce83dc",
+      "timedOutWorkerAbortObserved": true,
+      "allWorkersExitedBeforeNextSample": true,
+      "recordedWorkerExitCode": 0
+    }
+  ],
+  "oneMiBBaseline": [
+    {
+      "responseChunkBytes": 1048576,
+      "evidenceFile": "docs/evidence/T04/image-preparation-16mp-default-deadline-huffman-fast6-candidate-5-sample.json",
+      "successCount": 3,
+      "timeoutCount": 2,
+      "serviceWallTimeMs": {"median": 2925.22, "max": 3050.91}
+    },
+    {
+      "responseChunkBytes": 1048576,
+      "evidenceFile": "docs/evidence/T04/image-preparation-16mp-default-deadline-huffman-fast6-repeat2-5-sample.json",
+      "successCount": 5,
+      "timeoutCount": 0,
+      "serviceWallTimeMs": {"median": 2749.57, "max": 2755.66}
+    }
+  ],
+  "interpretation": [
+    "The 2 MiB run had the same success count as the latest 1 MiB repeat and a 26.42 ms higher median; the 4 MiB run had one timeout and a 154.30 ms higher median than that repeat. These sequential five-sample observations do not establish that chunk size caused the timing differences.",
+    "Every successful candidate sample matched the pinned full-frame RGBA SHA-256. The 4 MiB timeout observed request abort and worker exit.",
+    "Expected chunk counts and tail sizes are arithmetic from 64,000,000 output bytes and the candidate source constant; this runner did not record actual per-message chunk telemetry or RSS.",
+    "The runner asserts worker exit was observed, but does not assert the exit code. Recorded exit codes were zero.",
+    "The 3,000 ms budget starts immediately before service.prepare, not at the full product selection start, so these measurements do not close the product deadline gate."
+  ],
+  "decision": "Keep the production default at 1 MiB. Do not adopt either larger candidate from this timing-only comparison; chunk-count, memory, ASAR transport, and fuller selection-start deadline evidence remain open.",
+  "sideEffects": {
+    "browserWindowCreated": false,
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "nativeHelperInvoked": false,
+    "packageInstalledOrPublished": false,
+    "temporaryProfilesRemoved": true
+  }
+}
