@@ -173,12 +173,16 @@ test("root PASS recomputes helper identity from expected and actual fields", () 
     signatureStatus: "valid",
     evidence: ["tests/tasks/T05/fixture-plan.json"],
   });
+  assert.ok(
+    !collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_HELPER_IDENTITY_REQUIRED"),
+  );
 
   const mismatchMutations = [
     (helper) => { helper.actualPath = "resources/other/clipnest-helper.exe"; },
     (helper) => { helper.actualVersion = "1.0.1"; },
     (helper) => { helper.actualProtocol = "2"; },
     (helper) => { helper.actualSha256 = "b".repeat(64); },
+    (helper) => { helper.actualSha256 = 123; },
     (helper) => { helper.identityMatched = false; },
   ];
   for (const mutate of mismatchMutations) {
@@ -210,10 +214,14 @@ test("root PASS recomputes rollback version and hash identity", () => {
     helperBinaryOnly: { name: "helperBinaryOnly", result: "PASS", evidence: ["tests/tasks/T05/fixture-plan.json"] },
     evidence: ["tests/tasks/T05/fixture-plan.json"],
   });
+  assert.ok(
+    !collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_IDENTITY_REQUIRED"),
+  );
 
   const mismatchMutations = [
     (rollback) => { rollback.rollbackVersion = "1.0.1"; },
     (rollback) => { rollback.rollbackSha256 = "b".repeat(64); },
+    (rollback) => { rollback.rollbackSha256 = 123; },
     (rollback) => { rollback.identityMatched = false; },
   ];
   for (const mutate of mismatchMutations) {

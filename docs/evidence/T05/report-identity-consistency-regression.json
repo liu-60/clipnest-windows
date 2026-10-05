@@ -5,11 +5,12 @@
   "result": "PASS_WITH_LIMITATIONS",
   "checkedDate": "2026-10-05",
   "source": {
-    "commit": "de78921bc7ed44c052d66a0adb8ef49c77f9fc46",
+    "commit": "4395f6e279f3a29dd24022bc99a34e3291c2ccfb",
     "branch": "codex/m0-latency",
     "workingTreeWasDirty": true,
     "modifiedFiles": [
       "tests/tasks/T05/verify-report.test.cjs",
+      "tests/tasks/T05/verify-report.cjs",
       "docs/progress.json"
     ]
   },
@@ -25,15 +26,19 @@
   ],
   "coveredMismatches": {
     "helper": [
+      "matching expected and actual identity accepted",
       "actual path",
       "actual version",
       "actual protocol",
       "actual SHA-256",
+      "non-string actual SHA-256",
       "identityMatched boolean"
     ],
     "rollback": [
+      "matching prior and rollback identity accepted",
       "rollback version",
       "rollback SHA-256",
+      "non-string rollback SHA-256",
       "identityMatched boolean"
     ]
   },

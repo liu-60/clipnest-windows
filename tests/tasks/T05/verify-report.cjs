@@ -651,8 +651,9 @@ function validateRootPassRequirements(report, context, errors) {
         .every((field) => typeof helper[field] === "string" && helper[field].trim() !== "") ||
       helper.expectedPath !== helper.actualPath || helper.expectedVersion !== helper.actualVersion ||
       helper.expectedProtocol !== helper.actualProtocol ||
-      !/^[a-fA-F0-9]{64}$/.test(helper.expectedSha256 ?? "") ||
-      helper.expectedSha256?.toLowerCase() !== helper.actualSha256?.toLowerCase()) {
+      typeof helper.expectedSha256 !== "string" || !/^[a-fA-F0-9]{64}$/.test(helper.expectedSha256) ||
+      typeof helper.actualSha256 !== "string" || !/^[a-fA-F0-9]{64}$/.test(helper.actualSha256) ||
+      helper.expectedSha256.toLowerCase() !== helper.actualSha256.toLowerCase()) {
     addError(errors, "PASS_HELPER_IDENTITY_REQUIRED", "$.packageAndRollback.helperResource", "top-level PASS requires matching packaged helper path, version, protocol, and SHA-256");
   }
   if (helper && !["valid", "unsigned"].includes(helper.signatureStatus)) {
@@ -664,8 +665,9 @@ function validateRootPassRequirements(report, context, errors) {
       typeof rollback.priorVersion !== "string" || rollback.priorVersion.trim() === "" ||
       typeof rollback.rollbackVersion !== "string" || rollback.rollbackVersion.trim() === "" ||
       rollback.priorVersion !== rollback.rollbackVersion ||
-      !/^[a-fA-F0-9]{64}$/.test(rollback.priorSha256 ?? "") ||
-      rollback.priorSha256?.toLowerCase() !== rollback.rollbackSha256?.toLowerCase()) {
+      typeof rollback.priorSha256 !== "string" || !/^[a-fA-F0-9]{64}$/.test(rollback.priorSha256) ||
+      typeof rollback.rollbackSha256 !== "string" || !/^[a-fA-F0-9]{64}$/.test(rollback.rollbackSha256) ||
+      rollback.priorSha256.toLowerCase() !== rollback.rollbackSha256.toLowerCase()) {
     addError(errors, "PASS_ROLLBACK_IDENTITY_REQUIRED", "$.packageAndRollback.rollback", "top-level PASS requires rollback identity to match the recorded prior helper");
   }
   if (!isRecord(rollback) || !["valid", "unsigned"].includes(rollback.signatureStatus)) {
