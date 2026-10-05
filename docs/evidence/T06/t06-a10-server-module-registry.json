@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "T06-a10-server-module-registry",
+  "result": "PASS_WITH_LIMITATIONS",
+  "recordedAt": "2026-10-05T21:45:31+08:00",
+  "worktree": {
+    "path": "D:/ClipNest-work/v2",
+    "branch": "codex/v2-clipboard",
+    "headBeforeChanges": "83bbd63d27ace92ed98fb5a0c3b4cc99cff741d4",
+    "progressSnapshot": {
+      "T00": "accepted",
+      "T06": "in_progress"
+    },
+    "preservedExistingUntracked": [
+      "docs/progress.json.tmp"
+    ],
+    "committed": false,
+    "pushed": false
+  },
+  "implementation": {
+    "productionFile": "apps/server/src/modules/index.ts",
+    "productionSha256": "531a4a9252c8106b01e7f04d55c3c5cc342cef0f5a8c0bec45d7ea04772b5354",
+    "registeredModules": [
+      "auth",
+      "devices",
+      "workspaces",
+      "keys",
+      "sync",
+      "attachments",
+      "usage",
+      "billing"
+    ],
+    "allModulesEnabled": false,
+    "disabledResult": {
+      "ok": false,
+      "error": {
+        "code": "FEATURE_NOT_ENABLED"
+      }
+    },
+    "unknownModuleFailsClosed": true,
+    "dependenciesAdded": []
+  },
+  "test": {
+    "file": "tests/tasks/T06/server-module-registry.test.cjs",
+    "sha256": "59f353429883c23cd32a8ff8f50b9d93c977e80787d5a22d488c1a4ee1922625",
+    "command": "node --test tests/tasks/T06/server-module-registry.test.cjs",
+    "status": "PASS",
+    "passed": 3,
+    "failed": 0,
+    "observations": [
+      "All eight planned server module IDs are registered with enabled=false.",
+      "Invoking every registered module returns ok=false and FEATURE_NOT_ENABLED without data.",
+      "Unknown module names fail closed; mutating one response does not alter a later response."
+    ]
+  },
+  "additionalChecks": {
+    "sourceWhitespaceAndFinalNewline": "PASS",
+    "typescriptTypecheck": "NOT_RUN: no local or global tsc command is available.",
+    "fullT06Commands": "NOT_RUN: this increment validates only the isolated registry behavior; no contracts or Rust behavior was changed."
+  },
+  "limitations": [
+    "T06 remains in_progress; this slice does not accept T06 or implement server business/API success behavior.",
+    "apps/server/package.json has no module-type declaration. The test executes the exact source through an isolated ESM data URL; direct package import/module configuration remains for the app skeleton follow-up.",
+    "No TypeScript compiler was available, so TypeScript semantic type checking was not performed.",
+    "The existing untracked docs/progress.json.tmp was preserved and not read or modified.",
+    "The workspaces module is sourced from the workspace model/API in spec 03 and the server module path in T14; it is absent from the directory summary in 02 §2, which appears to be an architecture-summary omission."
+  ]
+}
