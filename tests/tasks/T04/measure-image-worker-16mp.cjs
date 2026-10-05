@@ -8,14 +8,13 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const zlib = require("node:zlib");
-const { createInflate } = zlib;
 
 const ROOT = path.resolve(__dirname, "../../..");
 const WIDTH = Math.max(1, Math.trunc(Number(process.env.T04_IMAGE_WIDTH) || 4000));
 const HEIGHT = Math.max(1, Math.trunc(Number(process.env.T04_IMAGE_HEIGHT) || 4000));
 const PIXELS = WIDTH * HEIGHT;
 const WORKER_LIMIT_BYTES = 256 * 1024 * 1024;
-const INFLATE_CHUNK_BYTES = 1024 * 1024;
+const IMAGE_RESPONSE_CHUNK_BYTES = 1024 * 1024;
 const SAMPLE_COUNT = Math.min(5, Math.max(1, Number(process.env.T04_IMAGE_SAMPLE_COUNT) || 5));
 const SAMPLE_INTERVAL_MS = Math.max(50, Number(process.env.T04_IMAGE_SAMPLE_INTERVAL_MS) || 100);
 const IMAGE_FORMAT = process.env.T04_IMAGE_FORMAT || "png";
@@ -278,16 +277,16 @@ async function runMeasurement() {
       p50WorkerStartupMs: percentile(samples.map((sample) => sample.workerStartupMs), 0.5),
       p95WorkerStartupMs: percentile(samples.map((sample) => sample.workerStartupMs), 0.95),
       maxWorkerStartupMs: Math.max(...samples.map((sample) => sample.workerStartupMs)),
-      timingScope: `fresh utility process ready, then request post through decompressed ${PIXELS * 4}-byte RGBA response receipt`,
+      timingScope: `fresh utility process ready, then request post through ${PIXELS * 4}-byte RGBA response receipt`,
       stageTimingDefinitions: {
         decodeMs: "utility process decoder duration",
-        deflateMs: "utility process synchronous compression duration",
-        requestToCompressedMessageMs: "parent postMessage through receipt of the full compressed IPC response; includes worker decode, compression, and transport",
-        parentInflateMs: "parent receipt of compressed response through exact inflate and completion",
+        chunkSendMs: "utility process first chunk send through receipt of the final chunk ACK",
+        requestToFirstChunkMessageMs: "parent postMessage through receipt of the first raw pixel chunk",
+        parentChunkTransferMs: "parent receipt of first raw pixel chunk through validated end message",
       },
       diagnosticOnly: true,
       doesNotSatisfyNormalTextOrWake100SampleAcceptance: true,
-      responsePayloadBytesMeaning: "compressed IPC transport bytes (transportBytes), not decompressed RGBA bytes",
+      responsePayloadBytesMeaning: "sum of raw RGBA IPC chunk bytes (transportBytes)",
     },
     limitations: [
       `Fresh-process synthetic ${PIXELS}-pixel samples are diagnostic; they do not satisfy the T05 100-sample controlled desktop timing gates or measure end-user paste latency.`,
@@ -319,35 +318,57 @@ function decode(child, requestId, bytes, width, height, format) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => finish(new Error(`image_decode_timeout:${requestId}`)), 30_000);
     let requestPostedAt = 0n;
+    const expectedBytes = width * height * 4;
+    const pixels = Buffer.allocUnsafe(expectedBytes);
+    let nextSeq = 0;
+    let receivedBytes = 0;
+    let transportBytes = 0;
+    let firstChunkAt = 0n;
     const onMessage = (eventOrMessage) => {
       const message = eventOrMessage && eventOrMessage.data !== undefined ? eventOrMessage.data : eventOrMessage;
-      if (!message || message.requestId !== requestId) return;
-      if (message.type === "failed") finish(new Error(message.reason || "image_decode_failed"));
-      else if (message.type === "decoded") finish(null, {
-        ...message.image,
-        transportBytes: message.image.pixels.byteLength,
-      });
-      else if (message.type === "decoded_compressed") {
-        const responseReceivedAt = process.hrtime.bigint();
-        const requestToCompressedMessageMs = Number(responseReceivedAt - requestPostedAt) / 1_000_000;
-        const inflateStartedAt = process.hrtime.bigint();
-        const compressed = Buffer.from(message.compressedPixels.buffer,
-          message.compressedPixels.byteOffset, message.compressedPixels.byteLength);
-        inflateExact(compressed, message.uncompressedBytes).then((pixels) => {
-          finish(null, {
-            width: message.width,
-            height: message.height,
-            pixels,
-            transportBytes: compressed.byteLength,
-            stageTimings: {
-              ...(message.stageTimings ?? {}),
-              requestToCompressedMessageMs: round(requestToCompressedMessageMs),
-              parentInflateMs: round(Number(process.hrtime.bigint() - inflateStartedAt) / 1_000_000),
-            },
-          });
-        }, finish);
+      if (!message || message.requestId !== requestId) {
+        finish(new Error("image_worker_response_invalid"));
+        return;
       }
-      else finish(new Error("image_worker_response_invalid"));
+      if (message.type === "failed") finish(new Error(message.reason || "image_decode_failed"));
+      else if (message.type === "decoded") {
+        if (!message.image || message.image.width !== width || message.image.height !== height ||
+            !(message.image.pixels instanceof Uint8Array) || message.image.pixels.byteLength !== expectedBytes) {
+          finish(new Error("image_worker_response_invalid"));
+          return;
+        }
+        finish(null, { ...message.image, transportBytes: message.image.pixels.byteLength });
+      } else if (message.type === "decoded_chunk") {
+        const chunk = message.pixels;
+        if (!Number.isSafeInteger(message.seq) || message.seq !== nextSeq || !(chunk instanceof Uint8Array) ||
+            chunk.byteLength === 0 || chunk.byteLength > IMAGE_RESPONSE_CHUNK_BYTES ||
+            receivedBytes + chunk.byteLength > expectedBytes) {
+          finish(new Error("image_worker_response_invalid"));
+          return;
+        }
+        if (firstChunkAt === 0n) firstChunkAt = process.hrtime.bigint();
+        Buffer.from(chunk.buffer, chunk.byteOffset, chunk.byteLength).copy(pixels, receivedBytes);
+        receivedBytes += chunk.byteLength;
+        transportBytes += chunk.byteLength;
+        const seq = nextSeq++;
+        try { child.postMessage({ type: "decoded_chunk_ack", requestId, seq }); }
+        catch (error) { finish(error); }
+      } else if (message.type === "decoded_end") {
+        if (message.width !== width || message.height !== height || message.byteLength !== expectedBytes ||
+            message.chunkCount !== nextSeq || receivedBytes !== expectedBytes || firstChunkAt === 0n) {
+          finish(new Error("image_worker_response_invalid"));
+          return;
+        }
+        const endedAt = process.hrtime.bigint();
+        finish(null, {
+          width, height, pixels, transportBytes,
+          stageTimings: {
+            ...(message.stageTimings ?? {}),
+            requestToFirstChunkMessageMs: round(Number(firstChunkAt - requestPostedAt) / 1_000_000),
+            parentChunkTransferMs: round(Number(endedAt - firstChunkAt) / 1_000_000),
+          },
+        });
+      } else finish(new Error("image_worker_response_invalid"));
     };
     const onExit = () => finish(new Error("image_worker_exited"));
     const finish = (error, image) => {
@@ -453,42 +474,6 @@ function summarizePixelOracle(oracle, checks) {
     alphaValid: checks.length > 0 && checks.every((check) => check.alphaValid),
     samples: checks[0]?.samples ?? [],
   };
-}
-
-function inflateExact(compressed, expectedBytes) {
-  return new Promise((resolve, reject) => {
-    const inflater = createInflate({ chunkSize: INFLATE_CHUNK_BYTES });
-    const pixels = Buffer.allocUnsafe(expectedBytes);
-    let outputBytes = 0;
-    let settled = false;
-    const fail = (error) => {
-      if (settled) return;
-      settled = true;
-      inflater.destroy();
-      reject(error);
-    };
-    inflater.on("data", (chunk) => {
-      if (settled) return;
-      if (outputBytes + chunk.byteLength > expectedBytes) {
-        fail(new Error("image_worker_response_invalid"));
-        return;
-      }
-      chunk.copy(pixels, outputBytes);
-      outputBytes += chunk.byteLength;
-    });
-    inflater.once("error", (error) => {
-      if (settled) return;
-      settled = true;
-      reject(error);
-    });
-    inflater.once("end", () => {
-      if (settled) return;
-      settled = true;
-      if (outputBytes !== expectedBytes) reject(new Error("image_worker_response_invalid"));
-      else resolve(pixels);
-    });
-    inflater.end(compressed);
-  });
 }
 
 function buildSyntheticPng(width, height) {
