@@ -1,0 +1,3940 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "recordType": "candidate_only_wpf_wic_jpeg_memory_probe",
+  "checkedDate": "2026-10-05",
+  "result": "WPF_WIC_CANDIDATE_WITHIN_BUDGET_NOT_ACCEPTANCE",
+  "source": {
+    "commit": "0459a557d104792909430147515394cccd79233a",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "runnerSha256": "766ac66a9af99b9cbbe6ada1770d25e02d410724cfaec8993f4c8378dcd2f3de",
+    "childScriptSha256": "eda589398a5e6ff0de7d6c7ee9f82a5b35c5d735459336ae7b0bf2d056a850de",
+    "existing420FixtureScriptSha256": "3751eefa8ba8e99d2faef8aa53d67348942e5338f860c75d2418744872e507a7",
+    "existingGdiPixelOracleScriptSha256": "757cfa1b8405830bfee28bc198688ce546f7fe46ad871f75eb09ed241c285d47"
+  },
+  "environment": {
+    "hostPlatform": "win32",
+    "hostArchitecture": "x64",
+    "hostNodeVersion": "v24.16.0",
+    "osVersion": "Windows 11 Enterprise",
+    "windowsPowerShellVersions": [
+      "5.1.22621.6931"
+    ],
+    "clrFrameworks": [
+      ".NET Framework 4.8.9332.0"
+    ],
+    "childArchitecture": "x64",
+    "childApartment": "STA",
+    "presentationCoreLoadedInPreflight": true,
+    "createdBrowserWindow": false,
+    "createdWpfWindowOrControl": false,
+    "systemClipboardReadOrWritten": false,
+    "physicalOrSyntheticInputSent": false,
+    "installedApplicationRun": false,
+    "dependenciesInstalledOrChanged": false
+  },
+  "scope": {
+    "decoder": "System.Windows.Media.Imaging.JpegBitmapDecoder via WPF managed imaging / Windows imaging infrastructure",
+    "pixelConversion": "FormatConvertedBitmap to PixelFormats.Bgra32 followed by one full-frame caller-owned byte[] CopyPixels call",
+    "bitmapCacheOption": "None; the synthetic MemoryStream remains open until CopyPixels completes",
+    "processIsolation": "One fresh hidden Windows PowerShell STA child process per sample; each child is awaited and reaped before continuing.",
+    "memoryMetrics": "Absolute child PeakWorkingSet64 and PeakPagedMemorySize64, pre/post working set/private bytes, and 25ms sampled child working-set/private bytes. Peak working set includes PowerShell/.NET/WPF process baseline and is not decoder-only memory.",
+    "targetBytes": 268435456,
+    "processIsNotElectronUtilityProcess": true,
+    "outputBufferBytes": 64000000,
+    "syntheticOnly": true,
+    "fixtureFilesWrittenOnlyToOwnUniqueTempDirectory": true,
+    "temporaryDirectoryCleanup": {
+      "removed": true,
+      "remainingEntries": []
+    },
+    "cleanupError": null
+  },
+  "fixtures": [
+    {
+      "fixtureKey": "420",
+      "path": "420.jpg",
+      "width": 4000,
+      "height": 4000,
+      "pixelCount": 16000000,
+      "encodedBytes": 20971520,
+      "exactSourceLimitBytes": 20971520,
+      "encoder": "Windows System.Drawing JPEG encoder",
+      "quality": 96,
+      "samplingFactors": [
+        {
+          "horizontal": 2,
+          "vertical": 2
+        },
+        {
+          "horizontal": 1,
+          "vertical": 1
+        },
+        {
+          "horizontal": 1,
+          "vertical": 1
+        }
+      ],
+      "sha256": "ab5c942602c42ccec1e9d8a74b98f6de09383a12faa92b08a2e521541cbbb235",
+      "app2PaddingBytes": 20611704,
+      "syntheticOracle": "R=32+floor(x*80/width), G=96+floor(y*80/height), B=48+floor((x+y)*80/(width+height)), A=255"
+    },
+    {
+      "fixtureKey": "444",
+      "path": "444.jpg",
+      "width": 4000,
+      "height": 4000,
+      "pixelCount": 16000000,
+      "encodedBytes": 20971520,
+      "exactSourceLimitBytes": 20971520,
+      "encoder": "pinned jpeg-js 0.4.4 encoder",
+      "quality": 96,
+      "samplingFactors": [
+        {
+          "horizontal": 1,
+          "vertical": 1
+        },
+        {
+          "horizontal": 1,
+          "vertical": 1
+        },
+        {
+          "horizontal": 1,
+          "vertical": 1
+        }
+      ],
+      "sha256": "1b601ea9853dfc666fe6c5f70a4439be0a011465b71ac5c61315214c10940edd",
+      "app2PaddingBytes": 20334863,
+      "syntheticOracle": "R=32+floor(x*80/width), G=96+floor(y*80/height), B=48+floor((x+y)*80/(width+height)), A=255"
+    }
+  ],
+  "independentGdiPlusOracle": {
+    "script": "tests/tasks/T04/purejsimage-independent-pixel-oracle.ps1",
+    "coordinates": [
+      {
+        "x": 0,
+        "y": 0
+      },
+      {
+        "x": 1,
+        "y": 1
+      },
+      {
+        "x": 16,
+        "y": 16
+      },
+      {
+        "x": 511,
+        "y": 511
+      },
+      {
+        "x": 1024,
+        "y": 1024
+      },
+      {
+        "x": 1999,
+        "y": 1999
+      },
+      {
+        "x": 2000,
+        "y": 2000
+      },
+      {
+        "x": 3001,
+        "y": 2377
+      },
+      {
+        "x": 3999,
+        "y": 3999
+      }
+    ],
+    "maxCrossDecoderChannelDifference": 8,
+    "fixtures": [
+      {
+        "fixtureKey": "420",
+        "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+        "powershellVersion": "5.1.22621.6931",
+        "dotNetRuntime": ".NET Framework 4.8.9332.0",
+        "width": 4000,
+        "height": 4000,
+        "pixelFormat": "Format32bppArgb",
+        "samples": [
+          {
+            "x": 0,
+            "y": 0,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "rgba": [
+              42,
+              105,
+              58,
+              255
+            ]
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "rgba": [
+              52,
+              115,
+              68,
+              255
+            ]
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "rgba": [
+              71,
+              134,
+              87,
+              255
+            ]
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "rgba": [
+              72,
+              135,
+              88,
+              255
+            ]
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "rgba": [
+              92,
+              143,
+              102,
+              255
+            ]
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "rgba": [
+              111,
+              174,
+              127,
+              255
+            ]
+          }
+        ]
+      },
+      {
+        "fixtureKey": "444",
+        "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+        "powershellVersion": "5.1.22621.6931",
+        "dotNetRuntime": ".NET Framework 4.8.9332.0",
+        "width": 4000,
+        "height": 4000,
+        "pixelFormat": "Format32bppArgb",
+        "samples": [
+          {
+            "x": 0,
+            "y": 0,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "rgba": [
+              42,
+              105,
+              58,
+              255
+            ]
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "rgba": [
+              52,
+              115,
+              68,
+              255
+            ]
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "rgba": [
+              71,
+              134,
+              87,
+              255
+            ]
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "rgba": [
+              72,
+              135,
+              88,
+              255
+            ]
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "rgba": [
+              92,
+              143,
+              102,
+              255
+            ]
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "rgba": [
+              111,
+              174,
+              127,
+              255
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "measurements": {
+    "freshChildCount": 10,
+    "sampleCountPerFixture": 5,
+    "peakWorkingSetBytes": [
+      169512960,
+      168869888,
+      168861696,
+      168841216,
+      168812544,
+      169676800,
+      168890368,
+      168923136,
+      168886272,
+      168816640
+    ],
+    "maxPeakWorkingSetBytes": 169676800,
+    "sampledPeakPrivateBytes": [
+      148447232,
+      160718848,
+      148008960,
+      147980288,
+      160759808,
+      148340736,
+      147976192,
+      148037632,
+      160587776,
+      160522240
+    ],
+    "decodeCopyAndFullScanMs": [
+      515.6651,
+      393.79110000000003,
+      504.36850000000004,
+      389.18190000000004,
+      442.09470000000005,
+      519.5389,
+      407.4379,
+      408.1377,
+      442.88190000000003,
+      430.786
+    ],
+    "allChildProcessesExitedAndWereReaped": true,
+    "within256MiBForEverySample": true
+  },
+  "samples": [
+    {
+      "fixtureKey": "420",
+      "sampleIndex": 1,
+      "childPid": 71380,
+      "launchToExitMs": 2617.986,
+      "processExitCode": 0,
+      "processSignal": null,
+      "processExitedAndReaped": true,
+      "timedOut": false,
+      "stdoutJsonParsed": true,
+      "stderr": null,
+      "child": {
+        "result": "PASS",
+        "failureStage": null,
+        "failure": null,
+        "processId": 71380,
+        "processArchitecture": "x64",
+        "threadApartment": "STA",
+        "powershellClrFramework": "4.0.30319.42000",
+        "decoder": "System.Windows.Media.Imaging.JpegBitmapDecoder (WPF managed imaging over Windows imaging infrastructure)",
+        "cacheOption": "BitmapCacheOption.None; memory stream remains open through CopyPixels",
+        "pixelFormat": "PixelFormats.Bgra32",
+        "frameCount": 1,
+        "width": 4000,
+        "height": 4000,
+        "decodedPixelCount": 16000000,
+        "inputBytes": 20971520,
+        "inputSha256": "ab5c942602c42ccec1e9d8a74b98f6de09383a12faa92b08a2e521541cbbb235",
+        "outputBgraSha256": "b06e31f91b18254d03346d1385650e445cdb78a88340a92c471b9cee1926a940",
+        "decodeCopyAndFullScanMs": 515.6651,
+        "maxRgbChannelAbsoluteError": 3,
+        "meanRgbAbsoluteError": 0.3361160625,
+        "alphaMismatchCount": 0,
+        "crossCheckPoints": [
+          {
+            "x": 0,
+            "y": 0,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "rgba": [
+              42,
+              105,
+              58,
+              255
+            ]
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "rgba": [
+              52,
+              115,
+              68,
+              255
+            ]
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "rgba": [
+              71,
+              134,
+              87,
+              255
+            ]
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "rgba": [
+              72,
+              135,
+              88,
+              255
+            ]
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "rgba": [
+              92,
+              143,
+              102,
+              255
+            ]
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "rgba": [
+              111,
+              174,
+              127,
+              255
+            ]
+          }
+        ],
+        "workingSetBeforeBytes": 94625792,
+        "privateBytesBefore": 75296768,
+        "workingSetAfterBytes": 169480192,
+        "privateBytesAfter": 148389888,
+        "peakWorkingSetBytes": 169512960,
+        "peakPagedMemoryBytes": 161812480,
+        "sampledPeakPrivateBytes": 148447232,
+        "sampledPeakWorkingSetBytes": 169492480,
+        "windowsPowerShellVersion": "5.1.22621.6931",
+        "clrFramework": ".NET Framework 4.8.9332.0"
+      },
+      "independentGdiPointComparison": {
+        "withinTolerance": true,
+        "maxChannelDifference": 0,
+        "points": [
+          {
+            "x": 0,
+            "y": 0,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "wicRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "gdiRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "wicRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "gdiRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "wicRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "gdiRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "wicRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "gdiRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "wicRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "gdiRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "wicRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "gdiRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          }
+        ]
+      }
+    },
+    {
+      "fixtureKey": "420",
+      "sampleIndex": 2,
+      "childPid": 71348,
+      "launchToExitMs": 2529.37,
+      "processExitCode": 0,
+      "processSignal": null,
+      "processExitedAndReaped": true,
+      "timedOut": false,
+      "stdoutJsonParsed": true,
+      "stderr": null,
+      "child": {
+        "result": "PASS",
+        "failureStage": null,
+        "failure": null,
+        "processId": 71348,
+        "processArchitecture": "x64",
+        "threadApartment": "STA",
+        "powershellClrFramework": "4.0.30319.42000",
+        "decoder": "System.Windows.Media.Imaging.JpegBitmapDecoder (WPF managed imaging over Windows imaging infrastructure)",
+        "cacheOption": "BitmapCacheOption.None; memory stream remains open through CopyPixels",
+        "pixelFormat": "PixelFormats.Bgra32",
+        "frameCount": 1,
+        "width": 4000,
+        "height": 4000,
+        "decodedPixelCount": 16000000,
+        "inputBytes": 20971520,
+        "inputSha256": "ab5c942602c42ccec1e9d8a74b98f6de09383a12faa92b08a2e521541cbbb235",
+        "outputBgraSha256": "b06e31f91b18254d03346d1385650e445cdb78a88340a92c471b9cee1926a940",
+        "decodeCopyAndFullScanMs": 393.79110000000003,
+        "maxRgbChannelAbsoluteError": 3,
+        "meanRgbAbsoluteError": 0.3361160625,
+        "alphaMismatchCount": 0,
+        "crossCheckPoints": [
+          {
+            "x": 0,
+            "y": 0,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "rgba": [
+              42,
+              105,
+              58,
+              255
+            ]
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "rgba": [
+              52,
+              115,
+              68,
+              255
+            ]
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "rgba": [
+              71,
+              134,
+              87,
+              255
+            ]
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "rgba": [
+              72,
+              135,
+              88,
+              255
+            ]
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "rgba": [
+              92,
+              143,
+              102,
+              255
+            ]
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "rgba": [
+              111,
+              174,
+              127,
+              255
+            ]
+          }
+        ],
+        "workingSetBeforeBytes": 95068160,
+        "privateBytesBefore": 75325440,
+        "workingSetAfterBytes": 168837120,
+        "privateBytesAfter": 147820544,
+        "peakWorkingSetBytes": 168869888,
+        "peakPagedMemoryBytes": 161308672,
+        "sampledPeakPrivateBytes": 160718848,
+        "sampledPeakWorkingSetBytes": 168849408,
+        "windowsPowerShellVersion": "5.1.22621.6931",
+        "clrFramework": ".NET Framework 4.8.9332.0"
+      },
+      "independentGdiPointComparison": {
+        "withinTolerance": true,
+        "maxChannelDifference": 0,
+        "points": [
+          {
+            "x": 0,
+            "y": 0,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "wicRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "gdiRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "wicRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "gdiRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "wicRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "gdiRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "wicRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "gdiRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "wicRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "gdiRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "wicRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "gdiRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          }
+        ]
+      }
+    },
+    {
+      "fixtureKey": "420",
+      "sampleIndex": 3,
+      "childPid": 70264,
+      "launchToExitMs": 2694.276,
+      "processExitCode": 0,
+      "processSignal": null,
+      "processExitedAndReaped": true,
+      "timedOut": false,
+      "stdoutJsonParsed": true,
+      "stderr": null,
+      "child": {
+        "result": "PASS",
+        "failureStage": null,
+        "failure": null,
+        "processId": 70264,
+        "processArchitecture": "x64",
+        "threadApartment": "STA",
+        "powershellClrFramework": "4.0.30319.42000",
+        "decoder": "System.Windows.Media.Imaging.JpegBitmapDecoder (WPF managed imaging over Windows imaging infrastructure)",
+        "cacheOption": "BitmapCacheOption.None; memory stream remains open through CopyPixels",
+        "pixelFormat": "PixelFormats.Bgra32",
+        "frameCount": 1,
+        "width": 4000,
+        "height": 4000,
+        "decodedPixelCount": 16000000,
+        "inputBytes": 20971520,
+        "inputSha256": "ab5c942602c42ccec1e9d8a74b98f6de09383a12faa92b08a2e521541cbbb235",
+        "outputBgraSha256": "b06e31f91b18254d03346d1385650e445cdb78a88340a92c471b9cee1926a940",
+        "decodeCopyAndFullScanMs": 504.36850000000004,
+        "maxRgbChannelAbsoluteError": 3,
+        "meanRgbAbsoluteError": 0.3361160625,
+        "alphaMismatchCount": 0,
+        "crossCheckPoints": [
+          {
+            "x": 0,
+            "y": 0,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "rgba": [
+              42,
+              105,
+              58,
+              255
+            ]
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "rgba": [
+              52,
+              115,
+              68,
+              255
+            ]
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "rgba": [
+              71,
+              134,
+              87,
+              255
+            ]
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "rgba": [
+              72,
+              135,
+              88,
+              255
+            ]
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "rgba": [
+              92,
+              143,
+              102,
+              255
+            ]
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "rgba": [
+              111,
+              174,
+              127,
+              255
+            ]
+          }
+        ],
+        "workingSetBeforeBytes": 94109696,
+        "privateBytesBefore": 75030528,
+        "workingSetAfterBytes": 168861696,
+        "privateBytesAfter": 147980288,
+        "peakWorkingSetBytes": 168861696,
+        "peakPagedMemoryBytes": 161398784,
+        "sampledPeakPrivateBytes": 148008960,
+        "sampledPeakWorkingSetBytes": 168730624,
+        "windowsPowerShellVersion": "5.1.22621.6931",
+        "clrFramework": ".NET Framework 4.8.9332.0"
+      },
+      "independentGdiPointComparison": {
+        "withinTolerance": true,
+        "maxChannelDifference": 0,
+        "points": [
+          {
+            "x": 0,
+            "y": 0,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "wicRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "gdiRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "wicRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "gdiRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "wicRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "gdiRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "wicRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "gdiRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "wicRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "gdiRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "wicRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "gdiRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          }
+        ]
+      }
+    },
+    {
+      "fixtureKey": "420",
+      "sampleIndex": 4,
+      "childPid": 71604,
+      "launchToExitMs": 2524.559,
+      "processExitCode": 0,
+      "processSignal": null,
+      "processExitedAndReaped": true,
+      "timedOut": false,
+      "stdoutJsonParsed": true,
+      "stderr": null,
+      "child": {
+        "result": "PASS",
+        "failureStage": null,
+        "failure": null,
+        "processId": 71604,
+        "processArchitecture": "x64",
+        "threadApartment": "STA",
+        "powershellClrFramework": "4.0.30319.42000",
+        "decoder": "System.Windows.Media.Imaging.JpegBitmapDecoder (WPF managed imaging over Windows imaging infrastructure)",
+        "cacheOption": "BitmapCacheOption.None; memory stream remains open through CopyPixels",
+        "pixelFormat": "PixelFormats.Bgra32",
+        "frameCount": 1,
+        "width": 4000,
+        "height": 4000,
+        "decodedPixelCount": 16000000,
+        "inputBytes": 20971520,
+        "inputSha256": "ab5c942602c42ccec1e9d8a74b98f6de09383a12faa92b08a2e521541cbbb235",
+        "outputBgraSha256": "b06e31f91b18254d03346d1385650e445cdb78a88340a92c471b9cee1926a940",
+        "decodeCopyAndFullScanMs": 389.18190000000004,
+        "maxRgbChannelAbsoluteError": 3,
+        "meanRgbAbsoluteError": 0.3361160625,
+        "alphaMismatchCount": 0,
+        "crossCheckPoints": [
+          {
+            "x": 0,
+            "y": 0,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "rgba": [
+              42,
+              105,
+              58,
+              255
+            ]
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "rgba": [
+              52,
+              115,
+              68,
+              255
+            ]
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "rgba": [
+              71,
+              134,
+              87,
+              255
+            ]
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "rgba": [
+              72,
+              135,
+              88,
+              255
+            ]
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "rgba": [
+              92,
+              143,
+              102,
+              255
+            ]
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "rgba": [
+              111,
+              174,
+              127,
+              255
+            ]
+          }
+        ],
+        "workingSetBeforeBytes": 94879744,
+        "privateBytesBefore": 75231232,
+        "workingSetAfterBytes": 168841216,
+        "privateBytesAfter": 147914752,
+        "peakWorkingSetBytes": 168841216,
+        "peakPagedMemoryBytes": 161329152,
+        "sampledPeakPrivateBytes": 147980288,
+        "sampledPeakWorkingSetBytes": 168722432,
+        "windowsPowerShellVersion": "5.1.22621.6931",
+        "clrFramework": ".NET Framework 4.8.9332.0"
+      },
+      "independentGdiPointComparison": {
+        "withinTolerance": true,
+        "maxChannelDifference": 0,
+        "points": [
+          {
+            "x": 0,
+            "y": 0,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "wicRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "gdiRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "wicRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "gdiRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "wicRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "gdiRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "wicRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "gdiRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "wicRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "gdiRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "wicRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "gdiRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          }
+        ]
+      }
+    },
+    {
+      "fixtureKey": "420",
+      "sampleIndex": 5,
+      "childPid": 67228,
+      "launchToExitMs": 2447.327,
+      "processExitCode": 0,
+      "processSignal": null,
+      "processExitedAndReaped": true,
+      "timedOut": false,
+      "stdoutJsonParsed": true,
+      "stderr": null,
+      "child": {
+        "result": "PASS",
+        "failureStage": null,
+        "failure": null,
+        "processId": 67228,
+        "processArchitecture": "x64",
+        "threadApartment": "STA",
+        "powershellClrFramework": "4.0.30319.42000",
+        "decoder": "System.Windows.Media.Imaging.JpegBitmapDecoder (WPF managed imaging over Windows imaging infrastructure)",
+        "cacheOption": "BitmapCacheOption.None; memory stream remains open through CopyPixels",
+        "pixelFormat": "PixelFormats.Bgra32",
+        "frameCount": 1,
+        "width": 4000,
+        "height": 4000,
+        "decodedPixelCount": 16000000,
+        "inputBytes": 20971520,
+        "inputSha256": "ab5c942602c42ccec1e9d8a74b98f6de09383a12faa92b08a2e521541cbbb235",
+        "outputBgraSha256": "b06e31f91b18254d03346d1385650e445cdb78a88340a92c471b9cee1926a940",
+        "decodeCopyAndFullScanMs": 442.09470000000005,
+        "maxRgbChannelAbsoluteError": 3,
+        "meanRgbAbsoluteError": 0.3361160625,
+        "alphaMismatchCount": 0,
+        "crossCheckPoints": [
+          {
+            "x": 0,
+            "y": 0,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "rgba": [
+              42,
+              105,
+              58,
+              255
+            ]
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "rgba": [
+              52,
+              115,
+              68,
+              255
+            ]
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "rgba": [
+              71,
+              134,
+              87,
+              255
+            ]
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "rgba": [
+              72,
+              135,
+              88,
+              255
+            ]
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "rgba": [
+              92,
+              143,
+              102,
+              255
+            ]
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "rgba": [
+              111,
+              174,
+              127,
+              255
+            ]
+          }
+        ],
+        "workingSetBeforeBytes": 95096832,
+        "privateBytesBefore": 75378688,
+        "workingSetAfterBytes": 168812544,
+        "privateBytesAfter": 147828736,
+        "peakWorkingSetBytes": 168812544,
+        "peakPagedMemoryBytes": 160825344,
+        "sampledPeakPrivateBytes": 160759808,
+        "sampledPeakWorkingSetBytes": 168706048,
+        "windowsPowerShellVersion": "5.1.22621.6931",
+        "clrFramework": ".NET Framework 4.8.9332.0"
+      },
+      "independentGdiPointComparison": {
+        "withinTolerance": true,
+        "maxChannelDifference": 0,
+        "points": [
+          {
+            "x": 0,
+            "y": 0,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "wicRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "gdiRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "wicRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "gdiRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "wicRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "gdiRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "wicRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "gdiRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "wicRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "gdiRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "wicRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "gdiRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          }
+        ]
+      }
+    },
+    {
+      "fixtureKey": "444",
+      "sampleIndex": 1,
+      "childPid": 71608,
+      "launchToExitMs": 2593.897,
+      "processExitCode": 0,
+      "processSignal": null,
+      "processExitedAndReaped": true,
+      "timedOut": false,
+      "stdoutJsonParsed": true,
+      "stderr": null,
+      "child": {
+        "result": "PASS",
+        "failureStage": null,
+        "failure": null,
+        "processId": 71608,
+        "processArchitecture": "x64",
+        "threadApartment": "STA",
+        "powershellClrFramework": "4.0.30319.42000",
+        "decoder": "System.Windows.Media.Imaging.JpegBitmapDecoder (WPF managed imaging over Windows imaging infrastructure)",
+        "cacheOption": "BitmapCacheOption.None; memory stream remains open through CopyPixels",
+        "pixelFormat": "PixelFormats.Bgra32",
+        "frameCount": 1,
+        "width": 4000,
+        "height": 4000,
+        "decodedPixelCount": 16000000,
+        "inputBytes": 20971520,
+        "inputSha256": "1b601ea9853dfc666fe6c5f70a4439be0a011465b71ac5c61315214c10940edd",
+        "outputBgraSha256": "436cf9df4894766c5bbdd3a59be67407809d1db1322d02f46fd410c3ff49126b",
+        "decodeCopyAndFullScanMs": 519.5389,
+        "maxRgbChannelAbsoluteError": 3,
+        "meanRgbAbsoluteError": 0.32180485416666665,
+        "alphaMismatchCount": 0,
+        "crossCheckPoints": [
+          {
+            "x": 0,
+            "y": 0,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "rgba": [
+              42,
+              105,
+              58,
+              255
+            ]
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "rgba": [
+              52,
+              115,
+              68,
+              255
+            ]
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "rgba": [
+              71,
+              134,
+              87,
+              255
+            ]
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "rgba": [
+              72,
+              135,
+              88,
+              255
+            ]
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "rgba": [
+              92,
+              143,
+              102,
+              255
+            ]
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "rgba": [
+              111,
+              174,
+              127,
+              255
+            ]
+          }
+        ],
+        "workingSetBeforeBytes": 94912512,
+        "privateBytesBefore": 75300864,
+        "workingSetAfterBytes": 169676800,
+        "privateBytesAfter": 148283392,
+        "peakWorkingSetBytes": 169676800,
+        "peakPagedMemoryBytes": 161427456,
+        "sampledPeakPrivateBytes": 148340736,
+        "sampledPeakWorkingSetBytes": 169545728,
+        "windowsPowerShellVersion": "5.1.22621.6931",
+        "clrFramework": ".NET Framework 4.8.9332.0"
+      },
+      "independentGdiPointComparison": {
+        "withinTolerance": true,
+        "maxChannelDifference": 0,
+        "points": [
+          {
+            "x": 0,
+            "y": 0,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "wicRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "gdiRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "wicRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "gdiRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "wicRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "gdiRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "wicRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "gdiRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "wicRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "gdiRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "wicRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "gdiRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          }
+        ]
+      }
+    },
+    {
+      "fixtureKey": "444",
+      "sampleIndex": 2,
+      "childPid": 70916,
+      "launchToExitMs": 2426.253,
+      "processExitCode": 0,
+      "processSignal": null,
+      "processExitedAndReaped": true,
+      "timedOut": false,
+      "stdoutJsonParsed": true,
+      "stderr": null,
+      "child": {
+        "result": "PASS",
+        "failureStage": null,
+        "failure": null,
+        "processId": 70916,
+        "processArchitecture": "x64",
+        "threadApartment": "STA",
+        "powershellClrFramework": "4.0.30319.42000",
+        "decoder": "System.Windows.Media.Imaging.JpegBitmapDecoder (WPF managed imaging over Windows imaging infrastructure)",
+        "cacheOption": "BitmapCacheOption.None; memory stream remains open through CopyPixels",
+        "pixelFormat": "PixelFormats.Bgra32",
+        "frameCount": 1,
+        "width": 4000,
+        "height": 4000,
+        "decodedPixelCount": 16000000,
+        "inputBytes": 20971520,
+        "inputSha256": "1b601ea9853dfc666fe6c5f70a4439be0a011465b71ac5c61315214c10940edd",
+        "outputBgraSha256": "436cf9df4894766c5bbdd3a59be67407809d1db1322d02f46fd410c3ff49126b",
+        "decodeCopyAndFullScanMs": 407.4379,
+        "maxRgbChannelAbsoluteError": 3,
+        "meanRgbAbsoluteError": 0.32180485416666665,
+        "alphaMismatchCount": 0,
+        "crossCheckPoints": [
+          {
+            "x": 0,
+            "y": 0,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "rgba": [
+              42,
+              105,
+              58,
+              255
+            ]
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "rgba": [
+              52,
+              115,
+              68,
+              255
+            ]
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "rgba": [
+              71,
+              134,
+              87,
+              255
+            ]
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "rgba": [
+              72,
+              135,
+              88,
+              255
+            ]
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "rgba": [
+              92,
+              143,
+              102,
+              255
+            ]
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "rgba": [
+              111,
+              174,
+              127,
+              255
+            ]
+          }
+        ],
+        "workingSetBeforeBytes": 94937088,
+        "privateBytesBefore": 75292672,
+        "workingSetAfterBytes": 168890368,
+        "privateBytesAfter": 147910656,
+        "peakWorkingSetBytes": 168890368,
+        "peakPagedMemoryBytes": 161153024,
+        "sampledPeakPrivateBytes": 147976192,
+        "sampledPeakWorkingSetBytes": 168783872,
+        "windowsPowerShellVersion": "5.1.22621.6931",
+        "clrFramework": ".NET Framework 4.8.9332.0"
+      },
+      "independentGdiPointComparison": {
+        "withinTolerance": true,
+        "maxChannelDifference": 0,
+        "points": [
+          {
+            "x": 0,
+            "y": 0,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "wicRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "gdiRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "wicRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "gdiRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "wicRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "gdiRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "wicRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "gdiRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "wicRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "gdiRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "wicRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "gdiRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          }
+        ]
+      }
+    },
+    {
+      "fixtureKey": "444",
+      "sampleIndex": 3,
+      "childPid": 69412,
+      "launchToExitMs": 2282.194,
+      "processExitCode": 0,
+      "processSignal": null,
+      "processExitedAndReaped": true,
+      "timedOut": false,
+      "stdoutJsonParsed": true,
+      "stderr": null,
+      "child": {
+        "result": "PASS",
+        "failureStage": null,
+        "failure": null,
+        "processId": 69412,
+        "processArchitecture": "x64",
+        "threadApartment": "STA",
+        "powershellClrFramework": "4.0.30319.42000",
+        "decoder": "System.Windows.Media.Imaging.JpegBitmapDecoder (WPF managed imaging over Windows imaging infrastructure)",
+        "cacheOption": "BitmapCacheOption.None; memory stream remains open through CopyPixels",
+        "pixelFormat": "PixelFormats.Bgra32",
+        "frameCount": 1,
+        "width": 4000,
+        "height": 4000,
+        "decodedPixelCount": 16000000,
+        "inputBytes": 20971520,
+        "inputSha256": "1b601ea9853dfc666fe6c5f70a4439be0a011465b71ac5c61315214c10940edd",
+        "outputBgraSha256": "436cf9df4894766c5bbdd3a59be67407809d1db1322d02f46fd410c3ff49126b",
+        "decodeCopyAndFullScanMs": 408.1377,
+        "maxRgbChannelAbsoluteError": 3,
+        "meanRgbAbsoluteError": 0.32180485416666665,
+        "alphaMismatchCount": 0,
+        "crossCheckPoints": [
+          {
+            "x": 0,
+            "y": 0,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "rgba": [
+              42,
+              105,
+              58,
+              255
+            ]
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "rgba": [
+              52,
+              115,
+              68,
+              255
+            ]
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "rgba": [
+              71,
+              134,
+              87,
+              255
+            ]
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "rgba": [
+              72,
+              135,
+              88,
+              255
+            ]
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "rgba": [
+              92,
+              143,
+              102,
+              255
+            ]
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "rgba": [
+              111,
+              174,
+              127,
+              255
+            ]
+          }
+        ],
+        "workingSetBeforeBytes": 95879168,
+        "privateBytesBefore": 76275712,
+        "workingSetAfterBytes": 168923136,
+        "privateBytesAfter": 147996672,
+        "peakWorkingSetBytes": 168923136,
+        "peakPagedMemoryBytes": 161054720,
+        "sampledPeakPrivateBytes": 148037632,
+        "sampledPeakWorkingSetBytes": 168800256,
+        "windowsPowerShellVersion": "5.1.22621.6931",
+        "clrFramework": ".NET Framework 4.8.9332.0"
+      },
+      "independentGdiPointComparison": {
+        "withinTolerance": true,
+        "maxChannelDifference": 0,
+        "points": [
+          {
+            "x": 0,
+            "y": 0,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "wicRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "gdiRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "wicRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "gdiRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "wicRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "gdiRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "wicRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "gdiRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "wicRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "gdiRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "wicRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "gdiRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          }
+        ]
+      }
+    },
+    {
+      "fixtureKey": "444",
+      "sampleIndex": 4,
+      "childPid": 67916,
+      "launchToExitMs": 2362.353,
+      "processExitCode": 0,
+      "processSignal": null,
+      "processExitedAndReaped": true,
+      "timedOut": false,
+      "stdoutJsonParsed": true,
+      "stderr": null,
+      "child": {
+        "result": "PASS",
+        "failureStage": null,
+        "failure": null,
+        "processId": 67916,
+        "processArchitecture": "x64",
+        "threadApartment": "STA",
+        "powershellClrFramework": "4.0.30319.42000",
+        "decoder": "System.Windows.Media.Imaging.JpegBitmapDecoder (WPF managed imaging over Windows imaging infrastructure)",
+        "cacheOption": "BitmapCacheOption.None; memory stream remains open through CopyPixels",
+        "pixelFormat": "PixelFormats.Bgra32",
+        "frameCount": 1,
+        "width": 4000,
+        "height": 4000,
+        "decodedPixelCount": 16000000,
+        "inputBytes": 20971520,
+        "inputSha256": "1b601ea9853dfc666fe6c5f70a4439be0a011465b71ac5c61315214c10940edd",
+        "outputBgraSha256": "436cf9df4894766c5bbdd3a59be67407809d1db1322d02f46fd410c3ff49126b",
+        "decodeCopyAndFullScanMs": 442.88190000000003,
+        "maxRgbChannelAbsoluteError": 3,
+        "meanRgbAbsoluteError": 0.32180485416666665,
+        "alphaMismatchCount": 0,
+        "crossCheckPoints": [
+          {
+            "x": 0,
+            "y": 0,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "rgba": [
+              42,
+              105,
+              58,
+              255
+            ]
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "rgba": [
+              52,
+              115,
+              68,
+              255
+            ]
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "rgba": [
+              71,
+              134,
+              87,
+              255
+            ]
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "rgba": [
+              72,
+              135,
+              88,
+              255
+            ]
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "rgba": [
+              92,
+              143,
+              102,
+              255
+            ]
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "rgba": [
+              111,
+              174,
+              127,
+              255
+            ]
+          }
+        ],
+        "workingSetBeforeBytes": 94998528,
+        "privateBytesBefore": 75354112,
+        "workingSetAfterBytes": 168886272,
+        "privateBytesAfter": 147902464,
+        "peakWorkingSetBytes": 168886272,
+        "peakPagedMemoryBytes": 160784384,
+        "sampledPeakPrivateBytes": 160587776,
+        "sampledPeakWorkingSetBytes": 168779776,
+        "windowsPowerShellVersion": "5.1.22621.6931",
+        "clrFramework": ".NET Framework 4.8.9332.0"
+      },
+      "independentGdiPointComparison": {
+        "withinTolerance": true,
+        "maxChannelDifference": 0,
+        "points": [
+          {
+            "x": 0,
+            "y": 0,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "wicRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "gdiRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "wicRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "gdiRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "wicRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "gdiRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "wicRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "gdiRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "wicRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "gdiRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "wicRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "gdiRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          }
+        ]
+      }
+    },
+    {
+      "fixtureKey": "444",
+      "sampleIndex": 5,
+      "childPid": 71604,
+      "launchToExitMs": 2303.335,
+      "processExitCode": 0,
+      "processSignal": null,
+      "processExitedAndReaped": true,
+      "timedOut": false,
+      "stdoutJsonParsed": true,
+      "stderr": null,
+      "child": {
+        "result": "PASS",
+        "failureStage": null,
+        "failure": null,
+        "processId": 71604,
+        "processArchitecture": "x64",
+        "threadApartment": "STA",
+        "powershellClrFramework": "4.0.30319.42000",
+        "decoder": "System.Windows.Media.Imaging.JpegBitmapDecoder (WPF managed imaging over Windows imaging infrastructure)",
+        "cacheOption": "BitmapCacheOption.None; memory stream remains open through CopyPixels",
+        "pixelFormat": "PixelFormats.Bgra32",
+        "frameCount": 1,
+        "width": 4000,
+        "height": 4000,
+        "decodedPixelCount": 16000000,
+        "inputBytes": 20971520,
+        "inputSha256": "1b601ea9853dfc666fe6c5f70a4439be0a011465b71ac5c61315214c10940edd",
+        "outputBgraSha256": "436cf9df4894766c5bbdd3a59be67407809d1db1322d02f46fd410c3ff49126b",
+        "decodeCopyAndFullScanMs": 430.786,
+        "maxRgbChannelAbsoluteError": 3,
+        "meanRgbAbsoluteError": 0.32180485416666665,
+        "alphaMismatchCount": 0,
+        "crossCheckPoints": [
+          {
+            "x": 0,
+            "y": 0,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "rgba": [
+              32,
+              95,
+              48,
+              255
+            ]
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "rgba": [
+              42,
+              105,
+              58,
+              255
+            ]
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "rgba": [
+              52,
+              115,
+              68,
+              255
+            ]
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "rgba": [
+              71,
+              134,
+              87,
+              255
+            ]
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "rgba": [
+              72,
+              135,
+              88,
+              255
+            ]
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "rgba": [
+              92,
+              143,
+              102,
+              255
+            ]
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "rgba": [
+              111,
+              174,
+              127,
+              255
+            ]
+          }
+        ],
+        "workingSetBeforeBytes": 95186944,
+        "privateBytesBefore": 75526144,
+        "workingSetAfterBytes": 168800256,
+        "privateBytesAfter": 147841024,
+        "peakWorkingSetBytes": 168816640,
+        "peakPagedMemoryBytes": 160587776,
+        "sampledPeakPrivateBytes": 160522240,
+        "sampledPeakWorkingSetBytes": 168689664,
+        "windowsPowerShellVersion": "5.1.22621.6931",
+        "clrFramework": ".NET Framework 4.8.9332.0"
+      },
+      "independentGdiPointComparison": {
+        "withinTolerance": true,
+        "maxChannelDifference": 0,
+        "points": [
+          {
+            "x": 0,
+            "y": 0,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "wicRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "gdiRgba": [
+              32,
+              95,
+              48,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "wicRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "gdiRgba": [
+              42,
+              105,
+              58,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "wicRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "gdiRgba": [
+              52,
+              115,
+              68,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "wicRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "gdiRgba": [
+              71,
+              134,
+              87,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "wicRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "gdiRgba": [
+              72,
+              135,
+              88,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "wicRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "gdiRgba": [
+              92,
+              143,
+              102,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "wicRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "gdiRgba": [
+              111,
+              174,
+              127,
+              255
+            ],
+            "channelDifferences": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxChannelDifference": 0
+          }
+        ]
+      }
+    }
+  ],
+  "failure": null,
+  "limitations": [
+    "This is a WPF managed-imaging candidate probe over Windows imaging infrastructure, not a direct IWIC COM implementation or the production Electron utilityProcess.",
+    "PowerShell, CLR, WPF, stream data, and codec state are included in child PeakWorkingSet64; the number is not decoder-only memory. WPF documents no memory ceiling for this path.",
+    "The probe copies one synthetic 16 MP baseline JPEG into one full 64,000,000-byte BGRA buffer; this does not test the production worker IPC/deflate/parent-inflate path, helper DIB registration, or final clipboard payload.",
+    "Only deterministic synthetic 4:2:0 and 4:4:4 JPEGs padded to the 20 MiB compressed-source cap are covered. Progressive JPEG, CMYK, EXIF/ICC/orientation, malformed corpus, cancellation, timeout, packaged loading, and varied content are not covered.",
+    "Even if every sample is below 256 MiB and pixel checks pass, this result only justifies further direct-WIC/utilityProcess evaluation; it cannot close the T04 memory gate, P15, production integration, or T04 acceptance.",
+    "No BrowserWindow, WPF control/window, user image, system clipboard, physical keyboard, or input was used."
+  ],
+  "sources": [
+    {
+      "title": "Microsoft Learn: WPF Imaging overview",
+      "url": "https://learn.microsoft.com/en-us/dotnet/framework/wpf/graphics-multimedia/imaging-overview",
+      "supports": "The managed WPF imaging component uses the unmanaged imaging infrastructure and exposes JPEG codecs."
+    },
+    {
+      "title": "Microsoft Learn: BitmapCacheOption",
+      "url": "https://learn.microsoft.com/dotnet/api/system.windows.media.imaging.bitmapcacheoption",
+      "supports": "None creates no image memory cache; OnLoad caches the entire image."
+    },
+    {
+      "title": "Microsoft Learn: BitmapSource.CopyPixels",
+      "url": "https://learn.microsoft.com/en-us/dotnet/api/system.windows.media.imaging.bitmapsource.copypixels?view=windowsdesktop-10.0",
+      "supports": "CopyPixels writes a selected rectangle or complete image into a caller-specified destination array/stride."
+    },
+    {
+      "title": "Microsoft Learn: PixelFormats.Bgra32",
+      "url": "https://learn.microsoft.com/en-us/dotnet/api/system.windows.media.pixelformats.bgra32?view=windowsdesktop-10.0",
+      "supports": "Bgra32 is sRGB, 32bpp, with 8-bit blue, green, red, and alpha channels."
+    },
+    {
+      "title": "Microsoft Learn: WIC overview",
+      "url": "https://learn.microsoft.com/windows/win32/wic/-wic-about-windows-imaging-codec",
+      "supports": "Windows imaging infrastructure and built-in codec framework."
+    }
+  ],
+  "taskStatus": "T04 remains in_progress; this candidate probe does not establish WIC production feasibility or acceptance."
+}

@@ -121,10 +121,11 @@
         "tests/tasks/T04/purejsimage-followup-worker.cjs",
         "tests/tasks/T04/purejsimage-independent-pixel-oracle.ps1",
         "tests/tasks/T04/run-purejsimage-16mp-utility-ipc-followup.cjs",
-        "docs/evidence/T04/wic-jpeg-route-review.json"
+        "docs/evidence/T04/wic-jpeg-route-review.json",
+        "docs/evidence/T04/wic-jpeg-memory-probe.json"
       ],
       "openGates": [
-        "WIC JPEG仅完成只读路线评估、未运行或测量。CopyPixels支持caller缓冲区与ROI，可尝试直接写入最终DIB，但WIC内部解码/缓存分配由实现决定，不能据此推断低于256MiB。16MP显式输入+最终DIB下限约81.04MiB，尚不含解码器、进程基线、IPC与分配开销。建议先在隔离utilityProcess评估JPEG专用WIC绑定与分块IPC；worker现有完整DecodedImage接口及whole-image压缩/inflate需要重新评估。Rust helper当前只接收已扩展DIB、同步ContentStore路径会阻塞协议事件；native/**、Cargo依赖超出T04 allowlist，新增windows crate须经T06。P15 `src/main/native/content-provider.ts`仍按用户决定保持开放。完整来源、接口边界和未证实事项见docs/evidence/T04/wic-jpeg-route-review.json。",
+        "WPF/WIC候选测量已完成：Windows PowerShell STA独立子进程对合成16MP、20MiB baseline JPEG 4:2:0和4:4:4各5样本（共10）完整解码、全像素oracle与GDI+九点对照均通过；PeakWorkingSet64最高169,676,800B（161.82MiB），10样本均低于256MiB目标。该值含PowerShell/.NET/WPF进程基线；探针不是生产IWIC直接调用或Electron utilityProcess，未覆盖完整IPC/deflate/helper DIB、JPEG语料与元数据、取消及打包路径，因此仅为候选初筛，不关闭生产JPEG内存门或T04验收。测量与限制见docs/evidence/T04/wic-jpeg-memory-probe.json及docs/evidence/T04/wic-jpeg-route-review.json。",
         "五个 fresh utilityProcess 的合成16MP RGBA PNG诊断测量：request→压缩传输→异步还原RGBA p50 524.91ms、p95/max 547.68ms，PeakWorkingSet64最高169066496B（161.23MiB），低于256MiB预算；每进程OS峰值、100ms private采样与Node 24.15/Electron 40.10.2环境见 image-worker-16mp-fresh-worker-5-sample-measurement.json。此结果只覆盖一种6.77MB合成PNG和5次样本，不证明所有PNG/JPEG、接近20MiB输入或打包运行的硬上限。",
         "新加9MP真实Electron utilityProcess压缩响应/异步inflate及最新代码隔离ASAR worker smoke已通过。新增Electron main/browser进程合成9MP诊断实测toPNG 1694.36ms、toJPEG 233.28ms、Base64/SHA-256 23.25ms；1951.13ms同步负载越过500ms截止后，迟到poll返回key_state_unavailable且模拟副作用为0。该诊断使用fake按键且不调用OS剪贴板、物理输入、窗口或content-provider；另有生产NativeContentProvider的2×1 DIB字节/hash检查，但未测大图转换性能。完整面板/目标可见粘贴、真实deadline负载竞态及T05 100样本基准仍未验收。",
         "P15 选图仍在 src/main/native/content-provider.ts 重复 Base64 解码/SHA-256并执行主线程DIB转换；该文件不在 T04 allowlist，用户选择暂不扩围，此门保持未关闭。",
