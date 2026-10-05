@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "check": "current-source-windows-asar-png-sof0-jpeg-utility-process-smoke",
+  "result": "PASS_WITH_LIMITATIONS",
+  "verificationDate": "2026-10-05",
+  "branch": "codex/m0-latency",
+  "source": {
+    "commit": "d34375f16c6ab1ded631875c47c6c4962aaef263",
+    "workingTreeWasDirty": true,
+    "note": "The repository also had concurrent T04/T05 task-file edits. The production worker, decoder, JPEG stream decoder and generated files below were the inputs to this build.",
+    "files": [
+      { "path": "src/main/clipboard/image-worker.ts", "bytes": 20288, "sha256": "ffd3b0ca7d1ab31f7d84e4ee30e89dbadb2c1c334bebc50d40374041c7d5532d" },
+      { "path": "src/main/clipboard/image-decoder.ts", "bytes": 20521, "sha256": "fa467e97c5840a76338fc7fc7c8fd876666473636051433dc7ff8afb1c9e9886" },
+      { "path": "src/main/clipboard/jpeg-baseline-stream.ts", "bytes": 27310, "sha256": "e490c6e4209aec7358be50577d0fedf1e6cd12bbe2ebef801806d6f983c6c0db" },
+      { "path": "dist-electron/main/clipboard/image-worker.js", "bytes": 19393, "sha256": "ca31dfe8caa18062ef1d49bddfd41e94384a07b7b2d4b26407b8454789571af8" },
+      { "path": "dist-electron/main/clipboard/image-decoder.js", "bytes": 21141, "sha256": "5be6d5407644d140d8ec2474f5f8882d2a7392955bac8ad46a3eb4e81eb952a7" },
+      { "path": "dist-electron/main/clipboard/jpeg-baseline-stream.js", "bytes": 28778, "sha256": "57cffed02e6c3bb722151302b3145eab8a908e437fd06a955bcd6074491525ec" },
+      { "path": "node_modules/jpeg-js/index.js", "bytes": 136, "sha256": "404574b5cede8905627bff9b05975c0472d50425feb6906b0a55335e6743c4b4" },
+      { "path": "tests/tasks/T04/packaged-asar-worker-smoke.cjs", "bytes": 5475, "sha256": "b0a6e15a6e569e174f7490a0d073d381c21f72fe55ca9d3f4badc06b64a3e0cd" }
+    ]
+  },
+  "environment": {
+    "os": "Windows 11 Enterprise 10.0.22631",
+    "architecture": "x64",
+    "node": "v24.16.0",
+    "pnpm": "11.19.0",
+    "electron": "40.10.2",
+    "electronBuilder": "25.1.8"
+  },
+  "build": {
+    "command": "pnpm build:main",
+    "status": "PASS",
+    "packageCommand": "pnpm exec electron-builder --win dir --x64 --publish never --config D:/ClipNest-work/.codex-temp-t04-asar-20261005-01/electron-builder.cjs",
+    "packageStatus": "PASS",
+    "packageVersion": "1.1.4-local.20261005.t04-asar-smoke",
+    "target": "Windows x64 directory package",
+    "asarPath": "D:/ClipNest-work/.codex-temp-t04-asar-20261005-01/output/win-unpacked/resources/app.asar",
+    "asarBytes": 30660980,
+    "asarSha256": "82e0ca092cafdaeb6881b09fe264f795252332a124338d651f17f5228dfa9a82",
+    "asarContentCheck": {
+      "command": "node D:/ClipNest-work/.codex-temp-t04-asar-20261005-01/verify-asar.cjs",
+      "status": "PASS",
+      "productionDependenciesMatchSourceManifest": true,
+      "filesMatchGeneratedBuildByteForByte": [
+        "dist-electron/main/clipboard/image-worker.js",
+        "dist-electron/main/clipboard/image-decoder.js",
+        "dist-electron/main/clipboard/jpeg-baseline-stream.js",
+        "node_modules/jpeg-js/index.js"
+      ]
+    },
+    "isolatedTemporaryDirectory": "D:/ClipNest-work/.codex-temp-t04-asar-20261005-01",
+    "dependencyRebuild": false,
+    "helperIncluded": false,
+    "helperExecuted": false,
+    "installPerformed": false,
+    "published": false,
+    "signature": "Unsigned local directory package; no signing information was configured."
+  },
+  "smoke": {
+    "source": "tests/tasks/T04/packaged-asar-worker-smoke.cjs",
+    "launch": "node D:/ClipNest-work/.codex-temp-t04-asar-20261005-01/run-smoke.cjs spawned Electron 40.10.2 in a hidden, no-window harness; ELECTRON_RUN_AS_NODE was removed. app.userData was set to the task-specific temporary directory before ready.",
+    "exitCode": 0,
+    "stderr": "",
+    "workerLoadedFromAsar": true,
+    "jpegDecoderLoadedFromAsar": "app.asar/node_modules/jpeg-js/index.js",
+    "png": {
+      "dimensions": "3000x3000",
+      "encodedBytes": 35074,
+      "decodedBytes": 36000000,
+      "decodedCacheThresholdBytes": 33554432,
+      "utilityProcessResponseTypes": { "decoded_chunk": 35, "decoded_end": 1 },
+      "allPixelsExact": true,
+      "elapsedMs": 474.85
+    },
+    "jpeg": {
+      "format": "8-bit three-component SOF0 baseline 4:4:4",
+      "samplingFactors": ["1x1", "1x1", "1x1"],
+      "dimensions": "640x360",
+      "encodedBytes": 106259,
+      "decodedBytes": 921600,
+      "utilityProcessResponseTypes": ["decoded"],
+      "matchesPackagedPinnedJpegJsDecodeByteForByte": true,
+      "elapsedMs": 54.34
+    },
+    "clipboardContentRead": false,
+    "clipboardWritten": false,
+    "inputSent": false,
+    "browserWindowCreated": false,
+    "userDataDirectory": "D:/ClipNest-work/.codex-temp-t04-asar-20261005-01/user-data"
+  },
+  "limitations": [
+    "The JPEG fixture is deliberately small and takes the packaged jpeg-js fallback path. The current jpeg-baseline-stream.js is present in ASAR and matches the generated build byte-for-byte, but this ASAR smoke does not execute its large-image streaming route.",
+    "One synthetic PNG and one synthetic SOF0 4:4:4 JPEG validate ASAR loading and these decode paths; they do not establish general memory/latency bounds or resolve 4:2:0 fidelity.",
+    "No application window, system clipboard, physical input, helper, installer, or release flow was exercised; broader T04 gates remain open."
+  ]
+}
