@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "reviewDate": "2026-10-05",
+  "result": "PASS_WITH_LIMITATIONS",
+  "independentReviews": [
+    {
+      "reviewer": "Independent read-only JPEG stream reviewer",
+      "scope": [
+        "reused 8-row sample views in the baseline JPEG stream decoder",
+        "1x1-component render fast path for grayscale and 4:4:4",
+        "full-frame jpeg-js differential-oracle comparison logic"
+      ],
+      "findings": [
+        "The reused row views share only the scratch sample buffer; each block synchronously copies all rows into its component band before the scratch buffer is reused.",
+        "With maxH and maxV both 1, the optimized renderer's incrementing component offsets are equivalent to the general sampling-coordinate path. Grayscale, 4:4:4, and partial MCU edges have no identified indexing regression.",
+        "The full-frame jpeg-js comparison validates dimensions and byte length, then compares all RGBA bytes and counts mismatches. It is a differential reference to the existing decoder path, not an independent implementation; its 64,000,000-byte RGBA buffer lives in the Electron parent and is excluded from utilityProcess PeakWorkingSet64.",
+        "The GDI+ 8-channel tolerance was calibrated only against the deterministic 4:4:4 jpeg-js fixture. The 4:2:0 native-image fixture's max difference 38 remains a diagnostic discrepancy and an open fidelity gate; exact jpeg-js agreement does not explain or erase the GDI+ result."
+      ],
+      "testsRunByReviewer": false
+    },
+    {
+      "reviewer": "Independent read-only T04 protocol reviewer",
+      "scope": [
+        "raw RGBA chunk-and-ACK sequencing and strict receive validation",
+        "request ID binding, utility-process child identity, cancellation quarantine, and worker reuse after errors"
+      ],
+      "findings": [
+        "The runtime rejects an outer requestId that differs from input.jobId before invoking the decoder.",
+        "Each utility-process message listener checks that its child is still the current child; stale messages after exit cannot be delivered to a replacement request.",
+        "A matching image_worker_busy response retires the child because it may still own another active job.",
+        "The receiver validates request identity, safe consecutive sequence numbers, exact full and final chunk lengths, accumulated byte count, and end-frame dimensions, byte length, and chunk count. Malformed matching responses retire and quarantine the child; cancel also kills and quarantines it until exit."
+      ],
+      "testsRunByReviewer": false
+    }
+  ],
+  "artifactsReviewed": [
+    "src/main/clipboard/image-worker.ts",
+    "src/main/clipboard/jpeg-baseline-stream.ts",
+    "tests/tasks/T04/clipboard-image-decoder.test.cjs",
+    "tests/tasks/T04/measure-image-worker-16mp.cjs"
+  ],
+  "limitations": [
+    "The review is static. The targeted test result is recorded separately in verification.json.",
+    "Synthetic fresh-utility-process measurements do not establish a universal process-memory ceiling, real clipboard conversion cost, desktop paste latency, or T05's 100-sample acceptance.",
+    "The GDI+ versus jpeg-js 4:2:0 pixel discrepancy remains unresolved.",
+    "P15 remains open by the user's scope decision; full desktop and exact physical-key cutoff gates remain open."
+  ]
+}

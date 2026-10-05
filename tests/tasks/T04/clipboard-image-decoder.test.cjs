@@ -448,6 +448,24 @@ test("compiled utility-process production entry decodes PNG through its real par
   assert.deepEqual([...responses[0].image.pixels], [255, 0, 0, 255, 0, 255, 0, 128]);
 });
 
+test("image worker rejects requests whose outer request id differs from the input job id", async () => {
+  const { installImageWorkerRuntime } = loadWorker({}, false);
+  let receive;
+  let decodeCalled = false;
+  const responses = [];
+  const input = { ...request("png", png()), jobId: "input-job" };
+  const dispose = installImageWorkerRuntime({
+    onMessage(listener) { receive = listener; return () => {}; },
+    postMessage(message) { responses.push(message); },
+  }, async () => { decodeCalled = true; return { width: 2, height: 1, pixels: Buffer.alloc(8) }; });
+
+  receive({ type: "decode", requestId: "outer-request", input });
+  await waitFor(() => responses.length === 1);
+  assert.deepEqual(responses[0], { type: "failed", requestId: "outer-request", reason: "image_request_invalid" });
+  assert.equal(decodeCalled, false);
+  dispose();
+});
+
 test("large worker responses wait for one ACK per bounded raw pixel chunk", async () => {
   const { installImageWorkerRuntime } = loadWorker({}, false);
   let receive;
@@ -529,6 +547,33 @@ test("utility worker assembles exact large pixel chunks and ACKs after copying e
   await disposed;
 });
 
+test("utility worker ignores messages delivered by a retired child after a replacement starts", async () => {
+  const { children, worker } = createFakeUtilityWorker();
+  const firstInput = largeWorkerInput("retired-child-first");
+  const controller = new AbortController();
+  const first = worker.decode(firstInput, controller.signal);
+  children[0].emit("message", { type: "decoded_chunk", requestId: firstInput.jobId, seq: 0,
+    pixels: Buffer.alloc(1024 * 1024) });
+  controller.abort();
+  await assert.rejects(first, /image_decode_cancelled/);
+  assert.equal(children[0].killed, true);
+  await assert.rejects(worker.decode({ ...firstInput, jobId: "before-old-child-exit" }, new AbortController().signal),
+    /image_worker_terminating/);
+  children[0].emit("exit", 0);
+
+  const secondInput = { ...request("png", png()), jobId: "replacement-child-second" };
+  const second = worker.decode(secondInput, new AbortController().signal);
+  children[0].emit("message", { type: "decoded", requestId: secondInput.jobId,
+    image: { width: 2, height: 1, pixels: Buffer.alloc(8, 0x22) } });
+  children[1].emit("message", { type: "decoded", requestId: secondInput.jobId,
+    image: { width: 2, height: 1, pixels: Buffer.alloc(8, 0x33) } });
+  const image = await second;
+  assert.deepEqual([...image.pixels], Array(8).fill(0x33));
+
+  children[1].emit("exit", 0);
+  await worker.dispose();
+});
+
 test("utility worker kills and quarantines a malformed chunk stream without waiting for ACK", async () => {
   const { children, worker } = createFakeUtilityWorker();
   const input = largeWorkerInput("chunked-invalid");
@@ -551,6 +596,19 @@ test("utility worker kills and quarantines a malformed chunk stream without wait
 
   const disposed = worker.dispose();
   await disposed;
+});
+
+test("utility worker retires after a busy response because the child may retain another active job", async () => {
+  const { children, worker } = createFakeUtilityWorker();
+  const input = largeWorkerInput("unexpected-busy");
+  const rejected = worker.decode(input, new AbortController().signal);
+  children[0].emit("message", { type: "failed", requestId: input.jobId, reason: "image_worker_busy" });
+  await assert.rejects(rejected, /image_worker_busy/);
+  assert.equal(children[0].killed, true);
+  await assert.rejects(worker.decode({ ...input, jobId: "busy-quarantined" }, new AbortController().signal),
+    /image_worker_terminating/);
+  children[0].emit("exit", 0);
+  await worker.dispose();
 });
 
 test("utility worker enforces the chunk size and end byte/count metadata", async () => {

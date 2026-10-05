@@ -307,6 +307,7 @@ function decodePlan(bytes: Buffer, plan: ScanPlan): DecodedImage {
   const coefficients = new Int32Array(64);
   const work = new Int32Array(64);
   const samples = new Uint8Array(64);
+  const sampleRows = Array.from({ length: 8 }, (_, row) => samples.subarray(row * 8, row * 8 + 8));
   const reader = new EntropyReader(bytes, plan.entropyOffset);
   const totalMcus = plan.mcuColumns * plan.mcuRows;
   let restartNumber = 0;
@@ -319,7 +320,7 @@ function decodePlan(bytes: Buffer, plan: ScanPlan): DecodedImage {
         for (let blockY = 0; blockY < component.v; blockY++) {
           for (let blockX = 0; blockX < component.h; blockX++) {
             decodeBlock(reader, component, coefficients, work, samples);
-            writeBlock(component, mcuX, blockX, blockY, samples);
+            writeBlock(component, mcuX, blockX, blockY, sampleRows);
           }
         }
       }
@@ -395,14 +396,14 @@ function receiveExtended(reader: EntropyReader, length: number): number {
   return value >= threshold ? value : value - ((1 << length) - 1);
 }
 
-function writeBlock(component: Component, mcuX: number, blockX: number, blockY: number, samples: Uint8Array): void {
+function writeBlock(component: Component, mcuX: number, blockX: number, blockY: number, sampleRows: Uint8Array[]): void {
   const band = component.band;
   if (!band) throw new Error("image_source_invalid");
   const xStart = mcuX * component.h * 8 + blockX * 8;
   const yStart = blockY * 8;
   for (let y = 0; y < 8; y++) {
     const destination = (yStart + y) * component.bandWidth + xStart;
-    band.set(samples.subarray(y * 8, y * 8 + 8), destination);
+    band.set(sampleRows[y], destination);
   }
 }
 
@@ -413,6 +414,37 @@ function renderMcuRow(frame: Frame, pixels: Buffer, mcuY: number): void {
   const first = components[0];
   const second = components[1];
   const third = components[2];
+  if (maxH === 1 && maxV === 1) {
+    const firstBand = first.band;
+    const secondBand = second?.band;
+    const thirdBand = third?.band;
+    if (!firstBand || (second && !secondBand) || (third && !thirdBand)) throw new Error("image_source_invalid");
+    for (let localY = 0; localY < rowCount; localY++) {
+      const y = firstY + localY;
+      let firstOffset = localY * first.bandWidth;
+      let secondOffset = localY * (second?.bandWidth ?? 0);
+      let thirdOffset = localY * (third?.bandWidth ?? 0);
+      let output = (y * width) * 4;
+      for (let x = 0; x < width; x++) {
+        const firstSample = firstBand[firstOffset++];
+        let red = firstSample;
+        let green = firstSample;
+        let blue = firstSample;
+        if (secondBand && thirdBand) {
+          const cb = secondBand[secondOffset++];
+          const cr = thirdBand[thirdOffset++];
+          red = clamp8(firstSample + 1.402 * (cr - 128));
+          green = clamp8(firstSample - 0.3441363 * (cb - 128) - 0.71413636 * (cr - 128));
+          blue = clamp8(firstSample + 1.772 * (cb - 128));
+        }
+        pixels[output++] = red;
+        pixels[output++] = green;
+        pixels[output++] = blue;
+        pixels[output++] = 255;
+      }
+    }
+    return;
+  }
   for (let localY = 0; localY < rowCount; localY++) {
     const y = firstY + localY;
     const firstRow = localY * first.v / maxV | 0;

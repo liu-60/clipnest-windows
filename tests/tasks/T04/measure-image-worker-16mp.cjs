@@ -19,6 +19,7 @@ const SAMPLE_COUNT = Math.min(5, Math.max(1, Number(process.env.T04_IMAGE_SAMPLE
 const SAMPLE_INTERVAL_MS = Math.max(50, Number(process.env.T04_IMAGE_SAMPLE_INTERVAL_MS) || 100);
 const IMAGE_FORMAT = process.env.T04_IMAGE_FORMAT || "png";
 const JPEG_ENCODER = process.env.T04_JPEG_ENCODER || "jpeg-js";
+const ENABLE_JPEG_JS_PIXEL_ORACLE = process.env.T04_JPEG_JS_PIXEL_ORACLE === "1";
 const MEASUREMENT_TAG = process.env.T04_IMAGE_MEASUREMENT_TAG || "";
 if (IMAGE_FORMAT !== "png" && IMAGE_FORMAT !== "jpeg") throw new Error("unsupported_t04_image_format");
 if (JPEG_ENCODER !== "jpeg-js" && JPEG_ENCODER !== "native-image") throw new Error("unsupported_t04_jpeg_encoder");
@@ -91,9 +92,12 @@ async function runMeasurement() {
   if (encodedBytes.byteLength > 20 * 1024 * 1024) throw new Error("synthetic_image_exceeds_source_limit");
   const imageSha256 = createHash("sha256").update(encodedBytes).digest("hex");
   const pixelOracle = jpegFixture ? runIndependentPixelOracle(encodedBytes, profileRoot) : null;
+  let jpegJsPixelOracle = jpegFixture && ENABLE_JPEG_JS_PIXEL_ORACLE
+    ? decodeJpegJsOracle(encodedBytes) : null;
   const samples = [];
   const workers = [];
   const pixelOracleChecks = [];
+  const jpegJsPixelOracleChecks = [];
   for (let index = 0; index < SAMPLE_COUNT; index++) {
     const requestId = `t04-${IMAGE_FORMAT}-${WIDTH}x${HEIGHT}-${index + 1}`;
     const workerStartedAt = process.hrtime.bigint();
@@ -126,6 +130,9 @@ async function runMeasurement() {
         assertOpaquePixels(image.pixels);
         if (pixelOracle?.status === "READY") {
           pixelOracleChecks.push(comparePixelsWithOracle(image.pixels, pixelOracle));
+        }
+        if (jpegJsPixelOracle) {
+          jpegJsPixelOracleChecks.push(compareFullPixels(image.pixels, jpegJsPixelOracle));
         }
       }
       const memoryAfter = await sampler.snapshot();
@@ -237,6 +244,7 @@ async function runMeasurement() {
       jpegSamplingFactors: jpegFixture?.samplingFactors ?? null,
       sha256: imageSha256,
       independentPixelOracle: summarizePixelOracle(pixelOracle, pixelOracleChecks),
+      jpegJsPixelOracle: summarizeJpegJsPixelOracle(jpegJsPixelOracle, jpegJsPixelOracleChecks),
     },
     worker: {
       runtime: "Electron utilityProcess",
@@ -302,8 +310,11 @@ async function runMeasurement() {
       "No clipboard, target window, physical input, installed package, helper, or rollback behavior was exercised. P15 and full T04 acceptance remain open.",
       "This harness sets unique userData and sessionData paths under the OS temporary directory and removes the validated per-run root only after Electron exits.",
       pixelOracle?.status === "READY"
-        ? "Decoded RGB values were compared at nine coordinates with the independent Windows System.Drawing/GDI+ JPEG decoder using a maximum per-channel tolerance of 8. This is a sampled oracle, not a full-image pixel hash."
+        ? `Decoded RGB values were compared at nine coordinates with the independent Windows System.Drawing/GDI+ JPEG decoder using a maximum per-channel tolerance of 8. This is a sampled oracle, not a full-image pixel hash.${JPEG_ENCODER === "native-image" ? " The 8-channel tolerance was previously calibrated only against the deterministic 4:4:4 jpeg-js fixture; the native-image 4:2:0 result is diagnostic and any disagreement remains an open fidelity gate." : ""}`
         : "No independent RGB oracle was run for this fixture.",
+      jpegJsPixelOracle
+        ? "The optional pinned jpeg-js full-frame oracle is a differential reference to the existing decoder path, not an independent implementation. It runs in the Electron parent before worker samples and retains a 64,000,000-byte RGBA buffer; that memory is excluded from each utilityProcess PeakWorkingSet64 measurement."
+        : "The pinned jpeg-js full-frame differential oracle was not enabled.",
     ],
   };
   fs.writeFileSync(outputPath, `${JSON.stringify(measurement, null, 2)}\n`, "utf8");
@@ -400,9 +411,6 @@ function decode(child, requestId, bytes, width, height, format) {
 }
 
 function runIndependentPixelOracle(encodedBytes, profileRoot) {
-  if (JPEG_ENCODER !== "jpeg-js") {
-    return { status: "NOT_RUN", reason: "RGB tolerance is calibrated only for the deterministic 4:4:4 jpeg-js fixture" };
-  }
   if (WIDTH !== 4000 || HEIGHT !== 4000) {
     return { status: "NOT_RUN", reason: "the existing independent GDI+ oracle is fixed to 4000x4000" };
   }
@@ -436,6 +444,39 @@ function runIndependentPixelOracle(encodedBytes, profileRoot) {
     pixelFormat: oracle.pixelFormat,
     samples: oracle.samples,
   };
+}
+
+function decodeJpegJsOracle(encodedBytes) {
+  const jpeg = require("jpeg-js");
+  const decoded = jpeg.decode(encodedBytes, { useTArray: true, formatAsRGBA: true });
+  assert.equal(decoded.width, WIDTH, "jpeg-js oracle width matches the fixture");
+  assert.equal(decoded.height, HEIGHT, "jpeg-js oracle height matches the fixture");
+  assert.equal(decoded.data.byteLength, PIXELS * 4, "jpeg-js oracle returns complete RGBA pixels");
+  return { width: decoded.width, height: decoded.height, pixels: decoded.data };
+}
+
+function compareFullPixels(actual, oracle) {
+  let mismatchedChannelCount = 0;
+  let mismatchedPixelCount = 0;
+  let maxChannelDifference = 0;
+  let mismatchExamples = [];
+  for (let offset = 0; offset < actual.byteLength; offset += 4) {
+    let pixelDiffers = false;
+    for (let channel = 0; channel < 4; channel++) {
+      const difference = Math.abs(actual[offset + channel] - oracle.pixels[offset + channel]);
+      if (difference !== 0) {
+        mismatchedChannelCount++;
+        pixelDiffers = true;
+        maxChannelDifference = Math.max(maxChannelDifference, difference);
+        if (mismatchExamples.length < 8) {
+          mismatchExamples.push({ pixel: offset / 4, channel, expected: oracle.pixels[offset + channel],
+            actual: actual[offset + channel], difference });
+        }
+      }
+    }
+    if (pixelDiffers) mismatchedPixelCount++;
+  }
+  return { mismatchedChannelCount, mismatchedPixelCount, maxChannelDifference, mismatchExamples };
 }
 
 function comparePixelsWithOracle(pixels, oracle) {
@@ -473,6 +514,29 @@ function summarizePixelOracle(oracle, checks) {
     maxRgbDifference,
     alphaValid: checks.length > 0 && checks.every((check) => check.alphaValid),
     samples: checks[0]?.samples ?? [],
+  };
+}
+
+function summarizeJpegJsPixelOracle(oracle, checks) {
+  if (!oracle) return { status: "NOT_RUN", reason: "T04_JPEG_JS_PIXEL_ORACLE is not enabled" };
+  const mismatchedChannelCount = checks.reduce((total, check) => total + check.mismatchedChannelCount, 0);
+  const mismatchedPixelCount = checks.reduce((total, check) => total + check.mismatchedPixelCount, 0);
+  const maxChannelDifference = Math.max(0, ...checks.map((check) => check.maxChannelDifference));
+  return {
+    status: checks.length > 0 && mismatchedChannelCount === 0 ? "PASS" : "FAIL",
+    decoder: "pinned jpeg-js full RGBA reference",
+    referenceType: "differential_reference_to_existing_decoder_path",
+    executionContext: "Electron parent process before worker samples",
+    referenceBufferBytes: oracle.pixels.byteLength,
+    includedInWorkerPeakWorkingSet: false,
+    width: oracle.width,
+    height: oracle.height,
+    exactByteComparison: true,
+    verifiedWorkerSamples: checks.length,
+    mismatchedChannelCount,
+    mismatchedPixelCount,
+    maxChannelDifference,
+    mismatchExamples: checks.find((check) => check.mismatchExamples.length > 0)?.mismatchExamples ?? [],
   };
 }
 

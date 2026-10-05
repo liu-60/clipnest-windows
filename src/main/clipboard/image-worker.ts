@@ -75,6 +75,10 @@ export function installImageWorkerRuntime(endpoint: ImageWorkerEndpoint, decoder
       endpoint.postMessage({ type: "failed", requestId: raw.requestId, reason: "image_request_invalid" });
       return;
     }
+    if (input.jobId !== raw.requestId) {
+      endpoint.postMessage({ type: "failed", requestId: raw.requestId, reason: "image_request_invalid" });
+      return;
+    }
     if (active) {
       endpoint.postMessage({ type: "failed", requestId: raw.requestId, reason: "image_worker_busy" });
       return;
@@ -206,7 +210,10 @@ class UtilityImageWorker implements ImageDecodeWorker {
       serviceName: "ClipNest Image Decoder", stdio: "ignore",
     });
     this.child = child;
-    child.on("message", (raw: unknown) => this.onMessage(raw));
+    child.on("message", (raw: unknown) => {
+      if (this.child !== child) return;
+      this.onMessage(raw);
+    });
     child.on("exit", () => {
       if (this.child === child) this.child = null;
       if (this.retiringChild === child) this.retiringChild = null;
@@ -225,7 +232,9 @@ class UtilityImageWorker implements ImageDecodeWorker {
     // next active request. Matching request IDs still receive strict checks.
     if (raw.requestId !== this.pending.id) return;
     if (raw.type === "failed" && typeof raw.reason === "string" && /^image_[a-z0-9_]+$/.test(raw.reason)) {
-      if (raw.reason === "image_worker_protocol_invalid") this.retire(new Error(raw.reason));
+      if (raw.reason === "image_worker_protocol_invalid" || raw.reason === "image_worker_busy") {
+        this.retire(new Error(raw.reason));
+      }
       else this.finish(new Error(raw.reason));
     }
     else if (raw.type === "decoded") this.onDecodedMessage(raw);
