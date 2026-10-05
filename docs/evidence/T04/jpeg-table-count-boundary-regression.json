@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "PASS_SYNTHETIC_UNIT_REGRESSION",
+  "checkedDate": "2026-10-05",
+  "source": {
+    "commit": "72bbf56e25ef4c60c0e8b7c777d7a5618612fc85",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "changedFiles": {
+      "tests/tasks/T04/clipboard-image-decoder.test.cjs": "dc1c49d3756c0449896102ae57a9ff6e482d514d7601332bd57d59556b3e1600"
+    }
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "nodeVersion": "v24.16.0",
+    "pnpmVersion": "11.19.0"
+  },
+  "scope": {
+    "productionSourceChanged": false,
+    "fixture": "synthetic valid 8x8 grayscale SOF0 baseline JPEG with repeated DQT/DHT definitions inserted before SOS; no clipboard, window, helper, package, or physical input",
+    "assertions": [
+      "A cumulative total of 64 quantization-table definitions, including the base table, decodes to the expected opaque gray pixels; 65 definitions fail with image_worker_capacity_exceeded.",
+      "A cumulative total of 64 Huffman-table definitions, including the base fixture's DC and AC tables, decodes to the expected opaque gray pixels; 65 definitions fail with image_worker_capacity_exceeded."
+    ],
+    "construction": "Extra DQT definitions repeat table ID 0 with the same 64 one-valued coefficients. Each extra DHT segment defines one DC table ID 0 with one length-1 code; the base fixture contributes two definitions."
+  },
+  "validation": {
+    "command": "pnpm test:unit -- clipboard-image-decoder.test.cjs",
+    "result": "PASS",
+    "buildMain": "PASS",
+    "tests": 30,
+    "passed": 30,
+    "failed": 0,
+    "skipped": 0
+  },
+  "limitations": [
+    "This regression checks the cumulative DQT/DHT definition-count thresholds for one small synthetic JPEG; it does not establish every JPEG metadata limit or broad image compatibility.",
+    "The result does not establish a hard memory bound, packaged behavior, product deadline, or complete T04 acceptance."
+  ],
+  "sideEffects": {
+    "desktopClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "helperRun": false,
+    "packageBuilt": false,
+    "productionSourceChanged": false
+  }
+}

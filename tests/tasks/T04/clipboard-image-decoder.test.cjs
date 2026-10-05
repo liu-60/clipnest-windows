@@ -117,6 +117,12 @@ function jpegWithCommentBytes(encoded, payloadBytes) {
   }
   return Buffer.concat([encoded.subarray(0, scanOffset), ...comments, encoded.subarray(scanOffset)]);
 }
+function jpegWithSegmentsBeforeScan(encoded, segments) {
+  const scanMarker = Buffer.from([0xff, 0xda]);
+  const scanOffset = encoded.indexOf(scanMarker);
+  assert.notEqual(scanOffset, -1, "fixture should contain an SOS marker");
+  return Buffer.concat([encoded.subarray(0, scanOffset), ...segments, encoded.subarray(scanOffset)]);
+}
 function simpleBaselineJpeg({
   width,
   height,
@@ -552,6 +558,35 @@ test("JPEG COM comment limit accepts exactly one MiB and rejects the next byte",
 
   const overLimit = jpegWithCommentBytes(base, 1024 * 1024 + 1);
   await assert.rejects(decode(request("jpeg", overLimit, 8, 8)), /image_worker_capacity_exceeded/);
+});
+
+test("JPEG quantization and Huffman table limits accept 64 definitions and reject 65", async () => {
+  const base = simpleBaselineJpeg({ width: 8, height: 8, sampling: [0x11] });
+  const quantization = jpegSegment(0xdb, Buffer.from([0, ...new Array(64).fill(1)]));
+  const huffmanPayload = Buffer.alloc(18);
+  huffmanPayload[1] = 1;
+  const huffman = jpegSegment(0xc4, huffmanPayload);
+  const assertGrayImage = (image) => {
+    assert.deepEqual([image.width, image.height], [8, 8]);
+    for (let offset = 0; offset < image.pixels.length; offset += 4) {
+      assert.deepEqual([...image.pixels.subarray(offset, offset + 4)], [128, 128, 128, 255]);
+    }
+  };
+
+  const exactQuantizationLimit = jpegWithSegmentsBeforeScan(base,
+    Array.from({ length: 63 }, () => quantization));
+  assertGrayImage(await decode(request("jpeg", exactQuantizationLimit, 8, 8)));
+  const overQuantizationLimit = jpegWithSegmentsBeforeScan(base,
+    Array.from({ length: 64 }, () => quantization));
+  await assert.rejects(decode(request("jpeg", overQuantizationLimit, 8, 8)), /image_worker_capacity_exceeded/);
+
+  // The base fixture defines one DC and one AC table; extra segments each add one DC definition.
+  const exactHuffmanLimit = jpegWithSegmentsBeforeScan(base,
+    Array.from({ length: 62 }, () => huffman));
+  assertGrayImage(await decode(request("jpeg", exactHuffmanLimit, 8, 8)));
+  const overHuffmanLimit = jpegWithSegmentsBeforeScan(base,
+    Array.from({ length: 63 }, () => huffman));
+  await assert.rejects(decode(request("jpeg", overHuffmanLimit, 8, 8)), /image_worker_capacity_exceeded/);
 });
 
 test("decoder handles already-aborted requests and invalid format/signature without output", async () => {
