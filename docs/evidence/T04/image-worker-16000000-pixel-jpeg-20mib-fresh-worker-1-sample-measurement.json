@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "DIAGNOSTIC_MEASUREMENT_WITH_LIMITATIONS",
+  "measurementType": "fresh_utility_process_per_uncached_16000000-pixel_synthetic_jpeg_decode",
+  "executionStatus": "MEASURED",
+  "source": {
+    "commit": "319197c4ad4a46ccb1668d6caf3a6f07cce56fb9",
+    "branch": "codex/m0-latency",
+    "commitRole": "base revision before compiling the dirty worktree; this commit alone does not reproduce the measured decoder",
+    "workingTreeWasDirty": true,
+    "workingTreeFiles": [
+      {
+        "path": "src/main/clipboard/image-decoder.ts",
+        "sha256": "FFEA0A0D5428681031094C3CC2D7C0BA19E7CCE11028AE84CBD9E0B08A07D183"
+      },
+      {
+        "path": "src/main/clipboard/jpeg-baseline-stream.ts",
+        "sha256": "AB3C5BCB5176CD57C3CE7A5115F19A484CDDFA738CA6E0E237EE470C7EB57837"
+      }
+    ],
+    "builtArtifactFiles": [
+      {
+        "path": "dist-electron/main/clipboard/image-decoder.js",
+        "sha256": "A6FE7CEEDCBDFA8D8B532EEA900AB8E39726590E985BF912D137F4E661B5403D"
+      },
+      {
+        "path": "dist-electron/main/clipboard/jpeg-baseline-stream.js",
+        "sha256": "68F323D3FBE41F147274A4CD74F18DAE9F98592C750DA0EE6CC71E31D28088AE"
+      }
+    ]
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "osVersion": "Windows 11 Enterprise",
+    "electronVersion": "40.10.2",
+    "electronLaunch": {
+      "mode": "directly launched repository-local Electron executable; bypassed require('electron') launcher",
+      "binaryPath": "D:\\ClipNest-work\\electron-l0\\node_modules\\.pnpm\\electron@40.10.2\\node_modules\\electron\\dist\\electron.exe",
+      "fullArgumentVectorRecorded": false
+    },
+    "profileIsolation": {
+      "isolated": false,
+      "userDataDirectory": "%APPDATA%\\Electron",
+      "sessionDataPathOverridden": false,
+      "profileModificationChecked": false
+    },
+    "nodeVersion": "24.15.0",
+    "cpuModel": "Intel(R) Xeon(R) Platinum 8378C CPU @ 2.80GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 17178939392,
+    "displayOrForegroundAppUsed": false,
+    "systemClipboardReadOrWritten": false,
+    "inputSent": false
+  },
+  "fixture": {
+    "format": "jpeg",
+    "width": 4000,
+    "height": 4000,
+    "pixelCount": 16000000,
+    "content": "deterministic high-entropy synthetic baseline JPEG; APP2 segments bring the source within 3 bytes of 20 MiB; no user data",
+    "encodedBytes": 20971520,
+    "sourceLimitBytes": 20971520,
+    "sourceLimitHeadroomBytes": 0,
+    "jpegQuality": 74,
+    "jpegEncoder": "jpeg-js",
+    "jpegImageBytesBeforeApp2Padding": 19866368,
+    "jpegApp2PaddingBytes": 1105152,
+    "jpegSamplingFactors": [
+      {
+        "horizontal": 1,
+        "vertical": 1
+      },
+      {
+        "horizontal": 1,
+        "vertical": 1
+      },
+      {
+        "horizontal": 1,
+        "vertical": 1
+      }
+    ],
+    "sha256": "5f5178ce761193b569130af082740669cd16071de9ea733aa8968f4f8e9dc6a3"
+  },
+  "worker": {
+    "runtime": "Electron utilityProcess",
+    "recyclingPolicy": "one fresh process per uncached image larger than the 32 MiB decoded cache",
+    "configuredPeakBytes": 268435456,
+    "jpegCapacityEstimate": {
+      "processReserveBytes": 117440512,
+      "coefficientBlockBytes": 512,
+      "quantizationTableBytes": 512,
+      "huffmanTableBytes": 4096,
+      "huffmanSymbolBytes": 2048,
+      "commentByteMultiplier": 2,
+      "metadataLimits": {
+        "quantizationTables": 64,
+        "huffmanTables": 64,
+        "huffmanSymbolsPerTable": 256,
+        "commentBytes": 1048576
+      },
+      "maximumMarkerSegments": 4096,
+      "includes": "encoded input copies, coefficient blocks, component lines, RGB intermediate, RGBA output, JPEG tables, Huffman trees, and decoded comments"
+    },
+    "processes": [
+      {
+        "pid": 72064,
+        "spawnMs": 66.9,
+        "peakWorkingSetBytes": 331091968,
+        "sampledPeakPrivateBytes": 232120320,
+        "workingSetAtStopBytes": 203526144,
+        "privateBytesAtStop": 232120320,
+        "samplerSamples": 47
+      }
+    ],
+    "observedPeakWorkingSetBytes": 331091968,
+    "observedPeakWorkingSetMiB": 315.75,
+    "sampledPeakPrivateBytes": 232120320,
+    "sampledPeakPrivateMiB": 221.37,
+    "sampleIntervalMs": 100,
+    "totalSamplerSamples": 47,
+    "withinConfiguredPeakWorkingSet": false
+  },
+  "latency": {
+    "sampleCount": 1,
+    "successfulSampleCount": 1,
+    "capacityRejectedSampleCount": 0,
+    "samples": [
+      {
+        "requestId": "t04-jpeg-4000x4000-1",
+        "durationMs": 4954.73,
+        "workerStartupMs": 66.9,
+        "outcome": "success",
+        "workingSetBeforeBytes": 57540608,
+        "privateBytesBefore": 27983872,
+        "workingSetAfterBytes": 203526144,
+        "privateBytesAfter": 232120320,
+        "responsePayloadBytes": 53288592,
+        "peakWorkingSetBytes": 331091968,
+        "sampledPeakPrivateBytes": 232120320
+      }
+    ],
+    "p50Ms": 4954.73,
+    "p95Ms": 4954.73,
+    "maxMs": 4954.73,
+    "capacityRejectP50Ms": null,
+    "capacityRejectP95Ms": null,
+    "p50WorkerStartupMs": 66.9,
+    "p95WorkerStartupMs": 66.9,
+    "maxWorkerStartupMs": 66.9,
+    "timingScope": "fresh utility process ready, then request post through decompressed 64,000,000-byte RGBA response receipt",
+      "diagnosticOnly": true,
+      "doesNotSatisfyNormalTextOrWake100SampleAcceptance": true,
+      "responsePayloadBytesMeaning": "Compressed IPC transport payload bytes (transportBytes), not the 64,000,000-byte decompressed RGBA response.",
+      "pixelOracle": "none; only output dimensions, byte length, and alpha at three sample positions were checked; no full-pixel comparison, hash, or independent RGB oracle was used"
+  },
+  "limitations": [
+    "Fresh-process synthetic 16MP samples are diagnostic; they do not satisfy the T05 100-sample controlled desktop timing gates or measure end-user paste latency.",
+    "The JPEG is a generated baseline image with synthetic APP2 padding to exercise the encoded-source ceiling; progressive JPEG, real EXIF/ICC metadata, other image content, UI responsiveness and original clipboard conversion are not covered.",
+    "No fixture was rejected by the decoder's internal capacity guard in this sample set; this does not establish a universal process-memory ceiling.",
+    "PeakWorkingSet64 is the OS-reported peak for each fresh process; private bytes are sampled every 100 ms and around each decode, so shorter private-memory peaks can be missed. These observations do not prove a hard ceiling for every decode.",
+    "No clipboard, target window, physical input, installed package, helper, or rollback behavior was exercised. P15 and full T04 acceptance remain open.",
+    "Electron used the default %APPDATA%\\Electron userData directory; profile isolation was not configured and possible profile side effects were not checked. Do not interpret the synthetic JPEG fixture's 'no user data' description as an isolated application profile.",
+    "No independent pixel correctness oracle was run; this diagnostic establishes successful full-size response shape only, not decoded color correctness.",
+    "The measured executable was built from the dirty worktree identified by source.workingTreeFiles and source.builtArtifactFiles; the full launch argument vector was not retained."
+  ]
+}
