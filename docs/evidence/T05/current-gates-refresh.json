@@ -5,7 +5,7 @@
   "reviewType": "dependency and offline-preflight refresh",
   "reviewedDate": "2026-10-05",
   "branch": "codex/m0-latency",
-  "sourceCommit": "da03a7dcc00d0689370573254a45c93fabe1f18b",
+  "sourceCommit": "70f4d8aafb151ad34d9e26b2a91c213ce007ef02",
   "workingTreeWasDirty": true,
   "dependencyGate": {
     "T03": "accepted",
@@ -43,7 +43,8 @@
       "The 4:2:0 JPEG fidelity gate remains open. Same-input WPF/WIC and GDI+ agree at all 4096 selected ROI points while worker/jpeg-js differ, but that agreement is not ground truth. The new source-ROI diagnostic shows lower worker MAE to the pre-JPEG source in four selected synthetic ROIs (4096 points total); each is one sample, and the lossy source metric is not a normative JPEG oracle or calibrated acceptance threshold.",
       "Production JPEG memory acceptance remains open despite the current utilityProcess decoder route succeeding on five synthetic 16 MP/20 MiB SOF0 4:2:0 samples (207.87 MiB peak) and five 4:4:4 samples (208.57 MiB peak). The stream covers only 8-bit SOF0, one interleaved scan and one/three components; it does not prove a universal RSS ceiling, the full production selection/packaged path, or all JPEG inputs. The WPF/WIC probe remains candidate-only, and the PureJsImage candidate exceeded 256 MiB.",
       "Exact P1/I10/I11 deadline acceptance remains open. The bounded real-timer probe failed closed and released zero-budget continuation was NOT_OBSERVED; physical keyboard, system clipboard, BrowserWindow/panel, helper lifecycle, target-visible paste and packaged application acceptance remain NOT_RUN.",
-      "Synthetic image diagnostics do not establish universal latency, format behavior, or a process-memory ceiling; full T04 acceptance remains NOT_RUN."
+      "Synthetic image diagnostics do not establish universal latency, format behavior, or a process-memory ceiling; full T04 acceptance remains NOT_RUN.",
+      "The new single-sample production ImagePreparationService + real utilityProcess diagnostic completed 16 MP decode and cache/worker-retirement checks, but measured 3174.24 ms under a 30000 ms diagnostic override, above the 3000 ms product deadline; default deadline acceptance and remaining I04 boundaries stay open. Failure/watchdog cleanup and raw 50 ms memory samples were not independently verified/persisted."
     ],
     "wicJpegCandidate": {
       "result": "WPF_WIC_CANDIDATE_WITHIN_BUDGET_NOT_ACCEPTANCE",
@@ -506,6 +507,25 @@
       "systemClipboardReadOrWritten": false,
       "physicalInputSent": false,
       "interpretation": "These fresh utilityProcess measurements establish successful decode only for the two synthetic SOF0 layouts. They do not establish general JPEG coverage, a universal RSS ceiling, 4:2:0 fidelity, or complete T04 acceptance."
+    },
+    "imagePreparationService16MpIntegration": {
+      "status": "DIAGNOSTIC_PASS_WITH_LIMITATIONS",
+      "artifact": "docs/evidence/T04/image-preparation-16mp-service-integration.json",
+      "sourceCommit": "70f4d8aafb151ad34d9e26b2a91c213ce007ef02",
+      "largePrepareMs": 3174.24,
+      "productDeadlineMs": 3000,
+      "decodedRgbaBytes": 64000000,
+      "largeImageCached": false,
+      "workerRetiredBeforeSmallImage": true,
+      "smallImageCacheHitWithoutDecode": true,
+      "largeUtilityPeakWorkingSetBytes": 215232512,
+      "mainProcessPeakWorkingSetBytes": 301572096,
+      "concurrentSampledWorkingSetPeakBytes": 450711552,
+      "systemClipboardReadOrWritten": false,
+      "physicalInputSent": false,
+      "installed": false,
+      "published": false,
+      "interpretation": "One instrumented SOF0 4:4:4 sample only; the 30s diagnostic deadline exceeded the product 3s threshold. Does not close I04, deadline, broad memory, fidelity, or T04 gates."
     }
   },
   "draft202012InstanceValidation": {
@@ -520,7 +540,7 @@
   "allowedPreparationCompleted": [
     "Latest identity-hardened raw-chunk utilityProcess worker ASAR smoke is indexed with its exact chunk/end counts and no-install/no-clipboard/no-input limitations.",
     "The current NOT_RUN report instance and eight invalid-instance cases passed the explicit Draft 2020-12 self-check, including six metric-contract negatives; the default Node verifier and unit suite do not require Python.",
-    "Refreshed this T04 dependency snapshot at source commit da03a7dcc00d0689370573254a45c93fabe1f18b. It includes the current limited SOF0 utilityProcess memory diagnostic and JPEG fidelity/source-ROI diagnostics; T05 remains NOT_RUN and none of these artifacts is full T04 acceptance."
+    "Refreshed this T04 dependency snapshot at source commit 70f4d8aafb151ad34d9e26b2a91c213ce007ef02. It indexes the single-sample ImagePreparationService/utilityProcess integration diagnostic and retains the 3s deadline, full I04, and T04 acceptance gates; T05 remains NOT_RUN."
   ],
   "notRun": [
     "P01-P28 T05 behavior/release acceptance and 100+100 controlled-live measurements.",
