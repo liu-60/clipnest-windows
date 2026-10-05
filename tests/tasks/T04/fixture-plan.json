@@ -368,7 +368,8 @@
       "evidence": [
         "tests/tasks/T04/main-image-preparation-failure.test.cjs: image preparation capacity failure leaves clipboard and panel untouched",
         "tests/tasks/T04/main-image-preparation-failure.test.cjs: helper unavailable and clipboard sequence baseline unavailable image cases also fail closed before snapshot/fallback",
-        "docs/evidence/T04/image-selection-worker-cancel-timeout.json: supplementary production selection cancellation aborts a pending real utilityProcess request after it emits a decoded response; helper and OS boundaries remain fake, and this probe adds no real-time I08/I10 monitor timing evidence"
+        "docs/evidence/T04/image-selection-worker-cancel-timeout.json: supplementary production selection cancellation aborts a pending real utilityProcess request after it emits a decoded response; helper and OS boundaries remain fake, and this probe adds no real-time I08/I10 monitor timing evidence",
+        "tests/tasks/T04/run-image-preparation-16mp-electron.cjs + docs/evidence/T04/image-preparation-16mp-service-integration.json: one synthetic 4000x4000/20MiB SOF0 4:4:4 sample through production ImagePreparationService and real utilityProcess; verifies 64,000,000 RGBA bytes, large-image cache miss/no entry, worker exit before a new worker prepares/caches a 2x1 PNG, and repeated cache hit without another decode. Same-query 50ms memory snapshots record main/worker separately. The diagnostic used a 30s deadline override; observed service preparation was 3174.24ms, above the 3000ms product configuration. This complements, but does not replace, fake I04 boundaries or close latency, broad RSS, fidelity, cancellation/permission/read-failure, or full T04 gates."
       ]
     },
     {
