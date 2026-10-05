@@ -14,7 +14,7 @@
     "latestTargetedFakeRun": {
       "status": "PASS",
       "command": "pnpm test:unit -- selection-key-deadline.test.cjs main-image-preparation-failure.test.cjs",
-      "passed": 24,
+      "passed": 25,
       "failed": 0
     },
     "nativeHelperFakeRun": {
@@ -408,7 +408,8 @@
       ],
       "evidence": [
         "tests/tasks/T04/selection-key-deadline.test.cjs: deterministic fake-clock coverage for held, re-pressed, released, late, stale, and cancellation paths",
-        "docs/evidence/T04/selection-key-monitor-utility-integration.json: latest production-timer run blocks held state as key_held (1.45ms late); the released case fails closed as key_state_unavailable (13.89ms late), so production released-cutoff continuation remains unverified",
+        "docs/evidence/T04/selection-key-monitor-utility-integration.json: earlier single-attempt result; latest bounded 12-attempt follow-up is docs/evidence/T04/released-cutoff-zero-budget-bounded-probe.json",
+        "docs/evidence/T04/released-cutoff-zero-budget-bounded-probe.json: 12 real Electron timer attempts; none met both fixed 5ms conditions, so released continuation and production zero-budget commit remain NOT_OBSERVED; thresholds were not relaxed",
         "A re-press released before a delayed callback or any transition between level samples can still be missed; exact held-at-cutoff remains P1_OPEN without event-timestamp evidence.",
         "tests/tasks/T04/selection-key-deadline.test.cjs: cross-clock classification; a lagging GetTickCount64 cannot reopen the cutoff and an early coarse tick fails closed"
       ]
@@ -518,7 +519,7 @@
       ],
       "evidence": [
         "tests/tasks/T04/selection-key-deadline.test.cjs: exact-cutoff latch, fresh pre-cutoff samples, jitter, stale samples, and delayed-callback boundaries",
-        "docs/evidence/T04/selection-key-monitor-utility-integration.json: latest production default-timer run blocks held keys as key_held and fails the late released callback closed as key_state_unavailable; no released continuation or zero-budget request was observed",
+        "docs/evidence/T04/selection-key-monitor-utility-integration.json: prior production default-timer sample; see the bounded follow-up at docs/evidence/T04/released-cutoff-zero-budget-bounded-probe.json",
         "Independent review: a released sample before cutoff cannot exclude a re-press held through cutoff; polling-only state has no transition timestamp, so exact held-at-cutoff remains a P1 open gate."
       ]
     },
@@ -538,7 +539,9 @@
       ],
       "evidence": [
         "tests/tasks/T04/selection-key-deadline.test.cjs: zero selection budget is classified as expired and does not add a fresh monitor window",
+        "tests/tasks/T04/main-image-preparation-failure.test.cjs: with performance.now still before its 500ms cutoff but GetTickCount64 at the original deadline, main orchestration fails closed as selection_clock_unavailable, sends only cancel for the registered fake job, and performs no commit, paste, clipboard write, or panel hide; helper quiescence/terminal behavior is faked and not accepted here",
         "native/tests/control.rs and native/tests/protocol.rs: isolated Rust fake-platform contract for check-only key sampling and clipboard/input gates; pnpm test:native result is recorded in docs/evidence/T04/verification.json",
+        "docs/evidence/T04/released-cutoff-zero-budget-bounded-probe.json: the bounded main-process integration follow-up did not observe an in-tolerance released branch; this does not replace the Rust fake helper contract",
         "No physical keyboard, system clipboard, or SendInput operation is used by these tests."
       ]
     },

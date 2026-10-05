@@ -51,6 +51,7 @@ function makeHarness({
   sequenceNumber = 41,
   snapshotDelayMs = 0,
   monotonicTickValues = null,
+  performanceNowMs = null,
 } = {}) {
   const events = [];
   const effects = {
@@ -64,6 +65,9 @@ function makeHarness({
     cancellations: 0,
   };
   const requests = [];
+  const cancellations = [];
+  const performanceNowSamples = [];
+  const monotonicTickSamples = [];
   const content = itemType === "image"
     ? "data:image/png;base64,AA=="
     : "保留当前内容";
@@ -78,7 +82,9 @@ function makeHarness({
     getMonotonicTickMs: () => {
       if (monotonicTickValues) {
         const index = Math.min(monotonicTickReadCount++, monotonicTickValues.length - 1);
-        return monotonicTickValues[index];
+        const value = monotonicTickValues[index];
+        monotonicTickSamples.push(value);
+        return value;
       }
       return Math.floor(10_000 + elapsedMs());
     },
@@ -98,6 +104,9 @@ function makeHarness({
     async request(command) {
       requests.push(command);
       events.push(`helper-${command.kind}`);
+      if (command.kind === "cancel") {
+        return { status: "cancelled", jobId: command.jobId, workerQuiescent: true };
+      }
       if (command.kind === "commit_write") {
         effects.nativeClipboardWrites += 1;
         return { status: "clipboard_written", jobId: command.jobId, clipboardSequence: "42" };
@@ -120,7 +129,10 @@ function makeHarness({
     clearTimeout,
     clearInterval,
     randomUUID: () => `test-${++nextId}`,
-    performance,
+    performance: performanceNowMs === null ? performance : { now: () => {
+      performanceNowSamples.push(performanceNowMs);
+      return performanceNowMs;
+    } },
     metrics: { mark: (_requestId, name) => events.push(`metric-${name}`), finish() {}, flush: async () => {} },
     benchmarkMode: false,
     process: { argv: [] },
@@ -162,6 +174,7 @@ function makeHarness({
     },
     async sendNativeContent(job) {
       effects.helperPreparationCalls += 1;
+      job.helperClient = client;
       job.registrationAttempted = true;
       job.registered = true;
       return { status: "prepared", jobId: job.jobId, prepareToken: "prepare-test" };
@@ -169,9 +182,20 @@ function makeHarness({
     async cancelNativePasteJob(job) {
       effects.cancellations += 1;
       job.cancelled = true;
-      job.cancellationQuiescent = true;
-      if (context.nativePasteJob === job) context.nativePasteJob = null;
-      return true;
+      job.imageDecodeController.abort();
+      const cancellation = { jobId: job.jobId, registrationAttempted: job.registrationAttempted };
+      cancellation.completion = (async () => {
+        const ack = await client.request({ kind: "cancel", jobId: job.jobId }, GENERATION);
+        if ((ack.status !== "cancelled" && ack.status !== "too_late") ||
+            ack.jobId !== job.jobId || ack.workerQuiescent !== true) return false;
+        if (job.snapshot) context.nativeContentProvider.release(job.snapshot, job.jobId, job.objectToken);
+        if (context.nativePasteJob === job) context.nativePasteJob = null;
+        job.cancellationQuiescent = true;
+        job.resolveTerminal();
+        return true;
+      })();
+      cancellations.push(cancellation);
+      return cancellation.completion;
     },
     getMainWindowTarget: () => HOST,
     writeItemToElectronClipboard() {
@@ -189,6 +213,9 @@ function makeHarness({
     effects,
     item,
     requests,
+    cancellations,
+    clockSamples: { performanceNow: performanceNowSamples, monotonicTicks: monotonicTickSamples },
+    waitForCancellations: async () => Promise.all(cancellations.map((cancellation) => cancellation.completion)),
     isVisible: () => visible,
     select: () => context.copySelectedItem(7, true, item.id, [], GENERATION, "image-failure-test"),
   };
@@ -260,6 +287,43 @@ test("an expired high-resolution cutoff sends helper check-only when GetTickCoun
   assert.equal(commit.selectionBudgetMs, 0, "an expired performance.now cutoff cannot restart a 500ms wait");
   assert.equal("selectionDeadlineTickMs" in commit, false, "the stale coarse tick is not sent as an unexpired deadline");
   assert.equal(harness.effects.pasteRequests, 1, "helper check-only retains the released-key success path");
+});
+
+test("an early coarse helper deadline fails closed and requests cancellation for the prepared job", async () => {
+  const highResolutionNowMs = 1_000;
+  const harness = makeHarness({
+    performanceNowMs: highResolutionNowMs,
+    monotonicTickValues: [10_000, 10_500],
+  });
+
+  assert.deepEqual(plain(await harness.select()), {
+    status: "blocked",
+    reasonCode: "selection_clock_unavailable",
+  });
+  const selectionStartedAtMs = harness.clockSamples.performanceNow[1];
+  const helperCheckAtMs = harness.clockSamples.performanceNow.at(-1);
+  assert.ok(helperCheckAtMs < selectionStartedAtMs + SELECTION_KEY_RELEASE_WINDOW_MS,
+    "the actual main-orchestration helper check uses performance.now before the 500ms deadline");
+  assert.deepEqual(harness.clockSamples.monotonicTicks, [10_000, 10_500],
+    "the helper's coarse clock advances to the original cutoff first");
+  assert.equal(harness.effects.snapshotCalls, 1, "the main route reaches the helper-deadline decision after snapshot");
+  assert.equal(harness.effects.helperPreparationCalls, 1, "the job is registered and prepared before the coarse-clock check");
+  assert.equal(harness.effects.nativeClipboardWrites, 0);
+  assert.equal(harness.effects.electronFallbackWrites, 0);
+  assert.equal(harness.effects.pasteRequests, 0);
+  assert.equal(harness.effects.panelHides, 0);
+  assert.equal(harness.isVisible(), true);
+  assert.deepEqual(harness.requests.map((request) => request.kind), ["cancel"],
+    "the fake helper boundary receives only cancellation, without commit_write or paste");
+
+  assert.equal(harness.cancellations.length, 1);
+  const [cancellation] = harness.cancellations;
+  assert.equal(harness.requests[0].jobId, cancellation.jobId, "cancel targets the prepared job ID");
+  assert.equal(cancellation.registrationAttempted, true);
+  // The harness fakes helper quiescence to settle cleanup; only the cancel
+  // request and main-process side effects are evidence from this VM test.
+  await harness.waitForCancellations();
+  assert.equal(harness.effects.cancellations, 1);
 });
 
 test("non-image preparation errors keep the existing copy-only fallback", async () => {

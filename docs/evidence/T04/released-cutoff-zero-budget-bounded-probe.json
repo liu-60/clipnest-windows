@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "fixtures": ["T04-I10", "T04-I11"],
+  "status": "PARTIAL",
+  "date": "2026-10-05",
+  "environment": {
+    "os": "Windows",
+    "architecture": "x64",
+    "node": "v24.16.0",
+    "electron": "40.10.2",
+    "electronProcessType": "browser"
+  },
+  "source": {
+    "commit": "bd159c498b77ada0762580fed48f2f44431f47e4",
+    "probe": "tests/tasks/T04/run-image-selection-electron.cjs",
+    "probeSha256": "26eccccb072393273511e1ba363b184a27710869d38153c8eb98546b39552219",
+    "productionMonitor": "dist-electron/main/clipboard/selection-key-deadline.js",
+    "productionMonitorSha256": "5adf0034d58dc0caf25e910d9416ff04c675cc32bb2151ed73be0ceb37ed8e20",
+    "productionOrchestration": "copySelectedItem extracted from src/main/main.ts",
+    "productionMainChanged": false
+  },
+  "commands": [
+    {
+      "command": "pnpm build:main",
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "$env:ELECTRON_OVERRIDE_DIST_PATH=(Resolve-Path -LiteralPath 'node_modules/.pnpm/electron@40.10.2/node_modules/electron/dist').Path\nnode tests/tasks/T04/run-image-selection-electron.cjs",
+      "exitCode": 0,
+      "reportedResult": "PARTIAL"
+    },
+    {
+      "command": "pnpm test:unit -- selection-key-deadline.test.cjs main-image-preparation-failure.test.cjs",
+      "exitCode": 0,
+      "passed": 24,
+      "failed": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "node --check tests/tasks/T04/run-image-selection-electron.cjs",
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check -- tests/tasks/T04/run-image-selection-electron.cjs tests/tasks/T04/fixture-plan.json docs/evidence/T04/released-cutoff-zero-budget-bounded-probe.json docs/progress.json",
+      "exitCode": 0,
+      "result": "PASS"
+    }
+  ],
+  "probe": {
+    "maxAttempts": 12,
+    "attemptsRun": 12,
+    "utilityProcessDecodeCount": 17,
+    "timerToleranceMs": 5,
+    "freshPreCutoffSampleToleranceMs": 5,
+    "attemptStatusSemantics": "The probe's raw status groups each blocked result as NOT_OBSERVED_LATE_FAIL_CLOSED; detailed timer and sample metrics show why the monitor failed closed. Attempt 10 was within timer tolerance but had a stale pre-cutoff sample (14.54ms).",
+    "globalTimeouts": {
+      "electronAppWatchdogMs": 25000,
+      "nodeSpawnSyncTimeoutMs": 30000
+    },
+    "releasedCutoffContinuation": "NOT_OBSERVED",
+    "zeroBudgetCommit": "NOT_OBSERVED",
+    "successfulAttempt": null,
+    "attempts": [
+      {"attempt": 1, "decodeIndex": 6, "decision": "key_state_unavailable", "cutoffElapsedMs": 507.75, "timerLateMs": 7.67, "lastPreCutoffSampleAgeMs": 9.98, "lastPreCutoffSampleAgeTickMs": 15, "status": "NOT_OBSERVED_LATE_FAIL_CLOSED"},
+      {"attempt": 2, "decodeIndex": 7, "decision": "key_state_unavailable", "cutoffElapsedMs": 508.4, "timerLateMs": 8.34, "lastPreCutoffSampleAgeMs": 8.61, "lastPreCutoffSampleAgeTickMs": 16, "status": "NOT_OBSERVED_LATE_FAIL_CLOSED"},
+      {"attempt": 3, "decodeIndex": 8, "decision": "key_state_unavailable", "cutoffElapsedMs": 509.33, "timerLateMs": 9.25, "lastPreCutoffSampleAgeMs": 8.12, "lastPreCutoffSampleAgeTickMs": 15, "status": "NOT_OBSERVED_LATE_FAIL_CLOSED"},
+      {"attempt": 4, "decodeIndex": 9, "decision": "key_state_unavailable", "cutoffElapsedMs": 509.03, "timerLateMs": 8.95, "lastPreCutoffSampleAgeMs": 7.43, "lastPreCutoffSampleAgeTickMs": 16, "status": "NOT_OBSERVED_LATE_FAIL_CLOSED"},
+      {"attempt": 5, "decodeIndex": 10, "decision": "key_state_unavailable", "cutoffElapsedMs": 509.04, "timerLateMs": 8.96, "lastPreCutoffSampleAgeMs": 6.8, "lastPreCutoffSampleAgeTickMs": 0, "status": "NOT_OBSERVED_LATE_FAIL_CLOSED"},
+      {"attempt": 6, "decodeIndex": 11, "decision": "key_state_unavailable", "cutoffElapsedMs": 511.77, "timerLateMs": 11.72, "lastPreCutoffSampleAgeMs": 5.09, "lastPreCutoffSampleAgeTickMs": 0, "status": "NOT_OBSERVED_LATE_FAIL_CLOSED"},
+      {"attempt": 7, "decodeIndex": 12, "decision": "key_state_unavailable", "cutoffElapsedMs": 508.65, "timerLateMs": 8.58, "lastPreCutoffSampleAgeMs": 8.71, "lastPreCutoffSampleAgeTickMs": 16, "status": "NOT_OBSERVED_LATE_FAIL_CLOSED"},
+      {"attempt": 8, "decodeIndex": 13, "decision": "key_state_unavailable", "cutoffElapsedMs": 508.2, "timerLateMs": 8.12, "lastPreCutoffSampleAgeMs": 7.43, "lastPreCutoffSampleAgeTickMs": 16, "status": "NOT_OBSERVED_LATE_FAIL_CLOSED"},
+      {"attempt": 9, "decodeIndex": 14, "decision": "key_state_unavailable", "cutoffElapsedMs": 509.88, "timerLateMs": 9.81, "lastPreCutoffSampleAgeMs": 6.9, "lastPreCutoffSampleAgeTickMs": 0, "status": "NOT_OBSERVED_LATE_FAIL_CLOSED"},
+      {"attempt": 10, "decodeIndex": 15, "decision": "key_state_unavailable", "cutoffElapsedMs": 502.71, "timerLateMs": 2.64, "lastPreCutoffSampleAgeMs": 14.54, "lastPreCutoffSampleAgeTickMs": 16, "status": "NOT_OBSERVED_LATE_FAIL_CLOSED"},
+      {"attempt": 11, "decodeIndex": 16, "decision": "key_state_unavailable", "cutoffElapsedMs": 506.99, "timerLateMs": 6.92, "lastPreCutoffSampleAgeMs": 9.21, "lastPreCutoffSampleAgeTickMs": 16, "status": "NOT_OBSERVED_LATE_FAIL_CLOSED"},
+      {"attempt": 12, "decodeIndex": 17, "decision": "key_state_unavailable", "cutoffElapsedMs": 512.95, "timerLateMs": 12.9, "lastPreCutoffSampleAgeMs": 3.87, "lastPreCutoffSampleAgeTickMs": 0, "status": "NOT_OBSERVED_LATE_FAIL_CLOSED"}
+    ],
+    "pendingWorkerAssertions": "PASS for all 12 attempts: while each real utilityProcess decoded response was held, production selection remained pending and helper request count plus fake side effects did not change; each late attempt then failed closed, canceled the worker, and observed process exit.",
+    "zeroBudgetAssertions": "NOT_OBSERVED: no attempt met both fixed 5ms conditions, so worker release and the post-worker production commit assertions did not run.",
+    "otherScenariosPreserved": {
+      "heldCutoff": {
+        "status": "PASS_WITH_LIMITATIONS",
+        "decision": "key_state_unavailable",
+        "cutoffElapsedMs": 515.98,
+        "timerLateMs": 15.96,
+        "lastPreCutoffSampleAgeMs": 1.01,
+        "workerCanceledAndExited": true
+      },
+      "productionImagePreparationTimeout": {
+        "status": "PASS",
+        "selectionElapsedMs": 3016.86,
+        "workerAbortElapsedMs": 3006.95,
+        "workerExitElapsedMs": 3019.61,
+        "reasonCode": "image_prepare_timeout"
+      }
+    }
+  },
+  "boundaries": {
+    "real": [
+      "Electron 40.10.2 browser/main event loop and default setTimeout scheduler",
+      "production selection monitor and copySelectedItem orchestration",
+      "real utilityProcess image decodes and worker cancellation/exit"
+    ],
+    "fake": [
+      "key-state adapter (always released for these attempts)",
+      "native helper protocol",
+      "clipboard, panel, and input side-effect boundaries"
+    ],
+    "browserWindowCreated": false,
+    "systemClipboardReadOrWritten": false,
+    "physicalKeyboardOrInputUsed": false
+  },
+  "openGates": [
+    "No released-at-cutoff continuation or production selectionBudgetMs=0 commit was observed in the bounded 12 attempts; keep T04-I10/I11 integration evidence open.",
+    "The level-polling monitor has no key transition timestamp, so a released sample cannot prove the key was not held at the exact cutoff; P1 remains open.",
+    "P15 remains open because src/main/native/content-provider.ts is outside the authorized T04 scope; JPEG memory, complete T04 acceptance, and T05 remain open."
+  ]
+}

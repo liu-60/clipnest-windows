@@ -119,15 +119,10 @@ if (!process.versions.electron) {
     const heldCutoffResponseCaptured = deferred();
     const heldCutoffDecodeRejected = deferred();
     const heldCutoffWorkerExited = deferred();
-    const releasedCutoffResponseCaptured = deferred();
-    const releasedCutoffDecodeRejected = deferred();
-    const releasedCutoffWorkerExited = deferred();
-    const releaseCutoffWorkerResponse = deferred();
     const heldWorkerResponses = new Map([
       [3, { name: "timeout", captured: timeoutResponseCaptured, rejected: timeoutDecodeRejected, exited: timeoutWorkerExited }],
       [4, { name: "cancel", captured: cancellationResponseCaptured, rejected: cancellationDecodeRejected, exited: cancellationWorkerExited }],
       [5, { name: "held-cutoff", captured: heldCutoffResponseCaptured, rejected: heldCutoffDecodeRejected, exited: heldCutoffWorkerExited }],
-      [6, { name: "released-cutoff", captured: releasedCutoffResponseCaptured, rejected: releasedCutoffDecodeRejected, exited: releasedCutoffWorkerExited, release: releaseCutoffWorkerResponse }],
     ]);
     let realWorkerDecodeCount = 0;
     let realWorkerFactoryCount = 0;
@@ -708,133 +703,209 @@ if (!process.versions.electron) {
       assert.ok(events.includes("worker-response-held-held-cutoff"));
       assert.ok(events.includes("worker-process-exit-held-cutoff"));
 
-      const releasedCutoffPixels = Buffer.from([70, 180, 15, 255, 10, 30, 225, 192]);
-      const releasedCutoffPng = PNG.sync.write({ width: 2, height: 1, data: releasedCutoffPixels });
-      const releasedCutoffItem = {
-        id: "worker-integration-released-cutoff-image",
-        type: "image",
-        content: `data:image/png;base64,${releasedCutoffPng.toString("base64")}`,
-        preview: "截止时已松开按键的图片预览",
-      };
-      const releasedCutoffContent = releasedCutoffItem.content;
-      history.push(releasedCutoffItem);
       keyStateReleased = true;
-      helperExited = false;
-      visible = true;
-      context.panelGeneration = GENERATION;
-      context.panelTarget = TARGET;
-      context.pendingPanelGeneration = null;
-      context.openingGuardUntil = 0;
-      const requestsBeforeReleasedCutoff = requests.length;
-      const effectsBeforeReleasedCutoff = { ...effects };
-      selectionSettled = false;
-      const releasedCutoffStartedAt = performance.now();
-      const releasedCutoffSelection = context.copySelectedItem(7, true, releasedCutoffItem.id, [], GENERATION, "image-released-cutoff")
-        .then((result) => { selectionSettled = true; return plain(result); });
+      const MAX_RELEASED_CUTOFF_ATTEMPTS = 12;
+      const releasedCutoffAttempts = [];
+      let successfulReleasedCutoffAttempt = null;
+      for (let attemptNumber = 1; attemptNumber <= MAX_RELEASED_CUTOFF_ATTEMPTS; attemptNumber += 1) {
+        const decodeIndex = realWorkerDecodeCount + 1;
+        const attemptName = `released-cutoff-${attemptNumber}`;
+        const attemptWorker = {
+          name: attemptName,
+          captured: deferred(),
+          rejected: deferred(),
+          exited: deferred(),
+          release: deferred(),
+        };
+        heldWorkerResponses.set(decodeIndex, attemptWorker);
 
-      phase = "wait for real worker response held at the released-key cutoff";
-      const releasedCutoffReply = await waitWithin(
-        releasedCutoffResponseCaptured.promise,
-        5_000,
-        "the real utilityProcess must emit its decoded response before the released-key cutoff",
-      );
-      assert.equal(releasedCutoffReply.requestId, "image-6");
-      assert.equal(releasedCutoffReply.type, "decoded");
-      assert.equal(selectionSettled, false, "released-at-cutoff starts with production image preparation pending");
-      assert.equal(requests.length, requestsBeforeReleasedCutoff, "no helper registration occurs before gated preparation completes");
-      const releasedCutoffMonitor = selectionMonitors.at(-1);
-      const releasedCutoffDiagnostic = selectionMonitorDiagnostics.at(-1);
-      const releasedCutoffDecision = await waitWithin(
-        releasedCutoffMonitor.cutoff,
-        1_500,
-        "the production default scheduler must reach its real 500ms released-key cutoff",
-      );
-      const releasedCutoffElapsedMs = performance.now() - releasedCutoffStartedAt;
-      assert.ok(releasedCutoffElapsedMs >= SELECTION_KEY_RELEASE_WINDOW_MS - 10, "released cutoff elapsed against the real monotonic clock");
-      monitorEvidence.releasedCutoffElapsedMs = Math.round(releasedCutoffElapsedMs * 100) / 100;
-      const releasedSample = [...releasedCutoffDiagnostic.keySamples]
-        .filter((sample) => sample.at < releasedCutoffDiagnostic.deadlineAt)
-        .at(-1);
-      monitorEvidence.releasedCutoffTimerLateAtMs = Math.round((performance.now() - releasedCutoffDiagnostic.deadlineAt) * 100) / 100;
-      monitorEvidence.releasedCutoffLastPreCutoffSampleAgeMs = releasedSample
-        ? Math.round((releasedCutoffDiagnostic.deadlineAt - releasedSample.at) * 100) / 100
-        : null;
-      monitorEvidence.releasedCutoffLastPreCutoffSampleAgeTickMs = releasedSample
-        ? releasedCutoffDiagnostic.deadlineTickMs - releasedSample.tickMs
-        : null;
-      monitorEvidence.releasedCutoffDecision = releasedCutoffDecision;
-      assert.ok(
-        (releasedCutoffDecision.kind === "continue" && releasedCutoffDecision.operationBudgetMs === SELECTION_KEY_RELEASE_WINDOW_MS) ||
-        (releasedCutoffDecision.kind === "blocked" && releasedCutoffDecision.reasonCode === "key_state_unavailable"),
-        "a late production timer must fail closed; otherwise a released key continues",
-      );
-      let zeroBudgetCommit = null;
-      if (releasedCutoffDecision.kind === "continue") {
-        assert.equal(selectionSettled, false, "released-at-cutoff keeps waiting for the gated image preparation");
-        assert.equal(requests.length, requestsBeforeReleasedCutoff, "the helper is untouched while released preparation remains pending");
-        assert.deepEqual(effects, effectsBeforeReleasedCutoff);
-        assert.ok(!events.includes("worker-decode-failed-released-cutoff"), "the released cutoff does not abort the pending worker response");
-        assert.ok(!events.includes("worker-process-exit-released-cutoff"), "the released cutoff keeps the worker alive");
-
-        releaseCutoffWorkerResponse.resolve();
-        phase = "wait for released-cutoff preparation and continuation";
-        assert.deepEqual(await waitWithin(releasedCutoffSelection, 5_000, "released-at-cutoff selection must continue after preparation"), {
-          status: "input_submitted",
-        });
-        assert.equal(selectionSettled, true);
-        assert.equal(imagePreparationService.getCacheStats().entries, 2, "released preparation completes and admits its decoded cache entry");
-        assert.equal(imagePreparationService.getCacheStats().bytes, 16);
-        assert.equal(releasedCutoffItem.content, releasedCutoffContent);
-        assert.deepEqual(requests.slice(requestsBeforeReleasedCutoff).map((request) => request.kind), [
-          "register_content", "prepare", "commit_write", "paste",
+        // Vary synthetic pixels so each retry is a cache miss and reaches a
+        // fresh real utilityProcess decode after a fail-closed attempt retires.
+        const attemptPixels = Buffer.from([
+          70 + attemptNumber, 180, 15, 255,
+          10, 30 + attemptNumber, 225, 192,
         ]);
-        zeroBudgetCommit = requests.slice(requestsBeforeReleasedCutoff).find((request) => request.kind === "commit_write");
-        assert.equal(zeroBudgetCommit.selectionBudgetMs, 0, "main passes zero after preparation completes at the original cutoff");
-        assert.equal("selectionDeadlineTickMs" in zeroBudgetCommit, false, "an expired cutoff does not restart its absolute deadline");
-        assert.equal(requests.slice(requestsBeforeReleasedCutoff).some((request) => request.kind === "cancel"), false,
-          "released-at-cutoff continuation does not invoke helper cancellation");
-        assert.deepEqual({
-          clipboardCommits: effects.clipboardCommits - effectsBeforeReleasedCutoff.clipboardCommits,
-          pasteRequests: effects.pasteRequests - effectsBeforeReleasedCutoff.pasteRequests,
-          fallbackWrites: effects.fallbackWrites - effectsBeforeReleasedCutoff.fallbackWrites,
-          panelHides: effects.panelHides - effectsBeforeReleasedCutoff.panelHides,
-        }, { clipboardCommits: 1, pasteRequests: 1, fallbackWrites: 0, panelHides: 1 },
-        "only fake protocol/window boundaries acknowledge the eventual continuation");
-        assert.ok(events.includes("worker-response-released-released-cutoff"));
-        assert.ok(!events.includes("worker-decode-failed-released-cutoff"));
-      } else {
-        phase = "wait for real-timer late-cutoff fail-closed cancellation";
-        assert.deepEqual(await waitWithin(releasedCutoffSelection, 2_000, "late released cutoff must fail closed"), {
+        const attemptPng = PNG.sync.write({ width: 2, height: 1, data: attemptPixels });
+        const releasedCutoffItem = {
+          id: `worker-integration-${attemptName}-image`,
+          type: "image",
+          content: `data:image/png;base64,${attemptPng.toString("base64")}`,
+          preview: `截止时已松开按键的合成图片 ${attemptNumber}`,
+        };
+        const releasedCutoffContent = releasedCutoffItem.content;
+        const releasedCutoffPreview = releasedCutoffItem.preview;
+        history.push(releasedCutoffItem);
+        helperExited = false;
+        visible = true;
+        context.panelGeneration = GENERATION;
+        context.panelTarget = TARGET;
+        context.pendingPanelGeneration = null;
+        context.openingGuardUntil = 0;
+        const requestsBeforeAttempt = requests.length;
+        const effectsBeforeAttempt = { ...effects };
+        selectionSettled = false;
+        const releasedCutoffStartedAt = performance.now();
+        const releasedCutoffSelection = context.copySelectedItem(
+          7,
+          true,
+          releasedCutoffItem.id,
+          [],
+          GENERATION,
+          `image-released-cutoff-${attemptNumber}`,
+        ).then((result) => { selectionSettled = true; return plain(result); });
+
+        phase = `wait for real utilityProcess response on released cutoff attempt ${attemptNumber}`;
+        const releasedCutoffReply = await waitWithin(
+          attemptWorker.captured.promise,
+          5_000,
+          `attempt ${attemptNumber}: real utilityProcess must decode before the released-key cutoff`,
+        );
+        assert.equal(releasedCutoffReply.requestId, `image-${decodeIndex}`);
+        assert.equal(releasedCutoffReply.type, "decoded");
+        assert.equal(selectionSettled, false, "released-at-cutoff preparation remains pending at the response gate");
+        assert.equal(requests.length, requestsBeforeAttempt, "no helper request occurs before gated preparation completes");
+
+        const releasedCutoffMonitor = selectionMonitors.at(-1);
+        const releasedCutoffDiagnostic = selectionMonitorDiagnostics.at(-1);
+        const releasedCutoffDecision = await waitWithin(
+          releasedCutoffMonitor.cutoff,
+          1_500,
+          `attempt ${attemptNumber}: production default scheduler must reach the real 500ms cutoff`,
+        );
+        const decisionObservedAtMs = performance.now();
+        const releasedCutoffElapsedMs = decisionObservedAtMs - releasedCutoffStartedAt;
+        const releasedCutoffTimerLateAtMs = decisionObservedAtMs - releasedCutoffDiagnostic.deadlineAt;
+        assert.ok(releasedCutoffElapsedMs >= SELECTION_KEY_RELEASE_WINDOW_MS - 10,
+          "released cutoff elapsed against the real monotonic clock");
+        const releasedSample = [...releasedCutoffDiagnostic.keySamples]
+          .filter((sample) => sample.at < releasedCutoffDiagnostic.deadlineAt)
+          .at(-1);
+        const releasedCutoffLastPreCutoffSampleAgeMs = releasedSample
+          ? releasedCutoffDiagnostic.deadlineAt - releasedSample.at
+          : null;
+        const releasedCutoffLastPreCutoffSampleAgeTickMs = releasedSample
+          ? releasedCutoffDiagnostic.deadlineTickMs - releasedSample.tickMs
+          : null;
+        const attemptEvidence = {
+          attempt: attemptNumber,
+          decodeIndex,
+          decision: releasedCutoffDecision,
+          cutoffElapsedMs: Math.round(releasedCutoffElapsedMs * 100) / 100,
+          timerLateAtMs: Math.round(releasedCutoffTimerLateAtMs * 100) / 100,
+          lastPreCutoffSampleAgeMs: releasedCutoffLastPreCutoffSampleAgeMs === null
+            ? null
+            : Math.round(releasedCutoffLastPreCutoffSampleAgeMs * 100) / 100,
+          lastPreCutoffSampleAgeTickMs: releasedCutoffLastPreCutoffSampleAgeTickMs,
+        };
+        assert.ok(
+          (releasedCutoffDecision.kind === "continue" && releasedCutoffDecision.operationBudgetMs === SELECTION_KEY_RELEASE_WINDOW_MS) ||
+          (releasedCutoffDecision.kind === "blocked" && releasedCutoffDecision.reasonCode === "key_state_unavailable"),
+          `attempt ${attemptNumber}: released adapter must continue within tolerance or fail closed as unavailable`,
+        );
+
+        // A cutoff decision alone must not touch helper/clipboard/panel/input
+        // boundaries while the decoded worker response is still withheld.
+        assert.equal(selectionSettled, false, "selection remains pending until this attempt's worker response is released");
+        assert.equal(requests.length, requestsBeforeAttempt, "no commit, cancel, or other helper request occurs while worker is pending");
+        assert.deepEqual(effects, effectsBeforeAttempt, "no fake clipboard, paste, fallback, or panel effect occurs while worker is pending");
+        assert.ok(!events.includes(`worker-process-exit-${attemptName}`), "the utilityProcess remains live while preparation is pending");
+
+        if (releasedCutoffDecision.kind === "continue") {
+          assert.ok(releasedCutoffTimerLateAtMs >= 0 && releasedCutoffTimerLateAtMs <= 5,
+            `attempt ${attemptNumber}: continuation must be observed within the fixed 5ms cutoff tolerance; late=${releasedCutoffTimerLateAtMs.toFixed(2)}ms`);
+          assert.ok(releasedCutoffLastPreCutoffSampleAgeMs !== null && releasedCutoffLastPreCutoffSampleAgeMs >= 0 && releasedCutoffLastPreCutoffSampleAgeMs <= 5,
+            `attempt ${attemptNumber}: continuing sample must be no older than 5ms; age=${releasedCutoffLastPreCutoffSampleAgeMs}`);
+          assert.ok(!events.includes(`worker-decode-failed-${attemptName}`), "released cutoff must not cancel the pending worker");
+
+          attemptWorker.release.resolve();
+          phase = `wait for production zero-budget commit on released cutoff attempt ${attemptNumber}`;
+          assert.deepEqual(await waitWithin(releasedCutoffSelection, 5_000,
+            `attempt ${attemptNumber}: released-at-cutoff selection must continue after worker completion`), {
+            status: "input_submitted",
+          });
+          assert.equal(selectionSettled, true);
+          assert.equal(releasedCutoffItem.content, releasedCutoffContent, "the retained synthetic original remains unchanged");
+          assert.equal(releasedCutoffItem.preview, releasedCutoffPreview);
+          const attemptRequests = requests.slice(requestsBeforeAttempt);
+          assert.deepEqual(attemptRequests.map((request) => request.kind), [
+            "register_content", "prepare", "commit_write", "paste",
+          ]);
+          const zeroBudgetCommit = attemptRequests.find((request) => request.kind === "commit_write");
+          assert.equal(zeroBudgetCommit.selectionBudgetMs, 0,
+            "production main orchestration sends check-only zero budget after the original cutoff");
+          assert.equal("selectionDeadlineTickMs" in zeroBudgetCommit, false,
+            "production main orchestration omits the expired absolute helper deadline");
+          assert.equal(attemptRequests.some((request) => request.kind === "cancel"), false,
+            "released cutoff does not send helper cancellation");
+          assert.deepEqual({
+            clipboardCommits: effects.clipboardCommits - effectsBeforeAttempt.clipboardCommits,
+            pasteRequests: effects.pasteRequests - effectsBeforeAttempt.pasteRequests,
+            fallbackWrites: effects.fallbackWrites - effectsBeforeAttempt.fallbackWrites,
+            panelHides: effects.panelHides - effectsBeforeAttempt.panelHides,
+          }, { clipboardCommits: 1, pasteRequests: 1, fallbackWrites: 0, panelHides: 1 },
+          "only fake protocol/window boundaries acknowledge continuation");
+          assert.ok(events.includes(`worker-response-released-${attemptName}`));
+          assert.ok(!events.includes(`worker-decode-failed-${attemptName}`));
+          attemptEvidence.status = "OBSERVED";
+          attemptEvidence.commitWrite = {
+            selectionBudgetMs: zeroBudgetCommit.selectionBudgetMs,
+            includedSelectionDeadlineTickMs: "selectionDeadlineTickMs" in zeroBudgetCommit,
+            helperKinds: attemptRequests.map((request) => request.kind),
+          };
+          successfulReleasedCutoffAttempt = attemptEvidence;
+          releasedCutoffAttempts.push(attemptEvidence);
+          break;
+        }
+
+        phase = `wait for fail-closed worker retirement on released cutoff attempt ${attemptNumber}`;
+        assert.deepEqual(await waitWithin(releasedCutoffSelection, 2_000,
+          `attempt ${attemptNumber}: late released cutoff must fail closed`), {
           status: "blocked",
           reasonCode: "key_state_unavailable",
         });
         const releasedCutoffError = await waitWithin(
-          releasedCutoffDecodeRejected.promise,
+          attemptWorker.rejected.promise,
           2_000,
-          "late released cutoff must abort its pending real worker request",
+          `attempt ${attemptNumber}: late cutoff must abort its pending utilityProcess request`,
         );
         assert.equal(releasedCutoffError.message, "image_cancelled");
-        await waitWithin(releasedCutoffWorkerExited.promise, 5_000, "late released cutoff must retire its utilityProcess");
-        assert.equal(requests.length, requestsBeforeReleasedCutoff, "late cutoff fails closed before helper registration");
-        assert.deepEqual(effects, effectsBeforeReleasedCutoff);
-        assert.equal(imagePreparationService.getCacheStats().entries, 1);
+        await waitWithin(attemptWorker.exited.promise, 5_000,
+          `attempt ${attemptNumber}: late cutoff must retire the real utilityProcess`);
+        assert.equal(requests.length, requestsBeforeAttempt, "late cutoff fails closed before helper registration/commit/cancel");
+        assert.deepEqual(effects, effectsBeforeAttempt, "late cutoff has no clipboard, paste, fallback, or panel effects");
+        assert.equal(imagePreparationService.getCacheStats().entries, 1, "blocked cutoff creates no decoded cache entry");
         assert.equal(imagePreparationService.getCacheStats().bytes, 8);
         assert.equal(releasedCutoffItem.content, releasedCutoffContent);
+        assert.ok(events.includes(`worker-process-exit-${attemptName}`));
+        attemptEvidence.status = "NOT_OBSERVED_LATE_FAIL_CLOSED";
+        releasedCutoffAttempts.push(attemptEvidence);
+        heldWorkerResponses.delete(decodeIndex);
       }
-      monitorEvidence.releasedCutoffContinued = releasedCutoffDecision.kind === "continue";
+
+      monitorEvidence.releasedCutoffProbe = {
+        status: successfulReleasedCutoffAttempt ? "OBSERVED" : "NOT_OBSERVED",
+        maxAttempts: MAX_RELEASED_CUTOFF_ATTEMPTS,
+        attemptsRun: releasedCutoffAttempts.length,
+        fixedTimerToleranceMs: 5,
+        fixedFreshSampleToleranceMs: 5,
+        attempts: releasedCutoffAttempts,
+        successfulAttempt: successfulReleasedCutoffAttempt,
+      };
+      monitorEvidence.releasedCutoffContinued = successfulReleasedCutoffAttempt !== null;
       const keyReadsAfterReleasedCompletion = keyStateReadCount;
       await new Promise((resolve) => setTimeout(resolve, 20));
       assert.equal(keyStateReadCount, keyReadsAfterReleasedCompletion, "terminal completion leaves no real selection-monitor poll scheduled");
       monitorEvidence.keyReadsAfterReleasedCompletionWait = keyStateReadCount - keyReadsAfterReleasedCompletion;
       assert.equal(BrowserWindow.getAllWindows().length, 0);
+      const releasedCutoffProbeStatus = successfulReleasedCutoffAttempt ? "PASS_WITH_LIMITATIONS" : "PARTIAL";
       process.stdout.write(`${JSON.stringify({
-        result: monitorEvidence.releasedCutoffContinued ? "PASS" : "PASS_WITH_LIMITATIONS",
+        result: releasedCutoffProbeStatus,
         platform: `${process.platform}-${process.arch}`,
         electron: process.versions.electron,
         electronProcessType: process.type,
         utilityProcessDecodeCount: realWorkerDecodeCount,
         productionMonitor: monitorEvidence,
-        releasedCutoffSelectionBudgetMs: zeroBudgetCommit?.selectionBudgetMs ?? null,
+        releasedCutoffSelectionBudgetMs: successfulReleasedCutoffAttempt?.commitWrite.selectionBudgetMs ?? null,
         helperClipboardPanelAndInputBoundaries: "faked",
         browserWindowCreated: false,
         systemClipboardReadOrWritten: false,
