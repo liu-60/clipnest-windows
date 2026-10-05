@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "PASS_SYNTHETIC_UNIT_REGRESSION",
+  "checkedDate": "2026-10-06",
+  "source": {
+    "commit": "bd5d8c864c1572868066fb9a0dc7d29dc542f518",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "changedFiles": {
+      "tests/tasks/T04/clipboard-image-decoder.test.cjs": "693467111EB18973C1911CC2AD2E7F46DE16FA115CEE170F53C1709F8275DBAA"
+    }
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "nodeVersion": "v24.16.0",
+    "pnpmVersion": "11.19.0"
+  },
+  "scope": {
+    "productionSourceChanged": false,
+    "productionEntry": "decodeProductionImage",
+    "fixture": "synthetic 4000x4000 8-bit SOF0 4:2:0 neutral-gray baseline JPEG; APP1 after the complete scan contains FF D9 payload bytes; 1 MiB COM payload follows before EOI; repeated FF marker-fill bytes surround the metadata",
+    "dimensions": {
+      "width": 4000,
+      "height": 4000,
+      "pixels": 16000000,
+      "rgbaBytes": 64000000,
+      "withinSourceLimit": true,
+      "withinWorkerInputEnvelope": true
+    },
+    "postScanMarkers": {
+      "baseCountedSegments": 4,
+      "app1Segments": 1,
+      "comPayloadBytesAtLimit": 1048576,
+      "comSegmentsAtLimit": 17,
+      "totalCountedSegmentsAtLimit": 22,
+      "comPayloadBytesOverLimit": 1048577,
+      "totalCountedSegmentsOverLimit": 22,
+      "terminalEoiCounted": false,
+      "app1PayloadContainsEoiBytes": true
+    },
+    "streamRouteEvidence": {
+      "estimatedPeakBytesLowerBound": 445440512,
+      "workerPeakLimitBytes": 268435456,
+      "diagnosticStagesInOrder": [
+        "jpegPreflightParseMs",
+        "jpegStreamPlanParseMs",
+        "jpegHuffmanIdctWriteMs"
+      ],
+      "outputAssertion": "All 16,000,000 output pixels are [128,128,128,255].",
+      "overLimitAssertion": "At 1 MiB+1 COM payload, production decode rejects with image_worker_capacity_exceeded and emits no jpegStreamPlanParseMs stage."
+    }
+  },
+  "validation": {
+    "command": "pnpm test:unit -- clipboard-image-decoder.test.cjs",
+    "result": "PASS",
+    "buildCommand": "pnpm build:main (invoked by test:unit)",
+    "buildMain": "PASS",
+    "tests": 35,
+    "passed": 35,
+    "failed": 0,
+    "skipped": 0,
+    "independentReview": {
+      "result": "PASS",
+      "reviewerConfirmed": "The 16MP 4:2:0 fixture exceeds the 256 MiB estimate gate, the exact COM boundary counts are correct, stage assertions prove successful production decoder streaming, and the 1 MiB+1 case fails before stream decoding.",
+      "scopeNote": "The review does not claim utilityProcess, IPC, ASAR, or worker RSS validation."
+    }
+  },
+  "limitations": [
+    "This regression calls the production decoder entry in-process; it does not verify real utilityProcess startup, chunk/ACK IPC, ASAR/package loading, worker RSS, or the product deadline.",
+    "The image is a synthetic flat neutral-gray SOF0 4:2:0 fixture. It does not establish broad JPEG compatibility, color fidelity, a general memory bound, or complete T04 acceptance."
+  ],
+  "sideEffects": {
+    "desktopClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "helperRun": false,
+    "packageBuilt": false,
+    "productionSourceChanged": false
+  }
+}

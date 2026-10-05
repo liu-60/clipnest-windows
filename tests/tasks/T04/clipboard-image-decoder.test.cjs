@@ -409,6 +409,63 @@ test("production and streamed baseline JPEG accept APP and COM marker segments a
   assert.deepEqual(Buffer.from(production.pixels), Buffer.from(reference.data));
 });
 
+test("production high-memory JPEG streaming handles post-scan metadata and COM limits", async () => {
+  const width = 4000;
+  const height = 4000;
+  const encoded = simpleBaselineJpeg({ width, height, sampling: [0x22, 0x11, 0x11] });
+  const commentsForBytes = (payloadBytes) => {
+    const segments = [];
+    while (payloadBytes > 0) {
+      const length = Math.min(65_533, payloadBytes);
+      segments.push(jpegSegment(0xfe, Buffer.alloc(length)));
+      payloadBytes -= length;
+    }
+    return segments;
+  };
+  const comments = commentsForBytes(1024 * 1024);
+  const marked = jpegWithSegmentsAfterScan(encoded, [
+    Buffer.from([0xff, 0xff]),
+    jpegSegment(0xe1, Buffer.from([0x45, 0x78, 0xff, 0xd9, 0x69, 0x66, 0x00])),
+    ...comments,
+    Buffer.from([0xff, 0xff, 0xff]),
+  ]);
+  assert.ok(marked.byteLength <= IMAGE_LIMITS.sourceBytes);
+  assert.equal(width * height, IMAGE_LIMITS.decodedPixels);
+  assert.ok(marked.byteLength + width * height * 4 <= IMAGE_LIMITS.workerPeakBytes);
+  const stages = [];
+  const image = await decodeProductionImage(request("jpeg", marked, width, height),
+    new AbortController().signal, (stage) => stages.push(stage));
+
+  assert.deepEqual([image.width, image.height, image.pixels.byteLength], [width, height, width * height * 4]);
+  const preflightStage = stages.indexOf("jpegPreflightParseMs");
+  const streamPlanStage = stages.indexOf("jpegStreamPlanParseMs");
+  const decodeStage = stages.indexOf("jpegHuffmanIdctWriteMs");
+  assert.ok(preflightStage >= 0 && streamPlanStage >= 0,
+    "the production high-memory route must select the streamed baseline decoder");
+  assert.ok(decodeStage >= 0 && preflightStage < streamPlanStage && streamPlanStage < decodeStage,
+    "the production streamed decoder must finish Huffman/IDCT band writing");
+  let mismatch = false;
+  for (let offset = 0; offset < image.pixels.length; offset += 4) {
+    if (image.pixels[offset] !== 128 || image.pixels[offset + 1] !== 128 ||
+        image.pixels[offset + 2] !== 128 || image.pixels[offset + 3] !== 255) {
+      mismatch = true;
+      break;
+    }
+  }
+  assert.equal(mismatch, false, "the complete synthetic 16MP image must decode to opaque neutral gray");
+
+  const overLimit = jpegWithSegmentsAfterScan(encoded, [
+    jpegSegment(0xe1, Buffer.from([0x45, 0x78, 0xff, 0xd9])),
+    ...commentsForBytes(1024 * 1024 + 1),
+  ]);
+  assert.ok(overLimit.byteLength <= IMAGE_LIMITS.sourceBytes);
+  const rejectedStages = [];
+  await assert.rejects(decodeProductionImage(request("jpeg", overLimit, width, height),
+    new AbortController().signal, (stage) => rejectedStages.push(stage)), /image_worker_capacity_exceeded/);
+  assert.equal(rejectedStages.includes("jpegStreamPlanParseMs"), false,
+    "post-scan COM over the preflight limit must fail before streaming decode starts");
+});
+
 test("streamed baseline JPEG rejects an extra scan and malformed post-scan segments", () => {
   const encoded = simpleBaselineJpeg({ width: 8, height: 8, sampling: [0x11] });
   const extraScan = jpegSegment(0xda, Buffer.from([1, 1, 0, 0, 63, 0]));
