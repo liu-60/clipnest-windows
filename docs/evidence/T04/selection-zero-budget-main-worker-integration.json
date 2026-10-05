@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "subtask": "selection-zero-budget-main-worker-integration",
+  "result": "OBSERVED_WITH_LIMITATIONS",
+  "checkedDate": "2026-10-05",
+  "worktree": {
+    "path": "D:/ClipNest-work/electron-l0",
+    "branch": "codex/m0-latency",
+    "baseCommit": "eca8157dd60ba90b2c71f6cc4ec4f80c34bcfa35",
+    "worktreeDirtyDuringRun": true,
+    "taskStatus": "T04 remains in_progress and is not accepted."
+  },
+  "environment": {
+    "platform": "win32-x64",
+    "nodeVersion": "v24.16.0",
+    "pnpmVersion": "11.19.0",
+    "electronVersion": "40.10.2",
+    "electronProcessType": "browser",
+    "electronRuntimeOverride": "node_modules/.pnpm/electron@40.10.2_supports-color@8.1.1/node_modules/electron/dist/dist",
+    "runtimeNote": "The package's local Electron archive was present, but the expected dist/electron.exe path was absent and the extracted executable was under dist/dist/electron.exe. The runner used a process-local ELECTRON_OVERRIDE_DIST_PATH; no tracked dependency or lockfile changed."
+  },
+  "sourceFiles": [
+    {
+      "path": "tests/tasks/T04/run-image-selection-electron.cjs",
+      "sha256": "584185bd4b64644c325775920a604d1b810acf1b609f5affa65ee505c6c9c3de"
+    },
+    {
+      "path": "src/main/main.ts",
+      "sha256": "142bf0aff26b841f20f116f5abb1360b4072a9351f163f5eabf7526eda9609a6"
+    },
+    {
+      "path": "src/main/clipboard/selection-key-deadline.ts",
+      "sha256": "1313c706a948607a73ba816ce4726f6fe3523b5ac7ffbcc7a4d971b6a062684f"
+    },
+    {
+      "path": "src/main/clipboard/image-worker.ts",
+      "sha256": "54fcf1946577d7dff4a958563271022bd08a73676283fa24724bd57b861e6313"
+    },
+    {
+      "path": "src/main/clipboard/image-preparation.ts",
+      "sha256": "c98fa67f3fc18e3215c4efa29917af2b8a560da093907ae455989ab64398aab7"
+    },
+    {
+      "path": "src/main/native/win32-host-bridge.ts",
+      "sha256": "a42e15a50a26eb837e1f423e744e5a6e7083da6fd79497cd52bec6cc1a3d0c72"
+    }
+  ],
+  "method": {
+    "productionPath": "Extracted production copySelectedItem orchestration in Electron main; NativeContentProvider snapshot; real Electron utilityProcess image worker and PNG decode.",
+    "workerGate": "Capture and hold the synthetic 2x1 PNG cache-miss response after the real utilityProcess decode; only after capture, inject VM performance.now at the original deadline plus 1ms and the helper tick at its original deadline minus 1ms, then release the response to the production worker handler.",
+    "fakeBoundaries": [
+      "Selection monitor and its continue decision",
+      "Win32 key-state adapter",
+      "Native helper protocol client and its blocked response",
+      "Clipboard sequence baseline and commit effects",
+      "Panel visibility and hide effects",
+      "Paste/input request effects"
+    ],
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "browserWindowCreated": false
+  },
+  "observation": {
+    "runnerReportedResult": "PARTIAL",
+    "utilityProcessDecodeCount": 18,
+    "deterministicZeroBudgetScenario": {
+      "status": "OBSERVED",
+      "utilityProcess": {
+        "decodeIndex": 18,
+        "responseType": "decoded",
+        "pidReportedByElectron": false,
+        "responseObservedAtMs": 11257.5173,
+        "clockOverrideAppliedAfterResponseCapture": true
+      },
+      "injectedClocks": {
+        "highResolutionNowMs": 11483.486,
+        "originalDeadlineAtMs": 11482.486,
+        "helperTickMs": 253200483,
+        "originalHelperDeadlineTickMs": 253200484
+      },
+      "commitWrite": {
+        "selectionBudgetMs": 0,
+        "includedSelectionDeadlineTickMs": false,
+        "helperKinds": [
+          "register_content",
+          "prepare",
+          "commit_write"
+        ]
+      },
+      "fakeHelperResponse": "blocked/key_state_unavailable; a harness-only terminal signal allows production finally cleanup and is not evidence about native helper lifecycle",
+      "fakeBoundaryEffects": {
+        "clipboardCommits": 0,
+        "pasteRequests": 0,
+        "fallbackWrites": 0,
+        "panelHides": 0
+      },
+      "fakeKeyStateAdapterReads": 1,
+      "originalContentAndPreviewUnchanged": true
+    },
+    "boundedRealTimerProbe": {
+      "status": "NOT_OBSERVED",
+      "attemptsRun": 12,
+      "allAttemptsFailedClosedAs": "key_state_unavailable",
+      "successfulReleasedContinuation": false,
+      "productionZeroBudgetCommitObservedWithRealTimer": false,
+      "heldCutoff": {
+        "elapsedMs": 512.25,
+        "timerLateAtMs": 12.24,
+        "lastPreCutoffSampleAgeMs": 3.97,
+        "decision": "key_state_unavailable"
+      }
+    }
+  },
+  "validation": [
+    {
+      "command": "pnpm build:main",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "$env:ELECTRON_OVERRIDE_DIST_PATH = (Resolve-Path node_modules/.pnpm/electron@40.10.2_supports-color@8.1.1/node_modules/electron/dist/dist).Path; node tests/tasks/T04/run-image-selection-electron.cjs",
+      "status": "PASS_WITH_LIMITATIONS",
+      "exitCode": 0,
+      "observed": "Latest runner output result=PARTIAL with 18 utilityProcess decode requests; all 12 real-timer released-cutoff attempts failed closed as key_state_unavailable. The deterministic scenario captured a real decoded worker response before clock injection, then observed production commit_write with selectionBudgetMs=0 and no clipboard/paste/fallback/panel effects."
+    },
+    {
+      "command": "node --check tests/tasks/T04/run-image-selection-electron.cjs",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS",
+      "exitCode": 0
+    }
+  ],
+  "gateEffect": {
+    "t04Status": "in_progress",
+    "productionMainZeroBudgetRequestPathObserved": true,
+    "realTimerReleasedCutoffObserved": false,
+    "p1I10I11Closed": false,
+    "p15Closed": false,
+    "jpegMemoryGateClosed": false,
+    "t04AcceptanceImplied": false
+  },
+  "limitations": [
+    "Injected clock values and a fake monitor make this deterministic; it does not observe the real timer/key-transition cutoff or prove a fresh real-time release sample.",
+    "The helper, clipboard, panel, and input boundaries are fake. The fake helper terminal signal is cleanup-only and does not prove native helper lifecycle or atomic clipboard/SendInput behavior.",
+    "This synthetic PNG integration does not close P15, JPEG memory/support, visible paste, full T04 acceptance, or any T05 behavior/release gate."
+  ]
+}

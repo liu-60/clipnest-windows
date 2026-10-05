@@ -134,6 +134,8 @@ if (!process.versions.electron) {
     let nextIdentity = 0;
     let helperExited = false;
     let monitorMode = "production";
+    let vmPerformanceNowOverride = null;
+    let vmMonotonicTickOverride = null;
     const selectionMonitors = [];
     const selectionMonitorDiagnostics = [];
     const monitorEvidence = {
@@ -141,7 +143,7 @@ if (!process.versions.electron) {
       monotonicClock: "production Win32HostBridge GetTickCount64 for helper deadline; node:perf_hooks performance.now for the monitor cutoff and sample ages",
     };
     const bridge = {
-      getMonotonicTickMs: () => nativeClock.getMonotonicTickMs(),
+      getMonotonicTickMs: () => vmMonotonicTickOverride ?? nativeClock.getMonotonicTickMs(),
       getClipboardSequenceNumber: () => 41,
       getProcessIdentity(pid) { return { pid, processCreatedAt: "2200" }; },
       getForegroundWindow: () => HOST,
@@ -256,6 +258,14 @@ if (!process.versions.electron) {
           return { status: "prepared", jobId: command.jobId, prepareToken: "prepare-image-test" };
         }
         if (command.kind === "commit_write") {
+          if (monitorMode === "deterministicZeroBudget") {
+            assert.equal(command.selectionBudgetMs, 0);
+            assert.equal("selectionDeadlineTickMs" in command, false);
+            // This fake terminal signal lets production finally release its
+            // snapshot. It is not evidence about native helper lifecycle.
+            helperExited = true;
+            return { status: "blocked", reasonCode: "key_state_unavailable", jobId: command.jobId };
+          }
           effects.clipboardCommits += 1;
           return { status: "clipboard_written", jobId: command.jobId, clipboardSequence: "42" };
         }
@@ -275,9 +285,17 @@ if (!process.versions.electron) {
         selectionDeadlineTickMs: input.selectionDeadlineTickMs,
         deadlineAt: input.selectionDeadlineAt,
         deadlineTickMs: input.selectionDeadlineTickMs,
+        monitorMode,
         keySamples: [],
       };
       selectionMonitorDiagnostics.push(diagnostic);
+      if (monitorMode === "deterministicZeroBudget") {
+        return {
+          cutoff: new Promise(() => {}),
+          waitForPreparation: async () => ({ kind: "continue", operationBudgetMs: SELECTION_KEY_RELEASE_WINDOW_MS }),
+          cancel() {},
+        };
+      }
       if (monitorMode === "pending") {
         return {
           cutoff: new Promise(() => {}),
@@ -307,7 +325,7 @@ if (!process.versions.electron) {
       clearTimeout,
       clearInterval,
       randomUUID: () => `integration-${++nextIdentity}`,
-      performance,
+      performance: { now: () => vmPerformanceNowOverride ?? performance.now() },
       createHash,
       metrics: {
         mark: (_requestId, name) => events.push(`metric-${name}`),
@@ -649,7 +667,7 @@ if (!process.versions.electron) {
       const heldCutoffReply = await waitWithin(
         heldCutoffResponseCaptured.promise,
         5_000,
-        "the real utilityProcess must emit its decoded response before the fake key cutoff",
+        `the real utilityProcess must emit its decoded response before the fake key cutoff; decodeCount=${realWorkerDecodeCount}, factories=${realWorkerFactoryCount}, workerEvents=${events.filter((event) => event.includes("worker-")).join(",")}`,
       );
       assert.equal(heldCutoffReply.requestId, "image-5");
       assert.equal(heldCutoffReply.type, "decoded");
@@ -896,6 +914,157 @@ if (!process.versions.electron) {
       await new Promise((resolve) => setTimeout(resolve, 20));
       assert.equal(keyStateReadCount, keyReadsAfterReleasedCompletion, "terminal completion leaves no real selection-monitor poll scheduled");
       monitorEvidence.keyReadsAfterReleasedCompletionWait = keyStateReadCount - keyReadsAfterReleasedCompletion;
+
+      assert.equal(context.nativePasteJob, null, "the bounded real-timer attempts leave no active fake job before the deterministic integration");
+      const zeroBudgetDecodeIndex = realWorkerDecodeCount + 1;
+      const zeroBudgetWorker = {
+        name: "deterministic-zero-budget",
+        captured: deferred(),
+        rejected: deferred(),
+        exited: deferred(),
+        release: deferred(),
+      };
+      heldWorkerResponses.set(zeroBudgetDecodeIndex, zeroBudgetWorker);
+      const zeroBudgetPixels = Buffer.from([17, 44, 219, 255, 202, 93, 11, 128]);
+      const zeroBudgetPng = PNG.sync.write({ width: 2, height: 1, data: zeroBudgetPixels });
+      const zeroBudgetItem = {
+        id: "worker-integration-deterministic-zero-budget-image",
+        type: "image",
+        content: `data:image/png;base64,${zeroBudgetPng.toString("base64")}`,
+        preview: "确定性零预算原始预览",
+      };
+      const zeroBudgetContent = zeroBudgetItem.content;
+      const zeroBudgetPreview = zeroBudgetItem.preview;
+      history.push(zeroBudgetItem);
+      monitorMode = "deterministicZeroBudget";
+      keyStateReleased = true;
+      helperExited = false;
+      visible = true;
+      context.panelGeneration = GENERATION;
+      context.panelTarget = TARGET;
+      context.pendingPanelGeneration = null;
+      context.openingGuardUntil = 0;
+      const requestsBeforeZeroBudget = requests.length;
+      const effectsBeforeZeroBudget = { ...effects };
+      const keyReadsBeforeZeroBudget = keyStateReadCount;
+      selectionSettled = false;
+      let zeroBudgetSelection = null;
+      try {
+        phase = "wait for real worker response held by deterministic zero-budget integration";
+        zeroBudgetSelection = context.copySelectedItem(
+          7,
+          true,
+          zeroBudgetItem.id,
+          [],
+          GENERATION,
+          "image-deterministic-zero-budget",
+        ).then((result) => { selectionSettled = true; return plain(result); });
+
+        const zeroBudgetReply = await waitWithin(
+          zeroBudgetWorker.captured.promise,
+          5_000,
+          "the real utilityProcess must decode before the deterministic zero-budget clock advance",
+        );
+        assert.equal(zeroBudgetReply.requestId, `image-${zeroBudgetDecodeIndex}`);
+        assert.equal(zeroBudgetReply.type, "decoded");
+        assert.ok(zeroBudgetWorker.child, "the production worker gate must be attached to a real Electron utilityProcess");
+        assert.equal(selectionSettled, false, "production selection remains pending while the real response is held");
+        assert.equal(requests.length, requestsBeforeZeroBudget, "no helper request precedes worker response release");
+        assert.deepEqual(effects, effectsBeforeZeroBudget, "no side-effect boundary changes while the real response is held");
+
+        const zeroBudgetDiagnostic = selectionMonitorDiagnostics.at(-1);
+        assert.equal(zeroBudgetDiagnostic.monitorMode, "deterministicZeroBudget");
+        assert.ok(zeroBudgetReply.observedAtMs > 0, "the real worker response capture records its observation time");
+        vmPerformanceNowOverride = zeroBudgetDiagnostic.selectionDeadlineAt + 1;
+        vmMonotonicTickOverride = zeroBudgetDiagnostic.selectionDeadlineTickMs - 1;
+        assert.equal(vmPerformanceNowOverride, zeroBudgetDiagnostic.selectionDeadlineAt + 1,
+          "after the real response is held, the injected high-resolution clock is one millisecond past the original cutoff");
+        assert.equal(vmMonotonicTickOverride, zeroBudgetDiagnostic.selectionDeadlineTickMs - 1,
+          "after the real response is held, the injected coarse tick remains one tick before the helper deadline");
+        zeroBudgetWorker.release.resolve();
+        phase = "wait for production zero-budget request through real utilityProcess and fake helper";
+        assert.deepEqual(await waitWithin(
+          zeroBudgetSelection,
+          5_000,
+          "the production selection must finish after the real worker response is released",
+        ), { status: "blocked", reasonCode: "key_state_unavailable" });
+
+        const zeroBudgetRequests = requests.slice(requestsBeforeZeroBudget);
+        assert.deepEqual(zeroBudgetRequests.map((request) => request.kind), [
+          "register_content", "prepare", "commit_write",
+        ]);
+        const zeroBudgetCommit = zeroBudgetRequests.at(-1);
+        assert.equal(zeroBudgetCommit.selectionBudgetMs, 0);
+        assert.equal("selectionDeadlineTickMs" in zeroBudgetCommit, false);
+        assert.equal(zeroBudgetRequests.some((request) => request.kind === "paste" || request.kind === "cancel"), false);
+        assert.deepEqual(effects, effectsBeforeZeroBudget,
+          "fake blocked commit causes no clipboard, paste, fallback or panel effect");
+        assert.equal(keyStateReadCount - keyReadsBeforeZeroBudget, 1,
+          "only production's pre-commit check uses the fake key-state adapter; the fake monitor does not poll");
+        assert.equal(visible, true, "blocked selection keeps the panel visible");
+        assert.equal(zeroBudgetItem.content, zeroBudgetContent, "the retained original image is unchanged");
+        assert.equal(zeroBudgetItem.preview, zeroBudgetPreview, "the retained preview is unchanged");
+        assert.equal(history.at(-1), zeroBudgetItem);
+        assert.equal(helperExited, true, "the fake terminal signal lets production finally release the prepared snapshot");
+        assert.equal(context.nativePasteJob, null, "production finally retires the zero-budget fake job");
+        assert.ok(events.includes("worker-response-released-deterministic-zero-budget"));
+        assert.ok(!events.includes("worker-decode-failed-deterministic-zero-budget"));
+        assert.equal(BrowserWindow.getAllWindows().length, 0);
+
+        monitorEvidence.deterministicZeroBudgetMainWorkerIntegration = {
+          status: "OBSERVED",
+          mode: "fake monitor with injected VM clocks; production Electron main selection and real utilityProcess PNG decode",
+          deadline: {
+            highResolutionNowMs: vmPerformanceNowOverride,
+            originalDeadlineAtMs: zeroBudgetDiagnostic.selectionDeadlineAt,
+            helperTickMs: vmMonotonicTickOverride,
+            originalHelperDeadlineTickMs: zeroBudgetDiagnostic.selectionDeadlineTickMs,
+          },
+          utilityProcess: {
+            pid: Number.isInteger(zeroBudgetWorker.utilityProcessPid) ? zeroBudgetWorker.utilityProcessPid : null,
+            pidReportedByElectron: Number.isInteger(zeroBudgetWorker.utilityProcessPid),
+            decodeIndex: zeroBudgetDecodeIndex,
+            responseType: zeroBudgetReply.type,
+            responseObservedAtMs: zeroBudgetReply.observedAtMs,
+            clockOverrideAppliedAfterResponseCapture: true,
+          },
+          commitWrite: {
+            selectionBudgetMs: zeroBudgetCommit.selectionBudgetMs,
+            includedSelectionDeadlineTickMs: "selectionDeadlineTickMs" in zeroBudgetCommit,
+            helperKinds: zeroBudgetRequests.map((request) => request.kind),
+          },
+          fakeHelperResponse: "blocked/key_state_unavailable; harness-only terminal signal is not helper lifecycle evidence",
+          fakeBoundaryEffects: {
+            clipboardCommits: effects.clipboardCommits - effectsBeforeZeroBudget.clipboardCommits,
+            pasteRequests: effects.pasteRequests - effectsBeforeZeroBudget.pasteRequests,
+            fallbackWrites: effects.fallbackWrites - effectsBeforeZeroBudget.fallbackWrites,
+            panelHides: effects.panelHides - effectsBeforeZeroBudget.panelHides,
+          },
+          fakeKeyStateAdapterReads: keyStateReadCount - keyReadsBeforeZeroBudget,
+          originalContentAndPreviewUnchanged: zeroBudgetItem.content === zeroBudgetContent && zeroBudgetItem.preview === zeroBudgetPreview,
+          browserWindowCreated: false,
+          systemClipboardReadOrWritten: false,
+          physicalInputSent: false,
+          limitations: [
+            "Does not observe a real timer cutoff, key transition, native helper lifecycle, or atomic clipboard/SendInput behavior.",
+            "Does not close P1/I10/I11, P15, JPEG memory, visible paste, or T04 acceptance gates.",
+          ],
+        };
+      } finally {
+        zeroBudgetWorker.release.resolve();
+        if (zeroBudgetSelection) {
+          await waitWithin(
+            zeroBudgetSelection.catch(() => undefined),
+            5_000,
+            "cleanup must settle the deterministic selection after releasing its worker gate",
+          ).catch(() => undefined);
+        }
+      }
+      const keyReadsAfterDeterministicScenario = keyStateReadCount;
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      assert.equal(keyStateReadCount, keyReadsAfterDeterministicScenario,
+        "the deterministic fake monitor leaves no real key polling timer");
+      monitorEvidence.keyReadsAfterDeterministicZeroBudgetWait = keyStateReadCount - keyReadsAfterDeterministicScenario;
       assert.equal(BrowserWindow.getAllWindows().length, 0);
       const releasedCutoffProbeStatus = successfulReleasedCutoffAttempt ? "PASS_WITH_LIMITATIONS" : "PARTIAL";
       process.stdout.write(`${JSON.stringify({
