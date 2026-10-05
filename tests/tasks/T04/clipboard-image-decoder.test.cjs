@@ -470,6 +470,7 @@ test("large worker responses wait for one ACK per bounded raw pixel chunk", asyn
   const { installImageWorkerRuntime } = loadWorker({}, false);
   let receive;
   const messages = [];
+  let decoderArgumentCount = null;
   const width = 3000;
   const height = 2800;
   const pixels = Buffer.alloc(width * height * 4, 0x5a);
@@ -477,7 +478,10 @@ test("large worker responses wait for one ACK per bounded raw pixel chunk", asyn
   installImageWorkerRuntime({
     onMessage(listener) { receive = listener; return () => {}; },
     postMessage(message) { messages.push(message); },
-  }, async () => ({ width, height, pixels }));
+  }, async function decoder(...args) {
+    decoderArgumentCount = args.length;
+    return { width, height, pixels };
+  });
 
   receive({ type: "decode", requestId: input.jobId, input });
   await waitFor(() => messages.length === 1);
@@ -500,6 +504,9 @@ test("large worker responses wait for one ACK per bounded raw pixel chunk", asyn
   assert.equal(messages.at(-1).type, "decoded_end");
   assert.equal(messages.at(-1).chunkCount, sequence);
   assert.equal(messages.at(-1).byteLength, pixels.byteLength);
+  assert.equal(Object.hasOwn(messages.at(-1), "stageTimings"), false,
+    "default worker output has no diagnostic timing fields");
+  assert.equal(decoderArgumentCount, 2, "default decoder call keeps its original argument shape");
   assert.equal(outputBytes, pixels.byteLength);
 });
 
@@ -540,6 +547,8 @@ test("utility worker assembles exact large pixel chunks and ACKs after copying e
   children[0].emit("message", { type: "decoded_end", requestId: input.jobId, width: input.width,
     height: input.height, chunkCount: seq, byteLength: pixels.byteLength });
   const image = await decoded;
+  assert.deepEqual(children[0].sentMessages[0], { type: "decode", requestId: input.jobId, input },
+    "default utility request has no diagnostic opt-in field");
   assert.deepEqual([image.width, image.height, image.pixels.byteLength], [input.width, input.height, pixels.byteLength]);
   assert.ok(Buffer.from(image.pixels.buffer, image.pixels.byteOffset, image.pixels.byteLength).equals(pixels));
   const disposed = worker.dispose();

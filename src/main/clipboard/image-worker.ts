@@ -1,5 +1,6 @@
 import type { UtilityProcess } from "electron";
 import { join } from "node:path";
+import { performance } from "node:perf_hooks";
 
 const IMAGE_RESPONSE_CHUNK_BYTES = 1024 * 1024;
 
@@ -24,9 +25,25 @@ export interface DecodedImage {
   readonly height: number;
   readonly pixels: Uint8Array;
 }
-export type ImageDecoder = (input: ImageDecodeInput, signal: AbortSignal) => Promise<DecodedImage>;
+export type ImageDiagnosticTimingStage =
+  | "workerColdStartMs"
+  | "serviceInputCopyMs"
+  | "jpegPreflightParseMs"
+  | "jpegStreamPlanParseMs"
+  | "jpegHuffmanIdctWriteMs"
+  | "jpegRenderMs"
+  | "workerDecodeMs"
+  | "workerChunkSendAckMs"
+  | "mainChunkAssemblyMs"
+  | "serviceFinalCopyMs";
+export type ImageDiagnosticTimingSink = (stage: ImageDiagnosticTimingStage, durationMs: number) => void;
+export type ImageDecoder = (
+  input: ImageDecodeInput,
+  signal: AbortSignal,
+  onDiagnosticTiming?: ImageDiagnosticTimingSink,
+) => Promise<DecodedImage>;
 export interface ImageDecodeWorker {
-  decode(input: ImageDecodeInput, signal: AbortSignal): Promise<DecodedImage>;
+  decode(input: ImageDecodeInput, signal: AbortSignal, onDiagnosticTiming?: ImageDiagnosticTimingSink): Promise<DecodedImage>;
   dispose(): Promise<void>;
 }
 export interface ImageWorkerEndpoint {
@@ -35,7 +52,10 @@ export interface ImageWorkerEndpoint {
     stageTimings?: { decodeMs: number } } |
     { type: "decoded_chunk"; requestId: string; seq: number; pixels: Uint8Array } |
     { type: "decoded_end"; requestId: string; width: number; height: number; chunkCount: number;
-      byteLength: number; stageTimings?: { decodeMs: number; chunkSendMs: number } } |
+      byteLength: number; stageTimings?: {
+        decodeMs: number; chunkSendMs: number; jpegPreflightParseMs?: number;
+        jpegStreamPlanParseMs?: number; jpegHuffmanIdctWriteMs?: number; jpegRenderMs?: number;
+      } } |
     { type: "failed"; requestId: string; reason: string }): void;
 }
 
@@ -48,6 +68,7 @@ interface ActiveImageJob {
   collectTimings: boolean;
   decodeStartedAt: number;
   chunkSendStartedAt: number;
+  diagnosticStageTimings?: Partial<Record<ImageDiagnosticTimingStage, number>>;
 }
 
 /** Shared worker protocol is testable with a decoder injected by the fixture. */
@@ -83,12 +104,22 @@ export function installImageWorkerRuntime(endpoint: ImageWorkerEndpoint, decoder
       endpoint.postMessage({ type: "failed", requestId: raw.requestId, reason: "image_worker_busy" });
       return;
     }
-    const collectTimings = process.env?.T04_WORKER_STAGE_TIMING === "1";
+    const collectTimings = raw.collectDiagnosticTimings === true || process.env?.T04_WORKER_STAGE_TIMING === "1";
     const job: ActiveImageJob = { id: raw.requestId, controller: new AbortController(),
       image: null, nextChunkSeq: 0, awaitingAck: null, collectTimings,
-      decodeStartedAt: collectTimings ? performance.now() : 0, chunkSendStartedAt: 0 };
+      decodeStartedAt: collectTimings ? performance.now() : 0, chunkSendStartedAt: 0,
+      ...(collectTimings ? { diagnosticStageTimings: {} } : {}) };
     active = job;
-    void Promise.resolve().then(() => decoder(input, job.controller.signal)).then((image) => {
+    const onDiagnosticTiming: ImageDiagnosticTimingSink | undefined = job.diagnosticStageTimings
+      ? (stage, durationMs) => {
+        if (Number.isFinite(durationMs) && durationMs >= 0) {
+          job.diagnosticStageTimings![stage] = roundTiming(durationMs);
+        }
+      }
+      : undefined;
+    void Promise.resolve().then(() => onDiagnosticTiming
+      ? decoder(input, job.controller.signal, onDiagnosticTiming)
+      : decoder(input, job.controller.signal)).then((image) => {
       if (disposed || active !== job || job.controller.signal.aborted) return;
       if (!isDecodedImage(image) || image.width !== input.width || image.height !== input.height ||
           image.pixels.byteLength !== input.width * input.height * 4) {
@@ -123,6 +154,7 @@ export function installImageWorkerRuntime(endpoint: ImageWorkerEndpoint, decoder
         ...(job.collectTimings ? { stageTimings: {
           decodeMs: roundTiming(job.chunkSendStartedAt - job.decodeStartedAt),
           chunkSendMs: roundTiming(performance.now() - job.chunkSendStartedAt),
+          ...job.diagnosticStageTimings,
         } } : {}),
       });
       active = null;
@@ -160,16 +192,17 @@ class UtilityImageWorker implements ImageDecodeWorker {
   private retiringChild: UtilityProcess | null = null;
   private pending: { id: string; width: number; height: number; signal: AbortSignal; abort: () => void;
     expectedBytes: number; nextChunkSeq: number; receivedBytes: number; pixels: Buffer | null;
+    onDiagnosticTiming?: ImageDiagnosticTimingSink; chunkAssemblyMs?: number;
     resolve: (image: DecodedImage) => void; reject: (error: Error) => void } | null = null;
   private disposed = false;
 
-  decode(input: ImageDecodeInput, signal: AbortSignal): Promise<DecodedImage> {
+  decode(input: ImageDecodeInput, signal: AbortSignal, onDiagnosticTiming?: ImageDiagnosticTimingSink): Promise<DecodedImage> {
     if (this.disposed) return Promise.reject(new Error("image_worker_closed"));
     if (this.pending) return Promise.reject(new Error("image_worker_busy"));
     if (this.retiringChild) return Promise.reject(new Error("image_worker_terminating"));
     if (!isDecodeInput(input)) return Promise.reject(new Error("image_request_invalid"));
     if (signal.aborted) return Promise.reject(new Error("image_decode_cancelled"));
-    try { this.ensureChild(); } catch { return Promise.reject(new Error("image_worker_start_failed")); }
+    try { this.ensureChild(onDiagnosticTiming); } catch { return Promise.reject(new Error("image_worker_start_failed")); }
     return new Promise((resolve, reject) => {
       const abort = () => {
         const error = abortError(signal);
@@ -182,11 +215,13 @@ class UtilityImageWorker implements ImageDecodeWorker {
       };
       this.pending = { id: input.jobId, width: input.width, height: input.height, signal, abort,
         expectedBytes: input.width * input.height * 4, nextChunkSeq: 0, receivedBytes: 0, pixels: null,
-        resolve, reject };
+        resolve, reject, ...(onDiagnosticTiming ? { onDiagnosticTiming, chunkAssemblyMs: 0 } : {}) };
       signal.addEventListener("abort", abort, { once: true });
       try {
         if (signal.aborted) abort();
-        else this.child?.postMessage({ type: "decode", requestId: input.jobId, input });
+        else this.child?.postMessage(onDiagnosticTiming
+          ? { type: "decode", requestId: input.jobId, input, collectDiagnosticTimings: true }
+          : { type: "decode", requestId: input.jobId, input });
       }
       catch { this.retire(new Error("image_worker_send_failed")); }
     });
@@ -202,16 +237,23 @@ class UtilityImageWorker implements ImageDecodeWorker {
     });
   }
 
-  private ensureChild(): void {
+  private ensureChild(onDiagnosticTiming?: ImageDiagnosticTimingSink): void {
     if (this.retiringChild) throw new Error("image_worker_terminating");
     if (this.child) return;
     const { utilityProcess } = require("electron") as typeof import("electron");
+    const diagnosticStartedAt = onDiagnosticTiming ? performance.now() : 0;
     const child = utilityProcess.fork(join(__dirname, "image-worker.js"), [], {
       serviceName: "ClipNest Image Decoder", stdio: "ignore",
+      ...(onDiagnosticTiming ? { env: { ...process.env, T04_IMAGE_STAGE_TIMING: "1" } } : {}),
     });
     this.child = child;
     child.on("message", (raw: unknown) => {
       if (this.child !== child) return;
+      if (isRecord(raw) && raw.type === "diagnostic_ready") {
+        if (onDiagnosticTiming) emitDiagnosticTiming(onDiagnosticTiming, "workerColdStartMs",
+          performance.now() - diagnosticStartedAt);
+        return;
+      }
       this.onMessage(raw);
     });
     child.on("exit", () => {
@@ -265,8 +307,10 @@ class UtilityImageWorker implements ImageDecodeWorker {
       this.retire(new Error("image_worker_response_invalid"));
       return;
     }
+    const assemblyStartedAt = pending.onDiagnosticTiming ? performance.now() : 0;
     if (!pending.pixels) pending.pixels = Buffer.allocUnsafe(pending.expectedBytes);
     Buffer.from(chunk.buffer, chunk.byteOffset, chunk.byteLength).copy(pending.pixels, pending.receivedBytes);
+    if (pending.onDiagnosticTiming) pending.chunkAssemblyMs! += performance.now() - assemblyStartedAt;
     pending.receivedBytes += chunk.byteLength;
     pending.nextChunkSeq++;
     try { this.child?.postMessage({ type: "decoded_chunk_ack", requestId: pending.id, seq: raw.seq as number }); }
@@ -280,6 +324,18 @@ class UtilityImageWorker implements ImageDecodeWorker {
         raw.chunkCount !== pending.nextChunkSeq || pending.receivedBytes !== pending.expectedBytes || !pending.pixels) {
       this.retire(new Error("image_worker_response_invalid"));
       return;
+    }
+    if (pending.onDiagnosticTiming) {
+      emitDiagnosticTiming(pending.onDiagnosticTiming, "mainChunkAssemblyMs", pending.chunkAssemblyMs ?? 0);
+      const timings = isRecord(raw.stageTimings) ? raw.stageTimings : undefined;
+      if (timings) {
+        if (isFiniteDuration(timings.decodeMs)) emitDiagnosticTiming(pending.onDiagnosticTiming, "workerDecodeMs", timings.decodeMs);
+        if (isFiniteDuration(timings.chunkSendMs)) emitDiagnosticTiming(pending.onDiagnosticTiming, "workerChunkSendAckMs", timings.chunkSendMs);
+        if (isFiniteDuration(timings.jpegPreflightParseMs)) emitDiagnosticTiming(pending.onDiagnosticTiming, "jpegPreflightParseMs", timings.jpegPreflightParseMs);
+        if (isFiniteDuration(timings.jpegStreamPlanParseMs)) emitDiagnosticTiming(pending.onDiagnosticTiming, "jpegStreamPlanParseMs", timings.jpegStreamPlanParseMs);
+        if (isFiniteDuration(timings.jpegHuffmanIdctWriteMs)) emitDiagnosticTiming(pending.onDiagnosticTiming, "jpegHuffmanIdctWriteMs", timings.jpegHuffmanIdctWriteMs);
+        if (isFiniteDuration(timings.jpegRenderMs)) emitDiagnosticTiming(pending.onDiagnosticTiming, "jpegRenderMs", timings.jpegRenderMs);
+      }
     }
     this.finish(undefined, { width: pending.width, height: pending.height, pixels: pending.pixels });
   }
@@ -316,6 +372,7 @@ function installProductionWorkerEntry(): void {
       parentPort.postMessage(message);
     },
   }, decodeProductionImage);
+  if (process.env?.T04_IMAGE_STAGE_TIMING === "1") parentPort.postMessage({ type: "diagnostic_ready" });
 }
 
 function isDecodeInput(value: unknown): value is ImageDecodeInput {
@@ -347,5 +404,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 function roundTiming(value: number): number { return Math.round(value * 100) / 100; }
+function isFiniteDuration(value: unknown): value is number { return typeof value === "number" && Number.isFinite(value) && value >= 0; }
+function emitDiagnosticTiming(sink: ImageDiagnosticTimingSink, stage: ImageDiagnosticTimingStage, durationMs: number): void {
+  try { sink(stage, roundTiming(durationMs)); } catch { /* Diagnostics cannot change image preparation. */ }
+}
 
 installProductionWorkerEntry();

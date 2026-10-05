@@ -1,7 +1,7 @@
 import { performance } from "node:perf_hooks";
 import {
   IMAGE_LIMITS, createUtilityProcessImageWorker,
-  type DecodedImage, type ImageDecodeInput, type ImageDecodeWorker, type ImageFormat,
+  type DecodedImage, type ImageDecodeInput, type ImageDecodeWorker, type ImageDiagnosticTimingSink, type ImageFormat,
 } from "./image-worker";
 export { IMAGE_LIMITS } from "./image-worker";
 
@@ -17,6 +17,7 @@ export interface ImagePreparationUpdate {
 export interface ImagePreparationOptions {
   readonly signal?: AbortSignal; readonly isCurrent?: () => boolean; readonly deadlineAt?: number;
   readonly onUpdate?: (update: ImagePreparationUpdate) => void;
+  readonly onDiagnosticTiming?: ImageDiagnosticTimingSink;
 }
 export interface ImagePreparationResult { readonly image: DecodedImage; readonly cacheHit: boolean; readonly cached: boolean; }
 export interface ImageCacheStats { readonly entries: number; readonly bytes: number; readonly limitBytes: number; readonly workerBusy: boolean; }
@@ -108,19 +109,29 @@ export class ImagePreparationService {
       }
       this.throwIfPreparationExpired(deadlineAt, controller, () => { timedOut = true; });
 
+      const inputCopyStartedAt = options.onDiagnosticTiming ? performance.now() : 0;
+      const copiedInput = Uint8Array.from(input.encodedBytes);
+      if (options.onDiagnosticTiming) reportDiagnosticTiming(options.onDiagnosticTiming, "serviceInputCopyMs",
+        performance.now() - inputCopyStartedAt);
       const request: ImageDecodeInput = {
         jobId: `image-${++this.nextJobId}`, format: input.format,
-        encodedBytes: Uint8Array.from(input.encodedBytes), width: input.width, height: input.height,
+        encodedBytes: copiedInput, width: input.width, height: input.height,
       };
       this.throwIfPreparationExpired(deadlineAt, controller, () => { timedOut = true; });
 
       const worker = (this.worker ??= this.workerFactory());
-      const decoded = await worker.decode(request, controller.signal);
+      const decoded = options.onDiagnosticTiming
+        ? await worker.decode(request, controller.signal, options.onDiagnosticTiming)
+        : await worker.decode(request, controller.signal);
       this.throwIfPreparationExpired(deadlineAt, controller, () => { timedOut = true; }, worker);
       throwIfAborted(controller.signal);
       if (options.isCurrent && !options.isCurrent()) throw new ImagePreparationError("image_item_stale");
       validateDecodedImage(decoded, input.width, input.height);
-      const image: DecodedImage = { width: decoded.width, height: decoded.height, pixels: Uint8Array.from(decoded.pixels) };
+      const finalCopyStartedAt = options.onDiagnosticTiming ? performance.now() : 0;
+      const finalPixels = Uint8Array.from(decoded.pixels);
+      if (options.onDiagnosticTiming) reportDiagnosticTiming(options.onDiagnosticTiming, "serviceFinalCopyMs",
+        performance.now() - finalCopyStartedAt);
+      const image: DecodedImage = { width: decoded.width, height: decoded.height, pixels: finalPixels };
       this.throwIfPreparationExpired(deadlineAt, controller, () => { timedOut = true; }, worker);
       const cachedNow = this.writeCache(key, input.itemRef, image);
       // Large images cannot enter the decoded cache. Retire their worker so
@@ -311,6 +322,11 @@ function jpegDimensions(bytes: Buffer): { width: number; height: number } | null
   return null;
 }
 function cacheKey(itemRef: string, itemVersion: string): string { return JSON.stringify([itemRef, itemVersion]); }
+function reportDiagnosticTiming(sink: ImageDiagnosticTimingSink, stage: "serviceInputCopyMs" | "serviceFinalCopyMs",
+  durationMs: number): void {
+  try { sink(stage, Math.round(durationMs * 100) / 100); }
+  catch { /* Diagnostics cannot change image preparation. */ }
+}
 function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) throw new ImagePreparationError("image_cancelled");
 }

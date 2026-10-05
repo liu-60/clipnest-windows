@@ -1,4 +1,6 @@
 import type { DecodedImage } from "./image-worker";
+import { performance } from "node:perf_hooks";
+import type { ImageDiagnosticTimingSink } from "./image-worker";
 
 /*
  * The fixed-point IDCT constants and row/column stages below are adapted from
@@ -96,10 +98,20 @@ export function decodeLargeBaselineJpeg(
   bytes: Buffer,
   expectedWidth: number,
   expectedHeight: number,
+  onDiagnosticTiming?: ImageDiagnosticTimingSink,
 ): DecodedImage | null {
+  const parseStartedAt = onDiagnosticTiming ? performance.now() : 0;
   const plan = parsePlan(bytes, expectedWidth, expectedHeight);
+  if (onDiagnosticTiming) reportDiagnosticTiming(onDiagnosticTiming, "jpegStreamPlanParseMs",
+    performance.now() - parseStartedAt);
   if (!plan) return null;
-  return decodePlan(bytes, plan);
+  return decodePlan(bytes, plan, onDiagnosticTiming);
+}
+
+function reportDiagnosticTiming(sink: ImageDiagnosticTimingSink,
+  stage: "jpegStreamPlanParseMs" | "jpegHuffmanIdctWriteMs" | "jpegRenderMs", durationMs: number): void {
+  try { sink(stage, Math.round(durationMs * 100) / 100); }
+  catch { /* Diagnostics cannot change image decoding. */ }
 }
 
 function parsePlan(bytes: Buffer, expectedWidth: number, expectedHeight: number): ScanPlan | null {
@@ -301,7 +313,7 @@ class EntropyReader {
   }
 }
 
-function decodePlan(bytes: Buffer, plan: ScanPlan): DecodedImage {
+function decodePlan(bytes: Buffer, plan: ScanPlan, onDiagnosticTiming?: ImageDiagnosticTimingSink): DecodedImage {
   const { frame } = plan;
   const pixels = Buffer.allocUnsafe(frame.width * frame.height * 4);
   const coefficients = new Int32Array(64);
@@ -312,8 +324,11 @@ function decodePlan(bytes: Buffer, plan: ScanPlan): DecodedImage {
   const totalMcus = plan.mcuColumns * plan.mcuRows;
   let restartNumber = 0;
   let decodedMcus = 0;
+  let huffmanIdctWriteMs = 0;
+  let renderMs = 0;
 
   for (let mcuY = 0; mcuY < plan.mcuRows; mcuY++) {
+    const decodeRowStartedAt = onDiagnosticTiming ? performance.now() : 0;
     for (let mcuX = 0; mcuX < plan.mcuColumns; mcuX++) {
       for (const scanComponent of plan.scan) {
         const component = scanComponent.component;
@@ -331,9 +346,16 @@ function decodePlan(bytes: Buffer, plan: ScanPlan): DecodedImage {
         for (const component of frame.components) component.predictor = 0;
       }
     }
+    if (onDiagnosticTiming) huffmanIdctWriteMs += performance.now() - decodeRowStartedAt;
+    const renderStartedAt = onDiagnosticTiming ? performance.now() : 0;
     renderMcuRow(frame, pixels, mcuY);
+    if (onDiagnosticTiming) renderMs += performance.now() - renderStartedAt;
   }
   reader.requireEndOfImage();
+  if (onDiagnosticTiming) {
+    reportDiagnosticTiming(onDiagnosticTiming, "jpegHuffmanIdctWriteMs", huffmanIdctWriteMs);
+    reportDiagnosticTiming(onDiagnosticTiming, "jpegRenderMs", renderMs);
+  }
   return { width: frame.width, height: frame.height, pixels };
 }
 

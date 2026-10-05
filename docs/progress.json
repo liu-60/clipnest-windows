@@ -158,10 +158,12 @@
         "docs/evidence/T04/jpeg-420-source-roi-reconstruction.json",
         "docs/evidence/T04/jpeg-stream-current-memory-status.json",
         "docs/evidence/T04/image-preparation-16mp-service-integration.json",
+        "docs/evidence/T04/image-preparation-16mp-stage-profile.json",
         "docs/evidence/T04/image-preparation-expired-deadline-fake-regression.json",
         "docs/evidence/T04/image-preparation-failure-boundaries-fake-regression.json"
       ],
       "openGates": [
+        "新增 opt-in production ImagePreparationService/utilityProcess 阶段计时（由 T04_IMAGE_STAGE_PROFILE=1 触发；未传 sink 时不额外读取时钟，worker 默认 IPC 与 service 返回键形不变）。同一 16MP/20MiB SOF0 4:4:4 合成fixture单样本 service=2989.89ms：worker冷启动204.93ms、JPEG preflight 71.08ms、stream plan parse 0.74ms、Huffman/IDCT/组件写入1980.96ms、render 267.58ms、worker chunk send/ACK 365.10ms、主进程chunk组装52.90ms、service输入/最终复制7.55/37.64ms。该样本在数值上低于3000ms，但使用30s诊断期限、启用了插桩且仅单次，不能证明产品期限或重复性；依赖的raw-chunk 5样本证据未重跑。3000ms产品期限门仍开放。完整单次profile和限制见docs/evidence/T04/image-preparation-16mp-stage-profile.json。",
         "WPF/WIC候选测量已完成：Windows PowerShell STA独立子进程对合成16MP、20MiB baseline JPEG 4:2:0和4:4:4各5样本（共10）完整解码、全像素oracle与GDI+九点对照均通过；PeakWorkingSet64最高169,676,800B（161.82MiB），10样本均低于256MiB目标。该值含PowerShell/.NET/WPF进程基线；探针不是生产IWIC直接调用或Electron utilityProcess，未覆盖完整IPC/deflate/helper DIB、JPEG语料与元数据、取消及打包路径，因此仅为候选初筛，不关闭生产JPEG内存门或T04验收。测量与限制见docs/evidence/T04/wic-jpeg-memory-probe.json及docs/evidence/T04/wic-jpeg-route-review.json。",
         "历史测量（旧压缩传输协议）：5个fresh utilityProcess合成16MP RGBA PNG的request→压缩传输→异步还原p50 524.91ms、p95/max 547.68ms、PeakWorkingSet64最高161.23MiB。该结果不代表当前原始RGBA分块+ACK协议；当前协议的PNG ASAR与JPEG重复测量见本条末尾及对应chunked evidence。",
         "历史9MP诊断曾使用压缩IPC/异步inflate，旧ASAR smoke也在原始分块迁移前完成；这些记录不能代表当前chunk+ACK传输。随后追加request/input ID与child来源隔离后，已重新构建并完成9MP原始分块ASAR smoke：35个decoded_chunk加decoded_end、全像素一致、456.19ms，见packaged-asar-worker-chunked-hardened-smoke.json；未加固前的478.43ms历史样本仍见packaged-asar-worker-chunked-smoke.json。其余NativeImage截止诊断、2×1 DIB与真实timer限制仍如本记录；完整窗口、OS剪贴板、目标可见粘贴及T05 100样本验收仍未完成。",

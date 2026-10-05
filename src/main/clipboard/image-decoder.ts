@@ -1,7 +1,8 @@
 import { decode as decodeJpeg } from "jpeg-js";
 import { inflateSync } from "node:zlib";
+import { performance } from "node:perf_hooks";
 import type { Metadata } from "pngjs";
-import { IMAGE_LIMITS, type DecodedImage, type ImageDecodeInput, type ImageDecoder } from "./image-worker";
+import { IMAGE_LIMITS, type DecodedImage, type ImageDecodeInput, type ImageDecoder, type ImageDiagnosticTimingSink } from "./image-worker";
 import { decodeLargeBaselineJpeg } from "./jpeg-baseline-stream";
 
 type PngMetadata = Omit<Metadata, "colorType" | "palette"> & {
@@ -46,12 +47,12 @@ const JPEG_HUFFMAN_SYMBOL_PEAK_BYTES = 2048;
 const JPEG_HUFFMAN_TABLE_PEAK_BYTES = 4096;
 
 /** Called only by the utility-process production entry; never decode on the main thread. */
-export const decodeProductionImage: ImageDecoder = async (input, signal) => {
+export const decodeProductionImage: ImageDecoder = async (input, signal, onDiagnosticTiming) => {
   if (signal.aborted) throw new Error("image_decode_cancelled");
   validateInput(input);
   const bytes = Buffer.from(input.encodedBytes.buffer, input.encodedBytes.byteOffset, input.encodedBytes.byteLength);
   try {
-    const image = input.format === "png" ? decodePng(bytes, input) : decodeJpegImage(bytes, input);
+    const image = input.format === "png" ? decodePng(bytes, input) : decodeJpegImage(bytes, input, onDiagnosticTiming);
     if (signal.aborted) throw new Error("image_decode_cancelled");
     if (image.width !== input.width || image.height !== input.height ||
         image.pixels.byteLength !== input.width * input.height * 4) throw new Error("image_decoded_invalid");
@@ -209,11 +210,15 @@ function validatePngChunks(bytes: Buffer, input: ImageDecodeInput): void {
   throw new Error("image_source_invalid");
 }
 
-function decodeJpegImage(bytes: Buffer, input: ImageDecodeInput): DecodedImage {
+function decodeJpegImage(bytes: Buffer, input: ImageDecodeInput, onDiagnosticTiming?: ImageDiagnosticTimingSink): DecodedImage {
+  const preflightStartedAt = onDiagnosticTiming ? performance.now() : 0;
   const frame = parseJpegFrame(bytes);
   validateDimensions(frame.width, frame.height, input);
-  if (estimateJpegPeakBytes(bytes.byteLength, frame) > IMAGE_LIMITS.workerPeakBytes) {
-    const streamed = decodeLargeBaselineJpeg(bytes, frame.width, frame.height);
+  const estimatedPeakBytes = estimateJpegPeakBytes(bytes.byteLength, frame);
+  if (onDiagnosticTiming) reportDiagnosticTiming(onDiagnosticTiming, "jpegPreflightParseMs",
+    performance.now() - preflightStartedAt);
+  if (estimatedPeakBytes > IMAGE_LIMITS.workerPeakBytes) {
+    const streamed = decodeLargeBaselineJpeg(bytes, frame.width, frame.height, onDiagnosticTiming);
     if (streamed) return streamed;
     throw new Error("image_worker_capacity_exceeded");
   }
@@ -222,6 +227,11 @@ function decodeJpegImage(bytes: Buffer, input: ImageDecodeInput): DecodedImage {
     maxResolutionInMP: 16, maxMemoryUsageInMB: 256,
   });
   return { width: image.width, height: image.height, pixels: image.data };
+}
+
+function reportDiagnosticTiming(sink: ImageDiagnosticTimingSink, stage: "jpegPreflightParseMs", durationMs: number): void {
+  try { sink(stage, Math.round(durationMs * 100) / 100); }
+  catch { /* Diagnostics cannot change image decoding. */ }
 }
 
 interface JpegFrame {

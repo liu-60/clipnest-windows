@@ -1,0 +1,296 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "DIAGNOSTIC_PASS_WITH_LIMITATIONS",
+  "measurementType": "production_ImagePreparationService_real_utilityProcess_16MP_cache_and_retirement",
+  "measuredAt": "2026-10-05T11:47:13.356Z",
+  "diagnosticProfile": {
+    "optIn": "T04_IMAGE_STAGE_PROFILE=1",
+    "timingSource": "optional ImagePreparationService diagnostic sink; utility worker detailed IPC is enabled only for the opted-in decode request",
+    "stages": {
+      "workerColdStartMs": "utilityProcess fork until its production entry installed the decode listener and reported diagnostic_ready",
+      "serviceInputCopyMs": "ImagePreparationService encoded-byte copy before worker.decode",
+      "jpegPreflightParseMs": "production JPEG frame/metadata scan, dimension validation, and worker-capacity estimate",
+      "jpegStreamPlanParseMs": "stream decoder marker/table/scan-plan parse before entropy decoding",
+      "jpegHuffmanIdctWriteMs": "sum across MCU rows of Huffman/coefficient/IDCT decode plus component-band writes",
+      "jpegRenderMs": "sum across MCU rows of RGB/RGBA rendering",
+      "workerDecodeMs": "utility worker request receipt through completed decoder result; includes JPEG stages above",
+      "workerChunkSendAckMs": "worker 1 MiB raw pixel chunk creation/send through final chunk ACK receipt",
+      "mainChunkAssemblyMs": "main process allocation and copy of received raw pixel chunks into the full RGBA buffer",
+      "serviceFinalCopyMs": "ImagePreparationService final decoded-pixel copy after worker.decode resolves"
+    },
+    "reusedFiveSampleEvidence": {
+      "path": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-20mib-fresh-worker-release-444-5-sample-measurement.json",
+      "sameFixtureSha256": "5f5178ce761193b569130af082740669cd16071de9ea733aa8968f4f8e9dc6a3",
+      "scope": "existing worker-ready-to-full-response five-sample timing and memory measurements; not rerun by this stage profile"
+    }
+  },
+  "source": {
+    "commit": "7f35262ddd8af2fa4904c2c31091d5fc8d9154d5",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "productionAndBuildFiles": [
+      {
+        "path": "src/main/clipboard/image-preparation.ts",
+        "sha256": "7d18bfd9c75ee393f86331ba4ef1712245dbc5a4b5d0bbaa11d848dfda662ee1"
+      },
+      {
+        "path": "src/main/clipboard/image-worker.ts",
+        "sha256": "e0ed32eec16f2dbca10160c9a8346a27d57e9c5538fb9308472cea141fe8bc67"
+      },
+      {
+        "path": "src/main/clipboard/image-decoder.ts",
+        "sha256": "fa467e97c5840a76338fc7fc7c8fd876666473636051433dc7ff8afb1c9e9886"
+      },
+      {
+        "path": "src/main/clipboard/jpeg-baseline-stream.ts",
+        "sha256": "29aeacce77e66853b5bbe312c3f5971a565c3fadb54e069741ec6000256abe5f"
+      },
+      {
+        "path": "dist-electron/main/clipboard/image-preparation.js",
+        "sha256": "85915bbf5d9064c750eec4fea9b03875b7455264a8b5d9bfd5736a370d25acf9"
+      },
+      {
+        "path": "dist-electron/main/clipboard/image-worker.js",
+        "sha256": "13f86fb2654fee8c63e9e5c4874a9e808d13e1849652ab6335da3549c2bd5758"
+      },
+      {
+        "path": "dist-electron/main/clipboard/image-decoder.js",
+        "sha256": "5be6d5407644d140d8ec2474f5f8882d2a7392955bac8ad46a3eb4e81eb952a7"
+      },
+      {
+        "path": "dist-electron/main/clipboard/jpeg-baseline-stream.js",
+        "sha256": "4911bb70c3c9e288b670bc2f3a8655a75b5f99492f428ec8182e00c0d13c8262"
+      },
+      {
+        "path": "tests/tasks/T04/run-image-preparation-16mp-electron.cjs",
+        "sha256": "6bec7056693de2161b6869b66f33fc371f6f87a6e142b9399345da7df55d2050"
+      }
+    ]
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "osVersion": "10.0.22631",
+    "electronVersion": "40.10.2",
+    "nodeVersion": "24.15.0",
+    "electronProcessType": "browser",
+    "electronBinarySource": "pinned pnpm Electron 40.10.2 runtime; nested dist fallback",
+    "cpuModel": "Intel(R) Xeon(R) Platinum 8378C CPU @ 2.80GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 17178939392,
+    "displayOrForegroundAppUsed": false,
+    "browserWindowCreated": false,
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "nativeHelperInvoked": false
+  },
+  "fixture": {
+    "width": 4000,
+    "height": 4000,
+    "pixelCount": 16000000,
+    "encodedBytes": 20971520,
+    "sha256": "5f5178ce761193b569130af082740669cd16071de9ea733aa8968f4f8e9dc6a3",
+    "jpegEncoder": "pinned jpeg-js 0.4.4",
+    "jpegQuality": 74,
+    "jpegImageBytesBeforeApp2Padding": 19866368,
+    "jpegApp2PaddingBytes": 1105152,
+    "samplingFactors": [
+      {
+        "horizontal": 1,
+        "vertical": 1
+      },
+      {
+        "horizontal": 1,
+        "vertical": 1
+      },
+      {
+        "horizontal": 1,
+        "vertical": 1
+      }
+    ],
+    "content": "deterministic high-entropy synthetic baseline JPEG with APP2 padding; no user data"
+  },
+  "productionRoute": {
+    "service": "ImagePreparationService",
+    "decoderWorker": "createUtilityProcessImageWorker (real Electron utilityProcess)",
+    "preparationDeadlineMs": 30000,
+    "productPreparationTimeoutMs": 3000,
+    "deadlineMeaning": "diagnostic-only override used to isolate service/cache/worker lifecycle; not the product 3000 ms deadline gate"
+  },
+  "largeImage": {
+    "itemRef": "synthetic-large-jpeg",
+    "elapsedMs": 2989.89,
+    "productDeadlineWouldHaveExpiredAtObservedDuration": false,
+    "updatePhases": [
+      "preparing",
+      "ready"
+    ],
+    "resultWidth": 4000,
+    "resultHeight": 4000,
+    "decodedRgbaBytes": 64000000,
+    "decodedRgbaSha256": "f6f1c8619e4adc31a55adc532c5219ab7408bca3cafdcf677d0dde2a0fce83dc",
+    "cacheHit": false,
+    "cached": false,
+    "cacheStatsAfterPrepare": {
+      "entries": 0,
+      "bytes": 0,
+      "limitBytes": 33554432,
+      "workerBusy": false
+    },
+    "utilityProcessPid": 77272,
+    "utilityProcessDecodeCalls": 1,
+    "diagnosticStageTimings": {
+      "serviceInputCopyMs": {
+        "sampleCount": 1,
+        "totalMs": 7.55,
+        "minMs": 7.55,
+        "maxMs": 7.55
+      },
+      "workerColdStartMs": {
+        "sampleCount": 1,
+        "totalMs": 204.93,
+        "minMs": 204.93,
+        "maxMs": 204.93
+      },
+      "mainChunkAssemblyMs": {
+        "sampleCount": 1,
+        "totalMs": 52.9,
+        "minMs": 52.9,
+        "maxMs": 52.9
+      },
+      "workerDecodeMs": {
+        "sampleCount": 1,
+        "totalMs": 2322.96,
+        "minMs": 2322.96,
+        "maxMs": 2322.96
+      },
+      "workerChunkSendAckMs": {
+        "sampleCount": 1,
+        "totalMs": 365.1,
+        "minMs": 365.1,
+        "maxMs": 365.1
+      },
+      "jpegPreflightParseMs": {
+        "sampleCount": 1,
+        "totalMs": 71.08,
+        "minMs": 71.08,
+        "maxMs": 71.08
+      },
+      "jpegStreamPlanParseMs": {
+        "sampleCount": 1,
+        "totalMs": 0.74,
+        "minMs": 0.74,
+        "maxMs": 0.74
+      },
+      "jpegHuffmanIdctWriteMs": {
+        "sampleCount": 1,
+        "totalMs": 1980.96,
+        "minMs": 1980.96,
+        "maxMs": 1980.96
+      },
+      "jpegRenderMs": {
+        "sampleCount": 1,
+        "totalMs": 267.58,
+        "minMs": 267.58,
+        "maxMs": 267.58
+      },
+      "serviceFinalCopyMs": {
+        "sampleCount": 1,
+        "totalMs": 37.64,
+        "minMs": 37.64,
+        "maxMs": 37.64
+      }
+    },
+    "response": {
+      "decodedChunkMessages": 62,
+      "totalChunkBytes": 64000000,
+      "firstSequence": 0,
+      "lastSequence": 61,
+      "minChunkBytes": 36864,
+      "maxChunkBytes": 1048576,
+      "decodedEnd": {
+        "width": 4000,
+        "height": 4000,
+        "chunkCount": 62,
+        "byteLength": 64000000
+      }
+    },
+    "retirement": {
+      "disposeCalls": 1,
+      "processExitObserved": true,
+      "exitCode": 0,
+      "exitedBeforeSmallImageWorkerStarted": true
+    }
+  },
+  "smallImageAfterRetirement": {
+    "decodedRgbaBytes": 8,
+    "decodedRgbaSha256": "eeaf3b6d1cd05907c9047112b9f23e36e90c29bf7a54528310418cfc574a8a66",
+    "expectedRgbaSha256": "eeaf3b6d1cd05907c9047112b9f23e36e90c29bf7a54528310418cfc574a8a66",
+    "cacheHitOnInitialPrepare": false,
+    "cachedOnInitialPrepare": true,
+    "cacheStatsAfterPrepare": {
+      "entries": 1,
+      "bytes": 8,
+      "limitBytes": 33554432,
+      "workerBusy": false
+    },
+    "utilityProcessPid": 73704,
+    "replacementWorkerCreated": true,
+    "cacheHitOnRepeat": true,
+    "workerFactoryCountUnchangedOnCacheHit": true,
+    "decodeCountUnchangedOnCacheHit": true,
+    "processExitObservedAfterServiceDispose": true,
+    "exitCode": 0
+  },
+  "memoryAttribution": {
+    "sampler": "one Windows PowerShell Get-Process sampler for the Electron main PID and utilityProcess PIDs",
+    "sampleIntervalMs": 50,
+    "sampleCount": 55,
+    "mainProcessPid": 74740,
+    "mainProcessBaselineWorkingSetBytes": 83771392,
+    "mainProcessPeakWorkingSetBytes": 298946560,
+    "mainProcessSampledPeakPrivateBytes": 269602816,
+    "largeUtilityPeakWorkingSetBytes": 215486464,
+    "largeUtilitySampledPeakPrivateBytes": 183963648,
+    "concurrentMainPlusLargeUtilitySampledPeakWorkingSetBytes": 483053568,
+    "concurrentSamplesUsed": 54,
+    "finalMainWorkingSetBytes": 235180032,
+    "withinConfiguredWorkerTarget": true,
+    "limitations": [
+      "PeakWorkingSet64 is the OS high-water mark observed at 50 ms snapshots; private bytes are sampled current values and shorter peaks may be missed.",
+      "Concurrent sum uses same-query 50 ms snapshots of the main process and large utility process; it excludes the PowerShell sampler, fixture generator, other application/system processes, and is not a whole-application hard memory bound.",
+      "The main process temporarily owns encoded input, worker IPC assembly, and ImagePreparationService's copied RGBA result; worker RSS does not include those allocations."
+    ]
+  },
+  "profileIsolation": {
+    "isolated": true,
+    "root": "unique validated child of the operating-system temporary directory",
+    "userDataAndSessionDataInsideRoot": true,
+    "fixtureInsideRoot": true,
+    "cleanupVerified": true,
+    "fixtureGeneratorOutsideElectronMemorySample": true
+  },
+  "cleanup": {
+    "serviceDisposed": true,
+    "allObservedUtilityProcessesExited": true,
+    "workerExitPids": [
+      77272,
+      73704
+    ],
+    "samplerStopped": true,
+    "temporaryProfileRemoved": true
+  },
+  "probeInvariants": {
+    "browserWindowCreated": false,
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "foregroundApplicationUsed": false,
+    "helperInvoked": false
+  },
+  "limitations": [
+    "One synthetic 16 MP/20 MiB SOF0 4:4:4 integration sample supplements, but does not replace, the five-sample worker memory evidence or T04 I04 fake boundary cases.",
+    "The single opt-in sample returned in 2989.89 ms, numerically below 3000 ms, but its 30000 ms diagnostic deadline override, timing instrumentation, and single-run scope do not validate the product 3000 ms deadline or its repeatability. No cancellation, over-limit input, permission/read failure, clipboard, target application, installed package, or full selection/paste path was exercised.",
+    "A passing probe does not prove a universal 256 MiB RSS ceiling, all JPEG layouts/metadata, 4:2:0 fidelity, or complete T04 acceptance."
+  ]
+}

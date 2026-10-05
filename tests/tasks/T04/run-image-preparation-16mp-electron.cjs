@@ -8,7 +8,10 @@ const os = require("node:os");
 const path = require("node:path");
 
 const ROOT = path.resolve(__dirname, "../../..");
-const EVIDENCE_PATH = path.join(ROOT, "docs", "evidence", "T04", "image-preparation-16mp-service-integration.json");
+const STAGE_TIMING_ENABLED = process.env.T04_IMAGE_STAGE_PROFILE === "1";
+const EVIDENCE_PATH = path.join(ROOT, "docs", "evidence", "T04", STAGE_TIMING_ENABLED
+  ? "image-preparation-16mp-stage-profile.json"
+  : "image-preparation-16mp-service-integration.json");
 const WIDTH = 4000;
 const HEIGHT = 4000;
 const PIXELS = WIDTH * HEIGHT;
@@ -59,6 +62,7 @@ function runLauncher() {
       T04_SESSION_DATA_PATH: sessionDataPath,
       T04_FIXTURE_PATH: fixturePath,
       T04_FIXTURE_METADATA_PATH: fixtureMetadataPath,
+      ...(STAGE_TIMING_ENABLED ? { T04_IMAGE_STAGE_PROFILE: "1" } : {}),
     });
     // The fixture generator runs in this outer Node process so its 64 MB
     // source pixel allocation is outside the Electron service memory samples.
@@ -139,6 +143,7 @@ function runElectronProbe() {
   app.setPath("sessionData", sessionDataPath);
 
   const workers = [];
+  const diagnosticTimingValues = {};
   let service;
   let sampler;
   let phase = "initialization";
@@ -170,6 +175,9 @@ function runElectronProbe() {
     const largeUpdates = [];
     phase = "large-image-service-prepare";
     const largeStartedAt = performance.now();
+    const onDiagnosticTiming = STAGE_TIMING_ENABLED
+      ? (stage, durationMs) => (diagnosticTimingValues[stage] ??= []).push(durationMs)
+      : undefined;
     const largeResult = await service.prepare({
       itemRef: "synthetic-large-jpeg",
       itemVersion: fixtureMetadata.sha256,
@@ -181,6 +189,7 @@ function runElectronProbe() {
       // The probe isolates service/cache/retirement behavior. This extended
       // diagnostic deadline does not claim the product's 3000 ms user gate.
       deadlineAt: largeStartedAt + 30_000,
+      ...(onDiagnosticTiming ? { onDiagnosticTiming } : {}),
       onUpdate: (update) => largeUpdates.push({ ...update }),
     });
     const largeElapsedMs = round(performance.now() - largeStartedAt);
@@ -265,6 +274,27 @@ function runElectronProbe() {
       result: "DIAGNOSTIC_PASS_WITH_LIMITATIONS",
       measurementType: "production_ImagePreparationService_real_utilityProcess_16MP_cache_and_retirement",
       measuredAt: new Date().toISOString(),
+      ...(STAGE_TIMING_ENABLED ? { diagnosticProfile: {
+        optIn: "T04_IMAGE_STAGE_PROFILE=1",
+        timingSource: "optional ImagePreparationService diagnostic sink; utility worker detailed IPC is enabled only for the opted-in decode request",
+        stages: {
+          workerColdStartMs: "utilityProcess fork until its production entry installed the decode listener and reported diagnostic_ready",
+          serviceInputCopyMs: "ImagePreparationService encoded-byte copy before worker.decode",
+          jpegPreflightParseMs: "production JPEG frame/metadata scan, dimension validation, and worker-capacity estimate",
+          jpegStreamPlanParseMs: "stream decoder marker/table/scan-plan parse before entropy decoding",
+          jpegHuffmanIdctWriteMs: "sum across MCU rows of Huffman/coefficient/IDCT decode plus component-band writes",
+          jpegRenderMs: "sum across MCU rows of RGB/RGBA rendering",
+          workerDecodeMs: "utility worker request receipt through completed decoder result; includes JPEG stages above",
+          workerChunkSendAckMs: "worker 1 MiB raw pixel chunk creation/send through final chunk ACK receipt",
+          mainChunkAssemblyMs: "main process allocation and copy of received raw pixel chunks into the full RGBA buffer",
+          serviceFinalCopyMs: "ImagePreparationService final decoded-pixel copy after worker.decode resolves",
+        },
+        reusedFiveSampleEvidence: {
+          path: "docs/evidence/T04/image-worker-16000000-pixel-jpeg-20mib-fresh-worker-release-444-5-sample-measurement.json",
+          sameFixtureSha256: EXPECTED_FIXTURE_SHA256,
+          scope: "existing worker-ready-to-full-response five-sample timing and memory measurements; not rerun by this stage profile",
+        },
+      } } : {}),
       source: currentSource,
       environment: {
         platform: process.platform,
@@ -305,6 +335,7 @@ function runElectronProbe() {
         cacheStatsAfterPrepare: largeStats,
         utilityProcessPid: largeWorker.pid,
         utilityProcessDecodeCalls: largeWorker.decodeCalls,
+        ...(onDiagnosticTiming ? { diagnosticStageTimings: summarizeDiagnosticTimings(diagnosticTimingValues) } : {}),
         response: {
           decodedChunkMessages: largeWorker.chunkMessages,
           totalChunkBytes: largeWorker.chunkBytes,
@@ -411,7 +442,7 @@ function runElectronProbe() {
     };
     workers.push(telemetry);
     return {
-      async decode(input, signal) {
+      async decode(input, signal, onDiagnosticTiming) {
         telemetry.decodeCalls++;
         const originalOnMessage = realWorker.onMessage;
         realWorker.onMessage = function observeMessage(raw) {
@@ -435,7 +466,9 @@ function runElectronProbe() {
           }
           originalOnMessage.call(realWorker, raw);
         };
-        const decoded = realWorker.decode(input, signal);
+        const decoded = onDiagnosticTiming
+          ? realWorker.decode(input, signal, onDiagnosticTiming)
+          : realWorker.decode(input, signal);
         const child = realWorker.child;
         assert.ok(child, "production worker factory must create a real utilityProcess");
         telemetry.exitPromise = new Promise((resolve) => child.once("exit", (code, signalValue) => {
@@ -464,6 +497,19 @@ function runElectronProbe() {
       },
     };
   }
+}
+
+function summarizeDiagnosticTimings(values) {
+  const summaries = {};
+  for (const [stage, samples] of Object.entries(values)) {
+    summaries[stage] = {
+      sampleCount: samples.length,
+      totalMs: round(samples.reduce((total, value) => total + value, 0)),
+      minMs: round(Math.min(...samples)),
+      maxMs: round(Math.max(...samples)),
+    };
+  }
+  return summaries;
 }
 
 function createWindowsMemorySampler(intervalMs) {

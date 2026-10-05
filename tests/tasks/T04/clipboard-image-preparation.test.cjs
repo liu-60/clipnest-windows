@@ -85,6 +85,48 @@ test("decoded cache is a 32 MiB LRU and a cache hit skips the worker", async () 
   }
 });
 
+test("diagnostics-disabled service preserves the public result shape", async () => {
+  let decodeArgumentCount = null;
+  const service = new ImagePreparationService({
+    workerFactory: () => ({
+      decode: function decode(...args) {
+        decodeArgumentCount = args.length;
+        const request = args[0];
+        return Promise.resolve({ width: request.width, height: request.height,
+          pixels: new Uint8Array(request.width * request.height * 4) });
+      },
+      dispose: async () => {},
+    }),
+  });
+  try {
+    const result = await service.prepare(input("diagnostics-disabled", { width: 2, height: 1 }));
+    assert.deepEqual(Object.keys(result), ["image", "cacheHit", "cached"]);
+    assert.deepEqual(Object.keys(result.image), ["width", "height", "pixels"]);
+    assert.equal(decodeArgumentCount, 2, "default worker calls keep their original argument shape");
+  } finally {
+    await service.dispose();
+  }
+});
+
+test("opt-in diagnostic callbacks cannot change a successful preparation", async () => {
+  const { service } = fakeService();
+  const timings = [];
+  try {
+    const result = await service.prepare(input("diagnostics-enabled", { width: 2, height: 1 }), {
+      onDiagnosticTiming(stage, durationMs) {
+        timings.push({ stage, durationMs });
+        throw new Error("diagnostic_sink_failure");
+      },
+    });
+    assert.deepEqual(Object.keys(result), ["image", "cacheHit", "cached"]);
+    assert.deepEqual(Object.keys(result.image), ["width", "height", "pixels"]);
+    assert.deepEqual(timings.map(({ stage }) => stage), ["serviceInputCopyMs", "serviceFinalCopyMs"]);
+    assert.ok(timings.every(({ durationMs }) => Number.isFinite(durationMs) && durationMs >= 0));
+  } finally {
+    await service.dispose();
+  }
+});
+
 test("uncached large images retire their worker before the next preparation", async () => {
   let created = 0;
   const disposed = [];
