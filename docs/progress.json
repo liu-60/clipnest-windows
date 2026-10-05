@@ -203,7 +203,8 @@
         "docs/evidence/T05/report-identity-consistency-regression.json",
         "docs/evidence/T05/g0-report-contract-static-verification.json",
         "docs/evidence/T05/artifact-byte-verification-static.json",
-        "docs/evidence/T05/helper-path-contract-static.json"
+        "docs/evidence/T05/helper-path-contract-static.json",
+        "docs/evidence/T05/unsigned-signature-policy-static.json"
       ],
       "openGates": [
         "T05任务保持not_started；T04压缩IPC worker的隔离ASAR smoke及合成main-process deadline诊断已记录。当前utilityProcess图片解码器对合成16MP/20MiB SOF0 baseline 4:2:0和4:4:4各5/5成功，PeakWorkingSet64峰值207.87/208.57MiB；该窄布局证据不证明所有JPEG格式、通用硬RSS上限、完整生产选择/打包路径或T04 accepted。WPF/WIC的10样本是候选探针，不是生产路径；PureJsImage候选超过256MiB。完整包/helper核验、最终卡片点击及受控live验收仍未完成。",
@@ -215,7 +216,8 @@
         "verify-report.cjs 的 root PASS 已交叉核对 helper/rollback 报告字段，并新增基于显式 --artifact-root 的离线文件复核：读取 helper actualPath、rollback priorPath/rollbackPath 的实际字节，以 64KiB 流式重算 SHA-256；拒绝绝对路径、路径遍历、Windows 非可移植路径段及越界 symlink/junction。25/25 T05 定向回归及静态 schema/NOT_RUN 检查通过，证据 docs/evidence/T05/artifact-byte-verification-static.json。该门只确认给定目录下文件内容哈希；版本、协议仍是报告字段，Authenticode 签名未作密码学验证，PASS 前仍需核对最终包、签名及逐项外部证据。T05 仍 not_started/NOT_RUN。",
         "dependencyGate字段由报告提供，但verify-report.cjs会与docs/progress.json交叉核对；schema或静态一致性检查仍不能替代T03/T04验收证据。当前 main.ts 期望 resourcesPath/native/clipnest-helper.exe，但 package.json files/asarUnpack 未声明 helper 或 extraResources；本地v3检查点不能替代最终包内路径、版本、协议、SHA-256及签名核对，内部包是否接受 unsigned 也需在PASS前明确。",
         "最新T04依赖快照收录了单样本真实ImagePreparationService + utilityProcess集成诊断：16MP准备3174.24ms（30s诊断期限，超过产品3s门），worker退役/小图缓存路径通过；异常清理路径与采样原始行未核验/持久化。I04其余边界、期限门及T04接受仍开放，T05保持not_started/NOT_RUN。",
-        "T05 helper 路径契约已离线固定为 unpacked Windows x64 app root 下 resources/native/clipnest-helper.exe，与 main.ts 的 process.resourcesPath/native/clipnest-helper.exe 一致；fixture plan/schema 静态检查及真实合成文件+哈希回归通过（1/1 verifier、17/17 preparation）。但 package.json 未配置 helper extraResources/asarUnpack，最终包路径未证实；版本/协议/签名与回滚仍须独立核验，T05保持not_started/NOT_RUN。证据：docs/evidence/T05/helper-path-contract-static.json。"
+        "T05 helper 路径契约已离线固定为 unpacked Windows x64 app root 下 resources/native/clipnest-helper.exe，与 main.ts 的 process.resourcesPath/native/clipnest-helper.exe 一致；fixture plan/schema 静态检查及真实合成文件+哈希回归通过（1/1 verifier、17/17 preparation）。但 package.json 未配置 helper extraResources/asarUnpack，最终包路径未证实；版本/协议/签名与回滚仍须独立核验，T05保持not_started/NOT_RUN。证据：docs/evidence/T05/helper-path-contract-static.json。",
+        "T05 unsigned 签名政策仍未决；为 fail-closed，root PASS 的 helper/rollback signatureStatus=unsigned 被拒，FAIL/REVIEW/NOT_RUN仍可记录unsigned。26/26 verifier、19/19 preparation、静态准备及Draft2020-12 NOT_RUN/schema负例检查通过。valid仍是报告字段，未执行Authenticode密码学验证；最终包与P01-P28受控验收仍NOT_RUN，T05保持not_started。证据：docs/evidence/T05/unsigned-signature-policy-static.json。"
       ]
     }
   }

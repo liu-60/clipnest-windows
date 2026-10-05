@@ -7,6 +7,7 @@ const { spawnSync } = require("node:child_process");
 
 const {
   EXPECTED_HELPER_RESOURCE_RELATIVE_PATH,
+  PASS_SIGNATURE_STATUS,
   collectPreparationErrors,
   loadPreparationInputs,
 } = require("./validate-preparation.cjs");
@@ -965,8 +966,15 @@ function validateRootPassRequirements(report, context, errors) {
       addError(errors, invalidArtifact.code, "$.packageAndRollback.helperResource.actualPath", invalidArtifact.message);
     }
   }
-  if (helper && !["valid", "unsigned"].includes(helper.signatureStatus)) {
-    addError(errors, "PASS_HELPER_SIGNATURE_STATUS", "$.packageAndRollback.helperResource.signatureStatus", "helper signature must be explicitly recorded as valid or unsigned");
+  if (helper?.signatureStatus === "unsigned") {
+    addError(
+      errors,
+      "PASS_UNSIGNED_SIGNATURE_POLICY_UNRESOLVED",
+      "$.packageAndRollback.helperResource.signatureStatus",
+      "root PASS is blocked while unsigned package signature policy is unresolved",
+    );
+  } else if (helper && helper.signatureStatus !== PASS_SIGNATURE_STATUS) {
+    addError(errors, "PASS_HELPER_SIGNATURE_STATUS", "$.packageAndRollback.helperResource.signatureStatus", `helper signatureStatus must be ${PASS_SIGNATURE_STATUS} for root PASS`);
   }
 
   const rollback = packageChecks?.rollback;
@@ -998,8 +1006,15 @@ function validateRootPassRequirements(report, context, errors) {
       );
     }
   }
-  if (!isRecord(rollback) || !["valid", "unsigned"].includes(rollback.signatureStatus)) {
-    addError(errors, "PASS_ROLLBACK_SIGNATURE_STATUS", "$.packageAndRollback.rollback.signatureStatus", "rollback helper signature must be explicitly recorded as valid or unsigned");
+  if (rollback?.signatureStatus === "unsigned") {
+    addError(
+      errors,
+      "PASS_UNSIGNED_SIGNATURE_POLICY_UNRESOLVED",
+      "$.packageAndRollback.rollback.signatureStatus",
+      "root PASS is blocked while unsigned package signature policy is unresolved",
+    );
+  } else if (!isRecord(rollback) || rollback.signatureStatus !== PASS_SIGNATURE_STATUS) {
+    addError(errors, "PASS_ROLLBACK_SIGNATURE_STATUS", "$.packageAndRollback.rollback.signatureStatus", `rollback signatureStatus must be ${PASS_SIGNATURE_STATUS} for root PASS`);
   }
   requirePass(rollback?.helperBinaryOnly, "$.packageAndRollback.rollback.helperBinaryOnly", errors);
 

@@ -90,6 +90,62 @@ function main() {
   }
   assert.equal(valid.kind, "valid", "current NOT_RUN example must satisfy the complete schema");
 
+  for (const status of ["FAIL", "REVIEW", "NOT_RUN"]) {
+    const unsignedNonPass = clone(example);
+    unsignedNonPass.status = status;
+    unsignedNonPass.packageAndRollback.helperResource.signatureStatus = "unsigned";
+    unsignedNonPass.packageAndRollback.rollback.signatureStatus = "unsigned";
+    const unsignedValidation = validateDraft202012Instance(unsignedNonPass, context.reportSchema);
+    assert.equal(unsignedValidation.kind, "valid",
+      `${status} reports must be able to record unsigned helper signatures: ${JSON.stringify(unsignedValidation.errors ?? [])}`);
+    const unsignedCodes = collectReportErrors(unsignedNonPass, context).map((error) => error.code);
+    assert.equal(unsignedCodes.includes("PASS_UNSIGNED_SIGNATURE_POLICY_UNRESOLVED"), false,
+      `${status} reports must not trigger the root PASS-only unsigned signature guard`);
+  }
+
+  const helperPass = clone(example);
+  Object.assign(helperPass.packageAndRollback.helperResource, {
+    result: "PASS",
+    expectedPath: "resources/native/clipnest-helper.exe",
+    actualPath: "resources/native/clipnest-helper.exe",
+    expectedVersion: "1.0.0",
+    actualVersion: "1.0.0",
+    expectedProtocol: "1",
+    actualProtocol: "1",
+    expectedSha256: "a".repeat(64),
+    actualSha256: "a".repeat(64),
+    identityMatched: true,
+    signatureStatus: "valid",
+    evidence: ["synthetic schema fixture; not runtime evidence"],
+  });
+  assert.equal(validateDraft202012Instance(helperPass, context.reportSchema).kind, "valid",
+    "schema must permit helper PASS to record signatureStatus=valid");
+  helperPass.packageAndRollback.helperResource.signatureStatus = "unsigned";
+  expectInvalidInstance(helperPass, "schema must reject helper PASS with unresolved unsigned signature policy");
+
+  const rollbackPass = clone(example);
+  Object.assign(rollbackPass.packageAndRollback.rollback, {
+    result: "PASS",
+    priorPath: "rollback/prior-helper.exe",
+    priorVersion: "1.0.0",
+    priorSha256: "a".repeat(64),
+    rollbackPath: "rollback/restored-helper.exe",
+    rollbackVersion: "1.0.0",
+    rollbackSha256: "a".repeat(64),
+    identityMatched: true,
+    signatureStatus: "valid",
+    helperBinaryOnly: {
+      name: "helperBinaryOnly",
+      result: "PASS",
+      evidence: ["synthetic schema fixture; not runtime evidence"],
+    },
+    evidence: ["synthetic schema fixture; not runtime evidence"],
+  });
+  assert.equal(validateDraft202012Instance(rollbackPass, context.reportSchema).kind, "valid",
+    "schema must permit rollback PASS to record signatureStatus=valid");
+  rollbackPass.packageAndRollback.rollback.signatureStatus = "unsigned";
+  expectInvalidInstance(rollbackPass, "schema must reject rollback PASS with unresolved unsigned signature policy");
+
   const syntheticG0Pass = reportWithSyntheticG0Pass();
   const syntheticG0Valid = validateDraft202012Instance(syntheticG0Pass, context.reportSchema);
   assert.equal(syntheticG0Valid.kind, "valid",
@@ -218,7 +274,13 @@ function main() {
     validator: valid.validator,
     validatorVersion: valid.validatorVersion,
     validNotRunReport: "PASS",
-    schemaInvalidInstanceCases: 14,
+    schemaInvalidInstanceCases: 16,
+    signaturePolicyCases: {
+      nonPassUnsignedRecordable: ["FAIL", "REVIEW", "NOT_RUN"],
+      helperPassUnsignedRejected: true,
+      rollbackPassUnsignedRejected: true,
+      authenticodeVerificationPerformed: false,
+    },
     syntheticG0DraftSchemaCases: {
       positive: "PASS_AT_UNICODE_CODE_POINT_LIMITS; SYNTHETIC_ONLY",
       negative: 6,

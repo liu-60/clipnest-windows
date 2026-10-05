@@ -9,12 +9,13 @@ const EXPECTED_G0_IDS = [
   "g0-no-helper-process-per-interaction",
 ];
 const EXPECTED_HELPER_RESOURCE_RELATIVE_PATH = "resources/native/clipnest-helper.exe";
+const PASS_SIGNATURE_STATUS = "valid";
 
 function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema }) {
+function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema, reportValidatorSource }) {
   const errors = [];
   const add = (code, message) => errors.push({ code, message });
 
@@ -67,6 +68,17 @@ function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema }) {
     );
   }
 
+  const signaturePolicyContract = fixturePlan.signaturePolicyContract;
+  if (!isRecord(signaturePolicyContract) ||
+      signaturePolicyContract.unsignedPolicy !== "unresolved" ||
+      signaturePolicyContract.passStatus !== PASS_SIGNATURE_STATUS ||
+      signaturePolicyContract.authenticodeVerification !== "not_performed_by_static_verifier") {
+    add(
+      "SIGNATURE_POLICY_CONTRACT",
+      `fixturePlan.signaturePolicyContract must leave unsigned unresolved, require ${PASS_SIGNATURE_STATUS} for PASS, and state Authenticode is not checked here`,
+    );
+  }
+
   const helperPassClauses = reportSchema.properties?.packageAndRollback?.properties?.helperResource?.allOf;
   const helperPassPath = Array.isArray(helperPassClauses)
     ? helperPassClauses.find((clause) => clause?.if?.properties?.result?.const === "PASS")
@@ -77,6 +89,59 @@ function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema }) {
       "SCHEMA_HELPER_PATH_CONTRACT",
       `report schema must require helper expectedPath=${EXPECTED_HELPER_RESOURCE_RELATIVE_PATH} for PASS`,
     );
+  }
+  const helperPassSignature = Array.isArray(helperPassClauses)
+    ? helperPassClauses.find((clause) => clause?.if?.properties?.result?.const === "PASS")
+      ?.then?.properties?.signatureStatus
+    : undefined;
+  if (!Array.isArray(helperPassSignature?.enum) || helperPassSignature.enum.length !== 1 ||
+      helperPassSignature.enum[0] !== PASS_SIGNATURE_STATUS) {
+    add(
+      "SCHEMA_HELPER_SIGNATURE_POLICY",
+      `report schema must require signatureStatus=${PASS_SIGNATURE_STATUS} for helper PASS while leaving non-PASS values recordable`,
+    );
+  }
+  const helperRecordedSignature = reportSchema.properties?.packageAndRollback?.properties?.helperResource
+    ?.properties?.signatureStatus;
+  if (!Array.isArray(helperRecordedSignature?.enum) || !helperRecordedSignature.enum.includes("unsigned")) {
+    add("SCHEMA_HELPER_UNSIGNED_RECORDING", "report schema must allow helper signatureStatus=unsigned to be recorded outside PASS");
+  }
+  if (typeof helperRecordedSignature?.description !== "string" ||
+      !helperRecordedSignature.description.includes("静态校验器不执行 Authenticode 验证")) {
+    add("SCHEMA_HELPER_SIGNATURE_DESCRIPTION", "helper signatureStatus must state that the static verifier does not perform Authenticode verification");
+  }
+
+  const rollbackPassClauses = reportSchema.properties?.packageAndRollback?.properties?.rollback?.allOf;
+  const rollbackPassSignature = Array.isArray(rollbackPassClauses)
+    ? rollbackPassClauses.find((clause) => clause?.if?.properties?.result?.const === "PASS")
+      ?.then?.properties?.signatureStatus
+    : undefined;
+  if (!Array.isArray(rollbackPassSignature?.enum) || rollbackPassSignature.enum.length !== 1 ||
+      rollbackPassSignature.enum[0] !== PASS_SIGNATURE_STATUS) {
+    add(
+      "SCHEMA_ROLLBACK_SIGNATURE_POLICY",
+      `report schema must require signatureStatus=${PASS_SIGNATURE_STATUS} for rollback PASS while leaving non-PASS values recordable`,
+    );
+  }
+  const rollbackRecordedSignature = reportSchema.properties?.packageAndRollback?.properties?.rollback
+    ?.properties?.signatureStatus;
+  if (!Array.isArray(rollbackRecordedSignature?.enum) || !rollbackRecordedSignature.enum.includes("unsigned")) {
+    add("SCHEMA_ROLLBACK_UNSIGNED_RECORDING", "report schema must allow rollback signatureStatus=unsigned to be recorded outside PASS");
+  }
+  if (typeof rollbackRecordedSignature?.description !== "string" ||
+      !rollbackRecordedSignature.description.includes("静态校验器不执行 Authenticode 验证")) {
+    add("SCHEMA_ROLLBACK_SIGNATURE_DESCRIPTION", "rollback signatureStatus must state that the static verifier does not perform Authenticode verification");
+  }
+
+  const hasHelperUnsignedPassGuard = typeof reportValidatorSource === "string" &&
+    /helper\?\.signatureStatus\s*===\s*"unsigned"/.test(reportValidatorSource);
+  const hasRollbackUnsignedPassGuard = typeof reportValidatorSource === "string" &&
+    /rollback\?\.signatureStatus\s*===\s*"unsigned"/.test(reportValidatorSource);
+  const unsignedPolicyErrorCount = typeof reportValidatorSource === "string"
+    ? (reportValidatorSource.match(/"PASS_UNSIGNED_SIGNATURE_POLICY_UNRESOLVED"/g) ?? []).length
+    : 0;
+  if (!hasHelperUnsignedPassGuard || !hasRollbackUnsignedPassGuard || unsignedPolicyErrorCount < 2) {
+    add("VALIDATOR_UNSIGNED_PASS_GUARD", "report validator must reject unsigned helper and rollback signatures for root PASS with PASS_UNSIGNED_SIGNATURE_POLICY_UNRESOLVED");
   }
 
   const cases = Array.isArray(fixturePlan.cases) ? fixturePlan.cases : [];
@@ -229,6 +294,7 @@ function loadPreparationInputs(directory = __dirname) {
     fixturePlan: readJson("fixture-plan.json"),
     assertionMap: readJson("assertion-map.json"),
     reportSchema: readJson("report.schema.json"),
+    reportValidatorSource: fs.readFileSync(path.join(directory, "verify-report.cjs"), "utf8"),
   };
 }
 
@@ -258,6 +324,7 @@ if (require.main === module) main();
 module.exports = {
   EXPECTED_CASE_IDS,
   EXPECTED_HELPER_RESOURCE_RELATIVE_PATH,
+  PASS_SIGNATURE_STATUS,
   collectPreparationErrors,
   loadPreparationInputs,
 };

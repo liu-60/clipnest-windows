@@ -207,7 +207,7 @@
                   "expectedSha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
                   "actualSha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
                   "identityMatched": { "const": true },
-                  "signatureStatus": { "enum": ["valid", "unsigned"] },
+                  "signatureStatus": { "enum": ["valid"] },
                   "evidence": { "minItems": 1 }
                 }
               }
@@ -230,7 +230,10 @@
             "expectedSha256": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" },
             "actualSha256": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" },
             "identityMatched": { "type": "boolean" },
-            "signatureStatus": { "enum": ["valid", "invalid", "unsigned", "not_checked"] },
+            "signatureStatus": {
+              "enum": ["valid", "invalid", "unsigned", "not_checked"],
+              "description": "记录报告中的 helper 签名状态；静态校验器不执行 Authenticode 验证。unsigned 策略未决时 root PASS 要求 valid。"
+            },
             "evidence": { "type": "array", "items": { "type": "string", "minLength": 1 } }
           }
         },
@@ -262,7 +265,7 @@
                   "rollbackVersion": { "type": "string", "minLength": 1 },
                   "rollbackSha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
                   "identityMatched": { "const": true },
-                  "signatureStatus": { "enum": ["valid", "unsigned"] },
+                  "signatureStatus": { "enum": ["valid"] },
                   "helperBinaryOnly": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
                   "evidence": { "minItems": 1 }
                 }
@@ -284,7 +287,10 @@
             "rollbackVersion": { "type": ["string", "null"] },
             "rollbackSha256": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" },
             "identityMatched": { "type": "boolean" },
-            "signatureStatus": { "enum": ["valid", "invalid", "unsigned", "not_checked"] },
+            "signatureStatus": {
+              "enum": ["valid", "invalid", "unsigned", "not_checked"],
+              "description": "记录报告中的 rollback helper 签名状态；静态校验器不执行 Authenticode 验证。unsigned 策略未决时 root PASS 要求 valid。"
+            },
             "helperBinaryOnly": { "$ref": "#/$defs/checkResult" },
             "evidence": { "type": "array", "items": { "type": "string", "minLength": 1 } }
           }

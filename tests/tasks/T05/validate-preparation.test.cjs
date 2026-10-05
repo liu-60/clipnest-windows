@@ -16,6 +16,7 @@ function codesFor(changes) {
     fixturePlan: clone(baseline.fixturePlan),
     assertionMap: clone(baseline.assertionMap),
     reportSchema: clone(baseline.reportSchema),
+    reportValidatorSource: baseline.reportValidatorSource,
   };
   changes(inputs);
   return collectPreparationErrors(inputs).map((error) => error.code);
@@ -45,6 +46,38 @@ test("requires rollback artifact paths to identify distinct canonical files", ()
     fixturePlan.packageResourceContract.rollbackRequiresDistinctCanonicalFiles = false;
   });
   assert.ok(codes.includes("ROLLBACK_DISTINCT_FILE_CONTRACT"));
+});
+
+test("keeps fixture, schema, and verifier aligned on unresolved unsigned signatures", () => {
+  const fixtureCodes = codesFor(({ fixturePlan }) => {
+    fixturePlan.signaturePolicyContract.unsignedPolicy = "accepted";
+  });
+  assert.ok(fixtureCodes.includes("SIGNATURE_POLICY_CONTRACT"));
+
+  const helperSchemaCodes = codesFor(({ reportSchema }) => {
+    const helper = reportSchema.properties.packageAndRollback.properties.helperResource;
+    helper.allOf[0].then.properties.signatureStatus.enum = ["valid", "unsigned"];
+  });
+  assert.ok(helperSchemaCodes.includes("SCHEMA_HELPER_SIGNATURE_POLICY"));
+
+  const rollbackSchemaCodes = codesFor(({ reportSchema }) => {
+    const rollback = reportSchema.properties.packageAndRollback.properties.rollback;
+    rollback.allOf[0].then.properties.signatureStatus.enum = ["valid", "unsigned"];
+  });
+  assert.ok(rollbackSchemaCodes.includes("SCHEMA_ROLLBACK_SIGNATURE_POLICY"));
+
+  const unsignedRecordingCodes = codesFor(({ reportSchema }) => {
+    reportSchema.properties.packageAndRollback.properties.helperResource.properties.signatureStatus.enum = ["valid", "invalid", "not_checked"];
+    reportSchema.properties.packageAndRollback.properties.rollback.properties.signatureStatus.enum = ["valid", "invalid", "not_checked"];
+  });
+  assert.ok(unsignedRecordingCodes.includes("SCHEMA_HELPER_UNSIGNED_RECORDING"));
+  assert.ok(unsignedRecordingCodes.includes("SCHEMA_ROLLBACK_UNSIGNED_RECORDING"));
+
+  const verifierCodes = codesFor((inputs) => {
+    const guard = 'if (helper?.signatureStatus === "unsigned")';
+    inputs.reportValidatorSource = inputs.reportValidatorSource.replace(guard, "if (false)");
+  });
+  assert.ok(verifierCodes.includes("VALIDATOR_UNSIGNED_PASS_GUARD"));
 });
 
 test("rejects changed source assertion text", () => {

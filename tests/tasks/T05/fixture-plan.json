@@ -83,6 +83,11 @@
     "helperRelativePath": "resources/native/clipnest-helper.exe",
     "rollbackRequiresDistinctCanonicalFiles": true
   },
+  "signaturePolicyContract": {
+    "unsignedPolicy": "unresolved",
+    "passStatus": "valid",
+    "authenticodeVerification": "not_performed_by_static_verifier"
+  },
   "packageAndRollbackChecks": [
     "Packaged Windows x64 helper resource resolves to the expected path and matches recorded version, protocol, and SHA-256/signature metadata.",
     "Run cold startup, tray availability, app restart, normal exit, and helper shutdown from the packaged artifact.",

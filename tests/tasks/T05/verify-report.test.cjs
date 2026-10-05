@@ -293,7 +293,7 @@ test("root PASS requires the complete recorded environment", () => {
   assert.ok(collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_ENVIRONMENT_REQUIRED"));
 });
 
-test("root PASS requires a valid or unsigned rollback helper signature", () => {
+test("root PASS requires a valid rollback helper signature", () => {
   const report = clone(example);
   report.status = "PASS";
   report.dependencyGate = { T03: "accepted", T04: "accepted" };
@@ -336,6 +336,12 @@ test("root PASS recomputes helper identity from expected and actual fields", (t)
   });
   assert.ok(
     !collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_HELPER_IDENTITY_REQUIRED"),
+  );
+  const unsignedHelperReport = clone(report);
+  unsignedHelperReport.packageAndRollback.helperResource.signatureStatus = "unsigned";
+  assert.ok(
+    collectReportErrors(unsignedHelperReport, acceptedContext)
+      .some((error) => error.code === "PASS_UNSIGNED_SIGNATURE_POLICY_UNRESOLVED"),
   );
   const alternateHelperPath = "resources/alternate/clipnest-helper.exe";
   const alternateHelperSha256 = artifact.write(alternateHelperPath, Buffer.from("different synthetic helper bytes"));
@@ -409,6 +415,12 @@ test("root PASS recomputes rollback version and hash identity", (t) => {
   );
   assert.ok(
     !collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_ARTIFACT_ALIAS"),
+  );
+  const unsignedRollbackReport = clone(report);
+  unsignedRollbackReport.packageAndRollback.rollback.signatureStatus = "unsigned";
+  assert.ok(
+    collectReportErrors(unsignedRollbackReport, acceptedContext)
+      .some((error) => error.code === "PASS_UNSIGNED_SIGNATURE_POLICY_UNRESOLVED"),
   );
   const samePathReport = clone(report);
   samePathReport.packageAndRollback.rollback.rollbackPath =

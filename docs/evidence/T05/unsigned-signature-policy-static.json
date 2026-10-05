@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "result": "PREPARATION_ONLY",
+  "reviewType": "offline unsigned signature policy guard",
+  "recordedDate": "2026-10-05",
+  "branch": "codex/m0-latency",
+  "sourceCommit": "e48d00dfe395b2a6d88f4f9e6cc7d21c5b847366",
+  "workingTreeWasDirty": true,
+  "scope": "tests/tasks/T05/** only; no package, runtime, installation, clipboard, or input behavior",
+  "policy": {
+    "unsignedPolicy": "unresolved",
+    "rootPassRequiresSignatureStatus": "valid",
+    "nonPassUnsignedRecording": ["FAIL", "REVIEW", "NOT_RUN"],
+    "authenticodeVerificationPerformed": false
+  },
+  "implementation": {
+    "rootPassVerifier": "helper and rollback signatureStatus=unsigned each fail with PASS_UNSIGNED_SIGNATURE_POLICY_UNRESOLVED",
+    "schema": "helperResource PASS and rollback PASS require signatureStatus=valid; base report fields still allow unsigned for non-PASS records",
+    "staticPreparation": "cross-checks fixture policy, PASS schema clauses, non-PASS enum, verifier source guards, and Authenticode limitation",
+    "signatureMeaning": "valid remains a report field; no cryptographic Authenticode verification is performed"
+  },
+  "changedFiles": {
+    "tests/tasks/T05/fixture-plan.json": {
+      "sha256": "aa7a6ec17a607e3f94c1eab6ade62c2659a35292856496168f86af9e00d63687"
+    },
+    "tests/tasks/T05/report.schema.json": {
+      "sha256": "d47ef1e4a8c41de98ce6100171e48690ff99233b17535b3392f67c0a617b37fb"
+    },
+    "tests/tasks/T05/schema-validation-self-check.cjs": {
+      "sha256": "2d5068a304ab30391a73b87af7a72ac002697f796682aa694028c6e99c3ad047"
+    },
+    "tests/tasks/T05/validate-preparation.cjs": {
+      "sha256": "93dacb3bd71e59b557443d8c77537db9382dba24b20ce375213037f7bd5b5c11"
+    },
+    "tests/tasks/T05/validate-preparation.test.cjs": {
+      "sha256": "59d26b7ce554383d5c2bb73f1b4cffdd2e142dc2c32f1d3b394a73d81d2ce701"
+    },
+    "tests/tasks/T05/verify-report.cjs": {
+      "sha256": "a470fdd14308e3186f1066b21dbcee18a4d0cbdc954384cf3e991001ce3834ab"
+    },
+    "tests/tasks/T05/verify-report.test.cjs": {
+      "sha256": "417738b3859e6bd4d119e61bf4b696a9769f045d9d6fe076880ee824ffaec017"
+    }
+  },
+  "validation": {
+    "node --test tests/tasks/T05/verify-report.test.cjs": {
+      "result": "PASS",
+      "tests": 26,
+      "passed": 26,
+      "failed": 0,
+      "skipped": 0
+    },
+    "node --test tests/tasks/T05/validate-preparation.test.cjs": {
+      "result": "PASS",
+      "tests": 19,
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0
+    },
+    "node tests/tasks/T05/validate-preparation.cjs": {
+      "result": "PREPARATION_ONLY",
+      "caseCount": 28,
+      "assertionCount": 71,
+      "g0GateCount": 2,
+      "behaviorExecuted": false
+    },
+    "node tests/tasks/T05/schema-validation-self-check.cjs": {
+      "result": "PASS",
+      "validator": "jsonschema.Draft202012Validator 4.26.0",
+      "notRunReportValid": true,
+      "schemaInvalidInstanceCases": 16,
+      "unsignedPolicyCases": {
+        "nonPassUnsignedRecordable": ["FAIL", "REVIEW", "NOT_RUN"],
+        "helperPassUnsignedRejected": true,
+        "rollbackPassUnsignedRejected": true
+      }
+    },
+    "node tests/tasks/T05/verify-report.cjs": {
+      "result": "PASS_PREPARATION_ONLY",
+      "reportStatus": "NOT_RUN",
+      "T04": "in_progress"
+    },
+    "git diff --check": "PASS"
+  },
+  "sideEffects": {
+    "behaviorExecuted": false,
+    "benchmarkExecuted": false,
+    "packageBuilt": false,
+    "installed": false,
+    "clipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "t05AcceptanceImplied": false
+  },
+  "remainingGates": [
+    "Unsigned package policy remains unresolved; root PASS currently rejects unsigned helper and rollback records until that policy changes.",
+    "The valid signatureStatus is still a report claim; final package Authenticode signature is not cryptographically verified by these static checks.",
+    "Final helper package presence, version, protocol, rollback behavior, controlled-live measurements, and P01-P28 release acceptance remain NOT_RUN; T05 remains not_started."
+  ]
+}
