@@ -2,6 +2,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
+const { spawnSync } = require("node:child_process");
 
 const {
   collectPreparationErrors,
@@ -14,6 +15,81 @@ const DEPENDENCY_TASKS = ["T03", "T04"];
 const OUTCOMES = ["success", "failure", "cancelled", "timeout"];
 const ROOT_STATUSES = ["PASS", "FAIL", "REVIEW", "NOT_RUN"];
 const CHECK_STATUSES = ["PASS", "FAIL", "NOT_RUN", "BLOCKED"];
+const PYTHON_EXECUTABLES = ["python", "python3"];
+const MAX_SCHEMA_ERRORS = 100;
+const METRIC_CONTRACTS = Object.freeze({
+  normalText: {
+    metricName: "normalText",
+    successResult: "inputSubmitted",
+    requiredStageMs: ["selection", "write", "hide", "focus", "modifier", "inputSubmitted"],
+  },
+  wakeToActionable: {
+    metricName: "wakeToActionable",
+    successResult: "list_actionable",
+    requiredStageMs: ["hotkey", "capture", "show", "firstFrame", "actionable"],
+  },
+});
+
+const PYTHON_DRAFT202012_VALIDATOR = String.raw`
+import importlib.metadata
+import json
+import sys
+
+def emit(payload):
+    print(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+
+try:
+    from jsonschema import Draft202012Validator
+except Exception as exc:
+    emit({"kind": "unavailable", "reason": "jsonschema import failed: " + type(exc).__name__})
+    raise SystemExit(0)
+
+try:
+    payload = json.load(sys.stdin)
+    schema = payload["schema"]
+    instance = payload["instance"]
+except Exception as exc:
+    emit({"kind": "unavailable", "reason": "validator input failed: " + type(exc).__name__})
+    raise SystemExit(0)
+
+try:
+    Draft202012Validator.check_schema(schema)
+except Exception as exc:
+    emit({"kind": "invalid_schema", "reason": "schema meta-validation failed: " + type(exc).__name__})
+    raise SystemExit(0)
+
+def display_path(parts):
+    result = "$"
+    for part in parts:
+        result += "[" + str(part) + "]" if isinstance(part, int) else "." + str(part)
+    return result
+
+try:
+    validator = Draft202012Validator(schema)
+    errors = sorted(
+        validator.iter_errors(instance),
+        key=lambda error: (display_path(error.absolute_path), str(error.validator), str(error.absolute_schema_path)),
+    )
+    truncated = len(errors) > int(payload.get("maxErrors", 100))
+    errors = errors[:int(payload.get("maxErrors", 100))]
+    version = importlib.metadata.version("jsonschema")
+    emit({
+        "kind": "invalid_instance" if errors else "valid",
+        "validator": "jsonschema.Draft202012Validator",
+        "validatorVersion": version,
+        "truncated": truncated,
+        "errors": [
+            {
+                "path": display_path(error.absolute_path),
+                "keyword": str(error.validator),
+                "schemaPath": "#/" + "/".join(str(part).replace("~", "~0").replace("/", "~1") for part in error.absolute_schema_path),
+            }
+            for error in errors
+        ],
+    })
+except Exception as exc:
+    emit({"kind": "unavailable", "reason": "validator execution failed: " + type(exc).__name__})
+`;
 
 function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -42,6 +118,111 @@ function nearestRankPercentile(values, quantile) {
 
 function addError(errors, code, location, message) {
   errors.push({ code, location, message });
+}
+
+function validateDraft202012Instance(instance, schema, options = {}) {
+  const pythonExecutables = options.pythonExecutables ?? PYTHON_EXECUTABLES;
+  const maxErrors = options.maxErrors ?? MAX_SCHEMA_ERRORS;
+  let input;
+  try {
+    input = JSON.stringify({ schema, instance, maxErrors });
+  } catch {
+    return {
+      kind: "invalid_instance",
+      validator: "jsonschema.Draft202012Validator",
+      validatorVersion: null,
+      truncated: false,
+      errors: [{ path: "$", keyword: "serialization", schemaPath: "#" }],
+    };
+  }
+  if (typeof input !== "string") {
+    return {
+      kind: "invalid_instance",
+      validator: "jsonschema.Draft202012Validator",
+      validatorVersion: null,
+      truncated: false,
+      errors: [{ path: "$", keyword: "serialization", schemaPath: "#" }],
+    };
+  }
+
+  let unavailableReason = "no Python interpreter candidate was available";
+  for (const executable of pythonExecutables) {
+    const result = spawnSync(executable, ["-c", PYTHON_DRAFT202012_VALIDATOR], {
+      input,
+      encoding: "utf8",
+      windowsHide: true,
+      timeout: 30000,
+      maxBuffer: 2 * 1024 * 1024,
+    });
+    if (result.error?.code === "ENOENT") {
+      unavailableReason = `${executable} was not found`;
+      continue;
+    }
+    if (result.error) {
+      unavailableReason = `${executable} failed to start or timed out (${result.error.code ?? result.error.name})`;
+      continue;
+    }
+    if (result.status !== 0) {
+      unavailableReason = `${executable} exited with code ${String(result.status)}`;
+      continue;
+    }
+
+    let parsed;
+    try {
+      parsed = JSON.parse(result.stdout);
+    } catch {
+      unavailableReason = `${executable} returned an unreadable validator response`;
+      continue;
+    }
+    if (parsed?.kind === "unavailable") {
+      unavailableReason = parsed.reason ?? `${executable} could not load the Draft 2020-12 validator`;
+      continue;
+    }
+    if (!["valid", "invalid_instance", "invalid_schema"].includes(parsed?.kind)) {
+      unavailableReason = `${executable} returned an unsupported validator response`;
+      continue;
+    }
+    return parsed;
+  }
+
+  return {
+    kind: "unavailable",
+    reason: unavailableReason,
+  };
+}
+
+function addSchemaValidationErrors(validation, errors) {
+  if (validation.kind === "valid") return;
+  if (validation.kind === "unavailable") {
+    addError(
+      errors,
+      "REPORT_SCHEMA_VALIDATOR_UNAVAILABLE",
+      "$",
+      `Draft 2020-12 instance validation is unavailable: ${validation.reason}`,
+    );
+    return;
+  }
+  if (validation.kind === "invalid_schema") {
+    addError(errors, "REPORT_SCHEMA_DEFINITION_INVALID", "$.schema", validation.reason);
+    return;
+  }
+
+  for (const issue of validation.errors ?? []) {
+    addError(
+      errors,
+      "REPORT_SCHEMA_INSTANCE_INVALID",
+      issue.path ?? "$",
+      `Draft 2020-12 schema rule ${issue.keyword ?? "unknown"} failed at ${issue.schemaPath ?? "#"}`,
+    );
+  }
+  if (validation.truncated) {
+    addError(
+      errors,
+      "REPORT_SCHEMA_INSTANCE_ERRORS_TRUNCATED",
+      "$",
+      `More than ${MAX_SCHEMA_ERRORS} Draft 2020-12 instance errors were found; only the first ${MAX_SCHEMA_ERRORS} are listed`,
+    );
+  }
 }
 
 function isWithinDirectory(parent, target) {
@@ -121,7 +302,7 @@ function collectEvidenceErrors(report, repoRoot) {
   return errors;
 }
 
-function validateMeasurement(measurement, location = "measurement", errors = []) {
+function validateMeasurement(measurement, location = "measurement", errors = [], metricContract = null) {
   if (!isRecord(measurement)) {
     addError(errors, "MEASUREMENT_SHAPE", location, "measurement must be an object");
     return errors;
@@ -157,6 +338,37 @@ function validateMeasurement(measurement, location = "measurement", errors = [])
       addError(errors, "SAMPLE_OUTCOME", `${sampleLocation}.outcome`, "sample outcome must be success, failure, cancelled, or timeout");
     } else {
       actualCounts[sample.outcome] += 1;
+    }
+    if (sample.outcome === "success" && metricContract) {
+      if (sample.result !== metricContract.successResult) {
+        addError(
+          errors,
+          "SAMPLE_SUCCESS_RESULT_MISMATCH",
+          `${sampleLocation}.result`,
+          `successful ${metricContract.metricName} samples must report ${metricContract.successResult}`,
+        );
+      }
+      const stageMs = isRecord(sample.stageMs) ? sample.stageMs : {};
+      const missingStages = metricContract.requiredStageMs.filter((stage) => !Object.hasOwn(stageMs, stage));
+      if (missingStages.length > 0) {
+        addError(
+          errors,
+          "SAMPLE_STAGE_TIMING_MISSING",
+          `${sampleLocation}.stageMs`,
+          `successful ${metricContract.metricName} samples require stage timings: ${missingStages.join(", ")}`,
+        );
+      }
+      for (const stage of metricContract.requiredStageMs) {
+        if (Object.hasOwn(stageMs, stage) &&
+            (typeof stageMs[stage] !== "number" || !Number.isFinite(stageMs[stage]) || stageMs[stage] < 0)) {
+          addError(
+            errors,
+            "SAMPLE_STAGE_TIMING_INVALID",
+            `${sampleLocation}.stageMs.${stage}`,
+            "required stage timing must be a finite nonnegative number",
+          );
+        }
+      }
     }
     if (typeof sample.valueMs !== "number" || !Number.isFinite(sample.valueMs) || sample.valueMs < 0) {
       addError(errors, "SAMPLE_VALUE", `${sampleLocation}.valueMs`, "sample valueMs must be a finite nonnegative number");
@@ -209,7 +421,7 @@ function validateMeasurement(measurement, location = "measurement", errors = [])
   return errors;
 }
 
-function collectReportErrors(report, context = loadVerifierContext()) {
+function collectReportErrors(report, context = loadVerifierContext(), validationOptions = {}) {
   const errors = [];
   if (!isRecord(report)) {
     addError(errors, "REPORT_SHAPE", "$", "report must be a JSON object");
@@ -218,6 +430,12 @@ function collectReportErrors(report, context = loadVerifierContext()) {
 
   for (const error of collectPreparationErrors(context)) {
     addError(errors, `PREPARATION_${error.code}`, "preparation", error.message);
+  }
+  if (validationOptions.validateSchema === true) {
+    addSchemaValidationErrors(
+      validateDraft202012Instance(report, context.reportSchema, validationOptions),
+      errors,
+    );
   }
   if (report.schemaVersion !== 1 || report.task !== "T05") {
     addError(errors, "REPORT_IDENTITY", "$", "report must have schemaVersion=1 and task=T05");
@@ -268,7 +486,7 @@ function collectReportErrors(report, context = loadVerifierContext()) {
   }
 
   for (const [name, measurement] of Object.entries(report.measurements ?? {})) {
-    validateMeasurement(measurement, `$.measurements.${name}`, errors);
+    validateMeasurement(measurement, `$.measurements.${name}`, errors, METRIC_CONTRACTS[name] ?? null);
   }
   const requestIdsByMetric = new Map();
   for (const [metricName, measurement] of Object.entries(report.measurements ?? {})) {
@@ -483,8 +701,11 @@ function deduplicateErrors(errors) {
 
 function main() {
   const context = loadVerifierContext();
-  const reportPath = process.argv[2]
-    ? path.resolve(REPO_ROOT, process.argv[2])
+  const args = process.argv.slice(2);
+  const schemaValidationRequested = args.includes("--validate-schema");
+  const reportArgument = args.find((argument) => argument !== "--validate-schema");
+  const reportPath = reportArgument
+    ? path.resolve(REPO_ROOT, reportArgument)
     : SAMPLE_REPORT;
   let report;
   try {
@@ -495,14 +716,17 @@ function main() {
     return;
   }
 
-  const errors = collectReportErrors(report, context);
+  const errors = collectReportErrors(report, context, { validateSchema: schemaValidationRequested });
   if (errors.length > 0) {
     console.error(`PREPARATION_ONLY: T05 report consistency check failed (${errors.length} issue(s)); no acceptance decision was made:`);
     for (const error of errors) console.error(`- [${error.code}] ${error.location}: ${error.message}`);
     process.exitCode = 1;
     return;
   }
-  console.log(`PREPARATION_ONLY: report consistency checks passed (${report.cases.length} cases, ${context.assertionMap.assertions.length} assertion names, T03=${report.dependencyGate.T03}, T04=${report.dependencyGate.T04}, status=${report.status}); behavior acceptance and Draft 2020-12 instance validation are not implied.`);
+  const schemaNote = schemaValidationRequested
+    ? "Draft 2020-12 instance validation passed"
+    : "Draft 2020-12 instance validation was not requested";
+  console.log(`PREPARATION_ONLY: report consistency checks passed; ${schemaNote} (${report.cases.length} cases, ${context.assertionMap.assertions.length} assertion names, T03=${report.dependencyGate.T03}, T04=${report.dependencyGate.T04}, status=${report.status}); behavior acceptance is not implied.`);
 }
 
 if (require.main === module) {
@@ -522,5 +746,6 @@ module.exports = {
   loadVerifierContext,
   nearestRankPercentile,
   validateEvidenceReference,
+  validateDraft202012Instance,
   validateMeasurement,
 };

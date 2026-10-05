@@ -5,8 +5,8 @@
   "reviewType": "dependency and offline-preflight refresh",
   "reviewedDate": "2026-10-05",
   "branch": "codex/m0-latency",
-  "sourceCommit": "722d2d01d7eb6ad6c619076708a69d126edc62df",
-  "workingTreeWasDirty": false,
+  "sourceCommit": "ece7e042d32f0aa89d727993e73c462a1080eb2c",
+  "workingTreeWasDirty": true,
   "dependencyGate": {
     "T03": "accepted",
     "T04": "in_progress",
@@ -39,21 +39,23 @@
       "The synthetic image diagnostics are not universal latency or peak-memory guarantees."
     ]
   },
-  "independentSchemaMetaCheck": {
+  "draft202012InstanceValidation": {
     "status": "PASS_WITH_LIMITATIONS",
-    "artifact": "docs/evidence/T05/draft2020-schema-meta-validation.json",
-    "validator": "System Python jsonschema 4.26.0 Draft202012Validator.check_schema",
-    "reportInstanceValidated": false,
-    "repositoryDependencyAdded": false
+    "artifact": "docs/evidence/T05/report-verifier-static-validation.json",
+    "validator": "System Python 3.11.15 jsonschema 4.26.0 Draft202012Validator",
+    "reportInstanceValidated": true,
+    "invalidInstanceCases": 8,
+    "repositoryDependencyAdded": false,
+    "schemaValidationIsOptIn": true
   },
   "allowedPreparationCompleted": [
     "Latest compressed image-worker ASAR package smoke status refreshed.",
-    "One-off Draft 2020-12 meta-schema self-check recorded without changing project dependencies."
+    "The current NOT_RUN report instance and eight invalid-instance cases passed the explicit Draft 2020-12 self-check, including six metric-contract negatives; the default Node verifier and unit suite do not require Python."
   ],
   "notRun": [
     "P01-P28 T05 behavior/release acceptance and 100+100 controlled-live measurements.",
     "Standard release package helper resource/signature/protocol, lifecycle, rollback, installation data and target-visible paste.",
-    "A repository-pinned schema validator or validation of a complete T05 report instance."
+    "A repository-pinned Draft 2020-12 validator; current full instance validation used the host Python package and remains an optional check."
   ],
   "historicalSnapshot": "docs/evidence/T05/preflight.json and docs/evidence/T05/report-schema-review.json retain their original dated observations; current state is recorded here and in current-static-audit.json."
 }

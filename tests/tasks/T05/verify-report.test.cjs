@@ -48,8 +48,8 @@ function measuredFixture(samples) {
   };
 }
 
-function errorsFor(report, overrides = {}) {
-  return collectReportErrors(report, { ...context, ...overrides });
+function errorsFor(report, overrides = {}, validationOptions = {}) {
+  return collectReportErrors(report, { ...context, ...overrides }, validationOptions);
 }
 
 test("NOT_RUN example is reproducible and maps all cases and assertion IDs", () => {
@@ -66,6 +66,13 @@ test("NOT_RUN example is reproducible and maps all cases and assertion IDs", () 
   assert.equal(example.status, "NOT_RUN");
   assert.equal(example.measurements.normalText.samples.length, 0);
   assert.equal(example.measurements.wakeToActionable.samples.length, 0);
+});
+
+test("the regular Node consistency checker does not require the optional schema validator", () => {
+  assert.deepEqual(
+    errorsFor(example, {}, { pythonExecutables: ["clipnest-python-not-installed"] }),
+    [],
+  );
 });
 
 test("report assertion names must match all 71 mapped IDs in each case", () => {
@@ -220,4 +227,37 @@ test("schema makes assertion IDs and raw sample valueMs explicit", () => {
   assert.match("P21-A06", new RegExp(assertionSchema.pattern));
   assert.ok(measurementSample.required.includes("valueMs"));
   assert.equal(measurementSample.properties.valueMs.type, "number");
+});
+
+test("successful metric samples require the target result and every §04 stage timing", () => {
+  const metricContracts = {
+    normalText: {
+      expectedResult: "inputSubmitted",
+      stageKeys: ["selection", "write", "hide", "focus", "modifier", "inputSubmitted"],
+    },
+    wakeToActionable: {
+      expectedResult: "list_actionable",
+      stageKeys: ["hotkey", "capture", "show", "firstFrame", "actionable"],
+    },
+  };
+
+  for (const [metricName, contract] of Object.entries(metricContracts)) {
+    const makeReport = (result, stageKeys) => {
+      const report = clone(example);
+      report.status = "REVIEW";
+      const successfulSample = {
+        ...sample(`${metricName}-request`, "success", 12),
+        result,
+        stageMs: Object.fromEntries(stageKeys.map((key) => [key, 1])),
+      };
+      report.measurements[metricName] = measuredFixture([successfulSample]);
+      return report;
+    };
+
+    const wrongResult = errorsFor(makeReport("copiedOnly", contract.stageKeys));
+    assert.ok(wrongResult.some((error) => error.code === "SAMPLE_SUCCESS_RESULT_MISMATCH"), metricName);
+
+    const missingStage = errorsFor(makeReport(contract.expectedResult, contract.stageKeys.slice(1)));
+    assert.ok(missingStage.some((error) => error.code === "SAMPLE_STAGE_TIMING_MISSING"), metricName);
+  }
 });

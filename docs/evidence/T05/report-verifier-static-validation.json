@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "result": "PREPARATION_ONLY",
+  "reviewType": "report verifier static instance validation",
+  "checkedDate": "2026-10-05",
+  "source": {
+    "commit": "ece7e042d32f0aa89d727993e73c462a1080eb2c",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true
+  },
+  "environment": {
+    "platform": "Windows",
+    "architecture": "x64",
+    "nodeVersion": "24.16.0",
+    "pnpmVersion": "11.19.0",
+    "pythonVersion": "3.11.15",
+    "jsonschemaVersion": "4.26.0",
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "browserWindowCreated": false,
+    "packageBuilt": false
+  },
+  "checks": [
+    {
+      "command": "pnpm test:unit -- T05",
+      "result": "PASS",
+      "passed": 32,
+      "failed": 0
+    },
+    {
+      "command": "node tests/tasks/T05/verify-report.cjs --validate-schema",
+      "result": "PASS",
+      "output": "PREPARATION_ONLY: report consistency checks passed; Draft 2020-12 instance validation passed (28 cases, 71 assertion names, T03=accepted, T04=in_progress, status=NOT_RUN); behavior acceptance is not implied."
+    },
+    {
+      "command": "node tests/tasks/T05/schema-validation-self-check.cjs",
+      "result": "PASS",
+      "output": {
+        "result": "PREPARATION_ONLY",
+        "validator": "jsonschema.Draft202012Validator",
+        "validatorVersion": "4.26.0",
+        "validNotRunReport": "PASS",
+        "schemaInvalidInstanceCases": 8,
+        "metricContractInvalidCases": 6,
+        "invalidSchemaDefinition": "DISTINCT_FROM_INSTANCE_INVALID",
+        "missingValidator": "DISTINCT_UNAVAILABLE_ERROR",
+        "behaviorExecuted": false,
+        "benchmarkExecuted": false,
+        "packageBuilt": false,
+        "desktopClipboardOrInputUsed": false,
+        "t05AcceptanceImplied": false
+      }
+    },
+    {
+      "command": "node --check tests/tasks/T05/verify-report.cjs; node --check tests/tasks/T05/verify-report.test.cjs; node --check tests/tasks/T05/schema-validation-self-check.cjs",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "schemaValidationMode": {
+    "defaultVerifierAndUnitTestsRequirePython": false,
+    "explicitFlag": "--validate-schema",
+    "validatorIsRepositoryPinned": false,
+    "validatorSource": "host Python jsonschema installation; not a project dependency",
+    "unavailableBehavior": "explicit schema validation fails closed with REPORT_SCHEMA_VALIDATOR_UNAVAILABLE"
+  },
+  "gateEffect": {
+    "t05Status": "not_started",
+    "t05ReportStatus": "NOT_RUN",
+    "acceptanceImplied": false,
+    "behaviorExecuted": false,
+    "g0Status": "planned/NOT_RUN"
+  },
+  "limitations": [
+    "This verifies a synthetic NOT_RUN report and schema-invalid cases only; it does not execute or accept P01-P28 behavior, package/helper lifecycle, rollback, or performance measurements.",
+    "The Draft 2020-12 validator depends on the current host Python jsonschema package and is not repository-pinned; portable validator dependency work remains for the T06 dependency task.",
+    "The checker verifies structure, sample identities, counts, and statistics but cannot prove that referenced evidence content supports each claim; human evidence review remains required."
+  ]
+}

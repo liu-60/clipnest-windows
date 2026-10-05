@@ -2,11 +2,12 @@
   "schemaVersion": 1,
   "task": "T05",
   "reviewType": "independent_read_only_static_preflight_audit",
+  "snapshotStatus": "HISTORICAL_SNAPSHOT; current schema-validation status is superseded by report-verifier-static-validation.json and current-gates-refresh.json",
   "reviewedDate": "2026-10-05",
   "result": "PASS_WITH_LIMITATIONS",
   "executionStatus": "NOT_RUN",
   "reviewedArtifacts": [
-    "docs/spec/tasks/T05.md",
+    "<spec-workspace>/docs/spec/tasks/T05.md",
     "tests/tasks/T05/fixture-plan.json",
     "tests/tasks/T05/assertion-map.json",
     "tests/tasks/T05/report.schema.json",
@@ -60,7 +61,7 @@
     "T05": "not_started",
     "compressedWorkerPackageSmoke": "PASS",
     "syntheticMainProcessDeadlineDiagnostic": "PASS_WITH_LIMITATIONS",
-    "schemaMetaValidation": "PASS_WITH_LIMITATIONS",
+    "schemaMetaValidationAtAuditTime": "PASS_WITH_LIMITATIONS",
     "completeT05Execution": "NOT_RUN"
   }
 }

@@ -121,13 +121,64 @@
                 },
                 "required": ["p95Ms", "textAppearanceIndependentlyVerified"]
               }
+            },
+            {
+              "properties": {
+                "samples": {
+                  "items": {
+                    "if": { "properties": { "outcome": { "const": "success" } }, "required": ["outcome"] },
+                    "then": {
+                      "properties": {
+                        "result": { "const": "inputSubmitted" },
+                        "stageMs": {
+                          "required": ["selection", "write", "hide", "focus", "modifier", "inputSubmitted"],
+                          "properties": {
+                            "selection": { "type": "number", "minimum": 0 },
+                            "write": { "type": "number", "minimum": 0 },
+                            "hide": { "type": "number", "minimum": 0 },
+                            "focus": { "type": "number", "minimum": 0 },
+                            "modifier": { "type": "number", "minimum": 0 },
+                            "inputSubmitted": { "type": "number", "minimum": 0 }
+                          }
+                        }
+                      },
+                      "required": ["result", "stageMs"]
+                    }
+                  }
+                }
+              }
             }
           ]
         },
         "wakeToActionable": {
           "allOf": [
             { "$ref": "#/$defs/measurement" },
-            { "if": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] }, "then": { "properties": { "p95Ms": { "type": "number", "exclusiveMaximum": 100 } } } }
+            { "if": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] }, "then": { "properties": { "p95Ms": { "type": "number", "exclusiveMaximum": 100 } } } },
+            {
+              "properties": {
+                "samples": {
+                  "items": {
+                    "if": { "properties": { "outcome": { "const": "success" } }, "required": ["outcome"] },
+                    "then": {
+                      "properties": {
+                        "result": { "const": "list_actionable" },
+                        "stageMs": {
+                          "required": ["hotkey", "capture", "show", "firstFrame", "actionable"],
+                          "properties": {
+                            "hotkey": { "type": "number", "minimum": 0 },
+                            "capture": { "type": "number", "minimum": 0 },
+                            "show": { "type": "number", "minimum": 0 },
+                            "firstFrame": { "type": "number", "minimum": 0 },
+                            "actionable": { "type": "number", "minimum": 0 }
+                          }
+                        }
+                      },
+                      "required": ["result", "stageMs"]
+                    }
+                  }
+                }
+              }
+            }
           ]
         }
       }
