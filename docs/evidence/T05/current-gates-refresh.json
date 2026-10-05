@@ -5,8 +5,8 @@
   "reviewType": "dependency and offline-preflight refresh",
   "reviewedDate": "2026-10-05",
   "branch": "codex/m0-latency",
-  "sourceCommit": "06e45b2b897bf6f33f6585ee9a886ca26fe5e2ab",
-  "workingTreeWasDirty": false,
+  "sourceCommit": "1695c50efb4ad6a687dc538692d3330f0a2c627b",
+  "workingTreeWasDirty": true,
   "dependencyGate": {
     "T03": "accepted",
     "T04": "in_progress",
@@ -14,13 +14,18 @@
   },
   "latestT04Evidence": {
     "packagedAsarCompressedWorker": {
-      "status": "PASS",
-      "artifact": "docs/evidence/T04/packaged-asar-worker-smoke.json",
-      "packageVersion": "1.1.4-local.20261005.1",
+      "status": "PASS_WITH_LIMITATIONS",
+      "artifact": "docs/evidence/T04/packaged-asar-worker-chunked-hardened-smoke.json",
+      "packageVersion": "1.1.4-local.20261005.chunked-hardening",
       "dimensions": "3000x3000",
       "exactDecodedRgbaBytes": 36000000,
-      "observedIpcResponse": "decoded_compressed",
-      "installed": false
+      "observedIpcResponse": "35 decoded_chunk messages plus 1 decoded_end",
+      "installed": false,
+      "published": false,
+      "clipboardContentRead": false,
+      "clipboardWritten": false,
+      "inputSent": false,
+      "packageSourceCommit": "d82298ce72d5469f03bcefe01c7e200536d220ed"
     },
     "mainProcessImageDeadlineDiagnostic": {
       "status": "PASS_WITH_LIMITATIONS",
@@ -35,9 +40,10 @@
     },
     "remainingT04Gates": [
       "P15 remains open under the user-confirmed scope; src/main/native/content-provider.ts was not changed or invoked.",
-      "The WPF/WIC candidate memory result is not a production Electron utilityProcess/IPC or direct IWIC implementation measurement; production JPEG memory acceptance remains open.",
-      "Exact P1/I10/I11 deadline acceptance remains open: the prior bounded Electron timer probe ran up to 12 attempts and all failed closed; released zero-budget continuation was NOT_OBSERVED. Physical keyboard, system clipboard, BrowserWindow/panel, helper lifecycle, target-visible paste, packaged application acceptance and full T04 acceptance remain NOT_RUN.",
-      "Synthetic image diagnostics cover only listed fixtures and do not establish universal latency, format behavior, or a process-memory ceiling."
+      "The 4:2:0 JPEG fidelity gate remains open. Four final-harness dense ROIs show broad GDI+ differences, but each is one selected synthetic sample; the 8-channel threshold is calibrated only for 4:4:4, and pinned jpeg-js is not an independent decoder reference.",
+      "Production JPEG memory acceptance remains open. The WPF/WIC candidate is a PowerShell STA probe, not production Electron utilityProcess/direct IWIC integration; the production-shaped PureJsImage candidate exceeded the 256 MiB target.",
+      "Exact P1/I10/I11 deadline acceptance remains open. The bounded real-timer probe failed closed and released zero-budget continuation was NOT_OBSERVED; physical keyboard, system clipboard, BrowserWindow/panel, helper lifecycle, target-visible paste and packaged application acceptance remain NOT_RUN.",
+      "Synthetic image diagnostics do not establish universal latency, format behavior, or a process-memory ceiling; full T04 acceptance remains NOT_RUN."
     ],
     "wicJpegCandidate": {
       "result": "WPF_WIC_CANDIDATE_WITHIN_BUDGET_NOT_ACCEPTANCE",
@@ -72,6 +78,84 @@
         "branch": "codex/m0-latency",
         "workingTreeWasDirty": true
       }
+    },
+    "jpeg420DenseRoiDiagnostic": {
+      "result": "DIAGNOSTIC_WITH_LIMITATIONS",
+      "artifact": "docs/evidence/T04/jpeg-420-gdiplus-roi-investigation.json",
+      "sourceCommit": "d2f058a9502ff2e83d33fb9e959e71f7dc59790a",
+      "measurementHarnessSha256": "5ea61a130d03d20ddcbc9ef39632e99319a5c1a7415b556de99b688a642e20b8",
+      "cases": [
+        {
+          "fixture": "high-entropy",
+          "fixtureSha256": "c9362e8411a710e82c8ead5e41295c0f6902bf8f5eac9cf40ac25915abb68ab1",
+          "roi": {
+            "x": 984,
+            "y": 2984,
+            "width": 32,
+            "height": 32
+          },
+          "pixelsOver8": 900,
+          "comparedPixels": 1024,
+          "maxRgbDifference": 70,
+          "twoPixelInsetPixelsOver8": 690,
+          "twoPixelInsetComparedPixels": 784,
+          "measurement": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-420-highentropy-roi-v3-1-sample-measurement.json"
+        },
+        {
+          "fixture": "chroma-edge-vertical",
+          "fixtureSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+          "roi": {
+            "x": 960,
+            "y": 2960,
+            "width": 32,
+            "height": 32
+          },
+          "pixelsOver8": 1000,
+          "comparedPixels": 1024,
+          "maxRgbDifference": 120,
+          "twoPixelInsetPixelsOver8": 784,
+          "twoPixelInsetComparedPixels": 784,
+          "measurement": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-420-edges-vertical-v2-1-sample-measurement.json"
+        },
+        {
+          "fixture": "chroma-edge-horizontal",
+          "fixtureSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+          "roi": {
+            "x": 992,
+            "y": 2960,
+            "width": 32,
+            "height": 32
+          },
+          "pixelsOver8": 1008,
+          "comparedPixels": 1024,
+          "maxRgbDifference": 136,
+          "twoPixelInsetPixelsOver8": 784,
+          "twoPixelInsetComparedPixels": 784,
+          "measurement": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-420-edges-horizontal-v2-1-sample-measurement.json"
+        },
+        {
+          "fixture": "chroma-edge-checker",
+          "fixtureSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+          "roi": {
+            "x": 1024,
+            "y": 2960,
+            "width": 32,
+            "height": 32
+          },
+          "pixelsOver8": 768,
+          "comparedPixels": 1024,
+          "maxRgbDifference": 147,
+          "twoPixelInsetPixelsOver8": 588,
+          "twoPixelInsetComparedPixels": 784,
+          "measurement": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-420-edges-checker-v2-1-sample-measurement.json"
+        }
+      ],
+      "allWorkerOutputsMatchPinnedJpegJsFullFrame": true,
+      "pinnedJpegJsIsIndependentOracle": false,
+      "gdiplusThresholdCalibratedFor420": false,
+      "systemClipboardReadOrWritten": false,
+      "inputSent": false,
+      "interpretation": "Selected single-sample synthetic ROIs support a chroma reconstruction/phase explanation but do not establish decoder correctness or whole-image fidelity; the 4:2:0 fidelity gate remains open."
     }
   },
   "draft202012InstanceValidation": {
@@ -84,15 +168,15 @@
     "schemaValidationIsOptIn": true
   },
   "allowedPreparationCompleted": [
-    "Latest compressed image-worker ASAR package smoke status refreshed.",
+    "Latest identity-hardened raw-chunk utilityProcess worker ASAR smoke is indexed with its exact chunk/end counts and no-install/no-clipboard/no-input limitations.",
     "The current NOT_RUN report instance and eight invalid-instance cases passed the explicit Draft 2020-12 self-check, including six metric-contract negatives; the default Node verifier and unit suite do not require Python.",
-    "Refreshed the T04 dependency snapshot against the current commit, including the 10-sample WPF/WIC JPEG candidate result; the candidate is explicitly not production acceptance."
+    "Refreshed the T04 dependency snapshot at source commit 1695c50, including the 10-sample WPF/WIC candidate result and the latest 4:2:0 GDI+ dense-ROI diagnostic; neither is production acceptance."
   ],
   "notRun": [
     "P01-P28 T05 behavior/release acceptance and 100+100 controlled-live measurements.",
     "Standard release package helper resource/signature/protocol, lifecycle, rollback, installation data and target-visible paste.",
     "A repository-pinned Draft 2020-12 validator; current full instance validation used the host Python package and remains an optional check.",
-    "Production WIC/utilityProcess IPC integration, the full JPEG corpus, packaged application behavior, physical-input or target-visible paste acceptance remain NOT_RUN."
+    "Production WIC decoder integration in utilityProcess with IPC, the full JPEG corpus, complete application packaging/lifecycle behavior, physical-input acceptance, and target-visible paste acceptance remain NOT_RUN; this does not refer to the limited hardened ASAR worker smoke recorded above."
   ],
   "historicalSnapshot": "docs/evidence/T05/preflight.json and docs/evidence/T05/report-schema-review.json retain their original dated observations; current state is recorded here and in current-static-audit.json."
 }
