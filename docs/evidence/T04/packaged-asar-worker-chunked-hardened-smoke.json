@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "check": "identity-hardened-packaged-asar-raw-chunk-worker-smoke",
+  "result": "PASS_WITH_LIMITATIONS",
+  "verificationDate": "2026-10-05",
+  "branch": "codex/m0-latency",
+  "source": {
+    "commit": "d82298ce72d5469f03bcefe01c7e200536d220ed",
+    "workingTreeWasDirty": false,
+    "files": [
+      {
+        "path": "src/main/clipboard/image-worker.ts",
+        "sha256": "5c2cf363e68759462a517fb505aa106abe005edce4e5ae4cdd2ca1832862c383",
+        "bytes": 15621
+      },
+      {
+        "path": "tests/tasks/T04/clipboard-image-decoder.test.cjs",
+        "sha256": "1a22b62d710ce13f8aebc3dc22a148e8c880f0d0bce19986e427c3fda405e24c",
+        "bytes": 35585
+      },
+      {
+        "path": "tests/tasks/T04/packaged-asar-worker-smoke.cjs",
+        "sha256": "872bf996a4938db2c682520da580e4b222079629c0be08a5cc12236742a5ea2e",
+        "bytes": 2873
+      }
+    ]
+  },
+  "environment": {
+    "os": "Windows 11 Enterprise 10.0.22631",
+    "architecture": "x64",
+    "node": "v24.16.0",
+    "pnpm": "11.19.0",
+    "electron": "40.10.2",
+    "electronBuilder": "25.1.8"
+  },
+  "build": {
+    "command": "pnpm build",
+    "status": "PASS",
+    "packageCommand": "pnpm exec electron-builder --win dir --x64 --publish never --config release/windows-flat-20261005-final-chunked/electron-builder.local.cjs",
+    "packageStatus": "PASS",
+    "packageVersion": "1.1.4-local.20261005.chunked-hardening",
+    "target": "Windows x64 directory package",
+    "outputDirectory": "release/windows-flat-20261005-final-chunked/artifacts/win-unpacked",
+    "asarPath": "release/windows-flat-20261005-final-chunked/artifacts/win-unpacked/resources/app.asar",
+    "asarBytes": 30650933,
+    "asarSha256": "5ea963f617ef3bffe102152590bb0fa05ec796e5913fed8556e245a561ace76a",
+    "installPerformed": false,
+    "published": false,
+    "signature": "Unsigned local directory package; no signing information was configured."
+  },
+  "smoke": {
+    "source": "tests/tasks/T04/packaged-asar-worker-smoke.cjs",
+    "launch": "Electron 40.10.2 launched an isolated harness with CLIPNEST_ASAR_PATH pointing to the generated app.asar; ELECTRON_RUN_AS_NODE was removed.",
+    "exitCode": 0,
+    "stderr": "",
+    "workerLoadedFromAsar": true,
+    "dimensions": "3000x3000",
+    "pngEncodedBytes": 35074,
+    "decodedBytes": 36000000,
+    "decodedCacheThresholdBytes": 33554432,
+    "decodedChunkCount": 35,
+    "decodedEndCount": 1,
+    "chunkedIpcObserved": true,
+    "allPixelsExact": true,
+    "elapsedMs": 456.19,
+    "clipboardContentRead": false,
+    "clipboardWritten": false,
+    "inputSent": false,
+    "isolatedUserDataDirectory": "release/windows-flat-20261005-final-chunked/isolated-user-data-2"
+  },
+  "limitations": [
+    "Synthetic 9 MP PNG and packaged utilityProcess worker path only; no NSIS installation, app window, system clipboard, physical input, or target-visible paste was exercised.",
+    "One isolated smoke does not establish a hard memory or latency bound across supported PNG/JPEG content or replace the controlled T05 benchmark.",
+    "This smoke verifies the request/input identity and child-source hardening package that the earlier packaged-asar-worker-chunked-smoke.json predates; it does not close JPEG fidelity, general memory, P15, desktop/platform behavior, or full T04 acceptance."
+  ]
+}
