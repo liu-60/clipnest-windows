@@ -46,13 +46,14 @@ const COS_6 = 1567;
 const SIN_6 = 3784;
 const SQRT_2 = 5793;
 const SQRT_1_2 = 2896;
+const HUFFMAN_LOOKUP_BITS = 6;
 
 interface HuffmanTable {
   readonly minCode: Int32Array;
   readonly maxCode: Int32Array;
   readonly valueOffset: Int32Array;
   readonly values: Uint8Array;
-  readonly shortCodeLookup: Uint16Array;
+  readonly prefixCodeLookup: Uint16Array;
 }
 
 interface Component {
@@ -264,7 +265,7 @@ function buildHuffmanTable(counts: Uint8Array, values: Uint8Array): HuffmanTable
   const minCode = new Int32Array(17).fill(-1);
   const maxCode = new Int32Array(17).fill(-1);
   const valueOffset = new Int32Array(17);
-  const shortCodeLookup = new Uint16Array(1 << 4);
+  const prefixCodeLookup = new Uint16Array(1 << HUFFMAN_LOOKUP_BITS);
   let code = 0;
   let valueIndex = 0;
   for (let length = 1; length <= 16; length++) {
@@ -274,16 +275,16 @@ function buildHuffmanTable(counts: Uint8Array, values: Uint8Array): HuffmanTable
       minCode[length] = code;
       maxCode[length] = code + count - 1;
       valueOffset[length] = valueIndex - code;
-      if (length <= 4) {
+      if (length <= HUFFMAN_LOOKUP_BITS) {
         for (let codeValue = code; codeValue < code + count; codeValue++) {
           const symbol = values[valueIndex + codeValue - code];
-          const prefix = codeValue << (4 - length);
-          const suffixCount = 1 << (4 - length);
+          const prefix = codeValue << (HUFFMAN_LOOKUP_BITS - length);
+          const suffixCount = 1 << (HUFFMAN_LOOKUP_BITS - length);
           const entry = (length << 8) | symbol;
           for (let suffix = 0; suffix < suffixCount; suffix++) {
             const lookupIndex = prefix | suffix;
-            if (shortCodeLookup[lookupIndex] !== 0) throw new Error("image_source_invalid");
-            shortCodeLookup[lookupIndex] = entry;
+            if (prefixCodeLookup[lookupIndex] !== 0) throw new Error("image_source_invalid");
+            prefixCodeLookup[lookupIndex] = entry;
           }
         }
       }
@@ -292,7 +293,7 @@ function buildHuffmanTable(counts: Uint8Array, values: Uint8Array): HuffmanTable
     code = (code + count) << 1;
   }
   if (valueIndex !== values.length) throw new Error("image_source_invalid");
-  return { minCode, maxCode, valueOffset, values, shortCodeLookup };
+  return { minCode, maxCode, valueOffset, values, prefixCodeLookup };
 }
 
 class EntropyReader {
@@ -316,9 +317,9 @@ class EntropyReader {
     return (this.current >>> --this.remaining) & 1;
   }
 
-  peekFourBits(): number | undefined {
-    if (this.remaining < 4) return undefined;
-    return (this.current >>> (this.remaining - 4)) & 0x0f;
+  peekPrefixBits(): number | undefined {
+    if (this.remaining < HUFFMAN_LOOKUP_BITS) return undefined;
+    return (this.current >>> (this.remaining - HUFFMAN_LOOKUP_BITS)) & ((1 << HUFFMAN_LOOKUP_BITS) - 1);
   }
 
   consumeBits(count: number): void {
@@ -465,9 +466,9 @@ function decodeBlock(
 }
 
 function decodeHuffman(reader: EntropyReader, table: HuffmanTable): number {
-  const prefix = reader.peekFourBits();
+  const prefix = reader.peekPrefixBits();
   if (prefix !== undefined) {
-    const entry = table.shortCodeLookup[prefix];
+    const entry = table.prefixCodeLookup[prefix];
     if (entry !== 0) {
       reader.consumeBits(entry >>> 8);
       return entry & 0xff;

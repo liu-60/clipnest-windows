@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "PASS_SYNTHETIC_UNIT_REGRESSION",
+  "checkedDate": "2026-10-06",
+  "source": {
+    "commit": "fd2dd2339cad8d0652954da40aa80fa4fa63ccb8",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "changedFiles": {
+      "src/main/clipboard/jpeg-baseline-stream.ts": "aaeb15823f6bf9b15716952ab3d9a654a7cd14d1a3eb0b9ce4f92e02bc5604a4",
+      "tests/tasks/T04/clipboard-image-decoder.test.cjs": "393bd212d25c92fcc571bbd11644b2ff63aa1268b506ccd7b22abaeea08ac85b",
+      "dist-electron/main/clipboard/jpeg-baseline-stream.js": "7727bae8822e5b487fecd78ec4d0e4c8212e04175a1d08a602cf663a4c89d187"
+    }
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "nodeVersion": "v24.16.0",
+    "pnpmVersion": "11.19.0"
+  },
+  "scope": {
+    "productionSourceChanged": true,
+    "fixture": "synthetic grayscale SOF0 baseline JPEG fixtures; full-frame outputs are compared byte-for-byte with pinned jpeg-js 0.4.4",
+    "huffmanPrefixCoverage": [
+      "canonical code lengths 1–6 are decoded through the lookup path after a warmup block leaves six buffered bits; each case checks that only the actual code length is consumed",
+      "63 six-bit prefixes 000000–111110 are exercised with seven buffered bits and alternating DC categories; AC codes of one or two bits keep the next lookup aligned, and output pixels are compared with jpeg-js",
+      "the remaining six-bit prefix 111111 misses the table and valid seven-bit code 1111110 succeeds through bitwise fallback",
+      "the seven-bit all-ones code 1111111 remains invalid after the six-bit lookup miss",
+      "AC decoding with zero through five buffered bits uses bitwise fallback",
+      "existing stuffed FF00 entropy, restart-marker RST0–RST7, restart padding, malformed input, and JPEG pixel-oracle regressions remain in the targeted suite"
+    ],
+    "lookupMemoryDeltaBytesPerHuffmanTable": 96
+  },
+  "validation": {
+    "command": "pnpm test:unit -- clipboard-image-decoder.test.cjs",
+    "result": "PASS",
+    "buildMain": "PASS",
+    "tests": 36,
+    "passed": 36,
+    "failed": 0,
+    "skipped": 0
+  },
+  "independentReview": {
+    "result": "PASS_WITH_NONBLOCKING_TEST_LIMITATION",
+    "confirmed": [
+      "the warmed entropy-reader bit counts exercise the six-bit lookup for canonical lengths 1–6 and prefixes 000000–111110",
+      "prefix 111111 misses the table and the valid 1111110 code falls back without cross-byte peeking",
+      "the all-ones invalid code reaches the same lookup miss and is rejected by fallback"
+    ],
+    "limitation": "The pixel regression does not independently prove that every runtime decode took the lookup fast path; a completely empty lookup would preserve semantics through the bitwise fallback. Static path accounting confirms the intended states, and alternating symbols detect incorrect neighboring-entry mappings."
+  },
+  "limitations": [
+    "Synthetic grayscale cases and the pinned jpeg-js comparison are a narrow regression reference, not an independent JPEG correctness oracle or broad corpus evaluation.",
+    "This unit result does not establish 4:2:0 color fidelity, memory limits, ASAR/package behavior, the 3000 ms product deadline, or complete T04 acceptance."
+  ],
+  "sideEffects": {
+    "desktopClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "helperRun": false,
+    "packageBuilt": false,
+    "productionSourceChanged": true
+  }
+}

@@ -505,16 +505,23 @@ test("production JPEG preflight enforces COM and marker limits after the scan", 
   await assert.rejects(decode(request("jpeg", overMarkerLimit, 8, 8)), /image_worker_capacity_exceeded/);
 });
 
-test("streamed JPEG Huffman prefix lookup covers canonical 1–4-bit codes and suffix expansion", () => {
-  for (let codeLength = 1; codeLength <= 4; codeLength++) {
+test("streamed JPEG Huffman prefix lookup covers canonical 1–6-bit codes and suffix expansion", () => {
+  for (let codeLength = 1; codeLength <= 6; codeLength++) {
     const encoded = simpleBaselineJpeg({
-      width: 8,
+      width: 16,
       height: 8,
       sampling: [0x11],
       dcCodeLength: codeLength,
-      acCodeLength: codeLength,
+      dcCodewords: [
+        { code: 0, length: 1 },
+        { code: (1 << codeLength) - 2, length: codeLength },
+      ],
+      acCodewords: [
+        { code: 0, length: 1 },
+        { code: 0, length: 1 },
+      ],
     });
-    const image = decodeLargeBaselineJpeg(encoded, 8, 8);
+    const image = decodeLargeBaselineJpeg(encoded, 16, 8);
     assert.ok(image, `canonical ${codeLength}-bit Huffman fixture should select the stream decoder`);
     for (let offset = 0; offset < image.pixels.length; offset += 4) {
       assert.deepEqual([...image.pixels.subarray(offset, offset + 4)], [128, 128, 128, 255]);
@@ -522,45 +529,77 @@ test("streamed JPEG Huffman prefix lookup covers canonical 1–4-bit codes and s
   }
 });
 
-test("streamed JPEG Huffman prefix lookup covers all 16 four-bit prefixes", () => {
-  const dcSymbols = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 2, 3];
+test("streamed JPEG Huffman prefix lookup covers all 64 six-bit prefixes including a long-code escape", () => {
+  const dcCodeCounts = Array.from({ length: 16 }, (_value, index) => index === 5 ? 63 : index === 6 ? 1 : 0);
+  const dcSymbols = [...Array.from({ length: 63 }, (_value, code) => code & 1), 1];
   const dcCodewords = [
-    { code: 0, length: 4 }, // Prime the entropy reader before checking each prefix.
-    ...Array.from({ length: 15 }, (_value, code) => {
+    // Warm up the entropy reader so the next DC decode begins with seven
+    // buffered bits and each six-bit prefix exercises the lookup fast path.
+    { code: 0b1111110, length: 7, amplitudeBits: 1, amplitudeLength: 1 },
+    ...Array.from({ length: 63 }, (_value, code) => {
       const category = dcSymbols[code];
-      const repeatedSymbol = code >= 12;
-      const amplitudeBits = category === 0 ? 0 : repeatedSymbol
-        ? (1 << (category - 1)) - 1
-        : 1 << (category - 1);
-      return { code, length: 4, amplitudeBits, amplitudeLength: category };
+      return {
+        code,
+        length: 6,
+        amplitudeBits: category === 1 ? 1 : 0,
+        amplitudeLength: category,
+      };
     }),
-    { code: 0b11110, length: 5, amplitudeBits: 0b011, amplitudeLength: 3 },
+    // The all-ones six-bit prefix cannot be a complete JPEG Huffman code.
+    // Its following zero selects the valid seven-bit code 1111110 via fallback.
+    { code: 0b1111110, length: 7, amplitudeBits: 1, amplitudeLength: 1 },
   ];
   const acCodewords = [
-    { code: 0b11110, length: 5 },
-    ...Array.from({ length: 16 }, () => ({ code: 0b1110, length: 4 })),
+    { code: 0, length: 1 },
+    ...Array.from({ length: 63 }, (_value, code) => dcSymbols[code] === 0
+      ? { code: 0b10, length: 2 }
+      : { code: 0, length: 1 }),
+    { code: 0, length: 1 },
   ];
-  const dcCodeCounts = Array.from({ length: 16 }, (_value, index) => index === 3 ? 15 : index === 4 ? 1 : 0);
   const encoded = simpleBaselineJpeg({
-    width: 136,
+    width: dcCodewords.length * 8,
     height: 8,
     sampling: [0x11],
     dcCodeCounts,
     dcSymbols,
     dcCodewords,
-    acCodeLength: 5,
+    acCodeLength: 2,
     acCodewords,
   });
-  const image = decodeLargeBaselineJpeg(encoded, 136, 8);
+  const image = decodeLargeBaselineJpeg(encoded, dcCodewords.length * 8, 8);
   assert.ok(image, "the all-prefix fixture should select the streaming baseline decoder");
   const reference = jpeg.decode(encoded, { useTArray: true, formatAsRGBA: true });
   assert.deepEqual(Buffer.from(image.pixels), Buffer.from(reference.data));
-  assert.ok(new Set(Array.from(reference.data).filter((_value, index) => index % 4 === 0)).size > 8,
-    "distinct DC categories must produce distinct grayscale blocks");
+  assert.ok(new Set(Array.from(reference.data).filter((_value, index) => index % 4 === 0)).size > 1,
+    "prefixes mapped to different DC categories must produce distinct grayscale blocks");
 });
 
-test("streamed JPEG Huffman decoder falls back for long codes and fewer than four buffered bits", () => {
-  for (const [dcCodeLength, acCodeLength] of [[5, 6], [6, 2], [6, 3]]) {
+test("streamed JPEG Huffman lookup falls back with zero to five bits left in the current byte", () => {
+  for (let dcCodeLength = 2; dcCodeLength <= 7; dcCodeLength++) {
+    const dcSymbols = Array(dcCodeLength).fill(0);
+    dcSymbols[dcCodeLength - 1] = 1;
+    const encoded = simpleBaselineJpeg({
+      width: 8,
+      height: 8,
+      sampling: [0x11],
+      dcCodeLength,
+      dcSymbols,
+      dcCodewords: [{
+        code: (1 << dcCodeLength) - 2,
+        length: dcCodeLength,
+        amplitudeBits: 1,
+        amplitudeLength: 1,
+      }],
+    });
+    const image = decodeLargeBaselineJpeg(encoded, 8, 8);
+    assert.ok(image, `fallback fixture with ${8 - dcCodeLength - 1} buffered bits should select the stream decoder`);
+    const reference = jpeg.decode(encoded, { useTArray: true, formatAsRGBA: true });
+    assert.deepEqual(Buffer.from(image.pixels), Buffer.from(reference.data));
+  }
+});
+
+test("streamed JPEG Huffman decoder falls back for long codes and fewer than six buffered bits", () => {
+  for (const [dcCodeLength, acCodeLength] of [[5, 6], [6, 2], [6, 3], [7, 7]]) {
     const encoded = simpleBaselineJpeg({
       width: 8,
       height: 8,
@@ -583,7 +622,35 @@ test("streamed JPEG selection is conservative and selected malformed streams fai
 
   const valid = simpleBaselineJpeg({ width: 16, height: 8, sampling: [0x11] });
   const allOnesCode = simpleBaselineJpeg({ width: 16, height: 8, sampling: [0x11], allOnesDcHuffman: true });
+  const allOnesDcCodewords = [
+    { code: 0b1111110, length: 7, amplitudeBits: 1, amplitudeLength: 1 },
+    ...Array.from({ length: 63 }, (_value, code) => ({
+      code,
+      length: 6,
+      amplitudeBits: code & 1,
+      amplitudeLength: code & 1,
+    })),
+    { code: 0b1111111, length: 7, amplitudeBits: 1, amplitudeLength: 1 },
+  ];
+  const allOnesDcSymbols = [...Array.from({ length: 63 }, (_value, code) => code & 1), 1];
+  const allOnesSixBitPrefix = simpleBaselineJpeg({
+    width: allOnesDcCodewords.length * 8,
+    height: 8,
+    sampling: [0x11],
+    dcCodeCounts: Array.from({ length: 16 }, (_value, index) => index === 5 ? 63 : index === 6 ? 1 : 0),
+    dcSymbols: allOnesDcSymbols,
+    dcCodewords: allOnesDcCodewords,
+    acCodeLength: 2,
+    acCodewords: [
+      { code: 0, length: 1 },
+      ...Array.from({ length: 63 }, (_value, code) => code & 1
+        ? { code: 0, length: 1 }
+        : { code: 0b10, length: 2 }),
+      { code: 0, length: 1 },
+    ],
+  });
   assert.throws(() => decodeLargeBaselineJpeg(allOnesCode, 16, 8), /image_source_invalid/);
+  assert.throws(() => decodeLargeBaselineJpeg(allOnesSixBitPrefix, allOnesDcCodewords.length * 8, 8), /image_source_invalid/);
   assert.throws(() => decodeLargeBaselineJpeg(valid.subarray(0, valid.length - 2), 16, 8), /image_source_invalid/);
   assert.throws(() => decodeLargeBaselineJpeg(valid, 8, 16), /image_dimensions_mismatch/);
 

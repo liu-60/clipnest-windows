@@ -1,0 +1,303 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "MEASURED_WITH_LIMITATIONS",
+  "measurementType": "production_ImagePreparationService_default_3000ms_deadline_five_fresh_utility_process_samples",
+  "measuredAt": "2026-10-05T18:40:42.917Z",
+  "source": {
+    "commit": "fd2dd2339cad8d0652954da40aa80fa4fa63ccb8",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "productionAndBuildFiles": [
+      {
+        "path": "src/main/clipboard/image-preparation.ts",
+        "sha256": "7d18bfd9c75ee393f86331ba4ef1712245dbc5a4b5d0bbaa11d848dfda662ee1"
+      },
+      {
+        "path": "src/main/clipboard/image-worker.ts",
+        "sha256": "ffd3b0ca7d1ab31f7d84e4ee30e89dbadb2c1c334bebc50d40374041c7d5532d"
+      },
+      {
+        "path": "src/main/clipboard/image-decoder.ts",
+        "sha256": "fa467e97c5840a76338fc7fc7c8fd876666473636051433dc7ff8afb1c9e9886"
+      },
+      {
+        "path": "src/main/clipboard/jpeg-baseline-stream.ts",
+        "sha256": "aaeb15823f6bf9b15716952ab3d9a654a7cd14d1a3eb0b9ce4f92e02bc5604a4"
+      },
+      {
+        "path": "dist-electron/main/clipboard/image-preparation.js",
+        "sha256": "85915bbf5d9064c750eec4fea9b03875b7455264a8b5d9bfd5736a370d25acf9"
+      },
+      {
+        "path": "dist-electron/main/clipboard/image-worker.js",
+        "sha256": "ca31dfe8caa18062ef1d49bddfd41e94384a07b7b2d4b26407b8454789571af8"
+      },
+      {
+        "path": "dist-electron/main/clipboard/image-decoder.js",
+        "sha256": "5be6d5407644d140d8ec2474f5f8882d2a7392955bac8ad46a3eb4e81eb952a7"
+      },
+      {
+        "path": "dist-electron/main/clipboard/jpeg-baseline-stream.js",
+        "sha256": "7727bae8822e5b487fecd78ec4d0e4c8212e04175a1d08a602cf663a4c89d187"
+      },
+      {
+        "path": "tests/tasks/T04/run-image-preparation-16mp-default-deadline-5-sample.cjs",
+        "sha256": "500ad2d7ee3da43376dcbe8b79572c870eb8fc7050ab111d72fefa88634fdf15"
+      }
+    ]
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "osVersion": "10.0.22631",
+    "electronVersion": "40.10.2",
+    "nodeVersion": "24.15.0",
+    "electronProcessType": "browser",
+    "electronBinarySource": "pinned pnpm Electron 40.10.2 runtime; nested dist fallback",
+    "cpuModel": "Intel(R) Xeon(R) Platinum 8378C CPU @ 2.80GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 17178939392,
+    "stageTimingProfileEnvPresent": false,
+    "workerStageTimingEnvPresent": false,
+    "browserWindowCreated": false,
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "nativeHelperInvoked": false
+  },
+  "fixture": {
+    "width": 4000,
+    "height": 4000,
+    "pixelCount": 16000000,
+    "encodedBytes": 20971520,
+    "sha256": "5f5178ce761193b569130af082740669cd16071de9ea733aa8968f4f8e9dc6a3",
+    "jpegEncoder": "pinned jpeg-js 0.4.4",
+    "jpegQuality": 74,
+    "jpegImageBytesBeforeApp2Padding": 19866368,
+    "jpegApp2PaddingBytes": 1105152,
+    "samplingFactors": [
+      {
+        "horizontal": 1,
+        "vertical": 1
+      },
+      {
+        "horizontal": 1,
+        "vertical": 1
+      },
+      {
+        "horizontal": 1,
+        "vertical": 1
+      }
+    ],
+    "content": "deterministic high-entropy synthetic baseline JPEG with APP2 padding; no user data"
+  },
+  "productionRoute": {
+    "service": "ImagePreparationService",
+    "decoderWorker": "createUtilityProcessImageWorker (real Electron utilityProcess)",
+    "sampleCount": 5,
+    "preparationDeadlineMs": 3000,
+    "deadlineAt": "performance.now() captured immediately before each service.prepare call plus the configured 3000 ms budget",
+    "serviceWallTime": "selectionPreparationStartedAtMs until service.prepare fulfills or rejects; excludes worker reaping",
+    "diagnosticSinkEnabled": false,
+    "workerStageTimingEnvironmentEnabled": false,
+    "perSampleIsolation": "new ImagePreparationService and one new utilityProcess per sample; await service.dispose and process exit before the next sample"
+  },
+  "summary": {
+    "sampleCount": 5,
+    "successCount": 5,
+    "timeoutCount": 0,
+    "errorCount": 0,
+    "serviceWallTimeMs": {
+      "min": 2688.3,
+      "median": 2749.57,
+      "max": 2755.66,
+      "values": [
+        2688.3,
+        2715.18,
+        2755.66,
+        2749.57,
+        2753.95
+      ]
+    },
+    "allTimedOutSamplesAbortedWorker": true,
+    "allSampleWorkersExitedBeforeNextSample": true
+  },
+  "samples": [
+    {
+      "index": 1,
+      "status": "success",
+      "selectionPreparationStartedAtMs": 253.4337,
+      "deadlineAtMs": 3253.4337,
+      "serviceSettledAtMs": 2941.7366,
+      "serviceWallTimeMs": 2688.3,
+      "deadlineOvershootMs": 0,
+      "errorCode": null,
+      "outputBytes": 64000000,
+      "outputRgbaSha256": "f6f1c8619e4adc31a55adc532c5219ab7408bca3cafdcf677d0dde2a0fce83dc",
+      "workerFactoryCalls": 1,
+      "workerDecodeCalls": 1,
+      "diagnosticSinkPassed": false,
+      "utilityProcessPid": 80628,
+      "workerSpawnedAtMs": 287.2661,
+      "workerAbortObserved": false,
+      "workerAbortObservedAtMs": null,
+      "workerAbortReasonCode": null,
+      "workerAbortObservationSource": null,
+      "workerExitObserved": true,
+      "workerExitObservedAtMs": 2997.1249,
+      "workerExitCode": 0,
+      "workerDisposeCalls": 1,
+      "serviceDisposeResolvedAtMs": 2997.2737,
+      "sampleCompletedAtMs": 2997.3418,
+      "serviceDisposeCompleted": true,
+      "processExitCompletedBeforeNextSample": null
+    },
+    {
+      "index": 2,
+      "status": "success",
+      "selectionPreparationStartedAtMs": 2997.367,
+      "deadlineAtMs": 5997.367,
+      "serviceSettledAtMs": 5712.5503,
+      "serviceWallTimeMs": 2715.18,
+      "deadlineOvershootMs": 0,
+      "errorCode": null,
+      "outputBytes": 64000000,
+      "outputRgbaSha256": "f6f1c8619e4adc31a55adc532c5219ab7408bca3cafdcf677d0dde2a0fce83dc",
+      "workerFactoryCalls": 1,
+      "workerDecodeCalls": 1,
+      "diagnosticSinkPassed": false,
+      "utilityProcessPid": 73392,
+      "workerSpawnedAtMs": 3105.8371,
+      "workerAbortObserved": false,
+      "workerAbortObservedAtMs": null,
+      "workerAbortReasonCode": null,
+      "workerAbortObservationSource": null,
+      "workerExitObserved": true,
+      "workerExitObservedAtMs": 5766.1193,
+      "workerExitCode": 0,
+      "workerDisposeCalls": 1,
+      "serviceDisposeResolvedAtMs": 5766.3464,
+      "sampleCompletedAtMs": 5766.4138,
+      "serviceDisposeCompleted": true,
+      "processExitCompletedBeforeNextSample": true
+    },
+    {
+      "index": 3,
+      "status": "success",
+      "selectionPreparationStartedAtMs": 5766.4324,
+      "deadlineAtMs": 8766.4324,
+      "serviceSettledAtMs": 8522.0925,
+      "serviceWallTimeMs": 2755.66,
+      "deadlineOvershootMs": 0,
+      "errorCode": null,
+      "outputBytes": 64000000,
+      "outputRgbaSha256": "f6f1c8619e4adc31a55adc532c5219ab7408bca3cafdcf677d0dde2a0fce83dc",
+      "workerFactoryCalls": 1,
+      "workerDecodeCalls": 1,
+      "diagnosticSinkPassed": false,
+      "utilityProcessPid": 81052,
+      "workerSpawnedAtMs": 5829.0204,
+      "workerAbortObserved": false,
+      "workerAbortObservedAtMs": null,
+      "workerAbortReasonCode": null,
+      "workerAbortObservationSource": null,
+      "workerExitObserved": true,
+      "workerExitObservedAtMs": 8575.4681,
+      "workerExitCode": 0,
+      "workerDisposeCalls": 1,
+      "serviceDisposeResolvedAtMs": 8575.5339,
+      "sampleCompletedAtMs": 8575.5992,
+      "serviceDisposeCompleted": true,
+      "processExitCompletedBeforeNextSample": true
+    },
+    {
+      "index": 4,
+      "status": "success",
+      "selectionPreparationStartedAtMs": 8575.6182,
+      "deadlineAtMs": 11575.6182,
+      "serviceSettledAtMs": 11325.1903,
+      "serviceWallTimeMs": 2749.57,
+      "deadlineOvershootMs": 0,
+      "errorCode": null,
+      "outputBytes": 64000000,
+      "outputRgbaSha256": "f6f1c8619e4adc31a55adc532c5219ab7408bca3cafdcf677d0dde2a0fce83dc",
+      "workerFactoryCalls": 1,
+      "workerDecodeCalls": 1,
+      "diagnosticSinkPassed": false,
+      "utilityProcessPid": 81460,
+      "workerSpawnedAtMs": 8646.1071,
+      "workerAbortObserved": false,
+      "workerAbortObservedAtMs": null,
+      "workerAbortReasonCode": null,
+      "workerAbortObservationSource": null,
+      "workerExitObserved": true,
+      "workerExitObservedAtMs": 11378.3168,
+      "workerExitCode": 0,
+      "workerDisposeCalls": 1,
+      "serviceDisposeResolvedAtMs": 11378.3807,
+      "sampleCompletedAtMs": 11378.4365,
+      "serviceDisposeCompleted": true,
+      "processExitCompletedBeforeNextSample": true
+    },
+    {
+      "index": 5,
+      "status": "success",
+      "selectionPreparationStartedAtMs": 11378.4599,
+      "deadlineAtMs": 14378.4599,
+      "serviceSettledAtMs": 14132.4116,
+      "serviceWallTimeMs": 2753.95,
+      "deadlineOvershootMs": 0,
+      "errorCode": null,
+      "outputBytes": 64000000,
+      "outputRgbaSha256": "f6f1c8619e4adc31a55adc532c5219ab7408bca3cafdcf677d0dde2a0fce83dc",
+      "workerFactoryCalls": 1,
+      "workerDecodeCalls": 1,
+      "diagnosticSinkPassed": false,
+      "utilityProcessPid": 77084,
+      "workerSpawnedAtMs": 11465.3125,
+      "workerAbortObserved": false,
+      "workerAbortObservedAtMs": null,
+      "workerAbortReasonCode": null,
+      "workerAbortObservationSource": null,
+      "workerExitObserved": true,
+      "workerExitObservedAtMs": 14185.7553,
+      "workerExitCode": 0,
+      "workerDisposeCalls": 1,
+      "serviceDisposeResolvedAtMs": 14185.824,
+      "sampleCompletedAtMs": 14185.8839,
+      "serviceDisposeCompleted": true,
+      "processExitCompletedBeforeNextSample": true
+    }
+  ],
+  "cleanup": {
+    "serviceDisposeCompletedForAllSamples": true,
+    "workerExitObservedForAllSamples": true,
+    "distinctUtilityProcessPids": [
+      80628,
+      73392,
+      81052,
+      81460,
+      77084
+    ],
+    "temporaryProfileRemoved": true
+  },
+  "profileIsolation": {
+    "isolated": true,
+    "root": "unique validated child of the operating-system temporary directory",
+    "userDataAndSessionDataInsideRoot": true,
+    "fixtureInsideRoot": true,
+    "cleanupVerified": true
+  },
+  "probeInvariants": {
+    "browserWindowCreated": false,
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "nativeHelperInvoked": false,
+    "packageInstalled": false
+  },
+  "limitations": [
+    "Five samples use one deterministic synthetic 16 MP/20 MiB baseline JPEG SOF0 4:4:4 input and do not represent all JPEG layouts or user images.",
+    "The measured interval covers production image preparation through success or timeout, but excludes selection UI work, clipboard access, helper calls, target-application behavior, and paste input.",
+    "Results are environment-specific timing observations, not a universal 3000 ms guarantee or complete T04 acceptance."
+  ]
+}
