@@ -78,8 +78,32 @@ export class ImagePreparationService {
     throwIfAborted(options.signal);
 
     const key = cacheKey(input.itemRef, input.itemVersion);
-    const cached = this.readCache(key);
+    const cached = this.cache.get(key);
     if (cached) {
+      let failure: ImagePreparationError | null = null;
+      try {
+        if (options.deadlineAt !== undefined) {
+          if (!Number.isFinite(options.deadlineAt)) {
+            failure = new ImagePreparationError("image_deadline_invalid");
+          } else if (performance.now() >= options.deadlineAt) {
+            failure = new ImagePreparationError("image_prepare_timeout");
+          }
+        }
+        if (!failure && options.isCurrent && !options.isCurrent()) {
+          failure = new ImagePreparationError("image_item_stale");
+        }
+      } catch (error) {
+        failure = normalizeError(error, options.signal?.aborted ?? false);
+      }
+      if (failure) {
+        this.emit(options.onUpdate, {
+          phase: failure.code === "image_cancelled" ? "cancelled" : "failed",
+          itemRef: input.itemRef, itemVersion: input.itemVersion, reason: failure.code,
+        });
+        throw failure;
+      }
+      this.cache.delete(key);
+      this.cache.set(key, cached);
       this.emit(options.onUpdate, { phase: "ready", itemRef: input.itemRef, itemVersion: input.itemVersion, cacheHit: true });
       return { image: cached.image, cacheHit: true, cached: true };
     }
@@ -183,12 +207,6 @@ export class ImagePreparationService {
     this.worker = null;
     if (worker) await worker.dispose();
     if (this.workerRetirement) await this.workerRetirement;
-  }
-
-  private readCache(key: string): CacheEntry | undefined {
-    const entry = this.cache.get(key);
-    if (entry) { this.cache.delete(key); this.cache.set(key, entry); }
-    return entry;
   }
 
   private writeCache(key: string, itemRef: string, image: DecodedImage): boolean {

@@ -75,11 +75,51 @@ test("decoded cache is a 32 MiB LRU and a cache hit skips the worker", async () 
     assert.equal(hit.cacheHit, true);
     assert.equal(calls.length, 8);
 
+    await assert.rejects(
+      service.prepare(input("item-1"), { isCurrent: () => false }),
+      (error) => error instanceof ImagePreparationError && error.code === "image_item_stale",
+    );
+
     await service.prepare(input("item-8"));
     assert.equal(service.getCacheStats().bytes, IMAGE_LIMITS.decodedCacheBytes);
     await service.prepare(input("item-1"));
     assert.equal(calls.length, 10);
     assert.equal(service.getCacheStats().entries, 8);
+  } finally {
+    await service.dispose();
+  }
+});
+
+test("cached image hits reject an expired deadline or stale item before reporting ready", async () => {
+  const { service, calls } = fakeService();
+  try {
+    await service.prepare(input("cached-current"));
+    const statsBefore = service.getCacheStats();
+    const staleUpdates = [];
+    await assert.rejects(
+      service.prepare(input("cached-current"), {
+        isCurrent: () => false,
+        onUpdate: (update) => staleUpdates.push(update),
+      }),
+      (error) => error instanceof ImagePreparationError && error.code === "image_item_stale",
+    );
+    assert.deepEqual(staleUpdates.map(({ phase, reason }) => ({ phase, reason })), [
+      { phase: "failed", reason: "image_item_stale" },
+    ]);
+
+    const expiredUpdates = [];
+    await assert.rejects(
+      service.prepare(input("cached-current"), {
+        deadlineAt: -1,
+        onUpdate: (update) => expiredUpdates.push(update),
+      }),
+      (error) => error instanceof ImagePreparationError && error.code === "image_prepare_timeout",
+    );
+    assert.deepEqual(expiredUpdates.map(({ phase, reason }) => ({ phase, reason })), [
+      { phase: "failed", reason: "image_prepare_timeout" },
+    ]);
+    assert.equal(calls.length, 1, "stale and expired cache hits do not start another decode");
+    assert.deepEqual(service.getCacheStats(), statsBefore, "rejected cache hits do not change cached bytes or entry count");
   } finally {
     await service.dispose();
   }

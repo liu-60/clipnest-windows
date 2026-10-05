@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "FAKE_REGRESSION_PASS_WITH_LIMITATIONS",
+  "measurementType": "image preparation cache, main-thread conversion, and pre-registration deadline boundaries",
+  "recordedDate": "2026-10-06",
+  "source": {
+    "commit": "253e54476465c5b3498314bd4233462da68d8fb1",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "testFiles": [
+      "tests/tasks/T04/clipboard-image-preparation.test.cjs",
+      "tests/tasks/T04/main-image-preparation-failure.test.cjs"
+    ]
+  },
+  "environment": {
+    "platform": "win32",
+    "nodeVersion": "24.16.0"
+  },
+  "command": "pnpm test:unit -- main-image-preparation-failure.test.cjs clipboard-image-preparation.test.cjs",
+  "validation": {
+    "mainProcessTypeScriptBuild": "PASS",
+    "targetedTests": {
+      "result": "PASS",
+      "passed": 25,
+      "failed": 0
+    },
+    "gitDiffCheck": "PASS"
+  },
+  "observed": {
+    "cachedImages": "Expired deadlines and stale item checks fail before ready; rejected hits do not decode, change cache byte/entry counts, or refresh LRU recency.",
+    "mainThreadBgraConversion": "The original absolute deadline is checked after image service completion and again after RGBA-to-BGRA conversion.",
+    "providerSnapshot": "The same deadline is checked after snapshot completion and before helper registration; a late snapshot is released.",
+    "lateConversionAndSnapshotTests": 2,
+    "helperRegistrationOnLateImagePreparation": 0,
+    "clipboardPasteOrPanelHideEffectsOnLateImagePreparation": 0
+  },
+  "sideEffects": {
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "browserWindowCreated": false,
+    "nativeHelperInvoked": false,
+    "packageBuiltOrInstalled": false
+  },
+  "limitations": [
+    "Image service, provider, and clock are fakes; main orchestration functions are exercised in a VM harness with a synthetic 1x1 image.",
+    "This evidence proves fail-closed guards before helper registration in the harness, not real decoder CPU interruption, real OS clipboard/provider behavior, helper lifecycle, or a full desktop selection/paste flow.",
+    "The T04 P15 content-provider decode/hash path remains outside scope per user direction; JPEG 4:2:0 fidelity and full T04 acceptance remain open."
+  ]
+}

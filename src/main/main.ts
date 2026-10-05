@@ -1423,6 +1423,8 @@ async function decodeNativeClipboardImage(dataUrl: string, encodedBytes: Buffer)
     isCurrent: () => isCurrentNativePasteJob(job),
     deadlineAt: job.contentPreparationDeadlineAt,
   });
+  if (!Number.isFinite(job.contentPreparationDeadlineAt)) throw new Error("image_deadline_invalid");
+  if (performance.now() >= job.contentPreparationDeadlineAt) throw new Error("image_prepare_timeout");
   const bgra = Buffer.allocUnsafe(image.pixels.byteLength);
   for (let sourceOffset = 0, targetOffset = 0; sourceOffset < image.pixels.length; sourceOffset += 4, targetOffset += 4) {
     const alpha = image.pixels[sourceOffset + 3];
@@ -1431,6 +1433,7 @@ async function decodeNativeClipboardImage(dataUrl: string, encodedBytes: Buffer)
     bgra[targetOffset + 2] = Math.round(image.pixels[sourceOffset] * alpha / 255);
     bgra[targetOffset + 3] = alpha;
   }
+  if (performance.now() >= job.contentPreparationDeadlineAt) throw new Error("image_prepare_timeout");
   return { width: image.width, height: image.height, bgra };
 }
 function startNativeHelper(): void {
@@ -2208,6 +2211,8 @@ async function copySelectedItem(
     const preparation = (async () => {
       job.snapshot = await provider.snapshot(senderId, itemRef);
       if (!isCurrentNativePasteJob(job)) throw new Error("paste_cancelled");
+      if (!Number.isFinite(job.contentPreparationDeadlineAt)) throw new Error("image_deadline_invalid");
+      if (performance.now() >= job.contentPreparationDeadlineAt) throw new Error("image_prepare_timeout");
       return sendNativeContent(job, provider, client);
     })();
     job.preparationPromise = preparation;

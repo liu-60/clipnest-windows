@@ -38,6 +38,14 @@
       "failed": 0,
       "command": "pnpm test:unit"
     },
+    "latestSelectionDeadlineBoundaryFakeRun": {
+      "status": "PASS_WITH_LIMITATIONS",
+      "artifact": "docs/evidence/T04/image-preparation-selection-deadline-boundary-regression.json",
+      "command": "pnpm test:unit -- main-image-preparation-failure.test.cjs clipboard-image-preparation.test.cjs",
+      "passed": 25,
+      "failed": 0,
+      "scope": "Fake image service/provider/clock and VM main orchestration; expired/stale cache checks, LRU order, BGRA conversion cutoff, and post-snapshot pre-registration cutoff. No real clipboard, helper, or physical input."
+    },
     "latestJpegPreflightRun": {
       "status": "PASS",
       "passed": 14,

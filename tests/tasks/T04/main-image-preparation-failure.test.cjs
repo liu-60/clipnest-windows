@@ -19,6 +19,7 @@ const mainSource = fs.readFileSync(mainPath, "utf8");
 const parsedMain = ts.createSourceFile(mainPath, mainSource, ts.ScriptTarget.Latest, true);
 const testedFunctionNames = [
   "copySelectedItem",
+  "decodeNativeClipboardImage",
   "makeNativePasteJob",
   "isCurrentNativePasteJob",
   "hidePanel",
@@ -52,6 +53,8 @@ function makeHarness({
   snapshotDelayMs = 0,
   monotonicTickValues = null,
   performanceNowMs = null,
+  performanceNowValues = null,
+  decodeImageDuringSnapshot = false,
 } = {}) {
   const events = [];
   const effects = {
@@ -63,6 +66,8 @@ function makeHarness({
     panelHides: 0,
     authorizationChecks: 0,
     cancellations: 0,
+    imagePreparationCalls: 0,
+    imagePreparationDeadlineAt: null,
   };
   const requests = [];
   const cancellations = [];
@@ -76,6 +81,7 @@ function makeHarness({
   let context;
   let nextId = 0;
   let monotonicTickReadCount = 0;
+  let performanceNowReadCount = 0;
   const elapsedMs = () => performance.now() - startedAt;
   const startedAt = performance.now();
   const bridge = {
@@ -121,18 +127,25 @@ function makeHarness({
     waitForPreparation: async () => ({ kind: "continue", operationBudgetMs: 500 }),
     cancel() { events.push("monitor-cancelled"); },
   };
+  const readPerformanceNow = () => {
+    const value = performanceNowValues
+      ? performanceNowValues[Math.min(performanceNowReadCount++, performanceNowValues.length - 1)]
+      : performanceNowMs;
+    performanceNowSamples.push(value);
+    return value;
+  };
 
   context = vm.createContext({
     Error,
+    Buffer,
     AbortController,
     setTimeout,
     clearTimeout,
     clearInterval,
     randomUUID: () => `test-${++nextId}`,
-    performance: performanceNowMs === null ? performance : { now: () => {
-      performanceNowSamples.push(performanceNowMs);
-      return performanceNowMs;
-    } },
+    performance: performanceNowMs === null && performanceNowValues === null
+      ? performance
+      : { now: readPerformanceNow },
     metrics: { mark: (_requestId, name) => events.push(`metric-${name}`), finish() {}, flush: async () => {} },
     benchmarkMode: false,
     process: { argv: [] },
@@ -161,12 +174,24 @@ function makeHarness({
     startSelectionKeyReleaseMonitor: () => monitor,
     SELECTION_KEY_RELEASE_WINDOW_MS,
     IMAGE_LIMITS: { contentPrepareTimeoutMs: 3_000 },
+    inspectImageSource: () => ({ format: "png", width: 1, height: 1 }),
+    createHash: () => ({ update() { return this; }, digest: () => "synthetic-image-sha256" }),
+    imagePreparationService: {
+      async prepare(_input, options) {
+        effects.imagePreparationCalls += 1;
+        effects.imagePreparationDeadlineAt = options.deadlineAt;
+        return { image: { width: 1, height: 1, pixels: Uint8Array.of(10, 20, 30, 255) } };
+      },
+    },
     nativeContentProvider: {
       async snapshot() {
         effects.snapshotCalls += 1;
         events.push("snapshot");
         if (snapshotDelayMs > 0) await new Promise((resolve) => setTimeout(resolve, snapshotDelayMs));
         if (snapshotError) throw new Error(snapshotError);
+        if (decodeImageDuringSnapshot) {
+          await context.decodeNativeClipboardImage(item.content, Buffer.from([1]));
+        }
         return { itemRef: item.id, itemVersion: "version-1" };
       },
       isCurrent: () => true,
@@ -256,6 +281,55 @@ test("image snapshot read failure preserves the retained source and has zero ext
   assert.equal(harness.item.content, "data:image/png;base64,AA==", "the retained image source remains available");
   assert.equal(harness.item.preview, "预览", "the retained image preview remains available");
   assert.deepEqual(harness.requests, [], "no helper command is sent after a failed image read");
+});
+
+test("image BGRA conversion that crosses the selection deadline blocks helper registration", async () => {
+  const harness = makeHarness({
+    decodeImageDuringSnapshot: true,
+    performanceNowValues: [0, 0, 2_999, 3_001],
+  });
+
+  assert.deepEqual(plain(await harness.select()), {
+    status: "blocked",
+    reasonCode: "image_prepare_timeout",
+  });
+  assert.equal(harness.effects.imagePreparationCalls, 1);
+  assert.equal(harness.effects.imagePreparationDeadlineAt, 3_000,
+    "image decoding receives the original selection-start deadline");
+  assert.deepEqual(harness.clockSamples.performanceNow, [0, 0, 2_999, 3_001],
+    "service completion is before cutoff and BGRA conversion finishes after it");
+  assert.equal(harness.effects.snapshotCalls, 1);
+  assert.equal(harness.effects.helperPreparationCalls, 0, "late BGRA conversion prevents helper registration");
+  assert.equal(harness.effects.nativeClipboardWrites, 0);
+  assert.equal(harness.effects.electronFallbackWrites, 0);
+  assert.equal(harness.effects.pasteRequests, 0);
+  assert.equal(harness.effects.panelHides, 0);
+  assert.equal(harness.isVisible(), true);
+  assert.deepEqual(harness.requests, []);
+});
+
+test("image snapshot work that crosses the selection deadline releases the snapshot before helper registration", async () => {
+  const harness = makeHarness({
+    decodeImageDuringSnapshot: true,
+    performanceNowValues: [0, 0, 2_998, 2_999, 3_001],
+  });
+
+  assert.deepEqual(plain(await harness.select()), {
+    status: "blocked",
+    reasonCode: "image_prepare_timeout",
+  });
+  assert.equal(harness.effects.imagePreparationCalls, 1);
+  assert.equal(harness.effects.imagePreparationDeadlineAt, 3_000);
+  assert.deepEqual(harness.clockSamples.performanceNow, [0, 0, 2_998, 2_999, 3_001],
+    "service completion and BGRA conversion finish before cutoff; later snapshot work crosses it");
+  assert.equal(harness.effects.helperPreparationCalls, 0, "late snapshot completion prevents helper registration");
+  assert.equal(harness.effects.nativeClipboardWrites, 0);
+  assert.equal(harness.effects.electronFallbackWrites, 0);
+  assert.equal(harness.effects.pasteRequests, 0);
+  assert.equal(harness.effects.panelHides, 0);
+  assert.ok(harness.events.includes("snapshot-release"), "the completed but late snapshot is released");
+  assert.equal(harness.isVisible(), true);
+  assert.deepEqual(harness.requests, []);
 });
 
 test("image selection fails closed when the helper is unavailable before preparation", async () => {
