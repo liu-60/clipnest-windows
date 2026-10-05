@@ -1,0 +1,321 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "b-temporary-candidate-compatibility-probe",
+  "checkedDate": "2026-10-05",
+  "result": "PARTIAL_COMPATIBILITY_DEMONSTRATED_CANDIDATE_NOT_SELECTED",
+  "repository": {
+    "path": "D:\\ClipNest-work\\v2",
+    "branch": "codex/v2-clipboard",
+    "head": "bd838bb57e7c1ed41c47f26a9394d8a7a273cee2"
+  },
+  "environment": {
+    "os": "Windows 11 x64",
+    "node": "v24.16.0",
+    "npm": "11.17.0",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "isolation": {
+    "temporaryProject": "%TEMP%\\clipnest-t06b-compat-13874405bd2549fca495d77f52e1bdae",
+    "installCommand": "npm install --ignore-scripts --no-audit --no-fund --save-exact zod@4.6.5 ajv@8.20.0 ajv-formats@3.0.1 quicktype@26.0.0",
+    "installExitCode": 0,
+    "packagesInstalled": 114,
+    "temporaryNpmLock": {
+      "path": "%TEMP%\\clipnest-t06b-compat-13874405bd2549fca495d77f52e1bdae\\package-lock.json",
+      "lockfileVersion": 3,
+      "sha256": "71436F0813A2832405947EEE6B856449D6E538D512C14209DDDDE750E2289DC3"
+    },
+    "v2ManifestsChanged": false,
+    "v2LockfilesChanged": false,
+    "v2ProgressChanged": false,
+    "progressStatus": "in_progress",
+    "preexistingUntrackedPreserved": [
+      "docs/progress.json.tmp"
+    ]
+  },
+  "candidatePackages": [
+    {
+      "name": "zod",
+      "version": "4.6.5",
+      "resolved": "https://registry.npmjs.org/zod/-/zod-4.6.5.tgz",
+      "registryIntegrity": "sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==",
+      "temporaryLockIntegrity": "sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==",
+      "integrityMatches": true
+    },
+    {
+      "name": "ajv",
+      "version": "8.20.0",
+      "resolved": "https://registry.npmjs.org/ajv/-/ajv-8.20.0.tgz",
+      "registryIntegrity": "sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==",
+      "temporaryLockIntegrity": "sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==",
+      "integrityMatches": true
+    },
+    {
+      "name": "ajv-formats",
+      "version": "3.0.1",
+      "resolved": "https://registry.npmjs.org/ajv-formats/-/ajv-formats-3.0.1.tgz",
+      "registryIntegrity": "sha512-8iUql50EUR+uUcdRQ3HDqa6EVyo3docL8g5WJ3FNcWmu62IbkGUue/pEyLBW8VGKKucTPgqeks4fIU1DA4yowQ==",
+      "temporaryLockIntegrity": "sha512-8iUql50EUR+uUcdRQ3HDqa6EVyo3docL8g5WJ3FNcWmu62IbkGUue/pEyLBW8VGKKucTPgqeks4fIU1DA4yowQ==",
+      "integrityMatches": true
+    },
+    {
+      "name": "quicktype",
+      "version": "26.0.0",
+      "resolved": "https://registry.npmjs.org/quicktype/-/quicktype-26.0.0.tgz",
+      "registryIntegrity": "sha512-6sGRYEe3402KFTVKhqnsE6Z6Jdi5jryc/6cg+A8kx3dvIy01Ex35OcuuuZUZDbvzFw+1fkseCpLpbGhDS3uLJA==",
+      "temporaryLockIntegrity": "sha512-6sGRYEe3402KFTVKhqnsE6Z6Jdi5jryc/6cg+A8kx3dvIy01Ex35OcuuuZUZDbvzFw+1fkseCpLpbGhDS3uLJA==",
+      "integrityMatches": true
+    },
+    {
+      "name": "quicktype-core",
+      "version": "26.0.0",
+      "resolved": "https://registry.npmjs.org/quicktype-core/-/quicktype-core-26.0.0.tgz",
+      "registryIntegrity": "sha512-tLSe2RkSj7c7ocTc+QMuQDGgEetGhZvKXLv1vNwpAQX2x8oOGYU9KSgJdIP9Qvy5hm47S2k3ZAX1LQAdS75JaA==",
+      "temporaryLockIntegrity": "sha512-tLSe2RkSj7c7ocTc+QMuQDGgEetGhZvKXLv1vNwpAQX2x8oOGYU9KSgJdIP9Qvy5hm47S2k3ZAX1LQAdS75JaA==",
+      "integrityMatches": true
+    },
+    {
+      "name": "quicktype-graphql-input",
+      "version": "26.0.0",
+      "resolved": "https://registry.npmjs.org/quicktype-graphql-input/-/quicktype-graphql-input-26.0.0.tgz",
+      "registryIntegrity": "sha512-bI129FVf6LLrG+6rh0gB9905oqNN0oGuZYIS0gV3V3C4JEdaR2qavdM/r925pUISwM3frrYE4McSDsuAzrHRTw==",
+      "temporaryLockIntegrity": "sha512-bI129FVf6LLrG+6rh0gB9905oqNN0oGuZYIS0gV3V3C4JEdaR2qavdM/r925pUISwM3frrYE4McSDsuAzrHRTw==",
+      "integrityMatches": true
+    },
+    {
+      "name": "quicktype-typescript-input",
+      "version": "26.0.0",
+      "resolved": "https://registry.npmjs.org/quicktype-typescript-input/-/quicktype-typescript-input-26.0.0.tgz",
+      "registryIntegrity": "sha512-8Fo23bQ2yON2VdjIgPvzLx0nqaqjgUb/xIBcYjd0D4U5cWJ7oABLeNRH0krcSrFp9ez5qDPHB2xbkSLXNFaW9w==",
+      "temporaryLockIntegrity": "sha512-8Fo23bQ2yON2VdjIgPvzLx0nqaqjgUb/xIBcYjd0D4U5cWJ7oABLeNRH0krcSrFp9ez5qDPHB2xbkSLXNFaW9w==",
+      "integrityMatches": true
+    }
+  ],
+  "schemaConstruction": {
+    "canonicalSchemaSource": "Zod 4.6.5 z.strictObject + z.literal + z.toJSONSchema(target=draft-2020-12)",
+    "dialect": "https://json-schema.org/draft/2020-12/schema",
+    "rootAdditionalPropertiesFalse": true,
+    "nestedAdditionalPropertiesFalse": true,
+    "nestedRef": "#/$defs/Nested",
+    "refFactoring": "The nested strict object was first emitted inline by Zod, then factored into local $defs.Nested and referenced by #/$defs/Nested to match the accepted fixture shape; this does not test Zod registry-native $ref emission.",
+    "generatedConstValues": {
+      "protocol": 1,
+      "enabled": true,
+      "numericConst": 7
+    }
+  },
+  "behaviorProbe": {
+    "command": "node probe.cjs",
+    "exitCode": 0,
+    "validator": "Ajv 8.20.0 Ajv2020 export (ajv/dist/2020), allErrors=true, strict=true",
+    "assertionsPassed": true,
+    "resultsArtifact": "docs/evidence/T06/candidate-compatibility-2026-10-05.results.json",
+    "cases": [
+      {
+        "id": "valid",
+        "zodAccepted": true,
+        "zodIssues": [],
+        "ajvAccepted": true,
+        "ajvErrors": []
+      },
+      {
+        "id": "protocol-missing",
+        "zodAccepted": false,
+        "zodIssues": [
+          {
+            "path": [
+              "protocol"
+            ],
+            "code": "invalid_value"
+          }
+        ],
+        "ajvAccepted": false,
+        "ajvErrors": [
+          {
+            "instancePath": "",
+            "keyword": "required",
+            "params": {
+              "missingProperty": "protocol"
+            }
+          }
+        ]
+      },
+      {
+        "id": "boolean-const-mismatch",
+        "zodAccepted": false,
+        "zodIssues": [
+          {
+            "path": [
+              "enabled"
+            ],
+            "code": "invalid_value"
+          }
+        ],
+        "ajvAccepted": false,
+        "ajvErrors": [
+          {
+            "instancePath": "/enabled",
+            "keyword": "const",
+            "params": {
+              "allowedValue": true
+            }
+          }
+        ]
+      },
+      {
+        "id": "numeric-const-mismatch",
+        "zodAccepted": false,
+        "zodIssues": [
+          {
+            "path": [
+              "numericConst"
+            ],
+            "code": "invalid_value"
+          }
+        ],
+        "ajvAccepted": false,
+        "ajvErrors": [
+          {
+            "instancePath": "/numericConst",
+            "keyword": "const",
+            "params": {
+              "allowedValue": 7
+            }
+          }
+        ]
+      },
+      {
+        "id": "root-extra",
+        "zodAccepted": false,
+        "zodIssues": [
+          {
+            "path": [],
+            "code": "unrecognized_keys"
+          }
+        ],
+        "ajvAccepted": false,
+        "ajvErrors": [
+          {
+            "instancePath": "",
+            "keyword": "additionalProperties",
+            "params": {
+              "additionalProperty": "extra"
+            }
+          }
+        ]
+      },
+      {
+        "id": "nested-extra",
+        "zodAccepted": false,
+        "zodIssues": [
+          {
+            "path": [
+              "nested"
+            ],
+            "code": "unrecognized_keys"
+          }
+        ],
+        "ajvAccepted": false,
+        "ajvErrors": [
+          {
+            "instancePath": "/nested",
+            "keyword": "additionalProperties",
+            "params": {
+              "additionalProperty": "extra"
+            }
+          }
+        ]
+      },
+      {
+        "id": "nested-missing-code",
+        "zodAccepted": false,
+        "zodIssues": [
+          {
+            "path": [
+              "nested",
+              "code"
+            ],
+            "code": "invalid_type"
+          }
+        ],
+        "ajvAccepted": false,
+        "ajvErrors": [
+          {
+            "instancePath": "/nested",
+            "keyword": "required",
+            "params": {
+              "missingProperty": "code"
+            }
+          }
+        ]
+      }
+    ],
+    "decimalStringRoundTrip": {
+      "value": "9007199254740993",
+      "type": "string",
+      "exact": true
+    },
+    "ajvFormatsInstalledButNotUsed": true,
+    "formatAssertionsTested": false
+  },
+  "rustGeneration": {
+    "command": "quicktype --src-lang schema --lang rs --top-level CompatFixture --out quicktype-generated.rs schema.json",
+    "versionCommandOutput": "quicktype version 26.0.0",
+    "exitCode": 0,
+    "outputBytes": 708,
+    "dtoFieldTypes": {
+      "decimal_id": "String",
+      "enabled": "bool",
+      "numeric_const": "f64",
+      "protocol": "f64"
+    },
+    "hasSerdeDenyUnknownFields": false,
+    "constValidationEmitted": false,
+    "generatedDtoCompile": "NOT_RUN",
+    "rustSerdeBehavior": "NOT_RUN",
+    "limitation": "Generated DTO types do not enforce boolean/numeric const values, and the output contains no explicit unknown-field rejection. This probe therefore demonstrates schema/validator compatibility and generation success, not the required Rust boundary behavior.",
+    "artifact": "docs/evidence/T06/candidate-compatibility-2026-10-05.quicktype.rs"
+  },
+  "notVerified": [
+    "The temporary candidates are not selected or frozen for v2.",
+    "The probe itself changed no v2 manifest, pnpm-lock.yaml, Cargo.toml, Cargo.lock, or docs/progress.json; this follow-up only indexes the evidence and records its scope in docs/progress.json.",
+    "The temporary npm graph was installed with scripts and audit disabled; this is not a complete license review, SBOM, or vulnerability review.",
+    "No Ajv format plugin behavior, required canonical ClipNest schemas, Rust DTO compilation/round-trip, Rust const enforcement, or Rust unknown-field behavior was tested.",
+    "The local $ref was factored by the harness from a Zod-generated nested definition; native Zod registry reference output was not tested.",
+    "The full T06-b cross-language fixtures, generated-drift check, provenance closure, and independent T06 acceptance review remain open."
+  ],
+  "artifacts": [
+    {
+      "path": "docs/evidence/T06/candidate-compatibility-2026-10-05.cjs",
+      "bytes": 4360,
+      "sha256": "77A3379C5DAB578880B1CF54F410D8DE1A1CD02E33C80E92065A578A94990C94"
+    },
+    {
+      "path": "docs/evidence/T06/candidate-compatibility-2026-10-05.schema.json",
+      "bytes": 843,
+      "sha256": "907265727AA067C8395B0971A18E9633E944B7C35DCC1FB6308791FC79EB281F"
+    },
+    {
+      "path": "docs/evidence/T06/candidate-compatibility-2026-10-05.results.json",
+      "bytes": 3242,
+      "sha256": "EE1FAB19942FF0AF156C7BC54CA62D62832BD5ACCAE1D026C992B4FAE97E36CD"
+    },
+    {
+      "path": "docs/evidence/T06/candidate-compatibility-2026-10-05.quicktype.rs",
+      "bytes": 708,
+      "sha256": "3982ADB0C727096072B6F7D9F4E8DCDA0DE92376969A940EB1AB2273E61F9452"
+    }
+  ],
+  "probeReexecution": {
+    "shell": "PowerShell",
+    "workingDirectory": "%TEMP%\\clipnest-t06b-compat-13874405bd2549fca495d77f52e1bdae",
+    "command": "$env:NODE_PATH = Join-Path $env:TEMP 'clipnest-t06b-compat-13874405bd2549fca495d77f52e1bdae\\node_modules'; node 'D:\\ClipNest-work\\v2\\docs\\evidence\\T06\\candidate-compatibility-2026-10-05.cjs'",
+    "outputsWrittenToWorkingDirectory": [
+      "schema.json",
+      "probe-results.json"
+    ],
+    "exitCode": 0,
+    "resultSha256": "EE1FAB19942FF0AF156C7BC54CA62D62832BD5ACCAE1D026C992B4FAE97E36CD",
+    "archivedResultMatchesTemp": true
+  }
+}

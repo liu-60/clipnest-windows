@@ -1,0 +1,159 @@
+{
+  "assertionsPassed": true,
+  "zodVersion": "4.6.5",
+  "ajvVersion": "8.20.0",
+  "schemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "schemaHasRootAdditionalPropertiesFalse": true,
+  "schemaHasNestedRef": "#/$defs/Nested",
+  "schemaHasNestedAdditionalPropertiesFalse": true,
+  "schemaConstValues": {
+    "protocol": 1,
+    "enabled": true,
+    "numericConst": 7
+  },
+  "decimalStringRoundTrip": {
+    "value": "9007199254740993",
+    "type": "string",
+    "exact": true
+  },
+  "cases": [
+    {
+      "id": "valid",
+      "zodAccepted": true,
+      "zodIssues": [],
+      "ajvAccepted": true,
+      "ajvErrors": []
+    },
+    {
+      "id": "protocol-missing",
+      "zodAccepted": false,
+      "zodIssues": [
+        {
+          "path": [
+            "protocol"
+          ],
+          "code": "invalid_value"
+        }
+      ],
+      "ajvAccepted": false,
+      "ajvErrors": [
+        {
+          "instancePath": "",
+          "keyword": "required",
+          "params": {
+            "missingProperty": "protocol"
+          }
+        }
+      ]
+    },
+    {
+      "id": "boolean-const-mismatch",
+      "zodAccepted": false,
+      "zodIssues": [
+        {
+          "path": [
+            "enabled"
+          ],
+          "code": "invalid_value"
+        }
+      ],
+      "ajvAccepted": false,
+      "ajvErrors": [
+        {
+          "instancePath": "/enabled",
+          "keyword": "const",
+          "params": {
+            "allowedValue": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "numeric-const-mismatch",
+      "zodAccepted": false,
+      "zodIssues": [
+        {
+          "path": [
+            "numericConst"
+          ],
+          "code": "invalid_value"
+        }
+      ],
+      "ajvAccepted": false,
+      "ajvErrors": [
+        {
+          "instancePath": "/numericConst",
+          "keyword": "const",
+          "params": {
+            "allowedValue": 7
+          }
+        }
+      ]
+    },
+    {
+      "id": "root-extra",
+      "zodAccepted": false,
+      "zodIssues": [
+        {
+          "path": [],
+          "code": "unrecognized_keys"
+        }
+      ],
+      "ajvAccepted": false,
+      "ajvErrors": [
+        {
+          "instancePath": "",
+          "keyword": "additionalProperties",
+          "params": {
+            "additionalProperty": "extra"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nested-extra",
+      "zodAccepted": false,
+      "zodIssues": [
+        {
+          "path": [
+            "nested"
+          ],
+          "code": "unrecognized_keys"
+        }
+      ],
+      "ajvAccepted": false,
+      "ajvErrors": [
+        {
+          "instancePath": "/nested",
+          "keyword": "additionalProperties",
+          "params": {
+            "additionalProperty": "extra"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nested-missing-code",
+      "zodAccepted": false,
+      "zodIssues": [
+        {
+          "path": [
+            "nested",
+            "code"
+          ],
+          "code": "invalid_type"
+        }
+      ],
+      "ajvAccepted": false,
+      "ajvErrors": [
+        {
+          "instancePath": "/nested",
+          "keyword": "required",
+          "params": {
+            "missingProperty": "code"
+          }
+        }
+      ]
+    }
+  ]
+}
