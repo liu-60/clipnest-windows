@@ -10,8 +10,13 @@ const path = require("node:path");
 const ROOT = path.resolve(__dirname, "../../..");
 const STAGE_PROFILE_MODE = process.env.T04_IMAGE_STAGE_PROFILE ?? "";
 const STAGE_TIMING_ENABLED = STAGE_PROFILE_MODE === "1" || STAGE_PROFILE_MODE === "block-breakdown";
+const STAGE_PROFILE_EVIDENCE_SUFFIX = process.env.T04_IMAGE_STAGE_PROFILE_EVIDENCE_SUFFIX ?? "";
+if (STAGE_PROFILE_EVIDENCE_SUFFIX &&
+    (STAGE_PROFILE_MODE !== "block-breakdown" || !/^[a-z0-9-]{1,48}$/.test(STAGE_PROFILE_EVIDENCE_SUFFIX))) {
+  throw new Error("invalid_stage_profile_evidence_suffix");
+}
 const EVIDENCE_PATH = path.join(ROOT, "docs", "evidence", "T04", STAGE_PROFILE_MODE === "block-breakdown"
-  ? "image-preparation-16mp-block-breakdown.json"
+  ? `image-preparation-16mp-block-breakdown${STAGE_PROFILE_EVIDENCE_SUFFIX ? `-${STAGE_PROFILE_EVIDENCE_SUFFIX}` : ""}.json`
   : STAGE_TIMING_ENABLED
     ? "image-preparation-16mp-stage-profile.json"
     : "image-preparation-16mp-service-integration.json");
