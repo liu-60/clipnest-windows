@@ -2,6 +2,7 @@ import { decode as decodeJpeg } from "jpeg-js";
 import { inflateSync } from "node:zlib";
 import type { Metadata } from "pngjs";
 import { IMAGE_LIMITS, type DecodedImage, type ImageDecodeInput, type ImageDecoder } from "./image-worker";
+import { decodeLargeBaselineJpeg } from "./jpeg-baseline-stream";
 
 type PngMetadata = Omit<Metadata, "colorType" | "palette"> & {
   colorType: number;
@@ -212,6 +213,8 @@ function decodeJpegImage(bytes: Buffer, input: ImageDecodeInput): DecodedImage {
   const frame = parseJpegFrame(bytes);
   validateDimensions(frame.width, frame.height, input);
   if (estimateJpegPeakBytes(bytes.byteLength, frame) > IMAGE_LIMITS.workerPeakBytes) {
+    const streamed = decodeLargeBaselineJpeg(bytes, frame.width, frame.height);
+    if (streamed) return streamed;
     throw new Error("image_worker_capacity_exceeded");
   }
   const image = decodeJpeg(bytes, {

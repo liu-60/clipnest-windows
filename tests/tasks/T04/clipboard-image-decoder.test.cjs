@@ -9,6 +9,7 @@ const { deflateSync } = require("node:zlib");
 const jpeg = require("jpeg-js");
 const { crc32 } = require("pngjs/lib/crc");
 const { decodeProductionImage } = require("../../../dist-electron/main/clipboard/image-decoder.js");
+const { decodeLargeBaselineJpeg } = require("../../../dist-electron/main/clipboard/jpeg-baseline-stream.js");
 const { IMAGE_LIMITS } = require("../../../dist-electron/main/clipboard/image-worker.js");
 
 function chunk(type, data) {
@@ -103,6 +104,93 @@ function truncatedJpegSegment(marker, payload, missingBytes = 2) {
 function jpegWithSegments(frame, segments) {
   return Buffer.concat([frame, ...segments, Buffer.from([0xff, 0xd9])]);
 }
+function simpleBaselineJpeg({ width, height, sampling, restartInterval = 0, allOnesDcHuffman = false }) {
+  const componentCount = sampling.length;
+  const frame = Buffer.alloc(6 + componentCount * 3);
+  frame[0] = 8;
+  frame.writeUInt16BE(height, 1);
+  frame.writeUInt16BE(width, 3);
+  frame[5] = componentCount;
+  for (let index = 0; index < componentCount; index++) {
+    frame[6 + index * 3] = index + 1;
+    frame[7 + index * 3] = sampling[index];
+    frame[8 + index * 3] = 0;
+  }
+  const quantization = Buffer.from([0, ...new Array(64).fill(1)]);
+  const dcSymbolCount = allOnesDcHuffman ? 2 : 1;
+  const acTableOffset = 17 + dcSymbolCount;
+  const huffman = Buffer.alloc(acTableOffset + 18);
+  huffman[0] = 0x00;
+  huffman[1] = dcSymbolCount;
+  huffman[17] = 0;
+  if (allOnesDcHuffman) huffman[18] = 1;
+  huffman[acTableOffset] = 0x10;
+  huffman[acTableOffset + 1] = 1;
+  huffman[acTableOffset + 17] = 0;
+  const segments = [
+    jpegSegment(0xdb, quantization),
+    jpegSegment(0xc0, frame),
+    jpegSegment(0xc4, huffman),
+  ];
+  if (restartInterval > 0) {
+    const interval = Buffer.alloc(2);
+    interval.writeUInt16BE(restartInterval);
+    segments.push(jpegSegment(0xdd, interval));
+  }
+  const scan = Buffer.alloc(1 + componentCount * 2 + 3);
+  scan[0] = componentCount;
+  for (let index = 0; index < componentCount; index++) {
+    scan[1 + index * 2] = index + 1;
+    scan[2 + index * 2] = 0;
+  }
+  scan[1 + componentCount * 2] = 0;
+  scan[2 + componentCount * 2] = 63;
+  scan[3 + componentCount * 2] = 0;
+  segments.push(jpegSegment(0xda, scan));
+
+  const maxH = Math.max(...sampling.map((factor) => factor >>> 4));
+  const maxV = Math.max(...sampling.map((factor) => factor & 0x0f));
+  const mcuColumns = Math.ceil(width / (maxH * 8));
+  const mcuRows = Math.ceil(height / (maxV * 8));
+  const mcuCount = mcuColumns * mcuRows;
+  const entropy = [];
+  let pendingByte = 0;
+  let pendingBits = 0;
+  let restart = 0;
+  const writeBit = (bit) => {
+    pendingByte = (pendingByte << 1) | bit;
+    if (++pendingBits === 8) {
+      entropy.push(pendingByte);
+      if (pendingByte === 0xff) entropy.push(0);
+      pendingByte = 0;
+      pendingBits = 0;
+    }
+  };
+  const alignEntropy = () => {
+    while (pendingBits !== 0) writeBit(1);
+  };
+  for (let mcu = 0; mcu < mcuCount; mcu++) {
+    for (const factor of sampling) {
+      const blocks = (factor >>> 4) * (factor & 0x0f);
+      for (let block = 0; block < blocks; block++) {
+        writeBit(0); // DC category zero
+        writeBit(0); // AC end-of-block
+      }
+    }
+    if (restartInterval > 0 && (mcu + 1) % restartInterval === 0 && mcu + 1 < mcuCount) {
+      alignEntropy();
+      entropy.push(0xff, 0xd0 + restart);
+      restart = (restart + 1) & 7;
+    }
+  }
+  alignEntropy();
+  return Buffer.concat([
+    Buffer.from([0xff, 0xd8]),
+    ...segments,
+    Buffer.from(entropy),
+    Buffer.from([0xff, 0xd9]),
+  ]);
+}
 const decode = (input) => decodeProductionImage(input, new AbortController().signal);
 
 test("production PNG decoder returns exact unpremultiplied RGBA and preserves encoded bytes", async () => {
@@ -173,6 +261,79 @@ test("real JPEG decoder produces strict opaque RGBA and rejects damaged data", a
   assert.deepEqual(input.encodedBytes, before);
   await assert.rejects(decode(request("jpeg", encoded.subarray(0, encoded.length / 2))), /image_source_invalid/);
   await assert.rejects(decode(request("jpeg", encoded, 1, 1)), /image_dimensions_mismatch/);
+});
+
+test("streamed baseline JPEG matches jpeg-js across odd MCU edges and stuffed entropy bytes", () => {
+  const width = 37;
+  const height = 29;
+  const sourcePixels = Buffer.allocUnsafe(width * height * 4);
+  let state = 0x31a6c29d;
+  for (let offset = 0; offset < sourcePixels.length; offset += 4) {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    sourcePixels[offset] = state & 0xff;
+    sourcePixels[offset + 1] = (state >>> 8) & 0xff;
+    sourcePixels[offset + 2] = (state >>> 16) & 0xff;
+    sourcePixels[offset + 3] = 0xff;
+  }
+  const encoded = Buffer.from(jpeg.encode({ width, height, data: sourcePixels }, 91).data);
+  const before = Buffer.from(encoded);
+  const sos = encoded.indexOf(Buffer.from([0xff, 0xda]));
+  const scanStart = sos + 2 + encoded.readUInt16BE(sos + 2);
+  assert.notEqual(encoded.indexOf(Buffer.from([0xff, 0x00]), scanStart), -1, "fixture must exercise FF00 stuffing");
+  const streamed = decodeLargeBaselineJpeg(encoded, width, height);
+  const reference = jpeg.decode(encoded, { useTArray: true, formatAsRGBA: true });
+  assert.ok(streamed);
+  assert.deepEqual(streamed.pixels, Buffer.from(reference.data));
+  assert.ok(streamed.pixels.every((_value, index) => index % 4 !== 3 || streamed.pixels[index] === 255));
+  assert.deepEqual(encoded, before, "the decoder must not mutate the source buffer");
+});
+
+test("streamed baseline JPEG handles grayscale, 4:2:0 MCU edges, and the complete RST0–RST7 cycle", () => {
+  const grayscale = simpleBaselineJpeg({ width: 72, height: 8, sampling: [0x11], restartInterval: 1 });
+  const image = decodeLargeBaselineJpeg(grayscale, 72, 8);
+  assert.ok(image);
+  assert.deepEqual([...image.pixels.subarray(0, 8)], [128, 128, 128, 255, 128, 128, 128, 255]);
+  assert.deepEqual([...image.pixels.subarray(-4)], [128, 128, 128, 255]);
+
+  const y420 = simpleBaselineJpeg({ width: 17, height: 19, sampling: [0x22, 0x11, 0x11] });
+  const color = decodeLargeBaselineJpeg(y420, 17, 19);
+  assert.ok(color);
+  assert.equal(color.pixels.byteLength, 17 * 19 * 4);
+  for (let offset = 0; offset < color.pixels.length; offset += 4) {
+    assert.deepEqual([...color.pixels.subarray(offset, offset + 4)], [128, 128, 128, 255]);
+  }
+  assert.equal(decodeLargeBaselineJpeg(
+    simpleBaselineJpeg({ width: 16, height: 16, sampling: [0x22] }), 16, 16), null,
+    "non-1x1 single-component sampling must retain the legacy path",
+  );
+
+  const wrongRestart = Buffer.from(grayscale);
+  const marker = wrongRestart.indexOf(Buffer.from([0xff, 0xd0]));
+  assert.notEqual(marker, -1);
+  wrongRestart[marker + 1] = 0xd2;
+  assert.throws(() => decodeLargeBaselineJpeg(wrongRestart, 72, 8), /image_source_invalid/);
+
+  const invalidRestartPadding = Buffer.from(grayscale);
+  invalidRestartPadding[marker - 1] &= 0xfe;
+  assert.throws(() => decodeLargeBaselineJpeg(invalidRestartPadding, 72, 8), /image_source_invalid/);
+});
+
+test("streamed JPEG selection is conservative and selected malformed streams fail closed", () => {
+  const progressiveHeader = Buffer.from(jpegSof(16, 16, [0x11, 0x11, 0x11]));
+  progressiveHeader[3] = 0xc2;
+  assert.equal(decodeLargeBaselineJpeg(progressiveHeader, 16, 16), null);
+
+  const valid = simpleBaselineJpeg({ width: 16, height: 8, sampling: [0x11] });
+  const allOnesCode = simpleBaselineJpeg({ width: 16, height: 8, sampling: [0x11], allOnesDcHuffman: true });
+  assert.throws(() => decodeLargeBaselineJpeg(allOnesCode, 16, 8), /image_source_invalid/);
+  assert.throws(() => decodeLargeBaselineJpeg(valid.subarray(0, valid.length - 2), 16, 8), /image_source_invalid/);
+  assert.throws(() => decodeLargeBaselineJpeg(valid, 8, 16), /image_dimensions_mismatch/);
+
+  const invalidEndPadding = Buffer.from(valid);
+  invalidEndPadding[invalidEndPadding.length - 3] &= 0xfe;
+  assert.throws(() => decodeLargeBaselineJpeg(invalidEndPadding, 16, 8), /image_source_invalid/);
 });
 
 test("encoded source, actual pixel dimensions, and PNG working-set limits are enforced", async () => {
