@@ -98,22 +98,22 @@
     {
       "command": "pnpm test:unit",
       "status": "PASS",
-      "result": "The latest main TypeScript build passed and all 114 unit tests passed, including exact PNG filter restoration, bounded compressed-response inflation, active-inflate cancellation, malformed decoded-response rejection, large-image worker retirement, selection-deadline fixtures and the existing orchestration/render tests."
+      "result": "Historical compressed-transport test run: main TypeScript build passed and 114 unit tests passed, including bounded compressed-response inflation and cancellation. This predates the raw chunk+ACK migration; the current protocol run is recorded in the later 25/25 check."
     },
     {
       "command": "ELECTRON_OVERRIDE_DIST_PATH=<Electron 40.10.2 dist>; node tests/tasks/T04/run-image-worker-electron.cjs",
       "status": "PASS",
-      "result": "Real Windows x64 Electron utilityProcess smoke passed PNG/JPEG decode, 3000×3000 synthetic PNG through compressed IPC and main-process inflate, CRC rejection, cancellation and retirement. No BrowserWindow, system clipboard or input was used."
+      "result": "Historical pre-migration Windows x64 Electron utilityProcess smoke passed PNG/JPEG decode, compressed IPC/inflate, CRC rejection, cancellation and retirement. It predates raw chunk+ACK; no BrowserWindow, system clipboard or input was used."
     },
     {
       "command": "node tests/tasks/T04/measure-image-worker-16mp.cjs (5 fresh utility processes; 100 ms Windows sampler)",
       "status": "MEASURED_WITH_LIMITATIONS",
-      "result": "Five synthetic 4000×4000 PNG decodes: request-to-decompressed-RGBA p50 524.91 ms, p95/max 547.68 ms; process startup p95 110.48 ms; maximum process PeakWorkingSet64 169066496 bytes (161.23 MiB) versus 256 MiB budget; sampled private peak 119549952 bytes (114.01 MiB). This is diagnostic for one generated PNG only, not a hard cap across all supported images or end-user paste latency."
+      "result": "Historical compressed-transport protocol: five synthetic 4000×4000 PNG decodes recorded request-to-decompressed-RGBA p50 524.91 ms and p95/max 547.68 ms; maximum worker PeakWorkingSet64 was 161.23 MiB. This does not measure current raw chunk+ACK transport."
     },
     {
       "command": "pnpm build; pnpm exec electron-builder --win dir --x64 --publish never --config release/windows-flat-20261005/electron-builder.local.cjs; isolated Electron ASAR worker probe",
       "status": "PASS",
-      "result": "Built package 1.1.4-local.20261005.1 into a new Windows x64 directory under release/windows-flat-20261005. The ASAR-loaded production utilityProcess emitted decoded_compressed for a synthetic 3000x3000 PNG and returned all 36000000 RGBA bytes exactly in 413.15 ms. No install, system clipboard, or input was used. See docs/evidence/T04/packaged-asar-worker-smoke.json."
+      "result": "Historical pre-migration ASAR package smoke: the ASAR-loaded worker emitted decoded_compressed for a synthetic 3000x3000 PNG and returned all 36000000 RGBA bytes exactly in 413.15 ms. It does not verify current raw chunk+ACK or later child-source hardening. No install, system clipboard, or input was used. See docs/evidence/T04/packaged-asar-worker-smoke.json."
     },
     {
       "command": "ELECTRON_OVERRIDE_DIST_PATH=<Electron 40.10.2 dist>; node tests/tasks/T04/run-image-main-thread-deadline-electron.cjs",
@@ -204,6 +204,26 @@
       "command": "Recorded candidate utilityProcess/IPC follow-up: docs/evidence/T04/purejsimage-16mp-utility-ipc-followup.json (five fresh workers per 16 MP baseline JPEG fixture)",
       "status": "MEASURED_WITH_LIMITATIONS",
       "result": "All five 4:2:0 workers peaked at 394,821,632 bytes (376.53 MiB) and all five 4:4:4 workers peaked at 393,969,664 bytes (375.72 MiB), above the 268,435,456-byte worker target. Full 64,000,000-byte RGBA output and independent pixel checks passed, but the candidate failed the measured memory target; it remains uninstalled/unintegrated and is not production acceptance."
+    },
+    {
+      "command": "pnpm test:unit -- clipboard-image-decoder.test.cjs (raw chunk protocol hardening)",
+      "status": "PASS",
+      "result": "pnpm build:main TypeScript compilation passed and all 25 targeted tests passed. Added fake regressions cover outer requestId/input.jobId mismatch, cancellation quarantine, stale old-child messages forged with the active requestId, image_worker_busy retirement, exact raw chunk assembly/ACK, malformed sequence/length/end frames, and cancellation. No system clipboard, physical input, or target window was used."
+    },
+    {
+      "command": "T04_JPEG_ENCODER=jpeg-js; 16MP/20MiB fresh utilityProcess; five raw-chunk samples; full-frame jpeg-js differential and GDI+ 9-point comparison",
+      "status": "MEASURED_WITH_LIMITATIONS",
+      "result": "Final compiled worker, synthetic baseline 4:4:4: 5/5 success; p50 2877.15 ms, p95 2986.02 ms, PeakWorkingSet64 218705920 bytes (208.57 MiB); GDI+ max difference 1 and jpeg-js full-frame exact match in 5/5. The jpeg-js oracle runs and retains 64,000,000 bytes in the Electron parent, excluded from worker RSS. This diagnostic does not satisfy T05 desktop timing or prove a universal memory ceiling."
+    },
+    {
+      "command": "T04_JPEG_ENCODER=native-image; 16MP/20MiB fresh utilityProcess; five raw-chunk samples; full-frame jpeg-js differential and GDI+ 9-point comparison",
+      "status": "MEASURED_WITH_LIMITATIONS",
+      "result": "Final compiled worker, synthetic baseline 4:2:0: 5/5 success; p50 2186.23 ms, p95 2262.56 ms, PeakWorkingSet64 217968640 bytes (207.87 MiB); exact full-frame agreement with the pinned jpeg-js reference in 5/5. GDI+ sampled comparison reports max difference 38 against tolerance 8; that tolerance was calibrated only on the deterministic 4:4:4 fixture, so the 4:2:0 discrepancy remains an open fidelity question, not a pass. The parent oracle buffer is excluded from worker RSS."
+    },
+    {
+      "command": "Independent read-only review of current T04 raw-chunk protocol and JPEG stream optimizations",
+      "status": "PASS_WITH_LIMITATIONS",
+      "result": "The protocol review confirmed request/input identity binding, stale-child message guard, busy-response retirement, chunk sequencing/length/end checks, and quarantine behavior. The JPEG reviewer found no byte-indexing regression in scratch row reuse or the 1x1 fast path. Oracle scope and the 4:2:0 GDI+ discrepancy remain documented limitations. Reviewers did not run tests; the 25/25 result is recorded separately."
     }
   ],
   "implementedAndCovered": [
@@ -216,9 +236,9 @@
     "When preparation finishes after a released 500ms cutoff, selectionBudgetMs=0 enters native check-only mode. It performs immediate key-state checks without opening a fresh wait window; control fakes verify clipboard gating and rejection of a key re-press before input.",
     "Production utility-process PNG/JPEG decoding is implemented with pinned pngjs 7.0.0/jpeg-js 0.4.4 and tested with real Electron cancellation/exit. The v2 ASAR decoder probe independently confirms packaged worker and decoder resolution; performance and final desktop acceptance remain open.",
     "Images larger than the 32 MiB decoded cache retire their utility worker; the next preparation waits for worker disposal before creating a replacement, covered by a worker-factory regression.",
-    "Uncached decoded responses above 32 MiB use bounded-chunk lossless deflate IPC; the main process restores exact RGBA into a preallocated dimension-derived buffer with 1 MiB inflate chunks. Cancellation destroys the active inflater, and protocol fixtures reject excess decompression, mismatched dimensions, and short/long pixel responses.",
-    "Fresh utility-process 16 MP synthetic PNG diagnostic: five samples stayed below 256 MiB PeakWorkingSet64 with maximum 161.23 MiB and decoder/transport/restore p95 547.68 ms; the full OS peak metric and sampled private bytes are recorded per process.",
-    "Latest compressed image-worker code also passes an isolated Windows x64 directory-package ASAR smoke: the ASAR-loaded worker emits decoded_compressed and the main process restores the complete 3000x3000 RGBA buffer byte-for-byte. This does not verify installation or UI/clipboard/input behavior.",
+    "Uncached decoded responses above the 32 MiB cache now use lossless raw RGBA chunks of at most 1 MiB with one ACK per chunk. The receiver assembles into a dimension-derived buffer and checks request identity, sequence, exact chunk sizes, accumulated bytes and the decoded_end metadata. Cancellation and malformed streams retire/quarantine the worker; current protocol fakes cover ID binding, stale child messages and busy-response retirement.",
+    "Historical compressed-transport protocol: five-sample 16 MP synthetic PNG diagnostics recorded PeakWorkingSet64 161.23 MiB and p95 547.68 ms. These measurements do not represent current raw chunk+ACK transport; current synthetic JPEG measurements are listed in the latest checks.",
+    "Historical raw-chunk ASAR smoke was built before the later request/input ID and child-source isolation hardening. That package emitted bounded raw RGBA chunks and decoded_end; its 3000x3000 synthetic output matched all pixels in 478.43 ms, recorded in packaged-asar-worker-chunked-smoke.json. The latest identity-hardening changes passed main-build fakes and are covered by the current source review, but have not been repackaged.",
     "An isolated Electron main-process diagnostic exercised the production NativeImage PNG-to-JPEG fallback and matching Base64/SHA-256 operation on a deterministic synthetic 9 MP bitmap. When that synchronous work delayed the original 500 ms monitor past its cutoff, the overdue poll failed closed with key_state_unavailable, made no fresh stale-key assumption, and produced zero simulated side effects; the diagnostic does not invoke the OS clipboard/input or content-provider P15 path.",
     "The production copySelectedItem image path now fails closed before Electron clipboard fallback if image snapshot/preparation fails, the helper is unavailable, or the clipboard-sequence baseline cannot be sampled before helper clipboard commit. The P17/T04-I04 production VM fake maps image_worker_capacity_exceeded to zero Electron fallback writes, helper registration/commit_write/paste, and panel hides, while retaining the original image; helper-unavailable and baseline-unavailable image paths have the same zero-effect checks. Non-image copy-only fallback and post-commit authorization_denied degradation remain covered.",
     "Supplementary real-Electron selection scenarios cancel a pending UtilityImageWorker request or expire an 8000ms test-only selection deadline after the utilityProcess emitted a decoded response; both observe worker rejection and process exit before helper registration, with no new cache entry or fake side effects. The response is gated after decode, so this does not establish interruption of CPU-bound decode.",
@@ -230,7 +250,7 @@
     "A five-sample Windows x64 16 MP synthetic RGBA PNG utilityProcess/IPC diagnostic recorded maximum PeakWorkingSet64 161.23 MiB and p95 547.68 ms, but does not prove a hard 256 MiB ceiling for other PNG/JPEG inputs, sources near 20 MiB, or packaged full-app behavior. The tested PureJsImage full JPEG utilityProcess/IPC candidate failed the target: all 10 16 MP samples exceeded 256 MiB. A production JPEG route meeting the worker budget, broader image coverage, and end-user paste remain unverified.",
     "P15 image selection still repeats Base64 decoding and hashing in src/main/native/content-provider.ts. The file is outside the T04 allowlist; the user chose not to expand the current scope, so this P15 gate remains open.",
     "One isolated Electron main-process run measured NativeImage toPNG/toJPEG fallback and Base64/SHA-256 on a synthetic 9 MP bitmap; the 500 ms key monitor failed closed when synchronous work delayed its poll. Actual clipboard.readImage behavior, large-image RGBA-to-BGRA/DIB performance, the 3000 ms preparation deadline under clipboard load, physical key timing, and complete Electron window/panel integration remain NOT_RUN. A separate real-worker 2x1 selection probe verifies production DIB bytes and SHA-256 only for that tiny fixture.",
-    "The new compressed-response protocol was validated with a real Electron utilityProcess, a five-sample 16 MP synthetic PNG measurement, and an isolated Windows x64 directory package ASAR smoke of the latest code. Actual Electron window/clipboard/panel integration, final-helper target-visible paste and T05 100-run controlled benchmark remain unfinished.",
+    "The earlier compressed-response transport was validated with real Electron utilityProcess, 16 MP PNG diagnostics, and an isolated package. Those are historical protocol-specific checks and do not validate current raw-chunk transfer; current raw-chunk ASAR and JPEG diagnostic evidence is recorded separately. Universal JPEG memory/fidelity and complete T04 acceptance remain open.",
     "The 3000ms production selection deadline is now measured in Electron with a warm utilityProcess: a real decoded response is held until the original selection-start deadline, after which selection aborts and the process exits with no helper/clipboard/paste/fallback/panel effects. The test uses a pending fake key monitor and does not interrupt already-completed decoder CPU work; full deadline behavior under actual clipboard encoding/load and complete clipboard/panel effects remain unverified.",
     "When preparation completes after a released 500ms cutoff, main sends selectionBudgetMs=0. The helper accepts zero as check-only, samples keys immediately, checks again before clipboard commit, and performs no fresh wait; Rust fake tests cover the contract. The physical-keyboard timing and full Electron/helper route remain NOT_RUN, and no fake rules out a key transition after the final state sample but before an OS operation.",
     "Static main-process review shows pre-registration cutoff cancellation aborts preparation and never restarts the helper; registered cancellation failure latches the clipboard fence and retains the job unless helper exit is confirmed. A supplementary integration now verifies production selection cancellation and an 8000ms test-only deadline abort a pending real utilityProcess request and observe worker exit after a decoded response was emitted. It does not cover helper cancellation/exit after registration, cancellation during decoder CPU work, or the production deadline under actual clipboard load; helper job/fence behavior remains verified only by static review and fakes.",
@@ -312,25 +332,26 @@
     ]
   },
   "checkpointEvidence": "docs/evidence/windows-flat-20261004/decoder-orchestration-checkpoint.json",
-  "historicalReviewNote": "interimReview and fixturePlanReview retain their original inspection snapshots; current decoder/fixture status is recorded in checks and checkpointEvidence.",
+  "historicalReviewNote": "interimReview and fixturePlanReview retain their original inspection snapshots; current decoder/fixture status is recorded in checks and checkpointEvidence. The finalReview artifact describes the pre-migration compressed image-worker protocol; current raw chunk+ACK review and findings are in chunked-stream-code-review.json.",
   "latestIndependentCodeReview": {
     "result": "PASS_WITH_LIMITATIONS",
     "reviewedDate": "2026-10-05",
-    "artifact": "docs/evidence/T04/final-stream-review.json",
-    "scope": "Read-only review of compressed image-worker protocol, cancellation, regression coverage and consistency of current evidence.",
-    "effect": "Confirms the reviewed implementation/evidence are internally consistent; it does not close P15, desktop/platform, general memory or full T04 acceptance gates."
+    "artifact": "docs/evidence/T04/chunked-stream-code-review.json",
+    "scope": "Read-only review of current raw RGBA chunk+ACK protocol, request/child identity isolation, cancellation quarantine, and baseline JPEG stream optimizations.",
+    "effect": "No identified indexing or protocol regression remains after the reviewed fixes. This review does not close the 4:2:0 GDI+ fidelity discrepancy, P15, desktop/platform behavior, general memory, or full T04 acceptance."
   },
   "openGates": [
-    "Five fresh Electron utilityProcess samples of one deterministic 16 MP synthetic RGBA PNG recorded request-to-compressed-transfer-and-async-restore p50 524.91 ms, p95/max 547.68 ms and maximum PeakWorkingSet64 169066496 bytes (161.23 MiB), below 256 MiB. This is diagnostic evidence for that fixture only; it does not establish a hard ceiling for other PNG/JPEG payloads, inputs near 20 MiB, or packaged full-app behavior.",
-    "Real Electron utilityProcess covers PNG/JPEG, 9 MP synthetic large-image compressed IPC and async inflation, CRC rejection, cancellation and retirement. A production selection probe additionally observes cancellation and test-only timeout retirement after a decoded response is emitted. Full Electron window, clipboard, panel, final-helper card-click and target-visible paste acceptance remain NOT_RUN.",
+    "历史测量（旧压缩传输协议）：五个fresh utilityProcess的合成16MP RGBA PNG request-to-compressed-transfer-and-async-restore p50 524.91ms、p95/max 547.68ms、PeakWorkingSet64最高161.23MiB。不能代表当前raw RGBA chunk+ACK。",
+    "历史9MP测试使用旧压缩IPC/inflate协议；其CRC、取消与退休覆盖仍有效，但旧ASAR结果不代表当前raw-chunk worker。当前原始分块ASAR smoke和16MP JPEG重复诊断列在最新原始分块门中。完整Electron窗口、系统剪贴板、面板、最终helper卡片点击和目标可见粘贴仍未运行。",
     "A synthetic Electron main-process NativeImage toPNG/toJPEG plus Base64/SHA-256 diagnostic now verifies a late 500 ms poll fails closed after the real event loop resumes. That diagnostic does not call clipboard.readImage or measure RGBA-to-BGRA/DIB conversion; a separate production selection probe verifies 2x1 DIB bytes/hash only. Neither establishes large-image conversion performance, physical key timing, or the 3000 ms preparation deadline under real clipboard load.",
     "The helper zero-budget check-only path has 56 Rust fake tests and no new 500 ms wait. Physical-key timing, final-sample-to-EmptyClipboard/SendInput races, and the complete Electron/helper clipboard/paste path remain NOT_RUN.",
     "P15 remains open: src/main/native/content-provider.ts repeats Base64 decode/hash and main-thread pixel conversion. User chose not to add this file to current T04 scope.",
     "PureJsImage 0.17.0's earlier one-sample feasibility spike recorded 149.32/151.97 MiB but omitted parent IPC/inflate and repeat distribution. The later full utilityProcess/IPC follow-up ran five fresh workers each for synthetic 16 MP baseline 4:2:0 and 4:4:4 JPEG; every sample exceeded the 256 MiB worker target, with per-format PeakWorkingSet64 of 394,821,632 bytes (376.53 MiB) and 393,969,664 bytes (375.72 MiB). This candidate FAILS the measured memory target and remains uninstalled/unapproved. The evidence does not establish a production JPEG route; license/notice review would remain open even if reconsidered. See docs/evidence/T04/purejsimage-16mp-feasibility-spike.json, docs/evidence/T04/purejsimage-16mp-utility-ipc-followup.json, and docs/evidence/T04/purejsimage-dependency-subcard.json.",
-    "Independent final static review passed with limitations; it does not close P15, actual keyboard timing, full Electron/helper clipboard/paste acceptance or full T04 acceptance. The latest compressed IPC code passed an isolated ASAR worker smoke, which is not installation or end-user UI acceptance.",
+    "docs/evidence/T04/final-stream-review.json记录的是2026-10-04旧压缩worker协议静态审查，不作为当前协议复核。当前原始分块、request/input身份、child隔离与JPEG优化的独立审查见chunked-stream-code-review.json；定向测试25/25及raw-chunk ASAR/测量结果见最新记录。P15、真实按键时序、桌面剪贴板/面板/粘贴与完整T04验收仍开放。",
     "The latest production real-timer probe uses performance.now for the selection cutoff and sample age. The held fake-key case resumed 1.45ms late and blocked as key_held; the released case resumed 13.89ms late and failed closed as key_state_unavailable. A released sample still cannot rule out a re-press after the sample or transitions between polls, so real released-cutoff continuation/helper zero-budget behavior remain NOT_CLOSED and exact held-at-cutoff remains P1_OPEN.",
     "Production duplicate-sequence polling is now covered by a VM regression extracted from main.ts; after the first synthetic image is captured, a repeated DWORD sequence causes no additional format/image read, dimension read, PNG/JPEG encode, Base64 conversion, SHA-256, or history update. This fake does not access the OS clipboard.",
-    "The test-only GDI+ JPEG route probe stopped before GDI+ startup/decode: WinSxS and System32 DLL signatures, Microsoft publisher, version, size, SHA-256, and protected-directory ACL match, but NTFS file IDs differ. No pixel-oracle or decoder-memory measurement was produced; see gdiplus-jpeg-memory-route-probe.json and gdiplus-jpeg-system-path-audit.json."
+    "The test-only GDI+ JPEG route probe stopped before GDI+ startup/decode: WinSxS and System32 DLL signatures, Microsoft publisher, version, size, SHA-256, and protected-directory ACL match, but NTFS file IDs differ. No pixel-oracle or decoder-memory measurement was produced; see gdiplus-jpeg-memory-route-probe.json and gdiplus-jpeg-system-path-audit.json.",
+    "当前原始分块+ACK协议：requestId与input.jobId相等校验、child来源guard、busy错误退役和隔离已实现；独立只读审查通过，main TypeScript构建及decoder/worker 25/25通过。此前raw-chunk隔离ASAR smoke（未包含后续identity-hardening补丁）返回3000×3000全像素相等（35 chunks，478.43ms）。最终构建下合成16MP/20MiB JPEG五样本：4:4:4 p50/p95 2877.15/2986.02ms、峰值208.57MiB、GDI+最大差1、jpeg-js全帧差分0；4:2:0 p50/p95 2186.23/2262.56ms、峰值207.87MiB、jpeg-js全帧差分0，但GDI+最大差38>8，且8通道阈值仅按4:4:4校准，差异原因未决。jpeg-js oracle是parent进程差分参考并保留64,000,000字节，未计入worker峰值。以上为合成诊断，不关闭通用内存/fidelity/桌面/T04门。P15按用户决定仍开放，T05保持not_started。"
   ],
   "artifacts": [
     "tests/tasks/T04/fixture-plan.json",
@@ -367,13 +388,25 @@
     "docs/evidence/T04/image-selection-production-3000ms-timeout.json",
     "docs/evidence/T04/selection-key-monitor-utility-integration.json",
     "src/main/clipboard/selection-key-deadline.ts",
-    "tests/tasks/T04/selection-key-deadline.test.cjs",
     "tests/tasks/T04/run-image-selection-electron.cjs",
     "docs/evidence/T04/gdiplus-jpeg-memory-route-probe.json",
     "docs/evidence/T04/gdiplus-jpeg-system-path-audit.json",
     "tests/tasks/T04/run-gdiplus-jpeg-memory-probe.cjs",
     "tests/tasks/T04/gdiplus-jpeg-memory-child.ps1",
     "tests/tasks/T04/gdiplus-jpeg-fixture.ps1",
-    "docs/evidence/T04/purejsimage-16mp-utility-ipc-followup.json"
+    "docs/evidence/T04/purejsimage-16mp-utility-ipc-followup.json",
+    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-20mib-fresh-worker-chunked-five-444-5-sample-measurement.json",
+    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-20mib-fresh-worker-optimized-444-5-sample-measurement.json",
+    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-20mib-fresh-worker-verified-444-5-sample-measurement.json",
+    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-20mib-fresh-worker-release-444-5-sample-measurement.json",
+    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-chunked-copy-420-5-sample-measurement.json",
+    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-chunked-copy-oracle-420-5-sample-measurement.json",
+    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-chunked-jsoracle-420-1-sample-measurement.json",
+    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-chunked-jsoracle-420-5-5-sample-measurement.json",
+    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-optimized-jsoracle-420-5-sample-measurement.json",
+    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-verified-jsoracle-420-5-sample-measurement.json",
+    "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-release-jsoracle-420-5-sample-measurement.json",
+    "docs/evidence/T04/chunked-stream-code-review.json",
+    "docs/evidence/T04/packaged-asar-worker-chunked-smoke.json"
   ]
 }
