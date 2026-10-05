@@ -16,6 +16,7 @@ function codesFor(changes) {
     fixturePlan: clone(baseline.fixturePlan),
     assertionMap: clone(baseline.assertionMap),
     reportSchema: clone(baseline.reportSchema),
+    identityManifestSchema: clone(baseline.identityManifestSchema),
     reportValidatorSource: baseline.reportValidatorSource,
   };
   changes(inputs);
@@ -43,7 +44,7 @@ test("requires the report schema PASS path to match the runtime helper resource"
 
 test("requires rollback artifact paths to identify distinct canonical files", () => {
   const codes = codesFor(({ fixturePlan }) => {
-    fixturePlan.packageResourceContract.rollbackRequiresDistinctCanonicalFiles = false;
+    fixturePlan.packageResourceContract.rollbackRequiresDistinctFilesystemIdentity = false;
   });
   assert.ok(codes.includes("ROLLBACK_DISTINCT_FILE_CONTRACT"));
 });
@@ -78,6 +79,44 @@ test("keeps fixture, schema, and verifier aligned on unresolved unsigned signatu
     inputs.reportValidatorSource = inputs.reportValidatorSource.replace(guard, "if (false)");
   });
   assert.ok(verifierCodes.includes("VALIDATOR_UNSIGNED_PASS_GUARD"));
+});
+
+test("requires the external identity manifest contract in fixture, schema, and verifier", () => {
+  const fixtureCodes = codesFor(({ fixturePlan }) => {
+    fixturePlan.identityManifestContract.pathMustResolveOutsideArtifactRoot = false;
+  });
+  assert.ok(fixtureCodes.includes("IDENTITY_MANIFEST_FIXTURE_CONTRACT"));
+
+  const helperSchemaCodes = codesFor(({ identityManifestSchema }) => {
+    identityManifestSchema.properties.helper.required = ["relativePath", "sha256", "version"];
+  });
+  assert.ok(helperSchemaCodes.includes("IDENTITY_MANIFEST_HELPER_SCHEMA"));
+
+  const reportDescriptionCodes = codesFor(({ reportSchema }) => {
+    reportSchema.description = "T05 report only";
+  });
+  assert.ok(reportDescriptionCodes.includes("REPORT_SCHEMA_IDENTITY_MANIFEST_DESCRIPTION"));
+
+  const verifierCodes = codesFor((inputs) => {
+    inputs.reportValidatorSource = inputs.reportValidatorSource.replaceAll("--identity-manifest", "--external-id");
+  });
+  assert.ok(verifierCodes.includes("VALIDATOR_IDENTITY_MANIFEST_CONTRACT"));
+
+  const untrustedManifestCodes = codesFor(({ fixturePlan }) => {
+    fixturePlan.identityManifestContract.trustBoundary = "verifier_generated";
+  });
+  assert.ok(untrustedManifestCodes.includes("IDENTITY_MANIFEST_FIXTURE_CONTRACT"));
+
+  const noCallerSourceBindingCodes = codesFor((inputs) => {
+    inputs.reportValidatorSource = inputs.reportValidatorSource
+      .replaceAll("PASS_IDENTITY_MANIFEST_SOURCE_MISMATCH", "PASS_MANIFEST_SOURCE_IGNORED");
+  });
+  assert.ok(noCallerSourceBindingCodes.includes("VALIDATOR_IDENTITY_MANIFEST_CONTRACT"));
+
+  const reportSelfFilledHashCodes = codesFor((inputs) => {
+    inputs.reportValidatorSource = inputs.reportValidatorSource.replaceAll("sha256Matches", "unverifiedHashMatches");
+  });
+  assert.ok(reportSelfFilledHashCodes.includes("VALIDATOR_IDENTITY_MANIFEST_CONTRACT"));
 });
 
 test("rejects changed source assertion text", () => {

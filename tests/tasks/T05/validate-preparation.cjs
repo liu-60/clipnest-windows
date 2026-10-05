@@ -15,7 +15,7 @@ function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema, reportValidatorSource }) {
+function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema, identityManifestSchema, reportValidatorSource }) {
   const errors = [];
   const add = (code, message) => errors.push({ code, message });
 
@@ -28,7 +28,10 @@ function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema, rep
   if (!isRecord(reportSchema)) {
     add("SCHEMA_SHAPE", "reportSchema must be a JSON object");
   }
-  if (!isRecord(fixturePlan) || !isRecord(assertionMap) || !isRecord(reportSchema)) {
+  if (!isRecord(identityManifestSchema)) {
+    add("IDENTITY_MANIFEST_SCHEMA_SHAPE", "identityManifestSchema must be a JSON object");
+  }
+  if (!isRecord(fixturePlan) || !isRecord(assertionMap) || !isRecord(reportSchema) || !isRecord(identityManifestSchema)) {
     return errors;
   }
 
@@ -61,10 +64,12 @@ function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema, rep
       `fixturePlan.packageResourceContract must map the unpacked Windows x64 app root runtime lookup to ${EXPECTED_HELPER_RESOURCE_RELATIVE_PATH}`,
     );
   }
-  if (!isRecord(packageResourceContract) || packageResourceContract.rollbackRequiresDistinctCanonicalFiles !== true) {
+  if (!isRecord(packageResourceContract) ||
+      packageResourceContract.rollbackRequiresDistinctCanonicalFiles !== true ||
+      packageResourceContract.rollbackRequiresDistinctFilesystemIdentity !== true) {
     add(
       "ROLLBACK_DISTINCT_FILE_CONTRACT",
-      "fixturePlan.packageResourceContract must require priorPath and rollbackPath to identify different canonical files",
+      "fixturePlan.packageResourceContract must require priorPath and rollbackPath to identify different canonical and filesystem files",
     );
   }
 
@@ -77,6 +82,54 @@ function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema, rep
       "SIGNATURE_POLICY_CONTRACT",
       `fixturePlan.signaturePolicyContract must leave unsigned unresolved, require ${PASS_SIGNATURE_STATUS} for PASS, and state Authenticode is not checked here`,
     );
+  }
+
+  const identityManifestContract = fixturePlan.identityManifestContract;
+  if (!isRecord(identityManifestContract) ||
+      identityManifestContract.cliOption !== "--identity-manifest" ||
+      identityManifestContract.requiredForRootPass !== true ||
+      identityManifestContract.pathMustDifferFromReport !== true ||
+      identityManifestContract.pathMustResolveOutsideArtifactRoot !== true ||
+      identityManifestContract.sourceCommitMustMatchReport !== true ||
+      identityManifestContract.trustBoundary !== "caller_supplied_and_trusted; verifier does not authenticate the manifest" ||
+      JSON.stringify(identityManifestContract.helperIdentityFields) !== JSON.stringify(["relativePath", "sha256", "version", "protocol"]) ||
+      JSON.stringify(identityManifestContract.rollbackPriorIdentityFields) !== JSON.stringify(["relativePath", "sha256", "version"]) ||
+      identityManifestContract.authenticodeVerification !== "not_performed_by_static_verifier") {
+    add(
+      "IDENTITY_MANIFEST_FIXTURE_CONTRACT",
+      "fixturePlan.identityManifestContract must define a caller-supplied external manifest, its PASS fields, path separation, and trust limits",
+    );
+  }
+
+  if (identityManifestSchema.$schema !== "https://json-schema.org/draft/2020-12/schema" ||
+      identityManifestSchema.type !== "object" ||
+      identityManifestSchema.properties?.schemaVersion?.const !== 1 ||
+      identityManifestSchema.properties?.task?.const !== "T05" ||
+      !Array.isArray(identityManifestSchema.required) ||
+      !["schemaVersion", "task", "sourceCommit", "artifactRootKind", "helper", "rollbackPrior"]
+        .every((key) => identityManifestSchema.required.includes(key)) ||
+      identityManifestSchema.properties?.artifactRootKind?.const !== "windows_x64_unpacked_app_root") {
+    add("IDENTITY_MANIFEST_SCHEMA_CONTRACT", "identityManifestSchema must describe a T05 manifest for the unpacked Windows x64 artifact root");
+  }
+  const manifestHelperSchema = identityManifestSchema.properties?.helper;
+  if (!isRecord(manifestHelperSchema) || manifestHelperSchema.type !== "object" ||
+      !Array.isArray(manifestHelperSchema.required) ||
+      !["relativePath", "sha256", "version", "protocol"].every((key) => manifestHelperSchema.required.includes(key)) ||
+      manifestHelperSchema.properties?.relativePath?.const !== EXPECTED_HELPER_RESOURCE_RELATIVE_PATH ||
+      manifestHelperSchema.properties?.sha256?.pattern !== "^[a-fA-F0-9]{64}$") {
+    add("IDENTITY_MANIFEST_HELPER_SCHEMA", "identityManifestSchema must pin helper path, SHA-256, version, and protocol");
+  }
+  const manifestRollbackSchema = identityManifestSchema.properties?.rollbackPrior;
+  if (!isRecord(manifestRollbackSchema) || manifestRollbackSchema.type !== "object" ||
+      !Array.isArray(manifestRollbackSchema.required) ||
+      !["relativePath", "sha256", "version"].every((key) => manifestRollbackSchema.required.includes(key)) ||
+      manifestRollbackSchema.properties?.sha256?.pattern !== "^[a-fA-F0-9]{64}$") {
+    add("IDENTITY_MANIFEST_ROLLBACK_SCHEMA", "identityManifestSchema must pin rollback prior path, SHA-256, and version");
+  }
+  if (typeof reportSchema.description !== "string" ||
+      !reportSchema.description.includes("--identity-manifest") ||
+      !reportSchema.description.includes("does not authenticate the manifest")) {
+    add("REPORT_SCHEMA_IDENTITY_MANIFEST_DESCRIPTION", "report schema must document the separate caller-supplied identity manifest and its trust boundary");
   }
 
   const helperPassClauses = reportSchema.properties?.packageAndRollback?.properties?.helperResource?.allOf;
@@ -142,6 +195,18 @@ function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema, rep
     : 0;
   if (!hasHelperUnsignedPassGuard || !hasRollbackUnsignedPassGuard || unsignedPolicyErrorCount < 2) {
     add("VALIDATOR_UNSIGNED_PASS_GUARD", "report validator must reject unsigned helper and rollback signatures for root PASS with PASS_UNSIGNED_SIGNATURE_POLICY_UNRESOLVED");
+  }
+  if (typeof reportValidatorSource !== "string" ||
+      !reportValidatorSource.includes("--identity-manifest") ||
+      !reportValidatorSource.includes("identityManifestOptionSeen") ||
+      !reportValidatorSource.includes("sha256Matches") ||
+      !reportValidatorSource.includes("PASS_IDENTITY_MANIFEST_REQUIRED") ||
+      !reportValidatorSource.includes("PASS_IDENTITY_MANIFEST_SOURCE_MISMATCH") ||
+      !reportValidatorSource.includes("PASS_HELPER_TRUSTED_IDENTITY_MISMATCH") ||
+      !reportValidatorSource.includes("PASS_ROLLBACK_TRUSTED_IDENTITY_MISMATCH") ||
+      !reportValidatorSource.includes("sameArtifactFileIdentity") ||
+      !reportValidatorSource.includes("PASS_ROLLBACK_FILE_IDENTITY_UNAVAILABLE")) {
+    add("VALIDATOR_IDENTITY_MANIFEST_CONTRACT", "report validator must require a single external manifest for root PASS, safely compare source/hash identity, and compare helper and rollback claims against it");
   }
 
   const cases = Array.isArray(fixturePlan.cases) ? fixturePlan.cases : [];
@@ -294,6 +359,7 @@ function loadPreparationInputs(directory = __dirname) {
     fixturePlan: readJson("fixture-plan.json"),
     assertionMap: readJson("assertion-map.json"),
     reportSchema: readJson("report.schema.json"),
+    identityManifestSchema: readJson("identity-manifest.schema.json"),
     reportValidatorSource: fs.readFileSync(path.join(directory, "verify-report.cjs"), "utf8"),
   };
 }

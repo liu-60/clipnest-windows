@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "result": "PREPARATION_ONLY",
+  "reviewType": "caller-supplied helper and rollback identity manifest interface",
+  "recordedDate": "2026-10-05",
+  "branch": "codex/m0-latency",
+  "sourceCommit": "a62f5c8d790581c69444e7f249f318b55471a08c",
+  "workingTreeWasDirty": true,
+  "scope": "tests/tasks/T05/** plus this evidence and a T05 open-gate note; no production code, package, dependency, install, clipboard, input, or behavior changes",
+  "interface": {
+    "cli": "--identity-manifest <file> or --identity-manifest=<file>",
+    "pathRequirements": [
+      "manifest resolves to a file distinct from the report",
+      "manifest resolves outside --artifact-root",
+      "at most one manifest CLI option is accepted"
+    ],
+    "sourceBinding": "manifest.sourceCommit must equal report.source.commit",
+    "helperIdentity": [
+      "relativePath",
+      "sha256",
+      "version",
+      "protocol"
+    ],
+    "rollbackPriorIdentity": [
+      "relativePath",
+      "sha256",
+      "version"
+    ],
+    "byteVerification": "helper actualPath and rollback priorPath/rollbackPath bytes are re-read under --artifact-root and SHA-256 is recomputed; expected and actual report identities must match the caller manifest"
+  },
+  "trustBoundary": {
+    "manifestTrust": "caller supplied and trusted; verifier does not authenticate its author or provenance",
+    "manifestDigest": "manifest bytes are hashed and the digest is reported for review; this does not authenticate the manifest",
+    "authenticodeVerificationPerformed": false,
+    "productionIdentityManifestGenerated": false,
+    "productionBaselineFabricated": false
+  },
+  "validation": {
+    "node --test tests/tasks/T05/verify-report.test.cjs tests/tasks/T05/validate-preparation.test.cjs": {
+      "result": "PASS",
+      "tests": 48,
+      "passed": 48,
+      "failed": 0,
+      "skipped": 0,
+      "syntheticCoverage": [
+        "valid caller manifest with helper and rollback identity",
+        "missing manifest and source commit mismatch",
+        "report alias and manifest inside artifact root",
+        "self-consistent forged helper path/hash/version/protocol claims",
+        "self-consistent forged rollback prior/restored path/hash/version claims",
+        "malformed hash values fail closed",
+        "duplicate manifest CLI option rejected",
+        "NTFS hard-link aliases sharing the same file identity rejected for rollback paths"
+      ]
+    },
+    "node tests/tasks/T05/validate-preparation.cjs": {
+      "result": "PREPARATION_ONLY",
+      "caseCount": 28,
+      "assertionCount": 71,
+      "g0GateCount": 2,
+      "behaviorExecuted": false
+    },
+    "node tests/tasks/T05/schema-validation-self-check.cjs": {
+      "result": "PASS",
+      "validator": "jsonschema.Draft202012Validator 4.26.0",
+      "notRunReportValid": true,
+      "identityManifestSyntheticPositive": true,
+      "identityManifestSyntheticNegativeCases": 2,
+      "authenticodeVerificationPerformed": false
+    },
+    "node tests/tasks/T05/verify-report.cjs --validate-schema": {
+      "result": "PASS_PREPARATION_ONLY",
+      "reportStatus": "NOT_RUN",
+      "T04": "in_progress",
+      "t05AcceptanceImplied": false
+    },
+    "git diff --check -- tests/tasks/T05 docs/evidence/T05 docs/progress.json": "PASS"
+  },
+  "changedFiles": {
+    "tests/tasks/T05/fixture-plan.json": {
+      "sha256": "71b6dc4850ed423e7d018236b394ebbe7349aba0d49cca076784c5bd2d52b240"
+    },
+    "tests/tasks/T05/identity-manifest.schema.json": {
+      "sha256": "7a4cf65869010ce6a5741111252a37fd3fea33a747b207ce98f1c1870bda80e9"
+    },
+    "tests/tasks/T05/report.schema.json": {
+      "sha256": "8f9e329e11469195ddf4548fd97a89e067b7fd72757ece7054d16f8ce2ff1dfa"
+    },
+    "tests/tasks/T05/schema-validation-self-check.cjs": {
+      "sha256": "b1e077c4d7db5de95f02f223cfeb236025a1eec6a2484553603de0996eb91de9"
+    },
+    "tests/tasks/T05/validate-preparation.cjs": {
+      "sha256": "c0d092c6d10c2ab9b738f3f15e089c3a1574fbf9791c87f00d2123f20a16bb64"
+    },
+    "tests/tasks/T05/validate-preparation.test.cjs": {
+      "sha256": "ef6b56c6c583a3e8ca80016a72f69c3b6577c14c29b6643d0f6e8afaf8347206"
+    },
+    "tests/tasks/T05/verify-report.cjs": {
+      "sha256": "2959c239d54cfa85b36065450b722efd977025adb1e0341fedd079b0b188c2e4"
+    },
+    "tests/tasks/T05/verify-report.test.cjs": {
+      "sha256": "dd4a6f75b029633963c04a1d045b8c9d727eb46a669e8cc9c6f833ea59cd3dc8"
+    }
+  },
+  "remainingGates": [
+    "The caller must obtain helper and rollback prior identity values from a trusted source; this interface does not create a production baseline.",
+    "package.json still does not establish helper extraResources/asarUnpack inclusion, and T04 remains in_progress; final package helper presence and metadata are unverified.",
+    "The manifest trust source/policy requires caller ownership; Authenticode cryptographic verification remains unperformed and signatureStatus=valid is a report claim.",
+    "P01-P28, lifecycle, rollback behavior, controlled-live measurements, and T05 acceptance remain NOT_RUN; T05 remains not_started."
+  ],
+  "sideEffects": {
+    "behaviorExecuted": false,
+    "benchmarkExecuted": false,
+    "packageBuilt": false,
+    "dependenciesChanged": false,
+    "installed": false,
+    "clipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "t05AcceptanceImplied": false
+  },
+  "rollbackAliasProtection": {
+    "canonicalPathAliasesRejected": true,
+    "hardLinkFileIdentity": "Windows stat dev+ino from opened file descriptors",
+    "missingFileIdentity": "fail-closed",
+    "hardLinkRegression": "PASS_SYNTHETIC"
+  }
+}

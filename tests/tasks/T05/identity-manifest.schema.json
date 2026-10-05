@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Caller-supplied T05 helper identity manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "task", "sourceCommit", "artifactRootKind", "helper", "rollbackPrior"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "task": { "const": "T05" },
+    "sourceCommit": { "type": "string", "minLength": 1 },
+    "artifactRootKind": { "const": "windows_x64_unpacked_app_root" },
+    "helper": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relativePath", "sha256", "version", "protocol"],
+      "properties": {
+        "relativePath": { "const": "resources/native/clipnest-helper.exe" },
+        "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "version": { "type": "string", "minLength": 1 },
+        "protocol": { "type": "string", "minLength": 1 }
+      }
+    },
+    "rollbackPrior": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relativePath", "sha256", "version"],
+      "properties": {
+        "relativePath": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "version": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

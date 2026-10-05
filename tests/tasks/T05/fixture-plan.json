@@ -81,11 +81,23 @@
     "artifactRootKind": "windows_x64_unpacked_app_root",
     "runtimeLookup": "process.resourcesPath/native/clipnest-helper.exe",
     "helperRelativePath": "resources/native/clipnest-helper.exe",
-    "rollbackRequiresDistinctCanonicalFiles": true
+    "rollbackRequiresDistinctCanonicalFiles": true,
+    "rollbackRequiresDistinctFilesystemIdentity": true
   },
   "signaturePolicyContract": {
     "unsignedPolicy": "unresolved",
     "passStatus": "valid",
+    "authenticodeVerification": "not_performed_by_static_verifier"
+  },
+  "identityManifestContract": {
+    "cliOption": "--identity-manifest",
+    "requiredForRootPass": true,
+    "pathMustDifferFromReport": true,
+    "pathMustResolveOutsideArtifactRoot": true,
+    "sourceCommitMustMatchReport": true,
+    "trustBoundary": "caller_supplied_and_trusted; verifier does not authenticate the manifest",
+    "helperIdentityFields": ["relativePath", "sha256", "version", "protocol"],
+    "rollbackPriorIdentityFields": ["relativePath", "sha256", "version"],
     "authenticodeVerification": "not_performed_by_static_verifier"
   },
   "packageAndRollbackChecks": [

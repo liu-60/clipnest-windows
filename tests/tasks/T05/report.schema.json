@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "ClipNest T05 execution report",
+  "description": "Root PASS additionally requires a caller-supplied --identity-manifest separate from the report and --artifact-root. The verifier does not authenticate the manifest or perform Authenticode verification.",
   "type": "object",
   "additionalProperties": false,
   "required": [

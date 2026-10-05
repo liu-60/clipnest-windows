@@ -81,6 +81,33 @@ function expectInvalidInstance(instance, label) {
   return result;
 }
 
+function expectInvalidManifest(manifest, label) {
+  const result = validateDraft202012Instance(manifest, context.identityManifestSchema);
+  assert.equal(result.kind, "invalid_instance", label);
+  assert.ok(result.errors.length > 0, label);
+  return result;
+}
+
+function syntheticIdentityManifest() {
+  return {
+    schemaVersion: 1,
+    task: "T05",
+    sourceCommit: "synthetic-source-commit",
+    artifactRootKind: "windows_x64_unpacked_app_root",
+    helper: {
+      relativePath: "resources/native/clipnest-helper.exe",
+      sha256: "a".repeat(64),
+      version: "synthetic-helper-version",
+      protocol: "synthetic-protocol",
+    },
+    rollbackPrior: {
+      relativePath: "rollback/synthetic-prior-helper.exe",
+      sha256: "b".repeat(64),
+      version: "synthetic-prior-version",
+    },
+  };
+}
+
 function main() {
   const valid = validateDraft202012Instance(example, context.reportSchema);
   if (valid.kind === "unavailable") {
@@ -89,6 +116,17 @@ function main() {
     return;
   }
   assert.equal(valid.kind, "valid", "current NOT_RUN example must satisfy the complete schema");
+
+  const identityManifest = syntheticIdentityManifest();
+  const identityManifestValid = validateDraft202012Instance(identityManifest, context.identityManifestSchema);
+  assert.equal(identityManifestValid.kind, "valid",
+    `synthetic caller identity manifest must satisfy its schema: ${JSON.stringify(identityManifestValid.errors ?? [])}`);
+  const wrongHelperPathManifest = clone(identityManifest);
+  wrongHelperPathManifest.helper.relativePath = "resources/alternate/clipnest-helper.exe";
+  expectInvalidManifest(wrongHelperPathManifest, "identity manifest must pin the fixed packaged helper path");
+  const missingProtocolManifest = clone(identityManifest);
+  delete missingProtocolManifest.helper.protocol;
+  expectInvalidManifest(missingProtocolManifest, "identity manifest must include helper protocol");
 
   for (const status of ["FAIL", "REVIEW", "NOT_RUN"]) {
     const unsignedNonPass = clone(example);
@@ -279,6 +317,12 @@ function main() {
       nonPassUnsignedRecordable: ["FAIL", "REVIEW", "NOT_RUN"],
       helperPassUnsignedRejected: true,
       rollbackPassUnsignedRejected: true,
+      authenticodeVerificationPerformed: false,
+    },
+    identityManifestCases: {
+      positive: "PASS_SYNTHETIC_ONLY",
+      negative: 2,
+      callerTrustRequired: true,
       authenticodeVerificationPerformed: false,
     },
     syntheticG0DraftSchemaCases: {

@@ -108,9 +108,106 @@ function loadVerifierContext(repoRoot = REPO_ROOT, options = {}) {
   return {
     repoRoot: path.resolve(repoRoot),
     artifactRoot: options.artifactRoot ? path.resolve(options.artifactRoot) : null,
+    identityManifest: options.identityManifest ?? null,
+    identityManifestPath: options.identityManifestPath ?? null,
+    identityManifestSha256: options.identityManifestSha256 ?? null,
+    identityManifestPathIndependent: options.identityManifestPathIndependent === true,
+    identityManifestError: options.identityManifestError ?? null,
     ...prep,
     progress: readJson(path.join(repoRoot, "docs", "progress.json")),
   };
+}
+
+function loadIdentityManifestFile(manifestArgument, reportPath, artifactRoot, repoRoot = REPO_ROOT) {
+  if (manifestArgument === null || manifestArgument === undefined) {
+    return {
+      identityManifest: null,
+      identityManifestPath: null,
+      identityManifestSha256: null,
+      identityManifestPathIndependent: false,
+      identityManifestError: null,
+    };
+  }
+  if (typeof manifestArgument !== "string" || manifestArgument.trim() === "" || manifestArgument.includes("\0")) {
+    return { identityManifestError: { code: "IDENTITY_MANIFEST_PATH_INVALID", message: "identity manifest path must be a nonempty file path" } };
+  }
+
+  let manifestRealPath;
+  try {
+    manifestRealPath = fs.realpathSync.native(path.resolve(repoRoot, manifestArgument));
+    if (!fs.statSync(manifestRealPath).isFile()) {
+      return { identityManifestError: { code: "IDENTITY_MANIFEST_NOT_FILE", message: "identity manifest must resolve to a file" } };
+    }
+  } catch {
+    return { identityManifestError: { code: "IDENTITY_MANIFEST_NOT_FOUND", message: "identity manifest must exist and resolve to a file" } };
+  }
+
+  try {
+    const reportRealPath = fs.realpathSync.native(path.resolve(repoRoot, reportPath));
+    if (sameCanonicalArtifactPath(manifestRealPath, reportRealPath)) {
+      return { identityManifestError: { code: "IDENTITY_MANIFEST_REPORT_ALIAS", message: "identity manifest must resolve to a different file than the report" } };
+    }
+  } catch {
+    return { identityManifestError: { code: "IDENTITY_MANIFEST_REPORT_UNRESOLVED", message: "report path must resolve before identity manifest independence can be checked" } };
+  }
+
+  if (typeof artifactRoot !== "string" || artifactRoot.trim() === "") {
+    return { identityManifestError: { code: "IDENTITY_MANIFEST_ARTIFACT_ROOT_REQUIRED", message: "a separate --artifact-root is required to verify identity manifest path independence" } };
+  }
+  let rootRealPath;
+  try {
+    rootRealPath = fs.realpathSync.native(path.resolve(repoRoot, artifactRoot));
+    if (!fs.statSync(rootRealPath).isDirectory()) {
+      return { identityManifestError: { code: "IDENTITY_MANIFEST_ARTIFACT_ROOT_INVALID", message: "--artifact-root must resolve to a directory" } };
+    }
+  } catch {
+    return { identityManifestError: { code: "IDENTITY_MANIFEST_ARTIFACT_ROOT_INVALID", message: "--artifact-root must exist and resolve to a directory" } };
+  }
+  if (isWithinDirectory(rootRealPath, manifestRealPath)) {
+    return { identityManifestError: { code: "IDENTITY_MANIFEST_INSIDE_ARTIFACT_ROOT", message: "identity manifest must resolve outside --artifact-root" } };
+  }
+
+  try {
+    const bytes = fs.readFileSync(manifestRealPath);
+    let identityManifest;
+    try {
+      identityManifest = JSON.parse(bytes.toString("utf8"));
+    } catch {
+      return { identityManifestError: { code: "IDENTITY_MANIFEST_JSON_INVALID", message: "identity manifest must contain valid JSON" } };
+    }
+    return {
+      identityManifest,
+      identityManifestPath: manifestRealPath,
+      identityManifestSha256: crypto.createHash("sha256").update(bytes).digest("hex"),
+      identityManifestPathIndependent: true,
+      identityManifestError: null,
+    };
+  } catch {
+    return { identityManifestError: { code: "IDENTITY_MANIFEST_UNREADABLE", message: "identity manifest bytes could not be read" } };
+  }
+}
+
+function validateIdentityManifestShape(manifest) {
+  const hasExactKeys = (value, expected) => isRecord(value) &&
+    Object.keys(value).sort().join("\n") === [...expected].sort().join("\n");
+  const hasText = (value) => typeof value === "string" && value.trim() !== "";
+  const hasSha256 = (value) => typeof value === "string" && /^[a-fA-F0-9]{64}$/.test(value);
+  if (!hasExactKeys(manifest, ["schemaVersion", "task", "sourceCommit", "artifactRootKind", "helper", "rollbackPrior"]) ||
+      manifest.schemaVersion !== 1 || manifest.task !== "T05" || !hasText(manifest.sourceCommit) ||
+      manifest.artifactRootKind !== "windows_x64_unpacked_app_root") {
+    return "manifest must identify T05, a source commit, and an unpacked Windows x64 app root";
+  }
+  if (!hasExactKeys(manifest.helper, ["relativePath", "sha256", "version", "protocol"]) ||
+      manifest.helper.relativePath !== EXPECTED_HELPER_RESOURCE_RELATIVE_PATH ||
+      !hasSha256(manifest.helper.sha256) || !hasText(manifest.helper.version) || !hasText(manifest.helper.protocol)) {
+    return "manifest.helper must pin the fixed packaged helper path, SHA-256, version, and protocol";
+  }
+  if (!hasExactKeys(manifest.rollbackPrior, ["relativePath", "sha256", "version"]) ||
+      !hasText(manifest.rollbackPrior.relativePath) || !hasSha256(manifest.rollbackPrior.sha256) ||
+      !hasText(manifest.rollbackPrior.version)) {
+    return "manifest.rollbackPrior must pin the prior helper path, SHA-256, and version";
+  }
+  return null;
 }
 
 // Kept byte-for-byte in behavior with scripts/benchmark/bench-desktop.cjs:
@@ -327,9 +424,17 @@ function inspectArtifactFileSha256(reference, expectedSha256, artifactRoot) {
   }
 
   let actualSha256;
+  let fileIdentity = null;
   try {
     const descriptor = fs.openSync(realPath, "r");
     try {
+      const fileStats = fs.fstatSync(descriptor, { bigint: true });
+      if (!fileStats.isFile()) {
+        return { code: "ARTIFACT_FILE_NOT_FILE", message: "artifact path must resolve to a file" };
+      }
+      if (fileStats.ino !== 0n) {
+        fileIdentity = { device: fileStats.dev.toString(), file: fileStats.ino.toString() };
+      }
       const hash = crypto.createHash("sha256");
       const chunk = Buffer.allocUnsafe(64 * 1024);
       let bytesRead;
@@ -347,7 +452,7 @@ function inspectArtifactFileSha256(reference, expectedSha256, artifactRoot) {
   if (actualSha256.toLowerCase() !== expectedSha256.toLowerCase()) {
     return { code: "ARTIFACT_SHA256_MISMATCH", message: "reported SHA-256 does not match the artifact file bytes" };
   }
-  return { realPath, actualSha256 };
+  return { realPath, actualSha256, fileIdentity };
 }
 
 function validateArtifactFileSha256(reference, expectedSha256, artifactRoot) {
@@ -361,6 +466,13 @@ function sameCanonicalArtifactPath(left, right) {
     ? (value) => path.win32.normalize(value).toLowerCase()
     : (value) => path.normalize(value);
   return normalize(left) === normalize(right);
+}
+
+function sameArtifactFileIdentity(left, right) {
+  return left?.fileIdentity !== null && left?.fileIdentity !== undefined &&
+    right?.fileIdentity !== null && right?.fileIdentity !== undefined &&
+    left.fileIdentity.device === right.fileIdentity.device &&
+    left.fileIdentity.file === right.fileIdentity.file;
 }
 
 function collectEvidenceErrors(report, repoRoot) {
@@ -997,12 +1109,21 @@ function validateRootPassRequirements(report, context, errors) {
       addError(errors, rollbackArtifact.code, "$.packageAndRollback.rollback.rollbackPath", rollbackArtifact.message);
     }
     if (!priorArtifact.code && !rollbackArtifact.code &&
-        sameCanonicalArtifactPath(priorArtifact.realPath, rollbackArtifact.realPath)) {
+        (sameCanonicalArtifactPath(priorArtifact.realPath, rollbackArtifact.realPath) ||
+          sameArtifactFileIdentity(priorArtifact, rollbackArtifact))) {
       addError(
         errors,
         "PASS_ROLLBACK_ARTIFACT_ALIAS",
         "$.packageAndRollback.rollback",
-        "priorPath and rollbackPath must resolve to different canonical artifact files",
+        "priorPath and rollbackPath must resolve to different filesystem files",
+      );
+    } else if (!priorArtifact.code && !rollbackArtifact.code &&
+        (!priorArtifact.fileIdentity || !rollbackArtifact.fileIdentity)) {
+      addError(
+        errors,
+        "PASS_ROLLBACK_FILE_IDENTITY_UNAVAILABLE",
+        "$.packageAndRollback.rollback",
+        "filesystem identity is required to prove priorPath and rollbackPath are different files",
       );
     }
   }
@@ -1017,6 +1138,8 @@ function validateRootPassRequirements(report, context, errors) {
     addError(errors, "PASS_ROLLBACK_SIGNATURE_STATUS", "$.packageAndRollback.rollback.signatureStatus", `rollback signatureStatus must be ${PASS_SIGNATURE_STATUS} for root PASS`);
   }
   requirePass(rollback?.helperBinaryOnly, "$.packageAndRollback.rollback.helperBinaryOnly", errors);
+
+  validateRootPassIdentityManifest(report, context, helper, rollback, errors);
 
   if (!Array.isArray(packageChecks?.evidence) || packageChecks.evidence.length === 0) {
     addError(errors, "PASS_PACKAGE_EVIDENCE_REQUIRED", "$.packageAndRollback.evidence", "top-level PASS requires package and rollback evidence");
@@ -1034,6 +1157,78 @@ function validateRootPassRequirements(report, context, errors) {
   }
 }
 
+function validateRootPassIdentityManifest(report, context, helper, rollback, errors) {
+  if (context.identityManifestError) {
+    addError(
+      errors,
+      "PASS_IDENTITY_MANIFEST_INVALID",
+      "--identity-manifest",
+      `${context.identityManifestError.code}: ${context.identityManifestError.message}`,
+    );
+    return;
+  }
+  if (!context.identityManifestPath || !/^[a-fA-F0-9]{64}$/.test(context.identityManifestSha256 ?? "") ||
+      context.identityManifestPathIndependent !== true || !isRecord(context.identityManifest)) {
+    addError(
+      errors,
+      "PASS_IDENTITY_MANIFEST_REQUIRED",
+      "--identity-manifest",
+      "root PASS requires a separate caller-supplied identity manifest outside the report and --artifact-root",
+    );
+    return;
+  }
+
+  const manifest = context.identityManifest;
+  const shapeError = validateIdentityManifestShape(manifest);
+  if (shapeError) {
+    addError(errors, "PASS_IDENTITY_MANIFEST_INVALID", "--identity-manifest", shapeError);
+    return;
+  }
+  if (manifest.sourceCommit !== report.source?.commit) {
+    addError(
+      errors,
+      "PASS_IDENTITY_MANIFEST_SOURCE_MISMATCH",
+      "--identity-manifest.sourceCommit",
+      "identity manifest sourceCommit must equal report.source.commit",
+    );
+  }
+
+  const sha256Matches = (actual, expected) =>
+    typeof actual === "string" && actual.toLowerCase() === expected.toLowerCase();
+  const helperMatchesManifest = isRecord(helper) &&
+    helper.expectedPath === manifest.helper.relativePath &&
+    helper.actualPath === manifest.helper.relativePath &&
+    sha256Matches(helper.expectedSha256, manifest.helper.sha256) &&
+    sha256Matches(helper.actualSha256, manifest.helper.sha256) &&
+    helper.expectedVersion === manifest.helper.version &&
+    helper.actualVersion === manifest.helper.version &&
+    helper.expectedProtocol === manifest.helper.protocol &&
+    helper.actualProtocol === manifest.helper.protocol;
+  if (!helperMatchesManifest) {
+    addError(
+      errors,
+      "PASS_HELPER_TRUSTED_IDENTITY_MISMATCH",
+      "$.packageAndRollback.helperResource",
+      "helper expected/actual path, SHA-256, version, and protocol must match the caller-supplied identity manifest",
+    );
+  }
+
+  const rollbackMatchesManifest = isRecord(rollback) &&
+    rollback.priorPath === manifest.rollbackPrior.relativePath &&
+    sha256Matches(rollback.priorSha256, manifest.rollbackPrior.sha256) &&
+    sha256Matches(rollback.rollbackSha256, manifest.rollbackPrior.sha256) &&
+    rollback.priorVersion === manifest.rollbackPrior.version &&
+    rollback.rollbackVersion === manifest.rollbackPrior.version;
+  if (!rollbackMatchesManifest) {
+    addError(
+      errors,
+      "PASS_ROLLBACK_TRUSTED_IDENTITY_MISMATCH",
+      "$.packageAndRollback.rollback",
+      "rollback prior path, SHA-256, and version, plus restored rollback identity, must match the caller-supplied identity manifest",
+    );
+  }
+}
+
 function deduplicateErrors(errors) {
   const seen = new Set();
   return errors.filter((error) => {
@@ -1048,6 +1243,8 @@ function main() {
   const args = process.argv.slice(2);
   let schemaValidationRequested = false;
   let artifactRootArgument = null;
+  let identityManifestArgument = null;
+  let identityManifestOptionSeen = false;
   let reportArgument = null;
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
@@ -1068,6 +1265,33 @@ function main() {
         process.exitCode = 1;
         return;
       }
+    } else if (argument === "--identity-manifest") {
+      if (identityManifestOptionSeen) {
+        console.error("PREPARATION_ONLY: provide --identity-manifest at most once.");
+        process.exitCode = 1;
+        return;
+      }
+      identityManifestOptionSeen = true;
+      identityManifestArgument = args[index + 1] ?? null;
+      if (identityManifestArgument === null || identityManifestArgument.startsWith("--")) {
+        console.error("PREPARATION_ONLY: --identity-manifest requires a file path.");
+        process.exitCode = 1;
+        return;
+      }
+      index += 1;
+    } else if (argument.startsWith("--identity-manifest=")) {
+      if (identityManifestOptionSeen) {
+        console.error("PREPARATION_ONLY: provide --identity-manifest at most once.");
+        process.exitCode = 1;
+        return;
+      }
+      identityManifestOptionSeen = true;
+      identityManifestArgument = argument.slice("--identity-manifest=".length);
+      if (identityManifestArgument === "") {
+        console.error("PREPARATION_ONLY: --identity-manifest requires a file path.");
+        process.exitCode = 1;
+        return;
+      }
     } else if (argument.startsWith("--")) {
       console.error(`PREPARATION_ONLY: unsupported option ${argument}.`);
       process.exitCode = 1;
@@ -1080,9 +1304,6 @@ function main() {
       return;
     }
   }
-  const context = loadVerifierContext(REPO_ROOT, {
-    artifactRoot: artifactRootArgument === null ? null : path.resolve(REPO_ROOT, artifactRootArgument),
-  });
   const reportPath = reportArgument
     ? path.resolve(REPO_ROOT, reportArgument)
     : SAMPLE_REPORT;
@@ -1094,6 +1315,17 @@ function main() {
     process.exitCode = 1;
     return;
   }
+  const artifactRoot = artifactRootArgument === null ? null : path.resolve(REPO_ROOT, artifactRootArgument);
+  const identityManifestInput = loadIdentityManifestFile(
+    identityManifestArgument,
+    reportPath,
+    artifactRoot,
+    REPO_ROOT,
+  );
+  const context = loadVerifierContext(REPO_ROOT, {
+    artifactRoot,
+    ...identityManifestInput,
+  });
 
   const errors = collectReportErrors(report, context, { validateSchema: schemaValidationRequested });
   if (errors.length > 0) {
@@ -1105,7 +1337,10 @@ function main() {
   const schemaNote = schemaValidationRequested
     ? "Draft 2020-12 instance validation passed"
     : "Draft 2020-12 instance validation was not requested";
-  console.log(`PREPARATION_ONLY: report consistency checks passed; ${schemaNote} (${report.cases.length} cases, ${context.assertionMap.assertions.length} assertion names, T03=${report.dependencyGate.T03}, T04=${report.dependencyGate.T04}, status=${report.status}); behavior acceptance is not implied.`);
+  const identityNote = context.identityManifestSha256
+    ? `; caller-supplied identity manifest SHA-256=${context.identityManifestSha256}`
+    : "";
+  console.log(`PREPARATION_ONLY: report consistency checks passed; ${schemaNote}${identityNote} (${report.cases.length} cases, ${context.assertionMap.assertions.length} assertion names, T03=${report.dependencyGate.T03}, T04=${report.dependencyGate.T04}, status=${report.status}); behavior acceptance is not implied.`);
 }
 
 if (require.main === module) {
@@ -1122,10 +1357,12 @@ module.exports = {
   SAMPLE_REPORT,
   collectEvidenceErrors,
   collectReportErrors,
+  loadIdentityManifestFile,
   loadVerifierContext,
   nearestRankPercentile,
   validateEvidenceReference,
   validateArtifactFileSha256,
   validateDraft202012Instance,
+  validateIdentityManifestShape,
   validateMeasurement,
 };

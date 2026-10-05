@@ -1,6 +1,7 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const { spawnSync } = require("node:child_process");
 const crypto = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
@@ -12,6 +13,7 @@ const {
   SAMPLE_REPORT,
   collectEvidenceErrors,
   collectReportErrors,
+  loadIdentityManifestFile,
   loadVerifierContext,
   nearestRankPercentile,
   validateEvidenceReference,
@@ -45,6 +47,40 @@ function createArtifactFixture(t) {
   };
 }
 
+function createIdentityManifestFixture(t, manifest) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "clipnest-t05-identity-manifest-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const filePath = path.join(root, "expected-identity.json");
+  fs.writeFileSync(filePath, `${JSON.stringify(manifest, null, 2)}\n`);
+  return filePath;
+}
+
+function syntheticIdentityManifest({ sourceCommit = "synthetic-source-commit", helperSha256 = "a".repeat(64), helperVersion = "1.0.0", helperProtocol = "1", rollbackPath = "rollback/prior-helper.exe", rollbackSha256 = "b".repeat(64), rollbackVersion = "0.9.0" } = {}) {
+  return {
+    schemaVersion: 1,
+    task: "T05",
+    sourceCommit,
+    artifactRootKind: "windows_x64_unpacked_app_root",
+    helper: {
+      relativePath: "resources/native/clipnest-helper.exe",
+      sha256: helperSha256,
+      version: helperVersion,
+      protocol: helperProtocol,
+    },
+    rollbackPrior: {
+      relativePath: rollbackPath,
+      sha256: rollbackSha256,
+      version: rollbackVersion,
+    },
+  };
+}
+
+function loadSyntheticIdentityContext(t, acceptedContext, artifactRoot, manifest) {
+  const manifestPath = createIdentityManifestFixture(t, manifest);
+  Object.assign(acceptedContext, loadIdentityManifestFile(manifestPath, SAMPLE_REPORT, artifactRoot));
+  return acceptedContext;
+}
+
 function measuredFixture(samples) {
   const counts = { success: 0, failure: 0, cancelled: 0, timeout: 0 };
   for (const item of samples) counts[item.outcome] += 1;
@@ -68,6 +104,40 @@ function measuredFixture(samples) {
 function errorsFor(report, overrides = {}, validationOptions = {}) {
   return collectReportErrors(report, { ...context, ...overrides }, validationOptions);
 }
+
+test("caller identity manifest is a separate CLI file outside the report and artifact root", (t) => {
+  const artifact = createArtifactFixture(t);
+  const manifest = syntheticIdentityManifest();
+  const manifestPath = createIdentityManifestFixture(t, manifest);
+  const loaded = loadIdentityManifestFile(manifestPath, SAMPLE_REPORT, artifact.root);
+  assert.equal(loaded.identityManifestPathIndependent, true);
+  assert.deepEqual(loaded.identityManifest, manifest);
+  assert.equal(loaded.identityManifestSha256, crypto.createHash("sha256")
+    .update(fs.readFileSync(manifestPath)).digest("hex"));
+
+  const reportAlias = loadIdentityManifestFile(SAMPLE_REPORT, SAMPLE_REPORT, artifact.root);
+  assert.equal(reportAlias.identityManifestError.code, "IDENTITY_MANIFEST_REPORT_ALIAS");
+
+  artifact.write("expected-identity.json", Buffer.from(JSON.stringify(manifest)));
+  const insideRoot = loadIdentityManifestFile(
+    path.join(artifact.root, "expected-identity.json"),
+    SAMPLE_REPORT,
+    artifact.root,
+  );
+  assert.equal(insideRoot.identityManifestError.code, "IDENTITY_MANIFEST_INSIDE_ARTIFACT_ROOT");
+});
+
+test("CLI accepts at most one caller identity manifest path", () => {
+  const result = spawnSync(process.execPath, [
+    path.join(__dirname, "verify-report.cjs"),
+    "--identity-manifest",
+    "first.json",
+    "--identity-manifest=second.json",
+    SAMPLE_REPORT,
+  ], { encoding: "utf8" });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /provide --identity-manifest at most once/);
+});
 
 function syntheticG0PassReport() {
   const report = clone(example);
@@ -308,6 +378,7 @@ test("root PASS requires a valid rollback helper signature", () => {
 test("root PASS recomputes helper identity from expected and actual fields", (t) => {
   const report = clone(example);
   report.status = "PASS";
+  report.source.commit = "synthetic-source-commit";
   report.dependencyGate = { T03: "accepted", T04: "accepted" };
   const acceptedContext = clone(context);
   acceptedContext.progress.tasks.T03.status = "accepted";
@@ -335,7 +406,32 @@ test("root PASS recomputes helper identity from expected and actual fields", (t)
     evidence: ["tests/tasks/T05/fixture-plan.json"],
   });
   assert.ok(
+    collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_IDENTITY_MANIFEST_REQUIRED"),
+    "root PASS must reject report-only identity claims without the independent manifest input",
+  );
+  loadSyntheticIdentityContext(t, acceptedContext, artifact.root, syntheticIdentityManifest({
+    sourceCommit: report.source.commit,
+    helperSha256,
+    helperVersion: "1.0.0",
+    helperProtocol: "1",
+  }));
+  assert.ok(
     !collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_HELPER_IDENTITY_REQUIRED"),
+  );
+  assert.ok(
+    !collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_HELPER_TRUSTED_IDENTITY_MISMATCH"),
+    "correct helper claims and independently supplied synthetic manifest must agree",
+  );
+  const wrongSourceManifestContext = clone(acceptedContext);
+  loadSyntheticIdentityContext(t, wrongSourceManifestContext, artifact.root, syntheticIdentityManifest({
+    sourceCommit: "different-synthetic-commit",
+    helperSha256,
+    helperVersion: "1.0.0",
+    helperProtocol: "1",
+  }));
+  assert.ok(
+    collectReportErrors(report, wrongSourceManifestContext).some((error) => error.code === "PASS_IDENTITY_MANIFEST_SOURCE_MISMATCH"),
+    "the independent identity manifest must be pinned to the report source commit",
   );
   const unsignedHelperReport = clone(report);
   unsignedHelperReport.packageAndRollback.helperResource.signatureStatus = "unsigned";
@@ -354,6 +450,10 @@ test("root PASS recomputes helper identity from expected and actual fields", (t)
   });
   assert.ok(
     collectReportErrors(alternatePathClaim, acceptedContext).some((error) => error.code === "PASS_HELPER_PATH_CONTRACT"),
+  );
+  assert.ok(
+    collectReportErrors(alternatePathClaim, acceptedContext).some((error) => error.code === "PASS_HELPER_TRUSTED_IDENTITY_MISMATCH"),
+    "a self-consistent alternate path and hash must still disagree with the external manifest",
   );
   const escapedHelperPath = clone(report);
   escapedHelperPath.packageAndRollback.helperResource.actualPath = "../outside/clipnest-helper.exe";
@@ -380,11 +480,45 @@ test("root PASS recomputes helper identity from expected and actual fields", (t)
       collectReportErrors(forged, acceptedContext).some((error) => error.code === "PASS_HELPER_IDENTITY_REQUIRED"),
     );
   }
+
+  for (const mutate of [
+    (helper) => { helper.expectedVersion = helper.actualVersion = "9.9.9"; },
+    (helper) => { helper.expectedProtocol = helper.actualProtocol = "9"; },
+  ]) {
+    const selfFilled = clone(report);
+    mutate(selfFilled.packageAndRollback.helperResource);
+    assert.ok(
+      collectReportErrors(selfFilled, acceptedContext).some((error) => error.code === "PASS_HELPER_TRUSTED_IDENTITY_MISMATCH"),
+      "matching expected and actual report fields cannot replace the caller-supplied trusted identity",
+    );
+  }
+
+  const malformedHash = clone(report);
+  malformedHash.packageAndRollback.helperResource.expectedSha256 = 7;
+  malformedHash.packageAndRollback.helperResource.actualSha256 = 7;
+  assert.ok(
+    collectReportErrors(malformedHash, acceptedContext).some((error) => error.code === "PASS_HELPER_TRUSTED_IDENTITY_MISMATCH"),
+    "malformed report hash values must fail closed without throwing",
+  );
+
+  const forgedHelperSha256 = artifact.write(
+    "resources/native/clipnest-helper.exe",
+    Buffer.from("self-consistent forged packaged helper bytes"),
+  );
+  const selfFilledHash = clone(report);
+  selfFilledHash.packageAndRollback.helperResource.expectedSha256 = forgedHelperSha256;
+  selfFilledHash.packageAndRollback.helperResource.actualSha256 = forgedHelperSha256;
+  const selfFilledHashErrors = collectReportErrors(selfFilledHash, acceptedContext);
+  assert.ok(selfFilledHashErrors.some((error) => error.code === "PASS_HELPER_TRUSTED_IDENTITY_MISMATCH"),
+    "self-consistent helper report hash and artifact bytes must still match the independent manifest");
+  assert.ok(!selfFilledHashErrors.some((error) => error.code === "ARTIFACT_SHA256_MISMATCH"),
+    "synthetic helper artifact bytes and self-filled report hashes should agree for this negative case");
 });
 
 test("root PASS recomputes rollback version and hash identity", (t) => {
   const report = clone(example);
   report.status = "PASS";
+  report.source.commit = "synthetic-source-commit";
   report.dependencyGate = { T03: "accepted", T04: "accepted" };
   const acceptedContext = clone(context);
   acceptedContext.progress.tasks.T03.status = "accepted";
@@ -392,17 +526,36 @@ test("root PASS recomputes rollback version and hash identity", (t) => {
   acceptedContext.progress.tasks.T05.status = "in_progress";
 
   const artifact = createArtifactFixture(t);
+  const helperSha256 = artifact.write(
+    "resources/native/clipnest-helper.exe",
+    Buffer.from("synthetic packaged helper artifact bytes"),
+  );
   const priorBytes = Buffer.from("synthetic rollback helper artifact bytes");
-  const priorSha256 = artifact.write("rollback/prior-helper.exe", priorBytes);
+  const priorPath = "rollback/prior-helper.exe";
+  const priorSha256 = artifact.write(priorPath, priorBytes);
   const rollbackSha256 = artifact.write("rollback/restored-helper.exe", priorBytes);
   acceptedContext.artifactRoot = artifact.root;
 
+  Object.assign(report.packageAndRollback.helperResource, {
+    result: "PASS",
+    expectedPath: "resources/native/clipnest-helper.exe",
+    actualPath: "resources/native/clipnest-helper.exe",
+    expectedVersion: "1.0.0",
+    actualVersion: "1.0.0",
+    expectedProtocol: "1",
+    actualProtocol: "1",
+    expectedSha256: helperSha256,
+    actualSha256: helperSha256,
+    identityMatched: true,
+    signatureStatus: "valid",
+    evidence: ["tests/tasks/T05/fixture-plan.json"],
+  });
   Object.assign(report.packageAndRollback.rollback, {
     result: "PASS",
-    priorPath: "rollback/prior-helper.exe",
-    priorVersion: "1.0.0",
+    priorPath,
+    priorVersion: "0.9.0",
     rollbackPath: "rollback/restored-helper.exe",
-    rollbackVersion: "1.0.0",
+    rollbackVersion: "0.9.0",
     priorSha256,
     rollbackSha256,
     identityMatched: true,
@@ -410,11 +563,24 @@ test("root PASS recomputes rollback version and hash identity", (t) => {
     helperBinaryOnly: { name: "helperBinaryOnly", result: "PASS", evidence: ["tests/tasks/T05/fixture-plan.json"] },
     evidence: ["tests/tasks/T05/fixture-plan.json"],
   });
+  loadSyntheticIdentityContext(t, acceptedContext, artifact.root, syntheticIdentityManifest({
+    sourceCommit: report.source.commit,
+    helperSha256,
+    helperVersion: "1.0.0",
+    helperProtocol: "1",
+    rollbackPath: priorPath,
+    rollbackSha256: priorSha256,
+    rollbackVersion: "0.9.0",
+  }));
   assert.ok(
     !collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_IDENTITY_REQUIRED"),
   );
   assert.ok(
     !collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_ARTIFACT_ALIAS"),
+  );
+  assert.ok(
+    !collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_TRUSTED_IDENTITY_MISMATCH"),
+    "rollback prior identity and restored bytes must agree with the external manifest",
   );
   const unsignedRollbackReport = clone(report);
   unsignedRollbackReport.packageAndRollback.rollback.signatureStatus = "unsigned";
@@ -427,6 +593,18 @@ test("root PASS recomputes rollback version and hash identity", (t) => {
     samePathReport.packageAndRollback.rollback.priorPath;
   assert.ok(
     collectReportErrors(samePathReport, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_ARTIFACT_ALIAS"),
+  );
+  const hardLinkPath = "rollback/prior-hardlink-helper.exe";
+  fs.linkSync(
+    path.join(artifact.root, ...priorPath.split("/")),
+    path.join(artifact.root, ...hardLinkPath.split("/")),
+  );
+  const hardLinkAliasReport = clone(report);
+  hardLinkAliasReport.packageAndRollback.rollback.rollbackPath = hardLinkPath;
+  assert.ok(
+    collectReportErrors(hardLinkAliasReport, acceptedContext)
+      .some((error) => error.code === "PASS_ROLLBACK_ARTIFACT_ALIAS"),
+    "different paths to the same filesystem file must not satisfy rollback identity separation",
   );
   const escapedRollbackPath = clone(report);
   escapedRollbackPath.packageAndRollback.rollback.rollbackPath = "../outside/clipnest-helper.exe";
@@ -447,6 +625,31 @@ test("root PASS recomputes rollback version and hash identity", (t) => {
       collectReportErrors(forged, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_IDENTITY_REQUIRED"),
     );
   }
+
+  const forgedBytes = Buffer.from("self-consistent forged prior helper bytes");
+  const forgedSha256 = artifact.write("rollback/forged-prior.exe", forgedBytes);
+  artifact.write("rollback/forged-restored.exe", forgedBytes);
+  const selfFilled = clone(report);
+  Object.assign(selfFilled.packageAndRollback.rollback, {
+    priorPath: "rollback/forged-prior.exe",
+    rollbackPath: "rollback/forged-restored.exe",
+    priorVersion: "9.9.9",
+    rollbackVersion: "9.9.9",
+    priorSha256: forgedSha256,
+    rollbackSha256: forgedSha256,
+  });
+  assert.ok(
+    collectReportErrors(selfFilled, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_TRUSTED_IDENTITY_MISMATCH"),
+    "self-consistent prior and restored report claims cannot replace the caller-supplied prior identity",
+  );
+
+  const malformedHash = clone(report);
+  malformedHash.packageAndRollback.rollback.priorSha256 = 7;
+  malformedHash.packageAndRollback.rollback.rollbackSha256 = 7;
+  assert.ok(
+    collectReportErrors(malformedHash, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_TRUSTED_IDENTITY_MISMATCH"),
+    "malformed report hash values must fail closed without throwing",
+  );
 });
 
 test("root PASS rejects rollback paths that are internal symlink aliases", (t) => {
