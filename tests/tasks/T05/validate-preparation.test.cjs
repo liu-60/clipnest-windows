@@ -47,6 +47,16 @@ test("requires rollback artifact paths to identify distinct canonical files", ()
     fixturePlan.packageResourceContract.rollbackRequiresDistinctFilesystemIdentity = false;
   });
   assert.ok(codes.includes("ROLLBACK_DISTINCT_FILE_CONTRACT"));
+
+  const identicalRollbackCodeCodes = codesFor(({ fixturePlan }) => {
+    fixturePlan.packageResourceContract.rollbackPriorSha256MustDifferFromHelperSha256 = false;
+  });
+  assert.ok(identicalRollbackCodeCodes.includes("ROLLBACK_DISTINCT_FILE_CONTRACT"));
+
+  const schemaDescriptionCodes = codesFor(({ reportSchema }) => {
+    reportSchema.properties.packageAndRollback.properties.rollback.properties.rollbackPath.description = "rollback path only";
+  });
+  assert.ok(schemaDescriptionCodes.includes("SCHEMA_ROLLBACK_DISTINCT_FROM_CURRENT_HELPER"));
 });
 
 test("keeps fixture, schema, and verifier aligned on unresolved unsigned signatures", () => {
@@ -87,6 +97,11 @@ test("requires the external identity manifest contract in fixture, schema, and v
   });
   assert.ok(fixtureCodes.includes("IDENTITY_MANIFEST_FIXTURE_CONTRACT"));
 
+  const identicalRollbackCodeCodes = codesFor(({ fixturePlan }) => {
+    fixturePlan.identityManifestContract.rollbackPriorSha256MustDifferFromHelperSha256 = false;
+  });
+  assert.ok(identicalRollbackCodeCodes.includes("IDENTITY_MANIFEST_FIXTURE_CONTRACT"));
+
   const helperSchemaCodes = codesFor(({ identityManifestSchema }) => {
     identityManifestSchema.properties.helper.required = ["relativePath", "sha256", "version"];
   });
@@ -101,6 +116,12 @@ test("requires the external identity manifest contract in fixture, schema, and v
     inputs.reportValidatorSource = inputs.reportValidatorSource.replaceAll("--identity-manifest", "--external-id");
   });
   assert.ok(verifierCodes.includes("VALIDATOR_IDENTITY_MANIFEST_CONTRACT"));
+
+  const noDistinctRollbackCodeCodes = codesFor((inputs) => {
+    inputs.reportValidatorSource = inputs.reportValidatorSource
+      .replaceAll("PASS_ROLLBACK_PRIOR_IS_CURRENT_HELPER", "PASS_ROLLBACK_PRIOR_DISTINCT_CHECK_REMOVED");
+  });
+  assert.ok(noDistinctRollbackCodeCodes.includes("VALIDATOR_IDENTITY_MANIFEST_CONTRACT"));
 
   const untrustedManifestCodes = codesFor(({ fixturePlan }) => {
     fixturePlan.identityManifestContract.trustBoundary = "verifier_generated";

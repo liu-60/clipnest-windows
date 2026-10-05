@@ -1195,6 +1195,15 @@ function validateRootPassIdentityManifest(report, context, helper, rollback, err
 
   const sha256Matches = (actual, expected) =>
     typeof actual === "string" && actual.toLowerCase() === expected.toLowerCase();
+  if (sha256Matches(manifest.rollbackPrior.sha256, manifest.helper.sha256)) {
+    addError(
+      errors,
+      "PASS_ROLLBACK_PRIOR_IS_CURRENT_HELPER",
+      "--identity-manifest.rollbackPrior.sha256",
+      "rollback prior helper SHA-256 must differ from the currently packaged helper for a binary rollback",
+    );
+  }
+
   const helperMatchesManifest = isRecord(helper) &&
     helper.expectedPath === manifest.helper.relativePath &&
     helper.actualPath === manifest.helper.relativePath &&

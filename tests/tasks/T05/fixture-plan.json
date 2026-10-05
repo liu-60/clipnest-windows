@@ -82,7 +82,8 @@
     "runtimeLookup": "process.resourcesPath/native/clipnest-helper.exe",
     "helperRelativePath": "resources/native/clipnest-helper.exe",
     "rollbackRequiresDistinctCanonicalFiles": true,
-    "rollbackRequiresDistinctFilesystemIdentity": true
+    "rollbackRequiresDistinctFilesystemIdentity": true,
+    "rollbackPriorSha256MustDifferFromHelperSha256": true
   },
   "signaturePolicyContract": {
     "unsignedPolicy": "unresolved",
@@ -98,6 +99,7 @@
     "trustBoundary": "caller_supplied_and_trusted; verifier does not authenticate the manifest",
     "helperIdentityFields": ["relativePath", "sha256", "version", "protocol"],
     "rollbackPriorIdentityFields": ["relativePath", "sha256", "version"],
+    "rollbackPriorSha256MustDifferFromHelperSha256": true,
     "authenticodeVerification": "not_performed_by_static_verifier"
   },
   "packageAndRollbackChecks": [

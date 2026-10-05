@@ -582,6 +582,87 @@ test("root PASS recomputes rollback version and hash identity", (t) => {
     !collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_TRUSTED_IDENTITY_MISMATCH"),
     "rollback prior identity and restored bytes must agree with the external manifest",
   );
+
+  const currentHelperBytes = Buffer.from("synthetic packaged helper artifact bytes");
+  const sameAsCurrentPriorPath = "rollback/current-helper-copy.exe";
+  const sameAsCurrentRestoredPath = "rollback/restored-current-helper-copy.exe";
+  const sameAsCurrentPriorSha256 = artifact.write(sameAsCurrentPriorPath, currentHelperBytes);
+  const sameAsCurrentRestoredSha256 = artifact.write(sameAsCurrentRestoredPath, currentHelperBytes);
+  assert.equal(sameAsCurrentPriorSha256, helperSha256);
+  assert.equal(sameAsCurrentRestoredSha256, helperSha256);
+
+  const sameAsCurrentReport = clone(report);
+  Object.assign(sameAsCurrentReport.packageAndRollback.rollback, {
+    priorPath: sameAsCurrentPriorPath,
+    priorVersion: "1.0.0",
+    rollbackPath: sameAsCurrentRestoredPath,
+    rollbackVersion: "1.0.0",
+    priorSha256: sameAsCurrentPriorSha256,
+    rollbackSha256: sameAsCurrentRestoredSha256,
+  });
+  const sameAsCurrentManifestPath = createIdentityManifestFixture(t, syntheticIdentityManifest({
+    sourceCommit: report.source.commit,
+    helperSha256,
+    helperVersion: "1.0.0",
+    helperProtocol: "1",
+    rollbackPath: sameAsCurrentPriorPath,
+    rollbackSha256: sameAsCurrentPriorSha256,
+    rollbackVersion: "1.0.0",
+  }));
+  const sameAsCurrentContext = clone(acceptedContext);
+  Object.assign(sameAsCurrentContext, loadIdentityManifestFile(
+    sameAsCurrentManifestPath,
+    SAMPLE_REPORT,
+    artifact.root,
+  ));
+  const sameAsCurrentErrors = collectReportErrors(sameAsCurrentReport, sameAsCurrentContext);
+  assert.ok(
+    sameAsCurrentErrors.some((error) => error.code === "PASS_ROLLBACK_PRIOR_IS_CURRENT_HELPER"),
+    "different files and paths containing the current helper bytes cannot demonstrate a binary rollback",
+  );
+  assert.ok(
+    !sameAsCurrentErrors.some((error) => error.code === "PASS_ROLLBACK_ARTIFACT_ALIAS"),
+    "the rejection must be based on identical bytes, not a path or filesystem identity alias",
+  );
+  assert.ok(
+    !sameAsCurrentErrors.some((error) => error.code === "PASS_ROLLBACK_TRUSTED_IDENTITY_MISMATCH" ||
+      error.code === "PASS_ROLLBACK_IDENTITY_REQUIRED" || error.code === "ARTIFACT_SHA256_MISMATCH"),
+    "the negative report, caller manifest, separate files, and artifact bytes must otherwise agree",
+  );
+
+  const sameVersionPriorPath = "rollback/same-version-different-bytes.exe";
+  const sameVersionRestoredPath = "rollback/restored-same-version-different-bytes.exe";
+  const sameVersionPriorSha256 = artifact.write(sameVersionPriorPath, Buffer.from("distinct prior helper bytes"));
+  const sameVersionRestoredSha256 = artifact.write(sameVersionRestoredPath, Buffer.from("distinct prior helper bytes"));
+  assert.notEqual(sameVersionPriorSha256, helperSha256);
+  assert.equal(sameVersionRestoredSha256, sameVersionPriorSha256);
+  const sameVersionReport = clone(report);
+  Object.assign(sameVersionReport.packageAndRollback.rollback, {
+    priorPath: sameVersionPriorPath,
+    priorVersion: "1.0.0",
+    rollbackPath: sameVersionRestoredPath,
+    rollbackVersion: "1.0.0",
+    priorSha256: sameVersionPriorSha256,
+    rollbackSha256: sameVersionRestoredSha256,
+  });
+  const sameVersionManifestPath = createIdentityManifestFixture(t, syntheticIdentityManifest({
+    sourceCommit: report.source.commit,
+    helperSha256,
+    helperVersion: "1.0.0",
+    helperProtocol: "1",
+    rollbackPath: sameVersionPriorPath,
+    rollbackSha256: sameVersionPriorSha256,
+    rollbackVersion: "1.0.0",
+  }));
+  const sameVersionContext = clone(acceptedContext);
+  Object.assign(sameVersionContext, loadIdentityManifestFile(sameVersionManifestPath, SAMPLE_REPORT, artifact.root));
+  const sameVersionErrors = collectReportErrors(sameVersionReport, sameVersionContext);
+  assert.ok(
+    !sameVersionErrors.some((error) => error.code === "PASS_ROLLBACK_PRIOR_IS_CURRENT_HELPER" ||
+      error.code === "PASS_ROLLBACK_TRUSTED_IDENTITY_MISMATCH" || error.code === "PASS_ROLLBACK_IDENTITY_REQUIRED"),
+    "a distinct prior binary with the same version string remains eligible for rollback identity checks",
+  );
+
   const unsignedRollbackReport = clone(report);
   unsignedRollbackReport.packageAndRollback.rollback.signatureStatus = "unsigned";
   assert.ok(

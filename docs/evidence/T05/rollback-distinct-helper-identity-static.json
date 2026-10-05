@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "result": "PREPARATION_ONLY",
+  "check": "rollback-prior-helper-bytes-differ-from-current-helper",
+  "checkedAt": "2026-10-05T13:54:35.518Z",
+  "source": {
+    "commit": "d34375f16c6ab1ded631875c47c6c4962aaef263",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "files": {
+      "tests/tasks/T05/verify-report.cjs": "658fb3fee0776f1281552794e954321eaf7326489c6a7a3344169bad8167418f",
+      "tests/tasks/T05/verify-report.test.cjs": "70c7b825fd8bc776079375391432f753a890dd4ba740a36e0928bac9777eb9f2",
+      "tests/tasks/T05/validate-preparation.cjs": "5978ec693728eedf685c68a771f34b737cc2985dc9c5a45631c992791f555f02",
+      "tests/tasks/T05/validate-preparation.test.cjs": "f608fb9943709684356c9b1c67cc92c928ee6b9c68bdc4ded3fbff97e5f1f24e",
+      "tests/tasks/T05/fixture-plan.json": "0d0976a3b339e5b287dd961d738857859358df5d2863c04ed1a6c859e1a232b3",
+      "tests/tasks/T05/report.schema.json": "74bccede90e78cf108479e114c94921afa79f7a31f57becdefd8d3148f5811ad"
+    }
+  },
+  "contract": {
+    "rootPassRule": "caller manifest rollbackPrior.sha256 must differ from helper.sha256, compared case-insensitively",
+    "versionDifferenceRequired": false,
+    "rejectionCode": "PASS_ROLLBACK_PRIOR_IS_CURRENT_HELPER",
+    "callerManifestAuthenticated": false,
+    "reportSchemaDocumentation": "rollbackPath description documents the cross-field prior/helper SHA-256 inequality; JSON Schema itself cannot enforce this comparison"
+  },
+  "negativeFixture": {
+    "helperPath": "resources/native/clipnest-helper.exe",
+    "priorPath": "rollback/current-helper-copy.exe",
+    "restoredPath": "rollback/restored-current-helper-copy.exe",
+    "helperPriorAndRestoredBytesHaveSameSha256": true,
+    "pathsAreDistinct": true,
+    "reportManifestAndArtifactBytesOtherwiseAgree": true,
+    "artifactAliasErrorObserved": false,
+    "expectedRollbackErrorObserved": true,
+    "sameVersionDifferentHashPositiveAccepted": true
+  },
+  "validation": {
+    "testCommand": "node --test tests/tasks/T05/verify-report.test.cjs tests/tasks/T05/validate-preparation.test.cjs",
+    "testStatus": "PASS",
+    "tests": 48,
+    "passed": 48,
+    "failed": 0,
+    "preparationCommand": "node tests/tasks/T05/validate-preparation.cjs",
+    "preparationStatus": "PASS_PREPARATION_ONLY",
+    "cases": 28,
+    "assertions": 71,
+    "g0Gates": 2,
+    "fullDraft2020SchemaValidation": "NOT_RUN",
+    "diffCheck": "PASS",
+    "schemaJsonParse": "PASS"
+  },
+  "sideEffects": {
+    "desktopOpened": false,
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "helperRun": false,
+    "packageBuiltOrInstalled": false,
+    "published": false
+  },
+  "limitations": [
+    "This static consistency gate prevents a copy of the current helper from being presented as a rollback binary; it does not establish the caller manifest trust source.",
+    "No packaged helper, Authenticode signature, rollback runtime, desktop behavior, or P01-P28 live acceptance was exercised.",
+    "T04 remains in_progress, so T05 remains not_started and no T05 acceptance is implied."
+  ]
+}

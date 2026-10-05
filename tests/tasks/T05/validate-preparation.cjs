@@ -66,10 +66,11 @@ function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema, ide
   }
   if (!isRecord(packageResourceContract) ||
       packageResourceContract.rollbackRequiresDistinctCanonicalFiles !== true ||
-      packageResourceContract.rollbackRequiresDistinctFilesystemIdentity !== true) {
+      packageResourceContract.rollbackRequiresDistinctFilesystemIdentity !== true ||
+      packageResourceContract.rollbackPriorSha256MustDifferFromHelperSha256 !== true) {
     add(
       "ROLLBACK_DISTINCT_FILE_CONTRACT",
-      "fixturePlan.packageResourceContract must require priorPath and rollbackPath to identify different canonical and filesystem files",
+      "fixturePlan.packageResourceContract must require distinct rollback files and prior helper bytes to differ from the packaged helper",
     );
   }
 
@@ -94,10 +95,11 @@ function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema, ide
       identityManifestContract.trustBoundary !== "caller_supplied_and_trusted; verifier does not authenticate the manifest" ||
       JSON.stringify(identityManifestContract.helperIdentityFields) !== JSON.stringify(["relativePath", "sha256", "version", "protocol"]) ||
       JSON.stringify(identityManifestContract.rollbackPriorIdentityFields) !== JSON.stringify(["relativePath", "sha256", "version"]) ||
+      identityManifestContract.rollbackPriorSha256MustDifferFromHelperSha256 !== true ||
       identityManifestContract.authenticodeVerification !== "not_performed_by_static_verifier") {
     add(
       "IDENTITY_MANIFEST_FIXTURE_CONTRACT",
-      "fixturePlan.identityManifestContract must define a caller-supplied external manifest, its PASS fields, path separation, and trust limits",
+      "fixturePlan.identityManifestContract must define a caller-supplied external manifest, distinct rollback bytes, its PASS fields, path separation, and trust limits",
     );
   }
 
@@ -130,6 +132,11 @@ function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema, ide
       !reportSchema.description.includes("--identity-manifest") ||
       !reportSchema.description.includes("does not authenticate the manifest")) {
     add("REPORT_SCHEMA_IDENTITY_MANIFEST_DESCRIPTION", "report schema must document the separate caller-supplied identity manifest and its trust boundary");
+  }
+  const rollbackPathDescription = reportSchema.properties?.packageAndRollback?.properties?.rollback?.properties?.rollbackPath?.description;
+  if (typeof rollbackPathDescription !== "string" ||
+      !rollbackPathDescription.includes("priorSha256 must differ from the packaged helper SHA-256")) {
+    add("SCHEMA_ROLLBACK_DISTINCT_FROM_CURRENT_HELPER", "report schema must document that the rollback prior hash differs from the packaged helper hash");
   }
 
   const helperPassClauses = reportSchema.properties?.packageAndRollback?.properties?.helperResource?.allOf;
@@ -203,6 +210,7 @@ function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema, ide
       !reportValidatorSource.includes("PASS_IDENTITY_MANIFEST_REQUIRED") ||
       !reportValidatorSource.includes("PASS_IDENTITY_MANIFEST_SOURCE_MISMATCH") ||
       !reportValidatorSource.includes("PASS_HELPER_TRUSTED_IDENTITY_MISMATCH") ||
+      !reportValidatorSource.includes("PASS_ROLLBACK_PRIOR_IS_CURRENT_HELPER") ||
       !reportValidatorSource.includes("PASS_ROLLBACK_TRUSTED_IDENTITY_MISMATCH") ||
       !reportValidatorSource.includes("sameArtifactFileIdentity") ||
       !reportValidatorSource.includes("PASS_ROLLBACK_FILE_IDENTITY_UNAVAILABLE")) {

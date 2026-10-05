@@ -283,7 +283,7 @@
             "priorSha256": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" },
             "rollbackPath": {
               "type": ["string", "null"],
-              "description": "PASS 时相对 --artifact-root 的正斜线路径；校验器读取回滚后 helper 并重算 SHA-256，且要求它与 priorPath 解析为不同规范文件。"
+              "description": "PASS 时相对 --artifact-root 的正斜线路径；校验器读取回滚后 helper 并重算 SHA-256。跨字段约束要求 priorSha256 must differ from the packaged helper SHA-256；回滚后 helper 的哈希须匹配 priorSha256，且 rollbackPath 与 priorPath 解析为不同规范文件。"
             },
             "rollbackVersion": { "type": ["string", "null"] },
             "rollbackSha256": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" },
