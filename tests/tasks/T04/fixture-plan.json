@@ -222,7 +222,7 @@
         "tests/tasks/T04/main-image-preparation-failure.test.cjs"
       ],
       "result": "When performance.now is past the original 500ms cutoff while GetTickCount64 remains in its prior tick bucket, production copySelectedItem sends selectionBudgetMs=0 and omits the stale absolute helper deadline. If the coarse tick reaches its deadline while performance.now remains before the original cutoff, the helper deadline returns unavailable and main blocks before sending an expired helper deadline or continuing early.",
-      "verification": "The latest full pnpm test:unit run passed 163/163; targeted cutoff and main image-preparation fakes passed 24/24, including both clock-skew directions and the existing T03 two-argument helper contract.",
+      "verification": "Latest focused run: pnpm test:unit -- selection-key-deadline.test.cjs main-image-preparation-failure.test.cjs; main build passed and all 25/25 tests passed. Production main-orchestration fakes cover both clock-skew directions, including the early coarse-deadline cancel-only path. No real timer, native helper lifecycle, OS clipboard, or physical input was exercised.",
       "limitations": "Clock skew, delayed preparation, key state, helper, clipboard, and input boundaries are fakes. The coarse-clock-ahead case intentionally fails closed and can reject a selection slightly before the high-resolution cutoff; physical key timing and Windows clipboard/input atomicity remain unverified."
     },
     "latestJpegMemoryRouteProbe": {
