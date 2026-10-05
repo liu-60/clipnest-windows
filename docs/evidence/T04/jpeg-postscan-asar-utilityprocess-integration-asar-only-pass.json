@@ -1,0 +1,295 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "check": "current-source-asar-postscan-jpeg-utilityprocess-smoke",
+  "result": "PASS_SYNTHETIC_CURRENT_ASAR_UTILITY_PROCESS_SMOKE",
+  "checkedDate": "2026-10-06",
+  "source": {
+    "commit": "54e92153c81a393c7e13459c0f6d5d1aa685e1eb",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "runner": {
+      "path": "tests/tasks/T04/run-image-postscan-asar-electron.cjs",
+      "bytes": 32790,
+      "sha256": "485b067a596bd328006e41e2573aab8aee33cb3eb3fbdd101cacdfddd7a1a4a4"
+    }
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "nodeVersion": "v24.16.0",
+    "pnpmVersion": "11.19.0",
+    "electronVersion": "40.10.2"
+  },
+  "package": {
+    "target": "Windows x64 dir package; no installer target",
+    "packageVersion": "1.1.4",
+    "asarPath": "D:\\ClipNest-work\\t04-postscan-asar-20261006-rn2gRM\\output\\win-unpacked\\resources\\app.asar",
+    "asarBytes": 30661750,
+    "asarSha256": "19b68fe61aa8a72260318a2c51d8bf0faf4c83d66b47dedb9129f257bf888d29",
+    "workerLoadedFromAsar": true,
+    "byteExactProductionEntries": [
+      {
+        "path": "dist-electron/main/clipboard/image-worker.js",
+        "bytes": 19393,
+        "sha256": "ca31dfe8caa18062ef1d49bddfd41e94384a07b7b2d4b26407b8454789571af8",
+        "exactMatch": true
+      },
+      {
+        "path": "dist-electron/main/clipboard/image-decoder.js",
+        "bytes": 21141,
+        "sha256": "5be6d5407644d140d8ec2474f5f8882d2a7392955bac8ad46a3eb4e81eb952a7",
+        "exactMatch": true
+      },
+      {
+        "path": "dist-electron/main/clipboard/jpeg-baseline-stream.js",
+        "bytes": 29578,
+        "sha256": "2971735920fcdb9b827a52279cb91e33f3a5fcbc6952bb9fcfab97b317303a52",
+        "exactMatch": true
+      },
+      {
+        "path": "node_modules/jpeg-js/index.js",
+        "bytes": 136,
+        "sha256": "404574b5cede8905627bff9b05975c0472d50425feb6906b0a55335e6743c4b4",
+        "exactMatch": true
+      }
+    ],
+    "dependenciesMatchRepository": true,
+    "installPerformed": false,
+    "published": false,
+    "asarRetainedAfterRun": false
+  },
+  "build": {
+    "configurationPath": "D:\\ClipNest-work\\t04-postscan-asar-20261006-rn2gRM\\electron-builder.cjs",
+    "outputDirectory": "D:\\ClipNest-work\\t04-postscan-asar-20261006-rn2gRM\\output",
+    "builderCachePath": "D:\\ClipNest-work\\t04-postscan-asar-20261006-rn2gRM\\builder-cache",
+    "configuration": {
+      "target": "Windows x64 dir",
+      "asar": true,
+      "npmRebuild": false,
+      "signAndEditExecutable": false,
+      "publish": [],
+      "nsisTargetConfigured": false,
+      "packageInstallPerformed": false
+    },
+    "sourceBuild": {
+      "label": "pnpm build",
+      "executable": "pnpm",
+      "args": [
+        "build"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 11856.19,
+      "stdout": "Already up to date\nDone in 564ms using pnpm v11.19.0\nvite v6.4.3 building for production...\ntransforming...\n✓ 1583 modules transformed.\nrendering chunks...\ncomputing gzip size...\n../../dist/index.html                   0.61 kB │ gzip:  0.37 kB\n../../dist/assets/index-DwSJ5yAE.css   16.08 kB │ gzip:  3.98 kB\n../../dist/assets/index-DE1n72t1.js   202.88 kB │ gzip: 63.98 kB\n✓ built in 4.01s\n",
+      "stderr": "$ pnpm build:main && pnpm build:renderer\n$ tsc -p tsconfig.main.json\n$ vite build\n"
+    },
+    "package": {
+      "label": "pnpm exec electron-builder --win dir --x64 --publish never --config <unique-temp-root>/electron-builder.cjs",
+      "executable": "pnpm",
+      "args": [
+        "exec",
+        "electron-builder",
+        "--win",
+        "dir",
+        "--x64",
+        "--publish",
+        "never",
+        "--config",
+        "D:\\ClipNest-work\\t04-postscan-asar-20261006-rn2gRM\\electron-builder.cjs"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 19702.17,
+      "stdout": "Already up to date\nDone in 615ms using pnpm v11.19.0\n  • electron-builder  version=25.1.8 os=10.0.22631\n  • loaded configuration  file=D:\\ClipNest-work\\t04-postscan-asar-20261006-rn2gRM\\electron-builder.cjs\n  • skipped dependencies rebuild  reason=npmRebuild is set to false\n  • packaging       platform=win32 arch=x64 electron=40.10.2 appOutDir=D:\\ClipNest-work\\t04-postscan-asar-20261006-rn2gRM\\output\\win-unpacked\n  • copying Electron  source=D:\\ClipNest-work\\electron-l0\\node_modules\\.pnpm\\electron@40.10.2\\node_modules\\electron\\dist destination=D:\\ClipNest-work\\t04-postscan-asar-20261006-rn2gRM\\output\\win-unpacked\n  • updating asar integrity executable resource  executablePath=D:\\ClipNest-work\\t04-postscan-asar-20261006-rn2gRM\\output\\win-unpacked\\ClipNest.exe\n",
+      "stderr": ""
+    }
+  },
+  "smoke": {
+    "launch": {
+      "label": "Electron isolated ASAR utilityProcess smoke",
+      "executable": "D:\\ClipNest-work\\electron-l0\\node_modules\\.pnpm\\electron@40.10.2\\node_modules\\electron\\dist\\electron.exe",
+      "args": [
+        "D:\\ClipNest-work\\t04-postscan-asar-20261006-rn2gRM\\harness"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 1674.56,
+      "stdout": "\r\nT04_POSTSCAN_ASAR_RESULT {\"electronVersion\":\"40.10.2\",\"packageVersion\":\"1.1.4\",\"workerModulePath\":\"D:\\\\ClipNest-work\\\\t04-postscan-asar-20261006-rn2gRM\\\\output\\\\win-unpacked\\\\resources\\\\app.asar\\\\dist-electron\\\\main\\\\clipboard\\\\image-worker.js\",\"workerLoadedFromAsar\":true,\"fixture\":{\"format\":\"8-bit SOF0 grayscale JPEG\",\"dimensions\":\"4000x4000\",\"pixels\":16000000,\"sourceBytes\":1111296,\"postScanApp1Segments\":1,\"app1PayloadContainsEoiBytes\":true,\"comPayloadBytes\":1048576,\"comSegmentCount\":17,\"repeatedMarkerFillBytes\":true},\"output\":{\"rgbaBytes\":64000000,\"allPixelsOpaqueNeutralGray\":true},\"utilityProcessResponseTypes\":{\"decoded_chunk\":62,\"decoded_end\":1},\"observedMessageFields\":{\"decoded_chunk\":[\"pixels\",\"requestId\",\"seq\",\"type\"],\"decoded_end\":[\"byteLength\",\"chunkCount\",\"height\",\"requestId\",\"stageTimings\",\"type\",\"width\"]},\"chunkSequence\":{\"first\":0,\"last\":61,\"count\":62,\"maxChunkBytes\":1048576},\"decodedEnd\":{\"width\":4000,\"height\":4000,\"chunkCount\":62,\"byteLength\":64000000},\"stages\":[{\"stage\":\"workerColdStartMs\",\"elapsedMs\":250.07},{\"stage\":\"mainChunkAssemblyMs\",\"elapsedMs\":35.54},{\"stage\":\"workerDecodeMs\",\"elapsedMs\":244.37},{\"stage\":\"workerChunkSendAckMs\",\"elapsedMs\":329.63},{\"stage\":\"jpegPreflightParseMs\",\"elapsedMs\":1.86},{\"stage\":\"jpegStreamPlanParseMs\",\"elapsedMs\":1.2},{\"stage\":\"jpegHuffmanIdctWriteMs\",\"elapsedMs\":144.09},{\"stage\":\"jpegHuffmanDecodeSampledMs\",\"elapsedMs\":0.56},{\"stage\":\"jpegInverseDctSampledMs\",\"elapsedMs\":0.96},{\"stage\":\"jpegBandWriteSampledMs\",\"elapsedMs\":0.46},{\"stage\":\"jpegRenderMs\",\"elapsedMs\":94.64}],\"requestToResponseMs\":829.54,\"workerExit\":{\"code\":0,\"signal\":null},\"browserWindowCount\":0,\"systemClipboardReadOrWritten\":false,\"nativeHelperRun\":false,\"physicalInputSent\":false}\n",
+      "stderr": ""
+    },
+    "result": {
+      "electronVersion": "40.10.2",
+      "packageVersion": "1.1.4",
+      "workerModulePath": "D:\\ClipNest-work\\t04-postscan-asar-20261006-rn2gRM\\output\\win-unpacked\\resources\\app.asar\\dist-electron\\main\\clipboard\\image-worker.js",
+      "workerLoadedFromAsar": true,
+      "fixture": {
+        "format": "8-bit SOF0 grayscale JPEG",
+        "dimensions": "4000x4000",
+        "pixels": 16000000,
+        "sourceBytes": 1111296,
+        "postScanApp1Segments": 1,
+        "app1PayloadContainsEoiBytes": true,
+        "comPayloadBytes": 1048576,
+        "comSegmentCount": 17,
+        "repeatedMarkerFillBytes": true
+      },
+      "output": {
+        "rgbaBytes": 64000000,
+        "allPixelsOpaqueNeutralGray": true
+      },
+      "utilityProcessResponseTypes": {
+        "decoded_chunk": 62,
+        "decoded_end": 1
+      },
+      "observedMessageFields": {
+        "decoded_chunk": [
+          "pixels",
+          "requestId",
+          "seq",
+          "type"
+        ],
+        "decoded_end": [
+          "byteLength",
+          "chunkCount",
+          "height",
+          "requestId",
+          "stageTimings",
+          "type",
+          "width"
+        ]
+      },
+      "chunkSequence": {
+        "first": 0,
+        "last": 61,
+        "count": 62,
+        "maxChunkBytes": 1048576
+      },
+      "decodedEnd": {
+        "width": 4000,
+        "height": 4000,
+        "chunkCount": 62,
+        "byteLength": 64000000
+      },
+      "stages": [
+        {
+          "stage": "workerColdStartMs",
+          "elapsedMs": 250.07
+        },
+        {
+          "stage": "mainChunkAssemblyMs",
+          "elapsedMs": 35.54
+        },
+        {
+          "stage": "workerDecodeMs",
+          "elapsedMs": 244.37
+        },
+        {
+          "stage": "workerChunkSendAckMs",
+          "elapsedMs": 329.63
+        },
+        {
+          "stage": "jpegPreflightParseMs",
+          "elapsedMs": 1.86
+        },
+        {
+          "stage": "jpegStreamPlanParseMs",
+          "elapsedMs": 1.2
+        },
+        {
+          "stage": "jpegHuffmanIdctWriteMs",
+          "elapsedMs": 144.09
+        },
+        {
+          "stage": "jpegHuffmanDecodeSampledMs",
+          "elapsedMs": 0.56
+        },
+        {
+          "stage": "jpegInverseDctSampledMs",
+          "elapsedMs": 0.96
+        },
+        {
+          "stage": "jpegBandWriteSampledMs",
+          "elapsedMs": 0.46
+        },
+        {
+          "stage": "jpegRenderMs",
+          "elapsedMs": 94.64
+        }
+      ],
+      "requestToResponseMs": 829.54,
+      "workerExit": {
+        "code": 0,
+        "signal": null
+      },
+      "browserWindowCount": 0,
+      "systemClipboardReadOrWritten": false,
+      "nativeHelperRun": false,
+      "physicalInputSent": false
+    }
+  },
+  "sideEffects": {
+    "browserWindowCreated": false,
+    "systemClipboardReadOrWritten": false,
+    "nativeHelperRun": false,
+    "physicalInputSent": false,
+    "installed": false,
+    "published": false
+  },
+  "limitations": [
+    "One synthetic 4000x4000 grayscale SOF0 JPEG fixture; this does not establish broad JPEG compatibility or color fidelity.",
+    "Direct utilityProcess decode bypasses ImagePreparationService and does not measure its 3000 ms product deadline.",
+    "No worker or whole-application RSS is sampled; this smoke does not establish a hard memory bound or complete T04 acceptance.",
+    "signAndEditExecutable=false skips WinPackager's normal executable signing/resource-edit path; electron-builder still writes the ASAR integrity resource to the EXE. This smoke does not verify that PE resource, Authenticode signature, installer, or full T04 acceptance."
+  ],
+  "temporaryWorkspace": {
+    "root": "D:\\ClipNest-work\\t04-postscan-asar-20261006-rn2gRM",
+    "uniqueRoot": true,
+    "realPathVerified": true,
+    "ownerMarker": ".t04-owned-by-runner.json",
+    "cleanup": {
+      "attempted": true,
+      "removed": true,
+      "verifiedRealPath": true,
+      "reason": null
+    }
+  },
+  "execution": {
+    "command": "node tests/tasks/T04/run-image-postscan-asar-electron.cjs",
+    "packageCommand": "pnpm exec electron-builder --win dir --x64 --publish never --config <unique-temp-root>/electron-builder.cjs",
+    "pnpmBuildExitCode": 0,
+    "packageExitCode": 0,
+    "electronSmokeExitCode": 0,
+    "output": "T04_POSTSCAN_ASAR_RESULT {\"electronVersion\":\"40.10.2\",\"packageVersion\":\"1.1.4\",\"workerModulePath\":\"D:\\\\ClipNest-work\\\\t04-postscan-asar-20261006-rn2gRM\\\\output\\\\win-unpacked\\\\resources\\\\app.asar\\\\dist-electron\\\\main\\\\clipboard\\\\image-worker.js\",\"workerLoadedFromAsar\":true,\"fixture\":{\"format\":\"8-bit SOF0 grayscale JPEG\",\"dimensions\":\"4000x4000\",\"pixels\":16000000,\"sourceBytes\":1111296,\"postScanApp1Segments\":1,\"app1PayloadContainsEoiBytes\":true,\"comPayloadBytes\":1048576,\"comSegmentCount\":17,\"repeatedMarkerFillBytes\":true},\"output\":{\"rgbaBytes\":64000000,\"allPixelsOpaqueNeutralGray\":true},\"utilityProcessResponseTypes\":{\"decoded_chunk\":62,\"decoded_end\":1},\"observedMessageFields\":{\"decoded_chunk\":[\"pixels\",\"requestId\",\"seq\",\"type\"],\"decoded_end\":[\"byteLength\",\"chunkCount\",\"height\",\"requestId\",\"stageTimings\",\"type\",\"width\"]},\"chunkSequence\":{\"first\":0,\"last\":61,\"count\":62,\"maxChunkBytes\":1048576},\"decodedEnd\":{\"width\":4000,\"height\":4000,\"chunkCount\":62,\"byteLength\":64000000},\"stages\":[{\"stage\":\"workerColdStartMs\",\"elapsedMs\":250.07},{\"stage\":\"mainChunkAssemblyMs\",\"elapsedMs\":35.54},{\"stage\":\"workerDecodeMs\",\"elapsedMs\":244.37},{\"stage\":\"workerChunkSendAckMs\",\"elapsedMs\":329.63},{\"stage\":\"jpegPreflightParseMs\",\"elapsedMs\":1.86},{\"stage\":\"jpegStreamPlanParseMs\",\"elapsedMs\":1.2},{\"stage\":\"jpegHuffmanIdctWriteMs\",\"elapsedMs\":144.09},{\"stage\":\"jpegHuffmanDecodeSampledMs\",\"elapsedMs\":0.56},{\"stage\":\"jpegInverseDctSampledMs\",\"elapsedMs\":0.96},{\"stage\":\"jpegBandWriteSampledMs\",\"elapsedMs\":0.46},{\"stage\":\"jpegRenderMs\",\"elapsedMs\":94.64}],\"requestToResponseMs\":829.54,\"workerExit\":{\"code\":0,\"signal\":null},\"browserWindowCount\":0,\"systemClipboardReadOrWritten\":false,\"nativeHelperRun\":false,\"physicalInputSent\":false}",
+    "errorOutput": "",
+    "stageLog": [
+      {
+        "stage": "preflight and create unique temporary root",
+        "at": "2026-10-05T18:05:16.862Z"
+      },
+      {
+        "stage": "build current main and renderer outputs: pnpm build",
+        "at": "2026-10-05T18:05:16.881Z"
+      },
+      {
+        "stage": "package unsigned ASAR-only Windows x64 dir target",
+        "at": "2026-10-05T18:05:28.740Z"
+      },
+      {
+        "stage": "verify packaged production entries against current build",
+        "at": "2026-10-05T18:05:48.443Z"
+      },
+      {
+        "stage": "launch isolated Electron harness and ASAR utilityProcess fixture",
+        "at": "2026-10-05T18:05:48.565Z"
+      },
+      {
+        "stage": "verify owned temporary root and clean generated package",
+        "at": "2026-10-05T18:05:50.244Z"
+      }
+    ]
+  }
+}

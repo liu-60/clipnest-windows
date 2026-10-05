@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "check": "current-source-asar-postscan-jpeg-utilityprocess-smoke",
+  "result": "FAIL_OR_BLOCKED",
+  "checkedDate": "2026-10-06",
+  "source": {
+    "commit": "54e92153c81a393c7e13459c0f6d5d1aa685e1eb",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "runner": {
+      "path": "tests/tasks/T04/run-image-postscan-asar-electron.cjs",
+      "bytes": 32715,
+      "sha256": "1f1d1adf4858dd407e0a3b9c84e72caecbe45756e8b3232d94c31de9128f1a67"
+    }
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "nodeVersion": "v24.16.0",
+    "pnpmVersion": "11.19.0",
+    "electronVersion": "40.10.2"
+  },
+  "package": {},
+  "build": {
+    "configurationPath": "D:\\ClipNest-work\\t04-postscan-asar-20261006-M3eRXy\\electron-builder.cjs",
+    "outputDirectory": "D:\\ClipNest-work\\t04-postscan-asar-20261006-M3eRXy\\output",
+    "builderCachePath": "D:\\ClipNest-work\\t04-postscan-asar-20261006-M3eRXy\\builder-cache",
+    "configuration": {
+      "target": "Windows x64 dir",
+      "asar": true,
+      "npmRebuild": false,
+      "signAndEditExecutable": false,
+      "publish": [],
+      "nsisTargetConfigured": false,
+      "packageInstallPerformed": false
+    },
+    "sourceBuild": {
+      "label": "pnpm build",
+      "executable": "pnpm",
+      "args": [
+        "build"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 9433.49,
+      "stdout": "Already up to date\nDone in 597ms using pnpm v11.19.0\nvite v6.4.3 building for production...\ntransforming...\n✓ 1583 modules transformed.\nrendering chunks...\ncomputing gzip size...\n../../dist/index.html                   0.61 kB │ gzip:  0.37 kB\n../../dist/assets/index-DwSJ5yAE.css   16.08 kB │ gzip:  3.98 kB\n../../dist/assets/index-DE1n72t1.js   202.88 kB │ gzip: 63.98 kB\n✓ built in 3.11s\n",
+      "stderr": "$ pnpm build:main && pnpm build:renderer\n$ tsc -p tsconfig.main.json\n$ vite build\n"
+    },
+    "package": {
+      "label": "pnpm exec electron-builder --win dir --x64 --publish never --config <unique-temp-root>/electron-builder.cjs",
+      "executable": "pnpm",
+      "args": [
+        "exec",
+        "electron-builder",
+        "--win",
+        "dir",
+        "--x64",
+        "--publish",
+        "never",
+        "--config",
+        "D:\\ClipNest-work\\t04-postscan-asar-20261006-M3eRXy\\electron-builder.cjs"
+      ],
+      "exitCode": 1,
+      "signal": null,
+      "error": null,
+      "durationMs": 3032.16,
+      "stdout": "Already up to date\nDone in 612ms using pnpm v11.19.0\n  • electron-builder  version=25.1.8 os=10.0.22631\n  • loaded configuration  file=D:\\ClipNest-work\\t04-postscan-asar-20261006-M3eRXy\\electron-builder.cjs\n  ⨯ Invalid configuration object. electron-builder 25.1.8 has been initialized using a configuration object that does not match the API schema.\n - configuration has an unknown property 'signAndEditExecutable'. These properties are valid:\n   object { afterAllArtifactBuild?, afterExtract?, afterPack?, afterSign?, apk?, appId?, appImage?, appx?, appxManifestCreated?, artifactBuildCompleted?, artifactBuildStarted?, artifactName?, asar?, asarUnpack?, beforeBuild?, beforePack?, buildDependenciesFromSource?, buildNumber?, buildVersion?, compression?, copyright?, cscKeyPassword?, cscLink?, deb?, defaultArch?, detectUpdateChannel?, directories?, disableDefaultIgnoredFiles?, disableSanityCheckAsar?, dmg?, downloadAlternateFFmpeg?, electronBranding?, electronCompile?, electronDist?, electronDownload?, electronLanguages?, electronUpdaterCompatibility?, electronVersion?, executableName?, extends?, extraFiles?, extraMetadata?, extraResources?, fileAssociations?, files?, flatpak?, forceCodeSigning?, framework?, freebsd?, generateUpdatesFilesForAllChannels?, icon?, includePdb?, includeSubNodeModules?, launchUiVersion?, linux?, mac?, mas?, masDev?, msi?, msiProjectCreated?, msiWrapped?, nativeRebuilder?, nodeGypRebuild?, nodeVersion?, npmArgs?, npmRebuild?, nsis?, nsisWeb?, onNodeModuleFile?, p5p?, pacman?, pkg?, portable?, productName?, protocols?, publish?, releaseInfo?, removePackageKeywords?, removePackageScripts?, rpm?, snap?, squirrelWindows?, target?, win?, $schema? }\n     How to fix:\n     1. Open https://www.electron.build/configuration\n     2. Search the option name on the page (or type in into Search to find across the docs).\n       * Not found? The option was deprecated or not exists (check spelling).\n       * Found? Check that the option in the appropriate place. e.g. \"title\" only in the \"dmg\", not in the root.\n  failedTask=build stackTrace=ValidationError: Invalid configuration object. electron-builder 25.1.8 has been initialized using a configuration object that does not match the API schema.\n - configuration has an unknown property 'signAndEditExecutable'. These properties are valid:\n   object { afterAllArtifactBuild?, afterExtract?, afterPack?, afterSign?, apk?, appId?, appImage?, appx?, appxManifestCreated?, artifactBuildCompleted?, artifactBuildStarted?, artifactName?, asar?, asarUnpack?, beforeBuild?, beforePack?, buildDependenciesFromSource?, buildNumber?, buildVersion?, compression?, copyright?, cscKeyPassword?, cscLink?, deb?, defaultArch?, detectUpdateChannel?, directories?, disableDefaultIgnoredFiles?, disableSanityCheckAsar?, dmg?, downloadAlternateFFmpeg?, electronBranding?, electronCompile?, electronDist?, electronDownload?, electronLanguages?, electronUpdaterCompatibility?, electronVersion?, executableName?, extends?, extraFiles?, extraMetadata?, extraResources?, fileAssociations?, files?, flatpak?, forceCodeSigning?, framework?, freebsd?, generateUpdatesFilesForAllChannels?, icon?, includePdb?, includeSubNodeModules?, launchUiVersion?, linux?, mac?, mas?, masDev?, msi?, msiProjectCreated?, msiWrapped?, nativeRebuilder?, nodeGypRebuild?, nodeVersion?, npmArgs?, npmRebuild?, nsis?, nsisWeb?, onNodeModuleFile?, p5p?, pacman?, pkg?, portable?, productName?, protocols?, publish?, releaseInfo?, removePackageKeywords?, removePackageScripts?, rpm?, snap?, squirrelWindows?, target?, win?, $schema? }\n     How to fix:\n     1. Open https://www.electron.build/configuration\n     2. Search the option name on the page (or type in into Search to find across the docs).\n       * Not found? The option was deprecated or not exists (check spelling).\n       * Found? Check that the option in the appropriate place. e.g. \"title\" only in the \"dmg\", not in the root.\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      at validate (D:\\ClipNest-work\\electron-l0\\node_modules\\.pnpm\\@develar+schema-utils@2.6.5\\node_modules\\@develar\\schema-utils\\dist\\validate.js:86:11)\n    at validateConfiguration (D:\\ClipNest-work\\electron-l0\\node_modules\\.pnpm\\app-builder-lib@25.1.8_blue_39947266f18ccc04ac268791d01a46da\\node_modules\\app-builder-lib\\src\\util\\config\\config.ts:238:3)\n    at Packager.validateConfig (D:\\ClipNest-work\\electron-l0\\node_modules\\.pnpm\\app-builder-lib@25.1.8_blue_39947266f18ccc04ac268791d01a46da\\node_modules\\app-builder-lib\\src\\packager.ts:354:5)\n    at Packager.build (D:\\ClipNest-work\\electron-l0\\node_modules\\.pnpm\\app-builder-lib@25.1.8_blue_39947266f18ccc04ac268791d01a46da\\node_modules\\app-builder-lib\\src\\packager.ts:362:5)\n    at executeFinally (D:\\ClipNest-work\\electron-l0\\node_modules\\.pnpm\\builder-util@25.1.7_supports-color@8.1.1\\node_modules\\builder-util\\src\\promise.ts:12:14)\n",
+      "stderr": ""
+    }
+  },
+  "smoke": {},
+  "sideEffects": {
+    "browserWindowCreated": false,
+    "systemClipboardReadOrWritten": false,
+    "nativeHelperRun": false,
+    "physicalInputSent": false,
+    "installed": false,
+    "published": false
+  },
+  "limitations": [
+    "One synthetic 4000x4000 grayscale SOF0 JPEG fixture; this does not establish broad JPEG compatibility or color fidelity.",
+    "Direct utilityProcess decode bypasses ImagePreparationService and does not measure its 3000 ms product deadline.",
+    "No worker or whole-application RSS is sampled; this smoke does not establish a hard memory bound or complete T04 acceptance.",
+    "electron-builder rejected the isolation configuration before packaging because signAndEditExecutable was placed at the top level; no ASAR utilityProcess smoke or PE resource edit occurred."
+  ],
+  "temporaryWorkspace": {
+    "root": "D:\\ClipNest-work\\t04-postscan-asar-20261006-M3eRXy",
+    "uniqueRoot": true,
+    "realPathVerified": true,
+    "ownerMarker": ".t04-owned-by-runner.json",
+    "cleanup": {
+      "attempted": true,
+      "removed": true,
+      "verifiedRealPath": true,
+      "reason": null
+    }
+  },
+  "failure": {
+    "message": "AssertionError [ERR_ASSERTION]: electron-builder failed: \n\n1 !== 0\n\n    at runBuildAndProbe (D:\\ClipNest-work\\electron-l0\\tests\\tasks\\T04\\run-image-postscan-asar-electron.cjs:262:12)\n    at Object.<anonymous> (D:\\ClipNest-work\\electron-l0\\tests\\tasks\\T04\\run-image-postscan-asar-electron.cjs:30:3)\n    at Module._compile (node:internal/modules/cjs/loader:1854:14)\n    at Object..js (node:internal/modules/cjs/loader:1985:10)\n    at Module.load (node:internal/modules/cjs/loader:1577:32)\n    at Module._load (node:internal/modules/cjs/loader:1379:12)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\n    at node:internal/main/run_main_module:33:47",
+    "failedStep": "electron_builder_dir_package"
+  },
+  "execution": {
+    "command": "node tests/tasks/T04/run-image-postscan-asar-electron.cjs",
+    "packageCommand": "pnpm exec electron-builder --win dir --x64 --publish never --config <unique-temp-root>/electron-builder.cjs",
+    "pnpmBuildExitCode": 0,
+    "packageExitCode": 1,
+    "electronSmokeExitCode": null,
+    "output": "",
+    "errorOutput": "",
+    "stageLog": [
+      {
+        "stage": "preflight and create unique temporary root",
+        "at": "2026-10-05T17:53:59.612Z"
+      },
+      {
+        "stage": "build current main and renderer outputs: pnpm build",
+        "at": "2026-10-05T17:53:59.618Z"
+      },
+      {
+        "stage": "package unsigned ASAR-only Windows x64 dir target",
+        "at": "2026-10-05T17:54:09.054Z"
+      },
+      {
+        "stage": "verify owned temporary root and clean generated package",
+        "at": "2026-10-05T17:54:12.088Z"
+      }
+    ]
+  }
+}
