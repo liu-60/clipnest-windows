@@ -21,6 +21,7 @@ const IMAGE_FORMAT = process.env.T04_IMAGE_FORMAT || "png";
 const JPEG_ENCODER = process.env.T04_JPEG_ENCODER || "jpeg-js";
 const JPEG_FIXTURE_PATTERN = process.env.T04_JPEG_FIXTURE_PATTERN || "high-entropy";
 const ENABLE_JPEG_JS_PIXEL_ORACLE = process.env.T04_JPEG_JS_PIXEL_ORACLE === "1";
+const ENABLE_WIC_PIXEL_ORACLE = process.env.T04_WIC_PIXEL_ORACLE === "1";
 const GDI_PIXEL_ROI = parseGdiPixelRoi(process.env.T04_GDI_PIXEL_ROI || "");
 const MEASUREMENT_TAG = process.env.T04_IMAGE_MEASUREMENT_TAG || "";
 if (IMAGE_FORMAT !== "png" && IMAGE_FORMAT !== "jpeg") throw new Error("unsupported_t04_image_format");
@@ -30,6 +31,9 @@ if (JPEG_FIXTURE_PATTERN !== "high-entropy" && JPEG_FIXTURE_PATTERN !== "chroma-
 }
 if (JPEG_FIXTURE_PATTERN === "chroma-edge-phases" && (WIDTH < 1056 || HEIGHT < 3056)) {
   throw new Error("chroma_edge_fixture_requires_at_least_1056x3056");
+}
+if (ENABLE_WIC_PIXEL_ORACLE && (IMAGE_FORMAT !== "jpeg" || !GDI_PIXEL_ROI || WIDTH !== 4000 || HEIGHT !== 4000)) {
+  throw new Error("wic_pixel_oracle_requires_a_4000x4000_jpeg_and_gdi_pixel_roi");
 }
 if (MEASUREMENT_TAG && !/^[a-z0-9-]{1,40}$/.test(MEASUREMENT_TAG)) throw new Error("invalid_t04_measurement_tag");
 if (!Number.isSafeInteger(PIXELS) || PIXELS > 16_000_000) throw new Error("synthetic_image_exceeds_pixel_limit");
@@ -101,11 +105,17 @@ async function runMeasurement() {
   if (encodedBytes.byteLength > 20 * 1024 * 1024) throw new Error("synthetic_image_exceeds_source_limit");
   const imageSha256 = createHash("sha256").update(encodedBytes).digest("hex");
   const pixelOracle = jpegFixture ? runIndependentPixelOracle(encodedBytes, profileRoot) : null;
+  const wicPixelOracle = ENABLE_WIC_PIXEL_ORACLE
+    ? runWicPixelOracle(profileRoot, GDI_PIXEL_ROI, imageSha256) : null;
+  if (ENABLE_WIC_PIXEL_ORACLE && wicPixelOracle?.status !== "READY") {
+    throw new Error(`wic_pixel_oracle_failed:${wicPixelOracle?.reason ?? "no_result"}`);
+  }
   let jpegJsPixelOracle = jpegFixture && ENABLE_JPEG_JS_PIXEL_ORACLE
     ? decodeJpegJsOracle(encodedBytes) : null;
   const samples = [];
   const workers = [];
   const pixelOracleChecks = [];
+  const wicPixelOracleChecks = [];
   const jpegJsPixelOracleChecks = [];
   for (let index = 0; index < SAMPLE_COUNT; index++) {
     const requestId = `t04-${IMAGE_FORMAT}-${WIDTH}x${HEIGHT}-${index + 1}`;
@@ -139,6 +149,9 @@ async function runMeasurement() {
         assertOpaquePixels(image.pixels);
         if (pixelOracle?.status === "READY") {
           pixelOracleChecks.push(comparePixelsWithOracle(image.pixels, pixelOracle));
+        }
+        if (wicPixelOracle?.status === "READY") {
+          wicPixelOracleChecks.push(comparePixelsWithOracle(image.pixels, wicPixelOracle));
         }
         if (jpegJsPixelOracle) {
           jpegJsPixelOracleChecks.push(compareFullPixels(image.pixels, jpegJsPixelOracle));
@@ -212,6 +225,7 @@ async function runMeasurement() {
       measurementHarnessFiles: [
         "tests/tasks/T04/measure-image-worker-16mp.cjs",
         "tests/tasks/T04/purejsimage-independent-pixel-oracle.ps1",
+        "tests/tasks/T04/wic-jpeg-roi-oracle.ps1",
       ].map((file) => ({ path: file, sha256: fileSha256(path.join(ROOT, file)) })),
     },
     environment: {
@@ -256,6 +270,13 @@ async function runMeasurement() {
       jpegSamplingFactors: jpegFixture?.samplingFactors ?? null,
       sha256: imageSha256,
       independentPixelOracle: summarizePixelOracle(pixelOracle, pixelOracleChecks, jpegFixture?.samplingFactors),
+      independentWicPixelOracle: summarizeWicPixelOracle(
+        wicPixelOracle,
+        wicPixelOracleChecks,
+        pixelOracle,
+        jpegJsPixelOracle,
+        imageSha256,
+      ),
       jpegJsPixelOracle: summarizeJpegJsPixelOracle(jpegJsPixelOracle, jpegJsPixelOracleChecks),
     },
     worker: {
@@ -465,6 +486,65 @@ function runIndependentPixelOracle(encodedBytes, profileRoot) {
   };
 }
 
+function runWicPixelOracle(profileRoot, region, expectedInputSha256) {
+  const imagePath = path.join(profileRoot, "synthetic-jpeg-fixture.jpg");
+  if (!fs.existsSync(imagePath)) return { status: "ERROR", reason: "shared_synthetic_jpeg_fixture_missing" };
+  const actualInputSha256 = createHash("sha256").update(fs.readFileSync(imagePath)).digest("hex");
+  if (actualInputSha256 !== expectedInputSha256) {
+    return { status: "ERROR", reason: "shared_fixture_sha256_mismatch", expectedInputSha256, actualInputSha256 };
+  }
+  const scriptPath = path.join(__dirname, "wic-jpeg-roi-oracle.ps1");
+  const result = spawnSync("powershell.exe", [
+    "-NoLogo", "-NoProfile", "-NonInteractive", "-STA", "-File", scriptPath,
+    "-ImagePath", imagePath,
+    "-X", String(region.x), "-Y", String(region.y),
+    "-RoiWidth", String(region.width), "-RoiHeight", String(region.height),
+  ], { cwd: ROOT, encoding: "utf8", timeout: 30_000, windowsHide: true, maxBuffer: 2 * 1024 * 1024 });
+  if (result.error) return { status: "ERROR", reason: String(result.error) };
+  if (result.status !== 0) {
+    return { status: "ERROR", reason: `powershell_exit_${result.status}:${result.stderr || result.stdout}` };
+  }
+  let oracle;
+  try { oracle = JSON.parse(result.stdout.trim()); }
+  catch (error) { return { status: "ERROR", reason: `invalid_wic_roi_oracle_json:${error}` }; }
+  if (oracle.status !== "DECODED_SAMPLED_ONLY" || oracle.oracleStatus !== "NOT_EVALUATED_AGAINST_SOURCE_PIXEL_GROUND_TRUTH") {
+    return { status: "ERROR", reason: "wic_roi_oracle_returned_unexpected_status" };
+  }
+  if (oracle.inputSha256 !== expectedInputSha256) {
+    return { status: "ERROR", reason: "wic_oracle_input_sha256_mismatch", expectedInputSha256, actualInputSha256: oracle.inputSha256 };
+  }
+  const expectedPoints = buildGdiPixelRoiPoints(region);
+  if (oracle.width !== WIDTH || oracle.height !== HEIGHT || oracle.comparedPixelCount !== expectedPoints.length ||
+      oracle.roi?.x !== region.x || oracle.roi?.y !== region.y || oracle.roi?.width !== region.width ||
+      oracle.roi?.height !== region.height || !/^[a-f0-9]{64}$/.test(oracle.roiBgraSha256 ?? "") ||
+      !Array.isArray(oracle.samples) || oracle.samples.length !== expectedPoints.length) {
+    return { status: "ERROR", reason: "wic_roi_oracle_sample_count_mismatch" };
+  }
+  for (let index = 0; index < expectedPoints.length; index++) {
+    const sample = oracle.samples[index];
+    const expected = expectedPoints[index];
+    if (sample.x !== expected.x || sample.y !== expected.y || !Array.isArray(sample.rgba) ||
+        sample.rgba.length !== 4 || !sample.rgba.every((channel) => Number.isInteger(channel) && channel >= 0 && channel <= 255) ||
+        sample.rgba[3] !== 255) {
+      return { status: "ERROR", reason: `wic_roi_oracle_sample_invalid:${index}` };
+    }
+  }
+  return {
+    status: "READY",
+    decoder: oracle.decoder,
+    oracleStatus: oracle.oracleStatus,
+    inputSha256: oracle.inputSha256,
+    inputShaMatchesFixture: true,
+    width: oracle.width,
+    height: oracle.height,
+    pixelFormat: oracle.pixelFormat,
+    sampledRegion: oracle.roi,
+    comparedPixelCount: oracle.comparedPixelCount,
+    roiBgraSha256: oracle.roiBgraSha256,
+    samples: oracle.samples,
+  };
+}
+
 function parseGdiPixelRoi(value) {
   if (!value) return null;
   const match = /^(\d+),(\d+),(\d+),(\d+)$/.exec(value);
@@ -536,6 +616,40 @@ function comparePixelsWithOracle(pixels, oracle) {
   return { maxRgbDifference, alphaValid, samples };
 }
 
+function compareOracleSamples(left, right) {
+  if (left?.status !== "READY" || right?.status !== "READY") {
+    return { status: "NOT_COMPARABLE", reason: "both_pixel_oracles_must_be_ready" };
+  }
+  if (left.samples.length !== right.samples.length) {
+    return { status: "NOT_COMPARABLE", reason: "oracle_sample_count_mismatch" };
+  }
+  let maxRgbDifference = 0;
+  let pixelsOver8 = 0;
+  let alphaMismatchCount = 0;
+  for (let index = 0; index < left.samples.length; index++) {
+    const a = left.samples[index];
+    const b = right.samples[index];
+    if (a.x !== b.x || a.y !== b.y) {
+      return { status: "NOT_COMPARABLE", reason: `oracle_coordinate_mismatch:${index}` };
+    }
+    const difference = Math.max(
+      Math.abs(a.rgba[0] - b.rgba[0]),
+      Math.abs(a.rgba[1] - b.rgba[1]),
+      Math.abs(a.rgba[2] - b.rgba[2]),
+    );
+    maxRgbDifference = Math.max(maxRgbDifference, difference);
+    if (difference > 8) pixelsOver8++;
+    if (a.rgba[3] !== b.rgba[3]) alphaMismatchCount++;
+  }
+  return {
+    status: "DIAGNOSTIC_ONLY",
+    comparedPixelCount: left.samples.length,
+    maxRgbDifference,
+    pixelsOver8,
+    alphaMismatchCount,
+  };
+}
+
 function summarizePixelOracle(oracle, checks, samplingFactors = null) {
   if (!oracle) return { status: "NOT_APPLICABLE", reason: "PNG fixture" };
   if (oracle.status !== "READY") return oracle;
@@ -554,12 +668,12 @@ function summarizePixelOracle(oracle, checks, samplingFactors = null) {
     verifiedWorkerSamples: checks.length,
     comparedPixelCountPerWorkerSample: oracle.samples.length,
     sampledRegion: oracle.sampledRegion,
-    samplingFactors,
-    thresholdCalibratedForSampling,
-    maxRgbDifference,
-    alphaValid: checks.length > 0 && checks.every((check) => check.alphaValid),
-    samples: checks[0]?.samples ?? [],
-  };
+      samplingFactors,
+      thresholdCalibratedForSampling,
+      maxRgbDifference,
+      alphaValid: checks.length > 0 && checks.every((check) => check.alphaValid),
+      samples: checks[0]?.samples ?? [],
+    };
 }
 
 function summarizeJpegJsPixelOracle(oracle, checks) {
@@ -582,6 +696,38 @@ function summarizeJpegJsPixelOracle(oracle, checks) {
     mismatchedPixelCount,
     maxChannelDifference,
     mismatchExamples: checks.find((check) => check.mismatchExamples.length > 0)?.mismatchExamples ?? [],
+  };
+}
+
+function summarizeWicPixelOracle(oracle, checks, gdiOracle, jpegJsOracle, expectedInputSha256) {
+  if (!oracle) return { status: "NOT_RUN", reason: "T04_WIC_PIXEL_ORACLE is not enabled" };
+  if (oracle.status !== "READY") return oracle;
+  const workerCheck = checks[0] ?? null;
+  const jpegJsCheck = jpegJsOracle
+    ? comparePixelsWithOracle(jpegJsOracle.pixels, oracle) : null;
+  const differenceSummary = (check) => check ? {
+    comparedPixelCount: check.samples.length,
+    pixelsOver8: check.samples.filter((sample) => sample.maxRgbDifference > 8).length,
+    maxRgbDifference: check.maxRgbDifference,
+    alphaMismatchCount: check.samples.filter((sample) => sample.expectedRgba[3] !== sample.actualRgba[3]).length,
+  } : { status: "NOT_RUN" };
+  return {
+    status: "DIAGNOSTIC_ONLY",
+    decoder: oracle.decoder,
+    oracleStatus: oracle.oracleStatus,
+    inputSha256: oracle.inputSha256,
+    inputShaMatchesFixture: oracle.inputSha256 === expectedInputSha256,
+    dimensions: { width: oracle.width, height: oracle.height },
+    pixelFormat: oracle.pixelFormat,
+    sampledRegion: oracle.sampledRegion,
+    comparedPixelCount: oracle.comparedPixelCount,
+    roiBgraSha256: oracle.roiBgraSha256,
+    thresholdRgbDifferenceForReporting: 8,
+    thresholdCalibratedForSampling: false,
+    workerVsWic: differenceSummary(workerCheck),
+    jpegJsVsWic: differenceSummary(jpegJsCheck),
+    gdiPlusVsWic: compareOracleSamples(gdiOracle, oracle),
+    samples: workerCheck?.samples ?? [],
   };
 }
 

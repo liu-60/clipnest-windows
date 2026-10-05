@@ -1,0 +1,359 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "recordType": "jpeg_420_same_input_three_way_roi_diagnostic",
+  "result": "DIAGNOSTIC_WITH_LIMITATIONS",
+  "gate": "4:2:0 JPEG fidelity remains OPEN",
+  "verificationDate": "2026-10-05",
+  "source": {
+    "commit": "6303ad20e4c04f6c7b7d1c3422d94998f2039f1f",
+    "workingTreeWasDirty": true,
+    "measurementHarnessPath": "tests/tasks/T04/measure-image-worker-16mp.cjs",
+    "measurementHarnessSha256": "10bf2c71e5cef71ae612ad2b7b231e9d29e5ceaaf16ca2241fdf8110040312d8",
+    "wicOraclePath": "tests/tasks/T04/wic-jpeg-roi-oracle.ps1",
+    "wicOracleSha256": "fab4f2d2a13edd75225be58d4c62d326100abb6f0e712f5b80396350470fc19a"
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "osVersion": "Windows 11 Enterprise",
+    "electronVersion": "40.10.2",
+    "wicOracleHost": "Windows PowerShell 5.1 STA / WPF managed imaging over Windows Imaging Component",
+    "systemClipboardReadOrWritten": false,
+    "inputSent": false,
+    "displayOrForegroundAppUsed": false,
+    "isolatedProfileCleanupVerified": true,
+    "electronRuntimePath": "node_modules/.pnpm/electron@40.10.2/node_modules/electron/dist/electron.exe",
+    "localRuntimeRestoredFromChecksumVerifiedCache": true,
+    "cachedElectronArchiveSha256": "25ea6cfdc06deba58dafa6a3fc1fbd6dcda9e06a14035150ee1d9f73bca2e651",
+    "packageManifestOrLockChanged": false,
+    "applicationPackageInstalledOrPublished": false
+  },
+  "method": {
+    "fixtureSource": "The same synthetic JPEG byte buffer is sent to one Electron utilityProcess worker and written to one isolated temporary file; GDI+ and WPF/WIC read that same file. The WIC child SHA-256 is checked against the worker fixture SHA-256 before comparison.",
+    "fixtureDimensions": "4000x4000",
+    "encodedSourceLimitBytes": 20971520,
+    "roiPointsPerCase": 1024,
+    "roiShape": "dense row-major 32x32 rectangle",
+    "comparisonToleranceForReporting": 8,
+    "thresholdCalibratedFor420": false,
+    "decoders": {
+      "worker": "ClipNest Electron utilityProcess image worker",
+      "gdiPlus": "Windows System.Drawing / GDI+ independent JPEG decode",
+      "wic": "System.Windows.Media.Imaging.JpegBitmapDecoder through WPF / Windows Imaging Component",
+      "differential": "pinned jpeg-js 0.4.4 full-frame output; not an independent implementation"
+    },
+    "cases": [
+      {
+        "measurement": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-highentropy-wic-roi-v2-1-sample-measurement.json",
+        "fixturePattern": "high-entropy",
+        "fixtureSha256": "c9362e8411a710e82c8ead5e41295c0f6902bf8f5eac9cf40ac25915abb68ab1",
+        "encodedBytes": 20971520,
+        "dimensions": "4000x4000",
+        "samplingFactors": [
+          {
+            "horizontal": 2,
+            "vertical": 2
+          },
+          {
+            "horizontal": 1,
+            "vertical": 1
+          },
+          {
+            "horizontal": 1,
+            "vertical": 1
+          }
+        ],
+        "workerSamples": 1,
+        "workerP50Ms": 2332.35,
+        "workerPeakWorkingSetBytes": 214790144,
+        "roi": {
+          "x": 984,
+          "y": 2984,
+          "width": 32,
+          "height": 32
+        },
+        "wicInputSha256": "c9362e8411a710e82c8ead5e41295c0f6902bf8f5eac9cf40ac25915abb68ab1",
+        "sameInputBytesForAllDecoders": true,
+        "comparedPixels": 1024,
+        "independentPixelComparisons": {
+          "workerVsGdiPlus": {
+            "comparedPixels": 1024,
+            "pixelsOver8": 900,
+            "maxRgbDifference": 70
+          },
+          "workerVsWic": {
+            "comparedPixelCount": 1024,
+            "pixelsOver8": 900,
+            "maxRgbDifference": 70,
+            "alphaMismatchCount": 0
+          },
+          "jpegJsVsWic": {
+            "comparedPixelCount": 1024,
+            "pixelsOver8": 900,
+            "maxRgbDifference": 70,
+            "alphaMismatchCount": 0
+          },
+          "gdiPlusVsWic": {
+            "status": "DIAGNOSTIC_ONLY",
+            "comparedPixelCount": 1024,
+            "maxRgbDifference": 0,
+            "pixelsOver8": 0,
+            "alphaMismatchCount": 0
+          }
+        },
+        "twoPixelInsetWorkerVsGdiPlus": {
+          "comparedPixels": 784,
+          "pixelsOver8": 690
+        },
+        "workerVsJpegJsFullFrame": {
+          "status": "PASS",
+          "mismatchedChannelCount": 0,
+          "mismatchedPixelCount": 0,
+          "maxChannelDifference": 0
+        },
+        "wicRoiBgraSha256": "8f3d7dd647cabc985a3fb4683e1a3dffe2d1b173019a829a14c9c30a8310bab4",
+        "clipboardContentRead": false,
+        "inputSent": false,
+        "displayOrForegroundAppUsed": false,
+        "profileCleanupVerified": true
+      },
+      {
+        "measurement": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-edges-vertical-wic-roi-v2-1-sample-measurement.json",
+        "fixturePattern": "chroma-edge-phases",
+        "fixtureSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+        "encodedBytes": 20971519,
+        "dimensions": "4000x4000",
+        "samplingFactors": [
+          {
+            "horizontal": 2,
+            "vertical": 2
+          },
+          {
+            "horizontal": 1,
+            "vertical": 1
+          },
+          {
+            "horizontal": 1,
+            "vertical": 1
+          }
+        ],
+        "workerSamples": 1,
+        "workerP50Ms": 1114.86,
+        "workerPeakWorkingSetBytes": 215863296,
+        "roi": {
+          "x": 960,
+          "y": 2960,
+          "width": 32,
+          "height": 32
+        },
+        "wicInputSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+        "sameInputBytesForAllDecoders": true,
+        "comparedPixels": 1024,
+        "independentPixelComparisons": {
+          "workerVsGdiPlus": {
+            "comparedPixels": 1024,
+            "pixelsOver8": 1000,
+            "maxRgbDifference": 120
+          },
+          "workerVsWic": {
+            "comparedPixelCount": 1024,
+            "pixelsOver8": 1000,
+            "maxRgbDifference": 120,
+            "alphaMismatchCount": 0
+          },
+          "jpegJsVsWic": {
+            "comparedPixelCount": 1024,
+            "pixelsOver8": 1000,
+            "maxRgbDifference": 120,
+            "alphaMismatchCount": 0
+          },
+          "gdiPlusVsWic": {
+            "status": "DIAGNOSTIC_ONLY",
+            "comparedPixelCount": 1024,
+            "maxRgbDifference": 0,
+            "pixelsOver8": 0,
+            "alphaMismatchCount": 0
+          }
+        },
+        "twoPixelInsetWorkerVsGdiPlus": {
+          "comparedPixels": 784,
+          "pixelsOver8": 784
+        },
+        "workerVsJpegJsFullFrame": {
+          "status": "PASS",
+          "mismatchedChannelCount": 0,
+          "mismatchedPixelCount": 0,
+          "maxChannelDifference": 0
+        },
+        "wicRoiBgraSha256": "56f48c32ff188fbaeab9aa8bb97624c369e1e15bef51c61cd1654f1aa25ee827",
+        "clipboardContentRead": false,
+        "inputSent": false,
+        "displayOrForegroundAppUsed": false,
+        "profileCleanupVerified": true
+      },
+      {
+        "measurement": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-edges-horizontal-wic-roi-v2-1-sample-measurement.json",
+        "fixturePattern": "chroma-edge-phases",
+        "fixtureSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+        "encodedBytes": 20971519,
+        "dimensions": "4000x4000",
+        "samplingFactors": [
+          {
+            "horizontal": 2,
+            "vertical": 2
+          },
+          {
+            "horizontal": 1,
+            "vertical": 1
+          },
+          {
+            "horizontal": 1,
+            "vertical": 1
+          }
+        ],
+        "workerSamples": 1,
+        "workerP50Ms": 1068.71,
+        "workerPeakWorkingSetBytes": 215089152,
+        "roi": {
+          "x": 992,
+          "y": 2960,
+          "width": 32,
+          "height": 32
+        },
+        "wicInputSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+        "sameInputBytesForAllDecoders": true,
+        "comparedPixels": 1024,
+        "independentPixelComparisons": {
+          "workerVsGdiPlus": {
+            "comparedPixels": 1024,
+            "pixelsOver8": 1008,
+            "maxRgbDifference": 136
+          },
+          "workerVsWic": {
+            "comparedPixelCount": 1024,
+            "pixelsOver8": 1008,
+            "maxRgbDifference": 136,
+            "alphaMismatchCount": 0
+          },
+          "jpegJsVsWic": {
+            "comparedPixelCount": 1024,
+            "pixelsOver8": 1008,
+            "maxRgbDifference": 136,
+            "alphaMismatchCount": 0
+          },
+          "gdiPlusVsWic": {
+            "status": "DIAGNOSTIC_ONLY",
+            "comparedPixelCount": 1024,
+            "maxRgbDifference": 0,
+            "pixelsOver8": 0,
+            "alphaMismatchCount": 0
+          }
+        },
+        "twoPixelInsetWorkerVsGdiPlus": {
+          "comparedPixels": 784,
+          "pixelsOver8": 784
+        },
+        "workerVsJpegJsFullFrame": {
+          "status": "PASS",
+          "mismatchedChannelCount": 0,
+          "mismatchedPixelCount": 0,
+          "maxChannelDifference": 0
+        },
+        "wicRoiBgraSha256": "a176411099d13c6cc0ea5b060830bf73d5fe3c0afcfd3dbf1123b4cfe5542f83",
+        "clipboardContentRead": false,
+        "inputSent": false,
+        "displayOrForegroundAppUsed": false,
+        "profileCleanupVerified": true
+      },
+      {
+        "measurement": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-edges-checker-wic-roi-v2-1-sample-measurement.json",
+        "fixturePattern": "chroma-edge-phases",
+        "fixtureSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+        "encodedBytes": 20971519,
+        "dimensions": "4000x4000",
+        "samplingFactors": [
+          {
+            "horizontal": 2,
+            "vertical": 2
+          },
+          {
+            "horizontal": 1,
+            "vertical": 1
+          },
+          {
+            "horizontal": 1,
+            "vertical": 1
+          }
+        ],
+        "workerSamples": 1,
+        "workerP50Ms": 1038.7,
+        "workerPeakWorkingSetBytes": 214450176,
+        "roi": {
+          "x": 1024,
+          "y": 2960,
+          "width": 32,
+          "height": 32
+        },
+        "wicInputSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+        "sameInputBytesForAllDecoders": true,
+        "comparedPixels": 1024,
+        "independentPixelComparisons": {
+          "workerVsGdiPlus": {
+            "comparedPixels": 1024,
+            "pixelsOver8": 768,
+            "maxRgbDifference": 147
+          },
+          "workerVsWic": {
+            "comparedPixelCount": 1024,
+            "pixelsOver8": 768,
+            "maxRgbDifference": 147,
+            "alphaMismatchCount": 0
+          },
+          "jpegJsVsWic": {
+            "comparedPixelCount": 1024,
+            "pixelsOver8": 768,
+            "maxRgbDifference": 147,
+            "alphaMismatchCount": 0
+          },
+          "gdiPlusVsWic": {
+            "status": "DIAGNOSTIC_ONLY",
+            "comparedPixelCount": 1024,
+            "maxRgbDifference": 0,
+            "pixelsOver8": 0,
+            "alphaMismatchCount": 0
+          }
+        },
+        "twoPixelInsetWorkerVsGdiPlus": {
+          "comparedPixels": 784,
+          "pixelsOver8": 588
+        },
+        "workerVsJpegJsFullFrame": {
+          "status": "PASS",
+          "mismatchedChannelCount": 0,
+          "mismatchedPixelCount": 0,
+          "maxChannelDifference": 0
+        },
+        "wicRoiBgraSha256": "817b50748fa1671898ea04fe2217037b93dcd23fe0cd09964b8b1327db016457",
+        "clipboardContentRead": false,
+        "inputSent": false,
+        "displayOrForegroundAppUsed": false,
+        "profileCleanupVerified": true
+      }
+    ]
+  },
+  "interpretation": [
+    "All four WIC child input hashes exactly match the fixture hashes used by the worker, GDI+, and jpeg-js comparisons; each fixture has JPEG SOF 4:2:0 sampling factors.",
+    "WPF/WIC and GDI+ produced identical RGBA values for every selected ROI point in all four cases (4096 total point comparisons; maximum RGB difference 0). This is agreement between two Windows imaging paths, not proof that either output is JPEG ground truth.",
+    "The worker and pinned jpeg-js outputs matched byte-for-byte over the full 16 MP RGBA image in each single sample. Against WPF/WIC, the worker had 900/1024, 1000/1024, 1008/1024, and 768/1024 ROI pixels above 8, with maxima 70, 120, 136, and 147; these equal the worker-vs-GDI+ diagnostic counts.",
+    "The evidence is consistent with different chroma reconstruction/phase behavior between the Chromium/Electron path and the Windows imaging paths. It does not establish which decoder is correct, generalize to the whole image, or close the JPEG fidelity gate.",
+    "Each fixture/ROI uses one worker sample and was deliberately selected from prior mismatch investigation. The reporting tolerance is calibrated only for 4:4:4; all 4:2:0 comparisons remain diagnostic.",
+    "WPF/WIC decoded only the selected CopyPixels rectangle in a fresh hidden STA PowerShell process. This is not a production WIC utilityProcess integration or a WIC latency/memory measurement. No system clipboard, input, foreground app, or installed application was used."
+  ],
+  "limitations": [
+    "WPF/WIC and GDI+ are platform imaging implementations; this experiment does not supply a normative JPEG reference or prove independence of their codec internals.",
+    "The worker-to-jpeg-js full-frame match is a compatibility differential because jpeg-js is not independent from the existing decoder path.",
+    "The selected ROIs are not random samples and cannot estimate full-frame error rates; only one worker sample was run per case.",
+    "No production decoder code, user data, P15 path, system clipboard, physical input, foreground app, or installed/published application package was exercised. The existing Electron 40.10.2 development runtime was restored from a local archive whose SHA-256 matched the pinned package checksum; package manifests and lockfiles were unchanged."
+  ]
+}
