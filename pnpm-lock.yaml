@@ -58,6 +58,14 @@ importers:
         specifier: ^8.0.1
         version: 8.0.5
 
+  apps/desktop: {}
+
+  apps/mobile: {}
+
+  apps/server: {}
+
+  apps/web: {}
+
   packages/contracts: {}
 
 packages:

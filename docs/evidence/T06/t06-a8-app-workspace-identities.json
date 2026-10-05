@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "T06-a8-app-workspace-identities",
+  "result": "PASS_MANIFEST_DISCOVERY_ONLY",
+  "checkedDate": "2026-10-05",
+  "worktree": {
+    "path": "D:/ClipNest-work/v2",
+    "branch": "codex/v2-clipboard",
+    "baseCommit": "2bf26e14411ea1c2f31f57111d352da70d771e6c",
+    "taskStatus": "T06仍处于进行中，尚未验收。"
+  },
+  "scope": {
+    "purpose": "登记任务清单及后续任务卡已明确命名的四个应用工作区身份。",
+    "manifests": [
+      { "name": "@clipnest/desktop", "path": "apps/desktop/package.json", "private": true },
+      { "name": "@clipnest/web", "path": "apps/web/package.json", "private": true },
+      { "name": "@clipnest/mobile", "path": "apps/mobile/package.json", "private": true },
+      { "name": "@clipnest/server", "path": "apps/server/package.json", "private": true }
+    ],
+    "manifestFields": ["name", "private"],
+    "dependenciesAdded": false,
+    "scriptsAdded": false,
+    "applicationCodeAdded": false,
+    "packageVersionsChanged": false,
+    "lockfileChange": "仅新增四个空工作区 importer；依赖包解析记录未变。",
+    "lockfileOnlyCommandExecuted": true,
+    "dependencyPayloadsInstalled": false,
+    "buildScriptsRun": false
+  },
+  "environment": {
+    "platform": "Windows x64",
+    "nodeVersion": "24.16.0",
+    "pnpmVersion": "11.19.0",
+    "preexistingUntrackedUserFilePreserved": "docs/progress.json.tmp"
+  },
+  "validation": [
+    {
+      "command": "pnpm install --lockfile-only --offline --ignore-scripts",
+      "status": "PASS",
+      "scope": "仅同步工作区 importer；未下载或安装依赖载荷，未运行生命周期脚本。",
+      "observed": "解析到全部6个工作区项目；锁文件497个条目通过供应链策略校验。"
+    },
+    {
+      "command": "node scripts/check-pnpm-workspace-manifests.cjs",
+      "status": "PASS_MANIFEST_DISCOVERY_ONLY",
+      "observedPackageCount": 6,
+      "observedAppPackages": [
+        "@clipnest/desktop",
+        "@clipnest/mobile",
+        "@clipnest/server",
+        "@clipnest/web"
+      ]
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS"
+    }
+  ],
+  "gateEffect": {
+    "t06Status": "in_progress",
+    "workspaceAppIdentitiesRegistered": true,
+    "appsBuildable": false,
+    "dependenciesSelectedOrFrozen": false,
+    "acceptanceImplied": false
+  },
+  "limitations": [
+    "本切片只登记任务清单和后续任务卡已使用的应用包名；未创建应用入口、脚本、TypeScript配置、Tauri/Expo配置或功能API。",
+    "T06-b schema/生成器与T06-c根验证/CI尚未实现；最终依赖、许可证及平台可选依赖审查仍开放。",
+    "MSVC/Tauri Windows概念验证和最终独立对抗审查仍开放；本次pnpm清单变更未覆盖这些验收门。"
+  ]
+}
