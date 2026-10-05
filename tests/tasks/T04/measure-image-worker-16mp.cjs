@@ -1,6 +1,6 @@
-// Diagnostic Windows x64 measurement using only a synthetic PNG/JPEG and an
-// isolated Electron utility process. It never accesses the system clipboard
-// or sends input to another application.
+// Diagnostic Windows x64 measurement using a synthetic PNG/JPEG, an isolated
+// Electron profile, and a fresh utility process. It never accesses the system
+// clipboard or sends input to another application.
 const assert = require("node:assert/strict");
 const { spawn, spawnSync } = require("node:child_process");
 const { createHash } = require("node:crypto");
@@ -20,21 +20,45 @@ const SAMPLE_COUNT = Math.min(5, Math.max(1, Number(process.env.T04_IMAGE_SAMPLE
 const SAMPLE_INTERVAL_MS = Math.max(50, Number(process.env.T04_IMAGE_SAMPLE_INTERVAL_MS) || 100);
 const IMAGE_FORMAT = process.env.T04_IMAGE_FORMAT || "png";
 const JPEG_ENCODER = process.env.T04_JPEG_ENCODER || "jpeg-js";
+const MEASUREMENT_TAG = process.env.T04_IMAGE_MEASUREMENT_TAG || "";
 if (IMAGE_FORMAT !== "png" && IMAGE_FORMAT !== "jpeg") throw new Error("unsupported_t04_image_format");
 if (JPEG_ENCODER !== "jpeg-js" && JPEG_ENCODER !== "native-image") throw new Error("unsupported_t04_jpeg_encoder");
+if (MEASUREMENT_TAG && !/^[a-z0-9-]{1,40}$/.test(MEASUREMENT_TAG)) throw new Error("invalid_t04_measurement_tag");
 if (!Number.isSafeInteger(PIXELS) || PIXELS > 16_000_000) throw new Error("synthetic_image_exceeds_pixel_limit");
 
 if (!process.versions.electron) {
   const env = { ...process.env };
   delete env.ELECTRON_RUN_AS_NODE;
-  const result = spawnSync(require("electron"), [__filename], {
-    cwd: ROOT,
-    env,
-    stdio: "inherit",
-    timeout: 180_000,
-  });
-  if (result.error) throw result.error;
-  process.exit(result.status ?? 1);
+  const profileRoot = fs.mkdtempSync(path.join(os.tmpdir(), "clipnest-t04-image-worker-"));
+  try {
+    assertTemporaryProfileRoot(profileRoot);
+    const userDataPath = path.join(profileRoot, "user-data");
+    const sessionDataPath = path.join(profileRoot, "session-data");
+    fs.mkdirSync(userDataPath);
+    fs.mkdirSync(sessionDataPath);
+    env.T04_PROFILE_ROOT = profileRoot;
+    env.T04_USER_DATA_PATH = userDataPath;
+    env.T04_SESSION_DATA_PATH = sessionDataPath;
+    const electronBinary = process.env.T04_ELECTRON_BIN
+      ? path.resolve(process.env.T04_ELECTRON_BIN)
+      : require("electron");
+    const result = spawnSync(electronBinary, [`--user-data-dir=${userDataPath}`, __filename], {
+      cwd: ROOT,
+      env,
+      stdio: "inherit",
+      timeout: 180_000,
+      windowsHide: true,
+    });
+    if (result.error) throw result.error;
+    process.exitCode = result.status ?? 1;
+  } finally {
+    assertTemporaryProfileRoot(profileRoot);
+    fs.rmSync(profileRoot, { recursive: true, force: true });
+    const cleanupVerified = !fs.existsSync(profileRoot);
+    if (cleanupVerified) recordProfileCleanup(measurementOutputPath());
+    if (!cleanupVerified) throw new Error("t04_profile_cleanup_failed");
+    process.stdout.write("T04_PROFILE_CLEANUP=PASS\n");
+  }
 } else {
   runMeasurement().catch((error) => {
     process.stderr.write(`${error.stack ?? error}\n`);
@@ -44,11 +68,18 @@ if (!process.versions.electron) {
 
 async function runMeasurement() {
   const { app, utilityProcess } = require("electron");
+  const profileRoot = process.env.T04_PROFILE_ROOT;
+  const userDataPath = process.env.T04_USER_DATA_PATH;
+  const sessionDataPath = process.env.T04_SESSION_DATA_PATH;
+  if (!profileRoot || !userDataPath || !sessionDataPath) throw new Error("isolated_electron_profile_required");
+  assertTemporaryProfileRoot(profileRoot);
+  assertInsideProfile(profileRoot, userDataPath);
+  assertInsideProfile(profileRoot, sessionDataPath);
+  app.setPath("userData", userDataPath);
+  app.setPath("sessionData", sessionDataPath);
   const workerEntry = path.join(ROOT, "dist-electron", "main", "clipboard", "image-worker.js");
-  const outputName = IMAGE_FORMAT === "png"
-    ? `image-worker-16mp-fresh-worker-${SAMPLE_COUNT}-sample-measurement.json`
-    : `image-worker-${PIXELS}-pixel-jpeg-${JPEG_ENCODER === "jpeg-js" ? "" : "native-image-"}20mib-fresh-worker-${SAMPLE_COUNT}-sample-measurement.json`;
-  const outputPath = path.join(ROOT, "docs", "evidence", "T04", outputName);
+  const outputPath = measurementOutputPath();
+  if (fs.existsSync(outputPath)) throw new Error(`measurement_output_exists; choose a unique T04_IMAGE_MEASUREMENT_TAG:${outputPath}`);
   assert.ok(fs.existsSync(workerEntry), `compiled worker entry missing: ${workerEntry}`);
   if (process.platform !== "win32" || process.arch !== "x64") {
     throw new Error(`measurement_requires_windows_x64:${process.platform}:${process.arch}`);
@@ -59,8 +90,10 @@ async function runMeasurement() {
   const encodedBytes = jpegFixture?.bytes ?? buildSyntheticPng(WIDTH, HEIGHT);
   if (encodedBytes.byteLength > 20 * 1024 * 1024) throw new Error("synthetic_image_exceeds_source_limit");
   const imageSha256 = createHash("sha256").update(encodedBytes).digest("hex");
+  const pixelOracle = jpegFixture ? runIndependentPixelOracle(encodedBytes, profileRoot) : null;
   const samples = [];
   const workers = [];
+  const pixelOracleChecks = [];
   for (let index = 0; index < SAMPLE_COUNT; index++) {
     const requestId = `t04-${IMAGE_FORMAT}-${WIDTH}x${HEIGHT}-${index + 1}`;
     const workerStartedAt = process.hrtime.bigint();
@@ -91,6 +124,9 @@ async function runMeasurement() {
         assertPixel(image.pixels, WIDTH - 1, HEIGHT - 1);
       } else {
         assertOpaquePixels(image.pixels);
+        if (pixelOracle?.status === "READY") {
+          pixelOracleChecks.push(comparePixelsWithOracle(image.pixels, pixelOracle));
+        }
       }
       const memoryAfter = await sampler.snapshot();
       const memory = await sampler.stop();
@@ -146,12 +182,30 @@ async function runMeasurement() {
       commit: gitValue("rev-parse", "HEAD"),
       branch: gitValue("branch", "--show-current"),
       workingTreeWasDirty: gitValue("status", "--short").length > 0,
+      workingTreeFiles: [
+        "src/main/clipboard/image-decoder.ts",
+        "src/main/clipboard/jpeg-baseline-stream.ts",
+        "src/main/clipboard/image-worker.ts",
+      ].map((file) => ({ path: file, sha256: fileSha256(path.join(ROOT, file)) })),
+      builtArtifactFiles: [
+        "dist-electron/main/clipboard/image-decoder.js",
+        "dist-electron/main/clipboard/jpeg-baseline-stream.js",
+        "dist-electron/main/clipboard/image-worker.js",
+      ].map((file) => ({ path: file, sha256: fileSha256(path.join(ROOT, file)) })),
     },
     environment: {
       platform: process.platform,
       architecture: process.arch,
       osVersion: os.version(),
       electronVersion: process.versions.electron,
+      electronBinaryPath: process.execPath,
+      profileIsolation: {
+        isolated: true,
+        userDataDirectory: "unique validated child of the OS temporary directory",
+        sessionDataDirectory: "unique validated child of the OS temporary directory",
+        cleanupPolicy: "remove the validated per-run root after Electron exits",
+        cleanupVerified: null,
+      },
       nodeVersion: process.versions.node,
       cpuModel: os.cpus()[0]?.model ?? null,
       logicalCpuCount: os.cpus().length,
@@ -167,7 +221,7 @@ async function runMeasurement() {
       pixelCount: PIXELS,
       content: IMAGE_FORMAT === "png"
         ? "deterministic synthetic RGBA gradient/noise PNG; no user data"
-        : "deterministic high-entropy synthetic baseline JPEG; APP2 segments bring the source within 3 bytes of 20 MiB; no user data",
+        : "deterministic high-entropy synthetic baseline JPEG padded with APP2 segments near the 20 MiB source limit; no user data",
       encodedBytes: encodedBytes.byteLength,
       sourceLimitBytes: 20 * 1024 * 1024,
       sourceLimitHeadroomBytes: 20 * 1024 * 1024 - encodedBytes.byteLength,
@@ -177,6 +231,7 @@ async function runMeasurement() {
       jpegApp2PaddingBytes: jpegFixture?.app2PaddingBytes ?? null,
       jpegSamplingFactors: jpegFixture?.samplingFactors ?? null,
       sha256: imageSha256,
+      independentPixelOracle: summarizePixelOracle(pixelOracle, pixelOracleChecks),
     },
     worker: {
       runtime: "Electron utilityProcess",
@@ -217,12 +272,13 @@ async function runMeasurement() {
       p50WorkerStartupMs: percentile(samples.map((sample) => sample.workerStartupMs), 0.5),
       p95WorkerStartupMs: percentile(samples.map((sample) => sample.workerStartupMs), 0.95),
       maxWorkerStartupMs: Math.max(...samples.map((sample) => sample.workerStartupMs)),
-      timingScope: "fresh utility process ready, then request post through decompressed 64,000,000-byte RGBA response receipt",
+      timingScope: `fresh utility process ready, then request post through decompressed ${PIXELS * 4}-byte RGBA response receipt`,
       diagnosticOnly: true,
       doesNotSatisfyNormalTextOrWake100SampleAcceptance: true,
+      responsePayloadBytesMeaning: "compressed IPC transport bytes (transportBytes), not decompressed RGBA bytes",
     },
     limitations: [
-      "Fresh-process synthetic 16MP samples are diagnostic; they do not satisfy the T05 100-sample controlled desktop timing gates or measure end-user paste latency.",
+      `Fresh-process synthetic ${PIXELS}-pixel samples are diagnostic; they do not satisfy the T05 100-sample controlled desktop timing gates or measure end-user paste latency.`,
       IMAGE_FORMAT === "png"
         ? "The PNG input is one generated gradient/noise fixture; JPEG, other image content, UI responsiveness and original clipboard conversion are not covered."
         : "The JPEG is a generated baseline image with synthetic APP2 padding to exercise the encoded-source ceiling; progressive JPEG, real EXIF/ICC metadata, other image content, UI responsiveness and original clipboard conversion are not covered.",
@@ -233,6 +289,10 @@ async function runMeasurement() {
         : "No fixture was rejected by the decoder's internal capacity guard in this sample set; this does not establish a universal process-memory ceiling.",
       `PeakWorkingSet64 is the OS-reported peak for each fresh process; private bytes are sampled every ${SAMPLE_INTERVAL_MS} ms and around each decode, so shorter private-memory peaks can be missed. These observations do not prove a hard ceiling for every decode.`,
       "No clipboard, target window, physical input, installed package, helper, or rollback behavior was exercised. P15 and full T04 acceptance remain open.",
+      "This harness sets unique userData and sessionData paths under the OS temporary directory and removes the validated per-run root only after Electron exits.",
+      pixelOracle?.status === "READY"
+        ? "Decoded RGB values were compared at nine coordinates with the independent Windows System.Drawing/GDI+ JPEG decoder using a maximum per-channel tolerance of 8. This is a sampled oracle, not a full-image pixel hash."
+        : "No independent RGB oracle was run for this fixture.",
     ],
   };
   fs.writeFileSync(outputPath, `${JSON.stringify(measurement, null, 2)}\n`, "utf8");
@@ -289,6 +349,83 @@ function decode(child, requestId, bytes, width, height, format) {
       finish(error);
     }
   });
+}
+
+function runIndependentPixelOracle(encodedBytes, profileRoot) {
+  if (JPEG_ENCODER !== "jpeg-js") {
+    return { status: "NOT_RUN", reason: "RGB tolerance is calibrated only for the deterministic 4:4:4 jpeg-js fixture" };
+  }
+  if (WIDTH !== 4000 || HEIGHT !== 4000) {
+    return { status: "NOT_RUN", reason: "the existing independent GDI+ oracle is fixed to 4000x4000" };
+  }
+  const imagePath = path.join(profileRoot, "synthetic-jpeg-fixture.jpg");
+  fs.writeFileSync(imagePath, encodedBytes);
+  const points = [
+    { x: 0, y: 0 }, { x: WIDTH - 1, y: 0 }, { x: 0, y: HEIGHT - 1 },
+    { x: WIDTH - 1, y: HEIGHT - 1 }, { x: Math.floor(WIDTH / 2), y: Math.floor(HEIGHT / 2) },
+    { x: Math.floor(WIDTH / 4), y: Math.floor(HEIGHT / 4) },
+    { x: Math.floor(WIDTH * 3 / 4), y: Math.floor(HEIGHT / 4) },
+    { x: Math.floor(WIDTH / 4), y: Math.floor(HEIGHT * 3 / 4) },
+    { x: Math.floor(WIDTH * 3 / 4), y: Math.floor(HEIGHT * 3 / 4) },
+  ];
+  const scriptPath = path.join(__dirname, "purejsimage-independent-pixel-oracle.ps1");
+  const result = spawnSync("powershell.exe", [
+    "-NoLogo", "-NoProfile", "-NonInteractive", "-File", scriptPath,
+    "-ImagePath", imagePath, "-CoordinateJson", JSON.stringify(points),
+  ], { cwd: ROOT, encoding: "utf8", timeout: 30_000, windowsHide: true });
+  if (result.error) return { status: "ERROR", reason: String(result.error) };
+  if (result.status !== 0) {
+    return { status: "ERROR", reason: `powershell_exit_${result.status}:${result.stderr || result.stdout}` };
+  }
+  let oracle;
+  try { oracle = JSON.parse(result.stdout.trim()); }
+  catch (error) { return { status: "ERROR", reason: `invalid_gdiplus_oracle_json:${error}` }; }
+  return {
+    status: "READY",
+    decoder: oracle.decoder,
+    powershellVersion: oracle.powershellVersion,
+    dotNetRuntime: oracle.dotNetRuntime,
+    pixelFormat: oracle.pixelFormat,
+    samples: oracle.samples,
+  };
+}
+
+function comparePixelsWithOracle(pixels, oracle) {
+  let maxRgbDifference = 0;
+  let alphaValid = true;
+  const samples = oracle.samples.map((sample) => {
+    const offset = (sample.y * WIDTH + sample.x) * 4;
+    const actualRgba = [...pixels.subarray(offset, offset + 4)];
+    const maxSampleDifference = Math.max(
+      Math.abs(actualRgba[0] - sample.rgba[0]),
+      Math.abs(actualRgba[1] - sample.rgba[1]),
+      Math.abs(actualRgba[2] - sample.rgba[2]),
+    );
+    alphaValid &&= actualRgba[3] === 255;
+    maxRgbDifference = Math.max(maxRgbDifference, maxSampleDifference);
+    return { x: sample.x, y: sample.y, expectedRgba: sample.rgba, actualRgba, maxRgbDifference: maxSampleDifference };
+  });
+  return { maxRgbDifference, alphaValid, samples };
+}
+
+function summarizePixelOracle(oracle, checks) {
+  if (!oracle) return { status: "NOT_APPLICABLE", reason: "PNG fixture" };
+  if (oracle.status !== "READY") return oracle;
+  const maxRgbDifference = Math.max(0, ...checks.map((check) => check.maxRgbDifference));
+  const passed = checks.length > 0 && checks.every((check) =>
+    check.maxRgbDifference <= 8 && check.alphaValid);
+  return {
+    status: passed ? "PASS" : "FAIL",
+    decoder: oracle.decoder,
+    powershellVersion: oracle.powershellVersion,
+    dotNetRuntime: oracle.dotNetRuntime,
+    pixelFormat: oracle.pixelFormat,
+    toleranceRgbDifference: 8,
+    verifiedWorkerSamples: checks.length,
+    maxRgbDifference,
+    alphaValid: checks.length > 0 && checks.every((check) => check.alphaValid),
+    samples: checks[0]?.samples ?? [],
+  };
 }
 
 function inflateExact(compressed, expectedBytes) {
@@ -456,6 +593,26 @@ function assertOpaquePixels(pixels) {
   }
 }
 
+function assertTemporaryProfileRoot(root) {
+  const resolved = path.resolve(root);
+  if (path.dirname(resolved) !== path.resolve(os.tmpdir()) ||
+      !path.basename(resolved).startsWith("clipnest-t04-image-worker-")) {
+    throw new Error("unsafe_t04_profile_root");
+  }
+}
+
+function assertInsideProfile(root, candidate) {
+  const relative = path.relative(path.resolve(root), path.resolve(candidate));
+  if (!relative || relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    throw new Error("unsafe_t04_profile_path");
+  }
+}
+
+function fileSha256(file) {
+  if (!fs.existsSync(file)) return null;
+  return createHash("sha256").update(fs.readFileSync(file)).digest("hex");
+}
+
 function startWindowsMemorySampler(pid, intervalMs) {
   const script = [
     "$ErrorActionPreference='Stop'",
@@ -537,6 +694,21 @@ function startWindowsMemorySampler(pid, intervalMs) {
       return stopPromise;
     },
   };
+}
+
+function measurementOutputPath() {
+  const tagSuffix = MEASUREMENT_TAG ? `-${MEASUREMENT_TAG}` : "";
+  const outputName = IMAGE_FORMAT === "png"
+    ? `image-worker-16mp-fresh-worker${tagSuffix}-${SAMPLE_COUNT}-sample-measurement.json`
+    : `image-worker-${PIXELS}-pixel-jpeg-${JPEG_ENCODER === "jpeg-js" ? "" : "native-image-"}20mib-fresh-worker${tagSuffix}-${SAMPLE_COUNT}-sample-measurement.json`;
+  return path.join(ROOT, "docs", "evidence", "T04", outputName);
+}
+
+function recordProfileCleanup(file) {
+  if (!fs.existsSync(file)) return;
+  const measurement = JSON.parse(fs.readFileSync(file, "utf8"));
+  measurement.environment.profileIsolation.cleanupVerified = true;
+  fs.writeFileSync(file, `${JSON.stringify(measurement, null, 2)}\n`, "utf8");
 }
 
 function gitValue(...args) {
