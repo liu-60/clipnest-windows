@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "DIAGNOSTIC_WITH_LIMITATIONS",
+  "gate": "4:2:0 JPEG fidelity remains OPEN",
+  "verificationDate": "2026-10-05",
+  "source": {
+    "commit": "d2f058a9502ff2e83d33fb9e959e71f7dc59790a",
+    "workingTreeWasDirty": true,
+    "measurementHarnessPath": "tests/tasks/T04/measure-image-worker-16mp.cjs",
+    "measurementHarnessSha256": "5ea61a130d03d20ddcbc9ef39632e99319a5c1a7415b556de99b688a642e20b8"
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "osVersion": "Windows 11 Enterprise",
+    "electronVersion": "40.10.2"
+  },
+  "method": {
+    "dimensions": "4000x4000",
+    "encodedSourceLimitBytes": 20971520,
+    "roiPointsPerCase": 1024,
+    "roiOracle": "Windows System.Drawing / GDI+ GetPixel over a selected dense 32x32 ROI",
+    "differentialReference": "Pinned jpeg-js full-frame output in the Electron parent; this is not an independent decoder implementation.",
+    "highEntropyFixtureSha256": "c9362e8411a710e82c8ead5e41295c0f6902bf8f5eac9cf40ac25915abb68ab1",
+    "chromaEdgeFixtureSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+    "chromaEdgeSourceColors": [
+      [
+        255,
+        88,
+        0
+      ],
+      [
+        0,
+        169,
+        255
+      ]
+    ],
+    "chromaEdgePattern": "Neutral-gray background; phase-shifted vertical stripes, phase-shifted horizontal stripes, and a 4x4 checkerboard at x=960..1055/y=2960..3055."
+  },
+  "cases": [
+    {
+      "measurement": "image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-420-highentropy-roi-v3-1-sample-measurement.json",
+      "fixturePattern": "high-entropy",
+      "fixtureSha256": "c9362e8411a710e82c8ead5e41295c0f6902bf8f5eac9cf40ac25915abb68ab1",
+      "quality": 96,
+      "encodedBytes": 20971520,
+      "samplingFactors": [
+        {
+          "horizontal": 2,
+          "vertical": 2
+        },
+        {
+          "horizontal": 1,
+          "vertical": 1
+        },
+        {
+          "horizontal": 1,
+          "vertical": 1
+        }
+      ],
+      "workerSamples": 1,
+      "workerP50Ms": 2006.63,
+      "peakWorkingSetBytes": 217161728,
+      "independentOracle": {
+        "status": "FAIL",
+        "sampledRegion": {
+          "x": 984,
+          "y": 2984,
+          "width": 32,
+          "height": 32
+        },
+        "comparedPixels": 1024,
+        "maxRgbDifference": 70,
+        "pixelsOver8": 900,
+        "meanOfPerPixelMaxRgbDifference": 22.05,
+        "alphaValid": true,
+        "thresholdCalibratedForSampling": false,
+        "twoPixelInset": {
+          "comparedPixels": 784,
+          "pixelsOver8": 690
+        }
+      },
+      "jpegJsFullFrame": {
+        "status": "PASS",
+        "mismatchedChannelCount": 0,
+        "maxChannelDifference": 0
+      },
+      "systemClipboardReadOrWritten": false,
+      "inputSent": false,
+      "profileCleanupVerified": true
+    },
+    {
+      "measurement": "image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-420-edges-vertical-v2-1-sample-measurement.json",
+      "fixturePattern": "chroma-edge-phases",
+      "fixtureSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+      "quality": 100,
+      "encodedBytes": 20971519,
+      "samplingFactors": [
+        {
+          "horizontal": 2,
+          "vertical": 2
+        },
+        {
+          "horizontal": 1,
+          "vertical": 1
+        },
+        {
+          "horizontal": 1,
+          "vertical": 1
+        }
+      ],
+      "workerSamples": 1,
+      "workerP50Ms": 1140.49,
+      "peakWorkingSetBytes": 215678976,
+      "independentOracle": {
+        "status": "FAIL",
+        "sampledRegion": {
+          "x": 960,
+          "y": 2960,
+          "width": 32,
+          "height": 32
+        },
+        "comparedPixels": 1024,
+        "maxRgbDifference": 120,
+        "pixelsOver8": 1000,
+        "meanOfPerPixelMaxRgbDifference": 61.14,
+        "alphaValid": true,
+        "thresholdCalibratedForSampling": false,
+        "twoPixelInset": {
+          "comparedPixels": 784,
+          "pixelsOver8": 784
+        }
+      },
+      "jpegJsFullFrame": {
+        "status": "PASS",
+        "mismatchedChannelCount": 0,
+        "maxChannelDifference": 0
+      },
+      "systemClipboardReadOrWritten": false,
+      "inputSent": false,
+      "profileCleanupVerified": true
+    },
+    {
+      "measurement": "image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-420-edges-horizontal-v2-1-sample-measurement.json",
+      "fixturePattern": "chroma-edge-phases",
+      "fixtureSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+      "quality": 100,
+      "encodedBytes": 20971519,
+      "samplingFactors": [
+        {
+          "horizontal": 2,
+          "vertical": 2
+        },
+        {
+          "horizontal": 1,
+          "vertical": 1
+        },
+        {
+          "horizontal": 1,
+          "vertical": 1
+        }
+      ],
+      "workerSamples": 1,
+      "workerP50Ms": 1016.1,
+      "peakWorkingSetBytes": 216211456,
+      "independentOracle": {
+        "status": "FAIL",
+        "sampledRegion": {
+          "x": 992,
+          "y": 2960,
+          "width": 32,
+          "height": 32
+        },
+        "comparedPixels": 1024,
+        "maxRgbDifference": 136,
+        "pixelsOver8": 1008,
+        "meanOfPerPixelMaxRgbDifference": 61.67,
+        "alphaValid": true,
+        "thresholdCalibratedForSampling": false,
+        "twoPixelInset": {
+          "comparedPixels": 784,
+          "pixelsOver8": 784
+        }
+      },
+      "jpegJsFullFrame": {
+        "status": "PASS",
+        "mismatchedChannelCount": 0,
+        "maxChannelDifference": 0
+      },
+      "systemClipboardReadOrWritten": false,
+      "inputSent": false,
+      "profileCleanupVerified": true
+    },
+    {
+      "measurement": "image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-420-edges-checker-v2-1-sample-measurement.json",
+      "fixturePattern": "chroma-edge-phases",
+      "fixtureSha256": "f4580eac0ace6b555b66747e2e9aa6e731dac36054502514c5e2ea63f9e4cfbc",
+      "quality": 100,
+      "encodedBytes": 20971519,
+      "samplingFactors": [
+        {
+          "horizontal": 2,
+          "vertical": 2
+        },
+        {
+          "horizontal": 1,
+          "vertical": 1
+        },
+        {
+          "horizontal": 1,
+          "vertical": 1
+        }
+      ],
+      "workerSamples": 1,
+      "workerP50Ms": 1138.83,
+      "peakWorkingSetBytes": 215969792,
+      "independentOracle": {
+        "status": "FAIL",
+        "sampledRegion": {
+          "x": 1024,
+          "y": 2960,
+          "width": 32,
+          "height": 32
+        },
+        "comparedPixels": 1024,
+        "maxRgbDifference": 147,
+        "pixelsOver8": 768,
+        "meanOfPerPixelMaxRgbDifference": 73.08,
+        "alphaValid": true,
+        "thresholdCalibratedForSampling": false,
+        "twoPixelInset": {
+          "comparedPixels": 784,
+          "pixelsOver8": 588
+        }
+      },
+      "jpegJsFullFrame": {
+        "status": "PASS",
+        "mismatchedChannelCount": 0,
+        "maxChannelDifference": 0
+      },
+      "systemClipboardReadOrWritten": false,
+      "inputSent": false,
+      "profileCleanupVerified": true
+    }
+  ],
+  "interpretation": [
+    "All four worker outputs matched the pinned jpeg-js full-frame differential reference byte-for-byte; the high-entropy fixture reused the same 20 MiB 4:2:0 JPEG SHA-256 as the prior five-sample GDI+ discrepancy.",
+    "The high-entropy ROI contains broad GDI+ differences (900/1024 pixels over 8; maximum 70). The neutral-gray/chroma-edge fixture was sampled in separate vertical, horizontal and checkerboard ROIs: 1000/1024, 1008/1024 and 768/1024 points were over 8, with maxima 120, 136 and 147.",
+    "The edge-case differences persist after trimming two pixels from each ROI edge: vertical and horizontal interiors each had 784/784 pixels over 8; the checkerboard interior had 588/784. This rules out the outer ROI edge alone as the cause, but the tiled JPEG image still has neighboring chroma transitions.",
+    "The high-chroma synthetic edge cases make chroma reconstruction/phase differences a plausible explanation for GDI+ disagreement, while exact worker/jpeg-js agreement reduces concern about raw-chunk transport corruption. This is an inference, not a proof of which decoder is correct.",
+    "The GDI+ tolerance of 8 was calibrated only for 4:4:4. Every 4:2:0 record remains FAIL with thresholdCalibratedForSampling=false; none is evidence to accept fidelity.",
+    "The ROIs were selected to investigate a previously observed mismatch and do not estimate whole-image error rates. Each case uses one synthetic worker sample; this does not close general JPEG fidelity, memory, T04 acceptance, or any T05 desktop gate.",
+    "The runs did not read/write the system clipboard, send input, show a window, install the package, or use user data. Isolated Electron profiles were removed and cleanup was verified."
+  ],
+  "independentReview": {
+    "result": "PASS_WITH_LIMITATIONS",
+    "reviewer": "Independent read-only ROI harness and evidence reviewer",
+    "scope": [
+      "ROI input bounds and absolute coordinate mapping",
+      "synthetic edge pattern geometry and phase description",
+      "four measurement records and summary arithmetic",
+      "calibration status semantics"
+    ],
+    "findings": [
+      "The final harness SHA matches all four measurements and the summary.",
+      "Every result records 4:2:0 sampling, exact jpeg-js full-frame differential match, GDI+ FAIL, and thresholdCalibratedForSampling=false.",
+      "Non-4:4:4 results at or below the numerical tolerance are reported as DIAGNOSTIC_ONLY, not PASS."
+    ],
+    "limitations": [
+      "Each ROI is a single selected region of one synthetic JPEG and one worker sample; this review does not prove which decoder is correct or establish full-image fidelity."
+    ]
+  }
+}

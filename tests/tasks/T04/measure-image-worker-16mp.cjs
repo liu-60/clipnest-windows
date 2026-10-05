@@ -19,10 +19,18 @@ const SAMPLE_COUNT = Math.min(5, Math.max(1, Number(process.env.T04_IMAGE_SAMPLE
 const SAMPLE_INTERVAL_MS = Math.max(50, Number(process.env.T04_IMAGE_SAMPLE_INTERVAL_MS) || 100);
 const IMAGE_FORMAT = process.env.T04_IMAGE_FORMAT || "png";
 const JPEG_ENCODER = process.env.T04_JPEG_ENCODER || "jpeg-js";
+const JPEG_FIXTURE_PATTERN = process.env.T04_JPEG_FIXTURE_PATTERN || "high-entropy";
 const ENABLE_JPEG_JS_PIXEL_ORACLE = process.env.T04_JPEG_JS_PIXEL_ORACLE === "1";
+const GDI_PIXEL_ROI = parseGdiPixelRoi(process.env.T04_GDI_PIXEL_ROI || "");
 const MEASUREMENT_TAG = process.env.T04_IMAGE_MEASUREMENT_TAG || "";
 if (IMAGE_FORMAT !== "png" && IMAGE_FORMAT !== "jpeg") throw new Error("unsupported_t04_image_format");
 if (JPEG_ENCODER !== "jpeg-js" && JPEG_ENCODER !== "native-image") throw new Error("unsupported_t04_jpeg_encoder");
+if (JPEG_FIXTURE_PATTERN !== "high-entropy" && JPEG_FIXTURE_PATTERN !== "chroma-edge-phases") {
+  throw new Error("unsupported_t04_jpeg_fixture_pattern");
+}
+if (JPEG_FIXTURE_PATTERN === "chroma-edge-phases" && (WIDTH < 1056 || HEIGHT < 3056)) {
+  throw new Error("chroma_edge_fixture_requires_at_least_1056x3056");
+}
 if (MEASUREMENT_TAG && !/^[a-z0-9-]{1,40}$/.test(MEASUREMENT_TAG)) throw new Error("invalid_t04_measurement_tag");
 if (!Number.isSafeInteger(PIXELS) || PIXELS > 16_000_000) throw new Error("synthetic_image_exceeds_pixel_limit");
 
@@ -87,7 +95,8 @@ async function runMeasurement() {
   }
 
   await app.whenReady();
-  const jpegFixture = IMAGE_FORMAT === "jpeg" ? buildSyntheticJpeg(WIDTH, HEIGHT, JPEG_ENCODER) : null;
+  const jpegFixture = IMAGE_FORMAT === "jpeg"
+    ? buildSyntheticJpeg(WIDTH, HEIGHT, JPEG_ENCODER, JPEG_FIXTURE_PATTERN) : null;
   const encodedBytes = jpegFixture?.bytes ?? buildSyntheticPng(WIDTH, HEIGHT);
   if (encodedBytes.byteLength > 20 * 1024 * 1024) throw new Error("synthetic_image_exceeds_source_limit");
   const imageSha256 = createHash("sha256").update(encodedBytes).digest("hex");
@@ -233,7 +242,10 @@ async function runMeasurement() {
       pixelCount: PIXELS,
       content: IMAGE_FORMAT === "png"
         ? "deterministic synthetic RGBA gradient/noise PNG; no user data"
-        : "deterministic high-entropy synthetic baseline JPEG padded with APP2 segments near the 20 MiB source limit; no user data",
+        : jpegFixture.pattern === "chroma-edge-phases"
+          ? "synthetic neutral-gray field with phase-shifted vertical/horizontal high-chroma edges and a 4x4 checkerboard; baseline JPEG padded with APP2 segments to the 20 MiB source limit; no user data"
+          : "deterministic high-entropy synthetic baseline JPEG padded with APP2 segments near the 20 MiB source limit; no user data",
+      jpegFixturePattern: jpegFixture?.pattern ?? null,
       encodedBytes: encodedBytes.byteLength,
       sourceLimitBytes: 20 * 1024 * 1024,
       sourceLimitHeadroomBytes: 20 * 1024 * 1024 - encodedBytes.byteLength,
@@ -243,7 +255,7 @@ async function runMeasurement() {
       jpegApp2PaddingBytes: jpegFixture?.app2PaddingBytes ?? null,
       jpegSamplingFactors: jpegFixture?.samplingFactors ?? null,
       sha256: imageSha256,
-      independentPixelOracle: summarizePixelOracle(pixelOracle, pixelOracleChecks),
+      independentPixelOracle: summarizePixelOracle(pixelOracle, pixelOracleChecks, jpegFixture?.samplingFactors),
       jpegJsPixelOracle: summarizeJpegJsPixelOracle(jpegJsPixelOracle, jpegJsPixelOracleChecks),
     },
     worker: {
@@ -310,7 +322,7 @@ async function runMeasurement() {
       "No clipboard, target window, physical input, installed package, helper, or rollback behavior was exercised. P15 and full T04 acceptance remain open.",
       "This harness sets unique userData and sessionData paths under the OS temporary directory and removes the validated per-run root only after Electron exits.",
       pixelOracle?.status === "READY"
-        ? `Decoded RGB values were compared at nine coordinates with the independent Windows System.Drawing/GDI+ JPEG decoder using a maximum per-channel tolerance of 8. This is a sampled oracle, not a full-image pixel hash.${JPEG_ENCODER === "native-image" ? " The 8-channel tolerance was previously calibrated only against the deterministic 4:4:4 jpeg-js fixture; the native-image 4:2:0 result is diagnostic and any disagreement remains an open fidelity gate." : ""}`
+        ? `Decoded RGB values were compared at ${pixelOracle.samples.length} coordinates with the independent Windows System.Drawing/GDI+ JPEG decoder using a maximum per-channel tolerance of 8. This is a sampled oracle, not a full-image pixel hash.${pixelOracle.sampledRegion ? ` The dense ROI is ${pixelOracle.sampledRegion.width}x${pixelOracle.sampledRegion.height} at (${pixelOracle.sampledRegion.x},${pixelOracle.sampledRegion.y}).` : ""}${JPEG_ENCODER === "native-image" ? " The 8-channel tolerance was previously calibrated only against the deterministic 4:4:4 jpeg-js fixture; non-4:4:4 output remains diagnostic and cannot pass from this threshold." : ""}`
         : "No independent RGB oracle was run for this fixture.",
       jpegJsPixelOracle
         ? "The optional pinned jpeg-js full-frame oracle is a differential reference to the existing decoder path, not an independent implementation. It runs in the Electron parent before worker samples and retains a 64,000,000-byte RGBA buffer; that memory is excluded from each utilityProcess PeakWorkingSet64 measurement."
@@ -416,7 +428,9 @@ function runIndependentPixelOracle(encodedBytes, profileRoot) {
   }
   const imagePath = path.join(profileRoot, "synthetic-jpeg-fixture.jpg");
   fs.writeFileSync(imagePath, encodedBytes);
-  const points = [
+  const points = GDI_PIXEL_ROI
+    ? buildGdiPixelRoiPoints(GDI_PIXEL_ROI)
+    : [
     { x: 0, y: 0 }, { x: WIDTH - 1, y: 0 }, { x: 0, y: HEIGHT - 1 },
     { x: WIDTH - 1, y: HEIGHT - 1 }, { x: Math.floor(WIDTH / 2), y: Math.floor(HEIGHT / 2) },
     { x: Math.floor(WIDTH / 4), y: Math.floor(HEIGHT / 4) },
@@ -424,10 +438,14 @@ function runIndependentPixelOracle(encodedBytes, profileRoot) {
     { x: Math.floor(WIDTH / 4), y: Math.floor(HEIGHT * 3 / 4) },
     { x: Math.floor(WIDTH * 3 / 4), y: Math.floor(HEIGHT * 3 / 4) },
   ];
+  const coordinateJson = JSON.stringify(points);
+  if (coordinateJson.length > 24_000) {
+    return { status: "ERROR", reason: "gdiplus_coordinate_payload_exceeds_safe_process_argument_size" };
+  }
   const scriptPath = path.join(__dirname, "purejsimage-independent-pixel-oracle.ps1");
   const result = spawnSync("powershell.exe", [
     "-NoLogo", "-NoProfile", "-NonInteractive", "-File", scriptPath,
-    "-ImagePath", imagePath, "-CoordinateJson", JSON.stringify(points),
+    "-ImagePath", imagePath, "-CoordinateJson", coordinateJson,
   ], { cwd: ROOT, encoding: "utf8", timeout: 30_000, windowsHide: true });
   if (result.error) return { status: "ERROR", reason: String(result.error) };
   if (result.status !== 0) {
@@ -442,8 +460,29 @@ function runIndependentPixelOracle(encodedBytes, profileRoot) {
     powershellVersion: oracle.powershellVersion,
     dotNetRuntime: oracle.dotNetRuntime,
     pixelFormat: oracle.pixelFormat,
+    sampledRegion: GDI_PIXEL_ROI,
     samples: oracle.samples,
   };
+}
+
+function parseGdiPixelRoi(value) {
+  if (!value) return null;
+  const match = /^(\d+),(\d+),(\d+),(\d+)$/.exec(value);
+  if (!match) throw new Error("T04_GDI_PIXEL_ROI_must_be_x,y,width,height");
+  const [x, y, width, height] = match.slice(1).map(Number);
+  if (![x, y, width, height].every(Number.isSafeInteger) || width < 1 || height < 1 ||
+      width * height > 1024 || x + width > WIDTH || y + height > HEIGHT) {
+    throw new Error("T04_GDI_PIXEL_ROI_must_fit_image_and_contain_at_most_1024_pixels");
+  }
+  return { x, y, width, height };
+}
+
+function buildGdiPixelRoiPoints(region) {
+  const points = [];
+  for (let y = region.y; y < region.y + region.height; y++) {
+    for (let x = region.x; x < region.x + region.width; x++) points.push({ x, y });
+  }
+  return points;
 }
 
 function decodeJpegJsOracle(encodedBytes) {
@@ -497,20 +536,26 @@ function comparePixelsWithOracle(pixels, oracle) {
   return { maxRgbDifference, alphaValid, samples };
 }
 
-function summarizePixelOracle(oracle, checks) {
+function summarizePixelOracle(oracle, checks, samplingFactors = null) {
   if (!oracle) return { status: "NOT_APPLICABLE", reason: "PNG fixture" };
   if (oracle.status !== "READY") return oracle;
   const maxRgbDifference = Math.max(0, ...checks.map((check) => check.maxRgbDifference));
-  const passed = checks.length > 0 && checks.every((check) =>
+  const withinTolerance = checks.length > 0 && checks.every((check) =>
     check.maxRgbDifference <= 8 && check.alphaValid);
+  const thresholdCalibratedForSampling = samplingFactors?.length === 3 &&
+    samplingFactors.every((factor) => factor.horizontal === 1 && factor.vertical === 1);
   return {
-    status: passed ? "PASS" : "FAIL",
+    status: !withinTolerance ? "FAIL" : thresholdCalibratedForSampling ? "PASS" : "DIAGNOSTIC_ONLY",
     decoder: oracle.decoder,
     powershellVersion: oracle.powershellVersion,
     dotNetRuntime: oracle.dotNetRuntime,
     pixelFormat: oracle.pixelFormat,
     toleranceRgbDifference: 8,
     verifiedWorkerSamples: checks.length,
+    comparedPixelCountPerWorkerSample: oracle.samples.length,
+    sampledRegion: oracle.sampledRegion,
+    samplingFactors,
+    thresholdCalibratedForSampling,
     maxRgbDifference,
     alphaValid: checks.length > 0 && checks.every((check) => check.alphaValid),
     samples: checks[0]?.samples ?? [],
@@ -576,17 +621,47 @@ function buildSyntheticPng(width, height) {
   }
 }
 
-function buildSyntheticJpeg(width, height, encoder) {
+function buildSyntheticJpeg(width, height, encoder, pattern) {
   const pixels = Buffer.allocUnsafe(width * height * 4);
-  let state = 0x6d2b79f5;
-  for (let offset = 0; offset < pixels.byteLength; offset += 4) {
-    state ^= state << 13;
-    state ^= state >>> 17;
-    state ^= state << 5;
-    pixels[offset] = state & 0xff;
-    pixels[offset + 1] = (state >>> 8) & 0xff;
-    pixels[offset + 2] = (state >>> 16) & 0xff;
-    pixels[offset + 3] = 0xff;
+  if (pattern === "chroma-edge-phases") {
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const offset = (y * width + x) * 4;
+        const localX = x - 960;
+        const localY = y - 2960;
+        let red = 128;
+        let green = 128;
+        let blue = 128;
+        let alternate = false;
+        if (localX >= 0 && localX < 96 && localY >= 0 && localY < 96) {
+          if (localX < 32) {
+            alternate = (Math.floor((localX + (localY & 3)) / 4) & 1) === 1;
+          } else if (localX < 64) {
+            alternate = (Math.floor((localY + (localX & 3)) / 4) & 1) === 1;
+          } else {
+            alternate = ((Math.floor(localX / 4) + Math.floor(localY / 4)) & 1) === 1;
+          }
+          red = alternate ? 0 : 255;
+          green = alternate ? 169 : 88;
+          blue = alternate ? 255 : 0;
+        }
+        pixels[offset] = red;
+        pixels[offset + 1] = green;
+        pixels[offset + 2] = blue;
+        pixels[offset + 3] = 0xff;
+      }
+    }
+  } else {
+    let state = 0x6d2b79f5;
+    for (let offset = 0; offset < pixels.byteLength; offset += 4) {
+      state ^= state << 13;
+      state ^= state >>> 17;
+      state ^= state << 5;
+      pixels[offset] = state & 0xff;
+      pixels[offset + 1] = (state >>> 8) & 0xff;
+      pixels[offset + 2] = (state >>> 16) & 0xff;
+      pixels[offset + 3] = 0xff;
+    }
   }
 
   const qualities = encoder === "native-image"
@@ -627,7 +702,7 @@ function buildSyntheticJpeg(width, height, encoder) {
   }
 
   const bytes = Buffer.concat([imageBytes.subarray(0, 2), ...segments, imageBytes.subarray(2)]);
-  return { bytes, quality, encoder, imageBytesBeforePadding: imageBytes.byteLength, app2PaddingBytes,
+  return { bytes, quality, encoder, pattern, imageBytesBeforePadding: imageBytes.byteLength, app2PaddingBytes,
     samplingFactors: readJpegSamplingFactors(imageBytes) };
 }
 
