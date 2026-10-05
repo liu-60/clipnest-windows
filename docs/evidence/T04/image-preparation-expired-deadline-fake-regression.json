@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "FAKE_REGRESSION_PASS_WITH_LIMITATIONS",
+  "measurementType": "expired image-preparation deadline worker-factory-cache-update and retirement-order fake regression",
+  "recordedDate": "2026-10-05",
+  "source": {
+    "commit": "5c0ccaa3e1dcd372f54860ed06bdc84135a0afe5",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "testFile": {
+      "path": "tests/tasks/T04/clipboard-image-preparation.test.cjs",
+      "sha256": "9f52ceda582e5efa0a3b0cde477707243b726b4aab8df3cab1b39f96d0913e93"
+    },
+    "implementationBuild": {
+      "path": "dist-electron/main/clipboard/image-preparation.js",
+      "sha256": "46a1a0d8e4aba8d0424d70493bc1fb00a839d02d1dd3d84e808717fe8f5a0c5d"
+    }
+  },
+  "environment": {
+    "platform": "win32",
+    "nodeVersion": "24.16.0"
+  },
+  "command": "node --test --test-name-pattern=\"content preparation deadline aborts and retires\" tests/tasks/T04/clipboard-image-preparation.test.cjs",
+  "test": {
+    "name": "content preparation deadline aborts and retires its worker before the next decode",
+    "result": "PASS",
+    "tests": 1,
+    "passed": 1,
+    "failed": 0,
+    "testDurationMs": 3023.489,
+    "configuredContentPrepareDeadlineMs": 3000
+  },
+  "observed": {
+    "firstFakeWorkerTimedOutAtConfiguredDeadline": true,
+    "timeoutAbortedSignal": true,
+    "timeoutUpdates": [
+      "preparing",
+      "failed"
+    ],
+    "timeoutFailure": "image_prepare_timeout",
+    "noReadyOnTimeout": true,
+    "noCacheEntryForTimedOutImage": true,
+    "timedOutWorkerRetirementHeldByFake": true,
+    "expiredAbsoluteDeadline": "deadlineAt=-1",
+    "expiredDeadlineFactoryCountBefore": 2,
+    "expiredDeadlineFactoryCountAfter": 2,
+    "expiredDeadlineDecodeCountBefore": 2,
+    "expiredDeadlineDecodeCountAfter": 2,
+    "expiredDeadlineUpdates": [
+      "preparing",
+      "failed"
+    ],
+    "expiredDeadlineFailure": "image_prepare_timeout",
+    "expiredDeadlineCacheEntriesAndBytesUnchanged": true,
+    "nextRequestWaitedUntilFakeDisposeResolved": true,
+    "newWorkerCreatedAfterRetirement": true
+  },
+  "sideEffects": {
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "browserWindowCreated": false,
+    "helperInvoked": false,
+    "packageBuilt": false,
+    "installed": false
+  },
+  "limitations": [
+    "All workers in this test are fakes; it verifies ImagePreparationService deadline/cache/factory/retirement ordering, not an OS process exit or interruption of real decoder CPU work.",
+    "The separate real Electron 3000 ms integration holds a decoded response after decoding and does not establish CPU-bound JPEG decode interruption or 16 MP completion under 3000 ms.",
+    "This regression does not close T04 I04 broadly, JPEG fidelity/RSS, real key timing, P15, or desktop acceptance."
+  ],
+  "validation": {
+    "node --test --test-name-pattern=... clipboard-image-preparation.test.cjs": {
+      "result": "PASS",
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "testDurationMs": 3023.489
+    },
+    "node --test tests/tasks/T04/clipboard-image-preparation.test.cjs": {
+      "result": "PASS",
+      "tests": 11,
+      "passed": 11,
+      "failed": 0,
+      "durationMs": 3285.7289,
+      "deadlineRegressionTestDurationMs": 3007.0575
+    },
+    "git diff --check": "PASS"
+  }
+}

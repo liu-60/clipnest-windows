@@ -154,6 +154,10 @@ test("content preparation deadline aborts and retires its worker before the next
   let firstRetirementStarted;
   const firstRetirementStartedPromise = new Promise((resolve) => { firstRetirementStarted = resolve; });
   const firstRetirement = new Promise((resolve) => { allowFirstRetirement = resolve; });
+  let allowSecondRetirement;
+  let secondRetirementStarted;
+  const secondRetirementStartedPromise = new Promise((resolve) => { secondRetirementStarted = resolve; });
+  const secondRetirement = new Promise((resolve) => { allowSecondRetirement = resolve; });
   const disposed = [];
   const service = new ImagePreparationService({
     workerFactory: () => {
@@ -178,6 +182,10 @@ test("content preparation deadline aborts and retires its worker before the next
           if (workerId === 1) {
             firstRetirementStarted();
             await firstRetirement;
+          }
+          if (workerId === 2) {
+            secondRetirementStarted();
+            await secondRetirement;
           }
           disposed[workerId - 1] = true;
         },
@@ -207,13 +215,35 @@ test("content preparation deadline aborts and retires its worker before the next
     assert.equal(created, 2, "the timed-out worker object is not reused");
     assert.equal(disposed[0], true);
 
+    const expiredUpdates = [];
+    const cachedEntriesBeforeExpiredRequest = service.getCacheStats().entries;
+    const cachedBytesBeforeExpiredRequest = service.getCacheStats().bytes;
     await assert.rejects(
-      service.prepare(input("expired-selection"), { deadlineAt: -1 }),
+      service.prepare(input("expired-selection"), {
+        deadlineAt: -1,
+        onUpdate: (update) => expiredUpdates.push(update),
+      }),
       (error) => error instanceof ImagePreparationError && error.code === "image_prepare_timeout",
     );
+    assert.equal(created, 2, "an expired deadline does not create another worker");
     assert.equal(decodeCalls, 2, "an already-expired absolute selection deadline never starts another decode");
+    assert.deepEqual(expiredUpdates.map((update) => update.phase), ["preparing", "failed"]);
+    assert.equal(expiredUpdates[1].reason, "image_prepare_timeout");
+    assert.equal(service.getCacheStats().entries, cachedEntriesBeforeExpiredRequest);
+    assert.equal(service.getCacheStats().bytes, cachedBytesBeforeExpiredRequest);
+
+    await secondRetirementStartedPromise;
+    const afterExpiredDeadline = service.prepare(input("after-expired-deadline"));
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(created, 2, "replacement waits for the expired request worker to finish retiring");
+    allowSecondRetirement();
+    const replacementResult = await afterExpiredDeadline;
+    assert.equal(replacementResult.cacheHit, false);
+    assert.equal(created, 3, "a future request creates a fresh worker after retirement completes");
+    assert.equal(disposed[1], true);
   } finally {
     allowFirstRetirement();
+    allowSecondRetirement();
     await service.dispose();
   }
 });

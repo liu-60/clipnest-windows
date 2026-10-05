@@ -388,7 +388,8 @@
       "evidence": [
         "tests/tasks/T04/clipboard-image-preparation.test.cjs: fake deadline abort and retirement semantics",
         "docs/evidence/T04/image-selection-production-3000ms-timeout.json: production 3000ms selection-start deadline with a warm real utilityProcess, held decoded response, abort, process exit, no helper registration or external side effects",
-        "The real-process probe gates the response after decode completed, so it verifies deadline cancellation/retirement but not interruption of decoder CPU work."
+        "The real-process probe gates the response after decode completed, so it verifies deadline cancellation/retirement but not interruption of decoder CPU work.",
+        "docs/evidence/T04/image-preparation-expired-deadline-fake-regression.json: supplements fake deadline coverage with no factory/decode/ready/cache changes for deadlineAt=-1, plus replacement blocked until fake worker disposal resolves."
       ]
     },
     {
