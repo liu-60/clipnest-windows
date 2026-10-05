@@ -589,6 +589,23 @@ test("JPEG quantization and Huffman table limits accept 64 definitions and rejec
   await assert.rejects(decode(request("jpeg", overHuffmanLimit, 8, 8)), /image_worker_capacity_exceeded/);
 });
 
+test("JPEG marker segment limit accepts 4096 valid segments and rejects 4097", async () => {
+  const base = simpleBaselineJpeg({ width: 8, height: 8, sampling: [0x11] });
+  const emptyAppSegment = jpegSegment(0xe2, Buffer.alloc(0));
+  // DQT, SOF0, DHT, and SOS make four segments; EOI is terminal and is not counted.
+  const exactLimit = jpegWithSegmentsBeforeScan(base,
+    Array.from({ length: 4092 }, () => emptyAppSegment));
+  const image = await decode(request("jpeg", exactLimit, 8, 8));
+  assert.deepEqual([image.width, image.height], [8, 8]);
+  for (let offset = 0; offset < image.pixels.length; offset += 4) {
+    assert.deepEqual([...image.pixels.subarray(offset, offset + 4)], [128, 128, 128, 255]);
+  }
+
+  const overLimit = jpegWithSegmentsBeforeScan(base,
+    Array.from({ length: 4093 }, () => emptyAppSegment));
+  await assert.rejects(decode(request("jpeg", overLimit, 8, 8)), /image_worker_capacity_exceeded/);
+});
+
 test("decoder handles already-aborted requests and invalid format/signature without output", async () => {
   const controller = new AbortController();
   controller.abort();

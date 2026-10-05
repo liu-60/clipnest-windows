@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "PASS_SYNTHETIC_UNIT_REGRESSION",
+  "checkedDate": "2026-10-05",
+  "source": {
+    "commit": "ca104cad7501c0f9fbead83e8821fdf7147d3088",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "changedFiles": {
+      "tests/tasks/T04/clipboard-image-decoder.test.cjs": "99d2d4f93002cf79fc709e48a780f1f8e0df3dc0d9e691249c648d36cdc0f268"
+    }
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "nodeVersion": "v24.16.0",
+    "pnpmVersion": "11.19.0"
+  },
+  "scope": {
+    "productionSourceChanged": false,
+    "fixture": "synthetic valid 8x8 grayscale SOF0 baseline JPEG with empty APP2 segments inserted before SOS; no clipboard, window, helper, package, or physical input",
+    "markerCounts": {
+      "baseCountedSegments": 4,
+      "additionalAtLimit": 4092,
+      "totalAtLimit": 4096,
+      "additionalOverLimit": 4093,
+      "totalOverLimit": 4097,
+      "terminalEoiCounted": false
+    },
+    "assertions": [
+      "The valid JPEG with 4096 counted marker segments decodes to the expected opaque gray pixels.",
+      "The valid JPEG with 4097 counted marker segments is rejected with image_worker_capacity_exceeded."
+    ]
+  },
+  "validation": {
+    "command": "pnpm test:unit -- clipboard-image-decoder.test.cjs",
+    "result": "PASS",
+    "buildMain": "PASS",
+    "tests": 31,
+    "passed": 31,
+    "failed": 0,
+    "skipped": 0
+  },
+  "limitations": [
+    "This regression tests the marker-count boundary for one small synthetic JPEG, not every marker type, metadata combination, or broad JPEG corpus.",
+    "The result does not establish a hard memory bound, packaged behavior, product deadline, or complete T04 acceptance."
+  ],
+  "sideEffects": {
+    "desktopClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "helperRun": false,
+    "packageBuilt": false,
+    "productionSourceChanged": false
+  }
+}

@@ -173,7 +173,8 @@
         "docs/evidence/T04/packaged-asar-current-png-sof0-smoke.json",
         "docs/evidence/T04/packaged-asar-16mp-sof0-444-smoke.json",
         "tests/tasks/T04/run-packaged-asar-16mp-jpeg-smoke.cjs",
-        "docs/evidence/T04/jpeg-table-count-boundary-regression.json"
+        "docs/evidence/T04/jpeg-table-count-boundary-regression.json",
+        "docs/evidence/T04/jpeg-marker-segment-boundary-regression.json"
       ],
       "openGates": [
         "新增 opt-in production ImagePreparationService/utilityProcess 阶段计时（由 T04_IMAGE_STAGE_PROFILE=1 触发；未传 sink 时不额外读取时钟，worker 默认 IPC 与 service 返回键形不变）。同一 16MP/20MiB SOF0 4:4:4 合成fixture单样本 service=2989.89ms：worker冷启动204.93ms、JPEG preflight 71.08ms、stream plan parse 0.74ms、Huffman/IDCT/组件写入1980.96ms、render 267.58ms、worker chunk send/ACK 365.10ms、主进程chunk组装52.90ms、service输入/最终复制7.55/37.64ms。该样本在数值上低于3000ms，但使用30s诊断期限、启用了插桩且仅单次，不能证明产品期限或重复性；依赖的raw-chunk 5样本证据未重跑。3000ms产品期限门仍开放。完整单次profile和限制见docs/evidence/T04/image-preparation-16mp-stage-profile.json。",
@@ -204,7 +205,8 @@
         "当前源码 Windows x64 隔离目录包 ASAR smoke：asar 内 worker、decoder、jpeg-baseline-stream.js 与 jpeg-js/index.js 均和本地构建文件逐字节一致；隐藏无窗口 utilityProcess 下，3000×3000 PNG 全像素一致并观察到35个 decoded_chunk+decoded_end，640×360 SOF0 4:4:4 JPEG 与包内 pinned jpeg-js 输出逐字节一致。小 JPEG 命中 jpeg-js fallback，本次没有执行大图 JPEG streaming，也不构成独立 JPEG 正确性或通用性能证明。未建窗口、未读写系统剪贴板、未发送输入、未包含/运行 helper、未安装/发布。P15、4:2:0 fidelity、全格式、目标窗口可见粘贴及完整T04验收仍开放。证据：docs/evidence/T04/packaged-asar-current-png-sof0-smoke.json。",
         "2026-10-05 在先前构建且 SHA-256=82e0ca09…dfa9a82 的当前源码 ASAR 上完成 16MP SOF0 4:4:4 utilityProcess streaming smoke，未重建包；ASAR 内 worker/decoder/jpeg-baseline-stream/jpeg-js 与当前生成文件逐字节一致。20MiB 输入 SHA 命中既有 fixture，64,000,000-byte RGBA 输出 SHA 命中既有全帧验证值，收到62个decoded_chunk和1个decoded_end，worker正常退出；诊断计时观测到jpegStreamPlanParseMs与jpegHuffmanIdctWriteMs，确认走流式解码。2,774.48ms 是启用诊断的直连 worker 耗时，不是 ImagePreparationService 3,000ms deadline 验收；worker 在 10 秒关闭时限内正常退出，专属临时 fixture 运行后已清理；本次未生成新独立颜色 oracle，仅测 SOF0 4:4:4。P15、4:2:0 fidelity、全格式、目标窗口可见粘贴及完整T04验收仍开放。未建窗口、未触碰系统剪贴板/物理输入、未运行 native helper、未安装或发布。证据：docs/evidence/T04/packaged-asar-16mp-sof0-444-smoke.json。",
         "JPEG COM累计字节边界补充合成回归：有效8×8 SOF0灰阶JPEG在SOS前含1 MiB分段COM时通过并返回预期像素，1 MiB+1字节以image_worker_capacity_exceeded拒绝；主进程构建成功，clipboard-image-decoder定向测试29/29通过。该证据只覆盖COM累计阈值，不证明所有JPEG元数据/格式/硬RSS或T04验收。详情：docs/evidence/T04/jpeg-com-comment-boundary-regression.json。",
-        "JPEG DQT/DHT定义数量边界增加小型合成回归：各64个定义（含base JPEG原有定义）解码到预期灰度像素；各65个在容量预检处以image_worker_capacity_exceeded拒绝。目标测试文件30/30通过，包含COM与Huffman回归。此证据仅验证累计表定义数阈值，不证明其他元数据、内存、完整JPEG或T04验收。详情：docs/evidence/T04/jpeg-table-count-boundary-regression.json。"
+        "JPEG DQT/DHT定义数量边界增加小型合成回归：各64个定义（含base JPEG原有定义）解码到预期灰度像素；各65个在容量预检处以image_worker_capacity_exceeded拒绝。目标测试文件30/30通过，包含COM与Huffman回归。此证据仅验证累计表定义数阈值，不证明其他元数据、内存、完整JPEG或T04验收。详情：docs/evidence/T04/jpeg-table-count-boundary-regression.json。",
+        "JPEG marker segment数量边界增加有效灰阶SOF0回归：基础DQT/SOF0/DHT/SOS共4段，加入4092个空APP2后总计4096段仍解码并逐像素正确；4097段以image_worker_capacity_exceeded拒绝。主进程构建成功，目标测试文件31/31通过。该证据只覆盖此fixture的marker计数边界，不证明通用JPEG或T04验收。详情：docs/evidence/T04/jpeg-marker-segment-boundary-regression.json。"
       ]
     },
     "T05": {
