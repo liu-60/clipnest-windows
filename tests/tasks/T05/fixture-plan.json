@@ -21,7 +21,7 @@
       "input": "Synthetic T05 interaction requests after the helper is already available.",
       "action": "Instrument process creation and synchronous child-process APIs while exercising representative hotkey, selection, and action paths.",
       "expected": "No interactive path calls spawnSync or another blocking process-spawn API.",
-      "observation": "Record the instrumented API call trace and correlate it with request IDs; startup/package setup is outside the interactive interval.",
+      "observation": "For each requestId, record monotonic event-sequence bounds from interaction start through terminal completion and the complete process-API call trace within that interval; startup/package setup is outside the interval. List requestIds by ascending startSequence; the report verifier requires exact ID coverage, safe-integer bounds, and non-overlapping chronological intervals.",
       "specLinks": ["<spec-workspace>/docs/spec/08-acceptance-matrix.md §1", "<spec-workspace>/docs/spec/tasks/T05.md"],
       "status": "planned",
       "executionStatus": "NOT_RUN"
@@ -31,7 +31,7 @@
       "input": "One already-running helper instance and repeated synthetic interaction requests.",
       "action": "Record helper process identity before and after each interaction and count helper launches during the interaction interval.",
       "expected": "Interaction handling reuses the existing helper; no new helper process is created per interaction.",
-      "observation": "Record process IDs/creation identities and launch counts alongside request IDs; helper startup/shutdown lifecycle remains separately covered by package checks.",
+      "observation": "For each requestId, record monotonic event-sequence bounds, helper PID/creation identity immediately before and after the interaction, and helper launches within the interval. List requestIds by ascending startSequence; repeated interactions must retain the same helper identity. Startup/shutdown lifecycle remains separately covered by package checks.",
       "specLinks": ["<spec-workspace>/docs/spec/08-acceptance-matrix.md §1", "<spec-workspace>/docs/spec/tasks/T05.md"],
       "status": "planned",
       "executionStatus": "NOT_RUN"

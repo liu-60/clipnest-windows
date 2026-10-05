@@ -52,6 +52,9 @@ function reportWithSyntheticG0Pass() {
     evidence,
     observation: {
       requestIds: [spawnRequestId],
+      interactionSequenceByRequestId: {
+        [spawnRequestId]: { startSequence: 10, endSequence: 20 },
+      },
       callsByRequestId: { [spawnRequestId]: [] },
       instrumentedBlockingSpawnSyncCalls: 0,
     },
@@ -64,6 +67,10 @@ function reportWithSyntheticG0Pass() {
     evidence,
     observation: {
       requestIds: helperRequestIds,
+      interactionSequenceByRequestId: {
+        [helperRequestIds[0]]: { startSequence: 10, endSequence: 20 },
+        [helperRequestIds[1]]: { startSequence: 30, endSequence: 40 },
+      },
       observationsByRequestId: Object.fromEntries(helperRequestIds.map((requestId) => [requestId, {
         helperBefore: helperIdentity,
         helperAfter: helperIdentity,
@@ -200,6 +207,25 @@ function main() {
   delete missingSpawnMap.g0Runtime.noInteractiveBlockingSpawnSync.observation.callsByRequestId;
   expectInvalidInstance(missingSpawnMap, "G0 PASS without per-request spawn trace map must fail the schema");
 
+  const missingInteractionBounds = clone(syntheticG0Pass);
+  delete missingInteractionBounds.g0Runtime.noHelperProcessPerInteraction.observation.interactionSequenceByRequestId;
+  expectInvalidInstance(missingInteractionBounds, "G0 PASS without interaction sequence boundaries must fail the schema");
+
+  const missingInteractionEnd = clone(syntheticG0Pass);
+  const helperSequenceRequestId = missingInteractionEnd.g0Runtime.noHelperProcessPerInteraction.observation.requestIds[0];
+  delete missingInteractionEnd.g0Runtime.noHelperProcessPerInteraction.observation.interactionSequenceByRequestId[helperSequenceRequestId].endSequence;
+  expectInvalidInstance(missingInteractionEnd, "G0 PASS without an interaction end sequence must fail the schema");
+
+  const negativeInteractionSequence = clone(syntheticG0Pass);
+  const schemaSpawnRequestId = negativeInteractionSequence.g0Runtime.noInteractiveBlockingSpawnSync.observation.requestIds[0];
+  negativeInteractionSequence.g0Runtime.noInteractiveBlockingSpawnSync.observation.interactionSequenceByRequestId[schemaSpawnRequestId].startSequence = -1;
+  expectInvalidInstance(negativeInteractionSequence, "G0 PASS with a negative interaction sequence must fail the schema");
+
+  const unsafeInteractionSequence = clone(syntheticG0Pass);
+  const unsafeSpawnRequestId = unsafeInteractionSequence.g0Runtime.noInteractiveBlockingSpawnSync.observation.requestIds[0];
+  unsafeInteractionSequence.g0Runtime.noInteractiveBlockingSpawnSync.observation.interactionSequenceByRequestId[unsafeSpawnRequestId].endSequence = Number.MAX_SAFE_INTEGER + 1;
+  expectInvalidInstance(unsafeInteractionSequence, "G0 PASS with an unsafe interaction sequence must fail the schema");
+
   const nonemptySpawnTrace = clone(syntheticG0Pass);
   const spawnRequestId = nonemptySpawnTrace.g0Runtime.noInteractiveBlockingSpawnSync.observation.requestIds[0];
   nonemptySpawnTrace.g0Runtime.noInteractiveBlockingSpawnSync.observation.callsByRequestId[spawnRequestId] = ["spawnSync"];
@@ -312,7 +338,7 @@ function main() {
     validator: valid.validator,
     validatorVersion: valid.validatorVersion,
     validNotRunReport: "PASS",
-    schemaInvalidInstanceCases: 16,
+    schemaInvalidInstanceCases: 20,
     signaturePolicyCases: {
       nonPassUnsignedRecordable: ["FAIL", "REVIEW", "NOT_RUN"],
       helperPassUnsignedRejected: true,
@@ -327,7 +353,7 @@ function main() {
     },
     syntheticG0DraftSchemaCases: {
       positive: "PASS_AT_UNICODE_CODE_POINT_LIMITS; SYNTHETIC_ONLY",
-      negative: 6,
+      negative: 10,
       nodeAcceptanceBlockedByEmptyEvidence: "PASS_EVIDENCE_REQUIRED",
     },
     metricContractInvalidCases: 6,

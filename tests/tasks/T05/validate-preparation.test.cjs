@@ -230,6 +230,29 @@ test("requires both G0 observation gates to remain planned and NOT_RUN", () => {
   assert.ok(codes.includes("G0_EXECUTION_STATE"));
 });
 
+test("requires G0 request-correlated sequence bounds and cross-interaction helper identity checks", () => {
+  const observationCodes = codesFor(({ fixturePlan }) => {
+    fixturePlan.g0RuntimeGates[0].observation = "Record API traces by requestId.";
+  });
+  assert.ok(observationCodes.includes("G0_INTERACTION_SEQUENCE_CONTRACT"));
+
+  const schemaCodes = codesFor(({ reportSchema }) => {
+    reportSchema.$defs.g0NoHelperProcessPerInteractionObservation.required = ["requestIds", "observationsByRequestId"];
+  });
+  assert.ok(schemaCodes.includes("G0_SCHEMA_SEQUENCE_MAP"));
+
+  const safeIntegerCodes = codesFor(({ reportSchema }) => {
+    reportSchema.$defs.g0InteractionSequenceBounds.properties.endSequence.maximum = Number.MAX_SAFE_INTEGER + 1;
+  });
+  assert.ok(safeIntegerCodes.includes("G0_SCHEMA_SEQUENCE_SAFE_INTEGER"));
+
+  const verifierCodes = codesFor((inputs) => {
+    inputs.reportValidatorSource = inputs.reportValidatorSource
+      .replace("G0_HELPER_PROCESS_IDENTITY_CROSS_INTERACTION", "G0_HELPER_PROCESS_IDENTITY_REMOVED");
+  });
+  assert.ok(verifierCodes.includes("G0_VALIDATOR_SEQUENCE_AND_IDENTITY"));
+});
+
 test("rejects execution or evidence status in the preparation assertion map", () => {
   const codes = codesFor(({ assertionMap }) => {
     assertionMap.assertions[0].status = "PASS";

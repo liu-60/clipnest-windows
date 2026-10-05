@@ -496,7 +496,7 @@
     "g0NoInteractiveBlockingSpawnSyncObservation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["requestIds", "callsByRequestId", "instrumentedBlockingSpawnSyncCalls"],
+      "required": ["requestIds", "interactionSequenceByRequestId", "callsByRequestId", "instrumentedBlockingSpawnSyncCalls"],
       "properties": {
         "requestIds": {
           "type": "array",
@@ -504,6 +504,7 @@
           "uniqueItems": true,
           "items": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" }
         },
+        "interactionSequenceByRequestId": { "$ref": "#/$defs/g0InteractionSequenceMap" },
         "callsByRequestId": {
           "type": "object",
           "description": "Map each observed requestId to its blocking process-spawn API trace. PASS requires an empty trace for every requestId.",
@@ -533,7 +534,7 @@
     "g0NoHelperProcessPerInteractionObservation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["requestIds", "observationsByRequestId"],
+      "required": ["requestIds", "interactionSequenceByRequestId", "observationsByRequestId"],
       "properties": {
         "requestIds": {
           "type": "array",
@@ -541,12 +542,29 @@
           "uniqueItems": true,
           "items": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" }
         },
+        "interactionSequenceByRequestId": { "$ref": "#/$defs/g0InteractionSequenceMap" },
         "observationsByRequestId": {
           "type": "object",
           "minProperties": 2,
           "propertyNames": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" },
           "additionalProperties": { "$ref": "#/$defs/g0HelperProcessInteractionObservation" }
         }
+      }
+    },
+    "g0InteractionSequenceMap": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" },
+      "additionalProperties": { "$ref": "#/$defs/g0InteractionSequenceBounds" },
+      "description": "Map each requestId to monotonic event sequence numbers delimiting that complete interaction. The Node verifier checks exact requestId coverage and non-overlapping chronological ranges."
+    },
+    "g0InteractionSequenceBounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startSequence", "endSequence"],
+      "properties": {
+        "startSequence": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "endSequence": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
       }
     },
     "g0HelperProcessInteractionObservation": {

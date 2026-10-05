@@ -799,7 +799,7 @@ function validateG0Runtime(g0Runtime, errors) {
       const observationLocation = `${location}.observation`;
       validateExactFields(
         observation,
-        ["requestIds", "callsByRequestId", "instrumentedBlockingSpawnSyncCalls"],
+        ["requestIds", "interactionSequenceByRequestId", "callsByRequestId", "instrumentedBlockingSpawnSyncCalls"],
         observationLocation,
         "G0_BLOCKING_SPAWNSYNC_OBSERVATION_FIELDS",
         errors,
@@ -808,6 +808,12 @@ function validateG0Runtime(g0Runtime, errors) {
         observation.requestIds,
         `${observationLocation}.requestIds`,
         1,
+        errors,
+      );
+      validateG0InteractionSequenceMap(
+        observation.requestIds,
+        observation.interactionSequenceByRequestId,
+        `${observationLocation}.interactionSequenceByRequestId`,
         errors,
       );
       const callsByRequestId = observation.callsByRequestId;
@@ -860,7 +866,7 @@ function validateG0Runtime(g0Runtime, errors) {
     const observationLocation = `${location}.observation`;
     validateExactFields(
       observation,
-      ["requestIds", "observationsByRequestId"],
+      ["requestIds", "interactionSequenceByRequestId", "observationsByRequestId"],
       observationLocation,
       "G0_HELPER_REUSE_OBSERVATION_FIELDS",
       errors,
@@ -869,6 +875,12 @@ function validateG0Runtime(g0Runtime, errors) {
       observation.requestIds,
       `${observationLocation}.requestIds`,
       2,
+      errors,
+    );
+    validateG0InteractionSequenceMap(
+      observation.requestIds,
+      observation.interactionSequenceByRequestId,
+      `${observationLocation}.interactionSequenceByRequestId`,
       errors,
     );
     const observations = observation.observationsByRequestId;
@@ -883,6 +895,7 @@ function validateG0Runtime(g0Runtime, errors) {
     }
     validateG0RequestIdSet(requestIds, observationIds, `${observationLocation}.observationsByRequestId`, "G0_HELPER_OBSERVATION_IDS_MISMATCH", errors);
 
+    let sharedIdentity = null;
     for (const [requestId, item] of Object.entries(observations)) {
       const itemLocation = `${observationLocation}.observationsByRequestId.${requestId}`;
       validateG0RequestId(requestId, itemLocation, errors);
@@ -898,6 +911,14 @@ function validateG0Runtime(g0Runtime, errors) {
       if (beforeValid && afterValid &&
           (before.pid !== after.pid || before.creationIdentity !== after.creationIdentity)) {
         addError(errors, "G0_HELPER_PROCESS_IDENTITY_MISMATCH", itemLocation, "helper PID and creation identity must remain unchanged across the interaction");
+      }
+      if (beforeValid && afterValid) {
+        sharedIdentity ??= before;
+        if (before.pid !== sharedIdentity.pid || before.creationIdentity !== sharedIdentity.creationIdentity ||
+            after.pid !== sharedIdentity.pid || after.creationIdentity !== sharedIdentity.creationIdentity) {
+          addError(errors, "G0_HELPER_PROCESS_IDENTITY_CROSS_INTERACTION", itemLocation,
+            "helper PID and creation identity must remain unchanged across all observed interactions");
+        }
       }
       if (item.helperLaunchCount !== 0) {
         addError(errors, "G0_HELPER_LAUNCH_COUNT", `${itemLocation}.helperLaunchCount`, "PASS requires zero helper launches during each interaction");
@@ -929,6 +950,44 @@ function validateG0RequestIdSet(requestIds, observedIds, location, errorCode, er
   const observed = new Set(observedIds);
   if (requestIds.size !== observedIds.length || observedIds.some((requestId) => !requestIds.has(requestId)) || observed.size !== observedIds.length) {
     addError(errors, errorCode, location, "per-request observations must match each request ID exactly once with no extra IDs");
+  }
+}
+
+function validateG0InteractionSequenceMap(requestIds, sequenceByRequestId, location, errors) {
+  if (!Array.isArray(requestIds)) return;
+  if (!isRecord(sequenceByRequestId)) {
+    addError(errors, "G0_INTERACTION_SEQUENCE_MAP_REQUIRED", location,
+      "PASS requires start/end event sequence boundaries for every request ID");
+    return;
+  }
+
+  const sequenceRequestIds = Object.keys(sequenceByRequestId);
+  validateG0RequestIdSet(new Set(requestIds), sequenceRequestIds, location,
+    "G0_INTERACTION_SEQUENCE_IDS_MISMATCH", errors);
+
+  let previousEnd = null;
+  for (const [index, requestId] of requestIds.entries()) {
+    const range = sequenceByRequestId[requestId];
+    const rangeLocation = `${location}.${requestId}`;
+    if (!isRecord(range)) {
+      addError(errors, "G0_INTERACTION_SEQUENCE_BOUNDS_REQUIRED", rangeLocation,
+        "each request ID must have interaction start/end sequence boundaries");
+      continue;
+    }
+    validateExactFields(range, ["startSequence", "endSequence"], rangeLocation,
+      "G0_INTERACTION_SEQUENCE_FIELDS", errors);
+    const startValid = Number.isSafeInteger(range.startSequence) && range.startSequence >= 0;
+    const endValid = Number.isSafeInteger(range.endSequence) && range.endSequence >= 0;
+    if (!startValid || !endValid || range.endSequence <= range.startSequence) {
+      addError(errors, "G0_INTERACTION_SEQUENCE_BOUNDS_INVALID", rangeLocation,
+        "interaction bounds require safe nonnegative integers with endSequence greater than startSequence");
+      continue;
+    }
+    if (index > 0 && previousEnd !== null && range.startSequence <= previousEnd) {
+      addError(errors, "G0_INTERACTION_SEQUENCE_ORDER_INVALID", rangeLocation,
+        "request IDs must be chronological and interaction sequence ranges must not overlap");
+    }
+    previousEnd = range.endSequence;
   }
 }
 

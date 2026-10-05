@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "result": "PREPARATION_ONLY",
+  "checkedDate": "2026-10-06",
+  "reviewType": "G0 interaction boundary and helper reuse report contract",
+  "source": {
+    "commit": "ac6c6c8b0587de72d914a07e135cc4e53dbf9200",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "dirtyChangesWereWithinT05Allowlist": false,
+    "otherUncommittedFilesAtCheckTime": [
+      "tests/tasks/T04/run-image-postscan-asar-electron.cjs"
+    ],
+    "files": {
+      "tests/tasks/T05/report.schema.json": "07cca00526054ce2f1850b88be4b4f1190399ce03133b7d678126f1a3b068125",
+      "tests/tasks/T05/verify-report.cjs": "655b1b3b513d0e3f3759751300ba366c4f73cb98ad7459c0b4ef213a904591f6",
+      "tests/tasks/T05/verify-report.test.cjs": "b952556f54f77043b63fb83d971af02647acb6c3f940e6017579757f7d19e91e",
+      "tests/tasks/T05/schema-validation-self-check.cjs": "27b44bf332b75551986ca3d8a31521fe7bf11155eb3277972ab751c33629cb2f",
+      "tests/tasks/T05/fixture-plan.json": "dc6d2cf553737302dd37790af88d9574931c42cf4dc7b68bb735b225ff93ac7a",
+      "tests/tasks/T05/validate-preparation.cjs": "566ce1375f66c4bad4307ef36a7bb5a961965f81cd8f2a504b9bc11538ddf00b",
+      "tests/tasks/T05/validate-preparation.test.cjs": "bc3b91d30e193c5bc88ef21d8fc9586ecd8a1260b76a1669af78ba3c4e17d31d"
+    }
+  },
+  "environment": {
+    "platform": "Windows",
+    "architecture": "x64",
+    "nodeVersion": "v24.16.0",
+    "pythonVersion": "3.11.15",
+    "jsonschemaVersion": "4.26.0",
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "browserWindowCreated": false,
+    "packageBuildIncludedInT05Verification": false
+  },
+  "contract": {
+    "requestScopedInteractionBounds": "Each G0 requestId maps to startSequence/endSequence boundaries; IDs must match exactly, bounds are safe nonnegative integers no greater than Number.MAX_SAFE_INTEGER, requestIds are listed by ascending startSequence, and ranges cannot overlap.",
+    "blockingProcessCalls": "Each requestId retains its complete blocking process API trace within the bounded interaction interval; PASS requires empty traces and a matching zero call count.",
+    "helperReuse": "Each requestId records helper PID/creation identity before and after the interaction and helperLaunchCount; every observed interaction must retain the same helper PID/creation identity.",
+    "gateState": "Both G0 runtime gates remain planned/NOT_RUN."
+  },
+  "checks": [
+    {
+      "command": "node --test tests/tasks/T05/verify-report.test.cjs tests/tasks/T05/validate-preparation.test.cjs",
+      "result": "PASS",
+      "passed": 49,
+      "failed": 0
+    },
+    {
+      "command": "node tests/tasks/T05/schema-validation-self-check.cjs",
+      "result": "PASS",
+      "schemaInvalidInstanceCases": 20,
+      "syntheticG0NegativeCases": 10,
+      "syntheticG0Positive": "PASS_AT_UNICODE_CODE_POINT_LIMITS; SYNTHETIC_ONLY",
+      "validator": "jsonschema.Draft202012Validator",
+      "validatorVersion": "4.26.0"
+    },
+    {
+      "command": "node tests/tasks/T05/verify-report.cjs",
+      "result": "PASS",
+      "reportStatus": "NOT_RUN",
+      "dependencyGate": { "T03": "accepted", "T04": "in_progress" },
+      "t05AcceptanceImplied": false
+    },
+    {
+      "command": "node tests/tasks/T05/validate-preparation.cjs",
+      "result": "PASS",
+      "cases": 28,
+      "mappedAssertions": 71,
+      "g0Gates": 2,
+      "behaviorExecuted": false,
+      "t05AcceptanceImplied": false
+    }
+  ],
+  "gateEffect": {
+    "t05Status": "not_started",
+    "t05ReportStatus": "NOT_RUN",
+    "g0Status": "planned/NOT_RUN",
+    "acceptanceImplied": false,
+    "behaviorExecuted": false
+  },
+  "sideEffects": {
+    "productionModulesImported": false,
+    "helperLaunched": false,
+    "desktopWindowCreated": false,
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "networkUsed": false,
+    "applicationPersistentStateWritten": false
+  },
+  "limitations": [
+    "Synthetic report structures validate static contracts only; they are not runtime G0 observations or evidence.",
+    "The Draft 2020-12 validator uses the host Python jsonschema package and is not repository-pinned.",
+    "This work does not execute P01-P28 behavior, helper lifecycle, rollback, performance measurements, package validation, or target-visible paste."
+  ],
+  "independentReview": {
+    "result": "PASS",
+    "reviewType": "independent_read_only_subagent_review",
+    "findings": [
+      "Request ID maps require exact set equality; Node validation rejects unsafe, reversed, overlapping, or out-of-order interaction sequence ranges.",
+      "Helper PID and creation identity must remain stable both within each interaction and across every observed interaction.",
+      "Draft 2020-12 sequence fields are bounded at Number.MAX_SAFE_INTEGER, matching the Node verifier; requestIds ordering is stated in the fixture plan.",
+      "Evidence retains PREPARATION_ONLY and does not imply runtime G0 or T05 acceptance."
+    ],
+    "reviewerRanTests": false
+  }
+}

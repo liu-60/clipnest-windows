@@ -322,6 +322,36 @@ function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema, ide
     if (!isRecord(gate) || gate.status !== "planned" || gate.executionStatus !== "NOT_RUN") {
       add("G0_EXECUTION_STATE", `fixturePlan.g0RuntimeGates[${index}] must remain planned/NOT_RUN`);
     }
+    if (!isRecord(gate) || typeof gate.observation !== "string" ||
+        !gate.observation.includes("event-sequence") || !gate.observation.includes("requestId")) {
+      add("G0_INTERACTION_SEQUENCE_CONTRACT", `fixturePlan.g0RuntimeGates[${index}] must describe request-correlated interaction sequence boundaries`);
+    }
+  }
+
+  const g0SpawnObservationSchema = reportSchema.$defs?.g0NoInteractiveBlockingSpawnSyncObservation;
+  const g0HelperObservationSchema = reportSchema.$defs?.g0NoHelperProcessPerInteractionObservation;
+  for (const [name, schema] of [
+    ["spawnSync", g0SpawnObservationSchema],
+    ["helper", g0HelperObservationSchema],
+  ]) {
+    if (!Array.isArray(schema?.required) || !schema.required.includes("interactionSequenceByRequestId")) {
+      add("G0_SCHEMA_SEQUENCE_MAP", `G0 ${name} PASS observation must require interactionSequenceByRequestId`);
+    }
+  }
+  const sequenceBoundsSchema = reportSchema.$defs?.g0InteractionSequenceBounds;
+  if (!Array.isArray(sequenceBoundsSchema?.required) ||
+      !sequenceBoundsSchema.required.includes("startSequence") ||
+      !sequenceBoundsSchema.required.includes("endSequence")) {
+    add("G0_SCHEMA_SEQUENCE_BOUNDS", "G0 interaction sequence bounds must require startSequence and endSequence");
+  }
+  if (sequenceBoundsSchema?.properties?.startSequence?.maximum !== Number.MAX_SAFE_INTEGER ||
+      sequenceBoundsSchema?.properties?.endSequence?.maximum !== Number.MAX_SAFE_INTEGER) {
+    add("G0_SCHEMA_SEQUENCE_SAFE_INTEGER", "G0 event sequences must be bounded by the JavaScript safe integer maximum");
+  }
+  if (typeof reportValidatorSource !== "string" ||
+      !reportValidatorSource.includes("G0_INTERACTION_SEQUENCE_ORDER_INVALID") ||
+      !reportValidatorSource.includes("G0_HELPER_PROCESS_IDENTITY_CROSS_INTERACTION")) {
+    add("G0_VALIDATOR_SEQUENCE_AND_IDENTITY", "G0 verifier must reject overlapping interactions and helper identity changes across interactions");
   }
 
   const casesSchema = reportSchema.properties?.cases;

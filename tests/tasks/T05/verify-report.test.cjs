@@ -149,6 +149,9 @@ function syntheticG0PassReport() {
     evidence: [],
     observation: {
       requestIds: ["synthetic-spawn-request-1"],
+      interactionSequenceByRequestId: {
+        "synthetic-spawn-request-1": { startSequence: 10, endSequence: 20 },
+      },
       callsByRequestId: { "synthetic-spawn-request-1": [] },
       instrumentedBlockingSpawnSyncCalls: 0,
     },
@@ -159,6 +162,10 @@ function syntheticG0PassReport() {
     evidence: [],
     observation: {
       requestIds: ["synthetic-helper-request-1", "synthetic-helper-request-2"],
+      interactionSequenceByRequestId: {
+        "synthetic-helper-request-1": { startSequence: 10, endSequence: 20 },
+        "synthetic-helper-request-2": { startSequence: 30, endSequence: 40 },
+      },
       observationsByRequestId: {
         "synthetic-helper-request-1": {
           helperBefore: { pid: 1200, creationIdentity: "synthetic-helper-created-at-1" },
@@ -263,6 +270,11 @@ test("G0 PASS recomputes spawn counts, request ID uniqueness, and helper identit
     (report) => { report.g0Runtime.noHelperProcessPerInteraction.observation.observationsByRequestId["synthetic-helper-request-1"].helperLaunchCount = 1; },
     (report) => { report.g0Runtime.noHelperProcessPerInteraction.observation.observationsByRequestId["synthetic-helper-request-1"].helperAfter.pid += 1; },
     (report) => { report.g0Runtime.noHelperProcessPerInteraction.observation.observationsByRequestId["synthetic-helper-request-1"].helperAfter.creationIdentity = "synthetic-helper-created-at-2"; },
+    (report) => {
+      const observations = report.g0Runtime.noHelperProcessPerInteraction.observation.observationsByRequestId;
+      observations["synthetic-helper-request-2"].helperBefore = { pid: 1201, creationIdentity: "synthetic-helper-created-at-2" };
+      observations["synthetic-helper-request-2"].helperAfter = { pid: 1201, creationIdentity: "synthetic-helper-created-at-2" };
+    },
   ];
   const expectedCodes = [
     "G0_BLOCKING_SPAWNSYNC_COUNT",
@@ -271,6 +283,7 @@ test("G0 PASS recomputes spawn counts, request ID uniqueness, and helper identit
     "G0_HELPER_LAUNCH_COUNT",
     "G0_HELPER_PROCESS_IDENTITY_MISMATCH",
     "G0_HELPER_PROCESS_IDENTITY_MISMATCH",
+    "G0_HELPER_PROCESS_IDENTITY_CROSS_INTERACTION",
   ];
 
   for (const [index, mutate] of mismatches.entries()) {
@@ -288,6 +301,9 @@ test("G0 spawn traces require exact request coverage, empty calls, and bounded f
     [(report) => { report.g0Runtime.noInteractiveBlockingSpawnSync.observation.callsByRequestId.extra = []; }, "G0_BLOCKING_SPAWNSYNC_CALL_IDS_MISMATCH"],
     [(report) => { report.g0Runtime.noInteractiveBlockingSpawnSync.observation.callsByRequestId["synthetic-spawn-request-1"] = ["spawnSync"]; }, "G0_BLOCKING_SPAWN_API_CALLS"],
     [(report) => { report.g0Runtime.noInteractiveBlockingSpawnSync.observation.extra = true; }, "G0_BLOCKING_SPAWNSYNC_OBSERVATION_FIELDS"],
+    [(report) => { delete report.g0Runtime.noInteractiveBlockingSpawnSync.observation.interactionSequenceByRequestId; }, "G0_INTERACTION_SEQUENCE_MAP_REQUIRED"],
+    [(report) => { report.g0Runtime.noInteractiveBlockingSpawnSync.observation.interactionSequenceByRequestId.extra = { startSequence: 50, endSequence: 60 }; }, "G0_INTERACTION_SEQUENCE_IDS_MISMATCH"],
+    [(report) => { report.g0Runtime.noInteractiveBlockingSpawnSync.observation.interactionSequenceByRequestId["synthetic-spawn-request-1"].endSequence = 10; }, "G0_INTERACTION_SEQUENCE_BOUNDS_INVALID"],
     [(report) => {
       const longId = "x".repeat(129);
       const observation = report.g0Runtime.noInteractiveBlockingSpawnSync.observation;
@@ -298,6 +314,8 @@ test("G0 spawn traces require exact request coverage, empty calls, and bounded f
     [(report) => { report.g0Runtime.noHelperProcessPerInteraction.observation.observationsByRequestId["synthetic-helper-request-1"].extra = true; }, "G0_HELPER_OBSERVATION_FIELDS"],
     [(report) => { report.g0Runtime.noHelperProcessPerInteraction.observation.observationsByRequestId["synthetic-helper-request-1"].helperBefore.creationIdentity = "x".repeat(257); }, "G0_HELPER_PROCESS_IDENTITY_INVALID"],
     [(report) => { report.g0Runtime.noHelperProcessPerInteraction.observation.requestIds[1] = "unobserved-request"; }, "G0_HELPER_OBSERVATION_IDS_MISMATCH"],
+    [(report) => { report.g0Runtime.noHelperProcessPerInteraction.observation.interactionSequenceByRequestId.extra = { startSequence: 50, endSequence: 60 }; }, "G0_INTERACTION_SEQUENCE_IDS_MISMATCH"],
+    [(report) => { report.g0Runtime.noHelperProcessPerInteraction.observation.interactionSequenceByRequestId["synthetic-helper-request-2"].startSequence = 20; }, "G0_INTERACTION_SEQUENCE_ORDER_INVALID"],
   ];
 
   for (const [mutate, expectedCode] of mismatches) {
@@ -314,9 +332,12 @@ test("G0 string limits count Unicode code points like Draft 2020-12 maxLength", 
   const spawnObservation = report.g0Runtime.noInteractiveBlockingSpawnSync.observation;
   spawnObservation.requestIds = [requestIdAtLimit];
   spawnObservation.callsByRequestId = { [requestIdAtLimit]: [] };
+  spawnObservation.interactionSequenceByRequestId = { [requestIdAtLimit]: { startSequence: 10, endSequence: 20 } };
   const helperObservation = report.g0Runtime.noHelperProcessPerInteraction.observation;
   helperObservation.observationsByRequestId["synthetic-helper-request-1"].helperBefore.creationIdentity = "😀".repeat(256);
   helperObservation.observationsByRequestId["synthetic-helper-request-1"].helperAfter.creationIdentity = "😀".repeat(256);
+  helperObservation.observationsByRequestId["synthetic-helper-request-2"].helperBefore.creationIdentity = "😀".repeat(256);
+  helperObservation.observationsByRequestId["synthetic-helper-request-2"].helperAfter.creationIdentity = "😀".repeat(256);
 
   let g0Errors = errorsFor(report).filter((error) => error.code.startsWith("G0_"));
   assert.deepEqual(g0Errors, [], "128/256 astral code points are valid at the schema boundary");
@@ -327,6 +348,9 @@ test("G0 string limits count Unicode code points like Draft 2020-12 maxLength", 
   report.g0Runtime.noInteractiveBlockingSpawnSync.details = "😀".repeat(2000);
   spawnObservation.requestIds = ["😀".repeat(129)];
   spawnObservation.callsByRequestId = { [spawnObservation.requestIds[0]]: [] };
+  spawnObservation.interactionSequenceByRequestId = {
+    [spawnObservation.requestIds[0]]: { startSequence: 10, endSequence: 20 },
+  };
   assert.ok(errorsFor(report).some((error) => error.code === "G0_REQUEST_ID_INVALID"));
 
   spawnObservation.requestIds = [requestIdAtLimit];
