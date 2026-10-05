@@ -1,0 +1,358 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "DIAGNOSTIC_MEASUREMENT_WITH_LIMITATIONS",
+  "measurementType": "fresh_utility_process_per_uncached_16000000-pixel_synthetic_jpeg_decode",
+  "executionStatus": "MEASURED",
+  "source": {
+    "commit": "9e2f42bb47f1c46dba95af539fd141a6e05bf31e",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "workingTreeFiles": [
+      {
+        "path": "src/main/clipboard/image-decoder.ts",
+        "sha256": "ffea0a0d5428681031094c3cc2d7c0ba19e7cce11028ae84cbd9e0b08a07d183"
+      },
+      {
+        "path": "src/main/clipboard/jpeg-baseline-stream.ts",
+        "sha256": "5d0cf7ab5b818a374c6ea716cced9d6b7d4cdf03452cd18260931274f00ea9de"
+      },
+      {
+        "path": "src/main/clipboard/image-worker.ts",
+        "sha256": "d8b77a8b81bf34f7662beea2c08da6afb6fc3521c685a9b2a0991aac65f8521b"
+      }
+    ],
+    "builtArtifactFiles": [
+      {
+        "path": "dist-electron/main/clipboard/image-decoder.js",
+        "sha256": "a6fe7ceedcbdfa8d8b532eea900ab8e39726590e985bf912d137f4e661b5403d"
+      },
+      {
+        "path": "dist-electron/main/clipboard/jpeg-baseline-stream.js",
+        "sha256": "2f5f96929f52c9e68ac685af81ec4d1abd95c5f7cfe5ddfb50c80ba810116931"
+      },
+      {
+        "path": "dist-electron/main/clipboard/image-worker.js",
+        "sha256": "798fdc5cbf832beec0a4239a706d95272fc563caed9816304688bac692272891"
+      }
+    ],
+    "measurementHarnessFiles": [
+      {
+        "path": "tests/tasks/T04/measure-image-worker-16mp.cjs",
+        "sha256": "28354189013aec237f65be2b6a65017fc196a2a8ab1d0406dd8da1fd528d344d"
+      },
+      {
+        "path": "tests/tasks/T04/purejsimage-independent-pixel-oracle.ps1",
+        "sha256": "757cfa1b8405830bfee28bc198688ce546f7fe46ad871f75eb09ed241c285d47"
+      }
+    ]
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "osVersion": "Windows 11 Enterprise",
+    "electronVersion": "40.10.2",
+    "electronBinaryPath": "D:\\ClipNest-work\\electron-l0\\node_modules\\.pnpm\\electron@40.10.2\\node_modules\\electron\\dist\\electron.exe",
+    "profileIsolation": {
+      "isolated": true,
+      "userDataDirectory": "unique validated child of the OS temporary directory",
+      "sessionDataDirectory": "unique validated child of the OS temporary directory",
+      "cleanupPolicy": "remove the validated per-run root after Electron exits",
+      "cleanupVerified": true
+    },
+    "nodeVersion": "24.15.0",
+    "cpuModel": "Intel(R) Xeon(R) Platinum 8378C CPU @ 2.80GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 17178939392,
+    "displayOrForegroundAppUsed": false,
+    "systemClipboardReadOrWritten": false,
+    "inputSent": false
+  },
+  "fixture": {
+    "format": "jpeg",
+    "width": 4000,
+    "height": 4000,
+    "pixelCount": 16000000,
+    "content": "deterministic high-entropy synthetic baseline JPEG padded with APP2 segments near the 20 MiB source limit; no user data",
+    "encodedBytes": 20971520,
+    "sourceLimitBytes": 20971520,
+    "sourceLimitHeadroomBytes": 0,
+    "jpegQuality": 74,
+    "jpegEncoder": "jpeg-js",
+    "jpegImageBytesBeforeApp2Padding": 19866368,
+    "jpegApp2PaddingBytes": 1105152,
+    "jpegSamplingFactors": [
+      {
+        "horizontal": 1,
+        "vertical": 1
+      },
+      {
+        "horizontal": 1,
+        "vertical": 1
+      },
+      {
+        "horizontal": 1,
+        "vertical": 1
+      }
+    ],
+    "sha256": "5f5178ce761193b569130af082740669cd16071de9ea733aa8968f4f8e9dc6a3",
+    "independentPixelOracle": {
+      "status": "PASS",
+      "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+      "powershellVersion": "5.1.22621.6931",
+      "dotNetRuntime": ".NET Framework 4.8.9332.0",
+      "pixelFormat": "Format32bppArgb",
+      "toleranceRgbDifference": 8,
+      "verifiedWorkerSamples": 1,
+      "maxRgbDifference": 1,
+      "alphaValid": true,
+      "samples": [
+        {
+          "x": 0,
+          "y": 0,
+          "expectedRgba": [
+            47,
+            205,
+            216,
+            255
+          ],
+          "actualRgba": [
+            46,
+            205,
+            215,
+            255
+          ],
+          "maxRgbDifference": 1
+        },
+        {
+          "x": 3999,
+          "y": 0,
+          "expectedRgba": [
+            121,
+            189,
+            212,
+            255
+          ],
+          "actualRgba": [
+            120,
+            188,
+            211,
+            255
+          ],
+          "maxRgbDifference": 1
+        },
+        {
+          "x": 0,
+          "y": 3999,
+          "expectedRgba": [
+            106,
+            103,
+            48,
+            255
+          ],
+          "actualRgba": [
+            106,
+            103,
+            48,
+            255
+          ],
+          "maxRgbDifference": 0
+        },
+        {
+          "x": 3999,
+          "y": 3999,
+          "expectedRgba": [
+            133,
+            133,
+            195,
+            255
+          ],
+          "actualRgba": [
+            132,
+            132,
+            194,
+            255
+          ],
+          "maxRgbDifference": 1
+        },
+        {
+          "x": 2000,
+          "y": 2000,
+          "expectedRgba": [
+            160,
+            92,
+            201,
+            255
+          ],
+          "actualRgba": [
+            160,
+            92,
+            201,
+            255
+          ],
+          "maxRgbDifference": 0
+        },
+        {
+          "x": 1000,
+          "y": 1000,
+          "expectedRgba": [
+            81,
+            143,
+            166,
+            255
+          ],
+          "actualRgba": [
+            80,
+            142,
+            165,
+            255
+          ],
+          "maxRgbDifference": 1
+        },
+        {
+          "x": 3000,
+          "y": 1000,
+          "expectedRgba": [
+            111,
+            226,
+            105,
+            255
+          ],
+          "actualRgba": [
+            110,
+            226,
+            105,
+            255
+          ],
+          "maxRgbDifference": 1
+        },
+        {
+          "x": 1000,
+          "y": 3000,
+          "expectedRgba": [
+            222,
+            3,
+            95,
+            255
+          ],
+          "actualRgba": [
+            222,
+            2,
+            96,
+            255
+          ],
+          "maxRgbDifference": 1
+        },
+        {
+          "x": 3000,
+          "y": 3000,
+          "expectedRgba": [
+            155,
+            165,
+            167,
+            255
+          ],
+          "actualRgba": [
+            154,
+            164,
+            167,
+            255
+          ],
+          "maxRgbDifference": 1
+        }
+      ]
+    }
+  },
+  "worker": {
+    "runtime": "Electron utilityProcess",
+    "recyclingPolicy": "one fresh process per uncached image larger than the 32 MiB decoded cache",
+    "configuredPeakBytes": 268435456,
+    "jpegCapacityEstimate": {
+      "processReserveBytes": 117440512,
+      "coefficientBlockBytes": 512,
+      "quantizationTableBytes": 512,
+      "huffmanTableBytes": 4096,
+      "huffmanSymbolBytes": 2048,
+      "commentByteMultiplier": 2,
+      "metadataLimits": {
+        "quantizationTables": 64,
+        "huffmanTables": 64,
+        "huffmanSymbolsPerTable": 256,
+        "commentBytes": 1048576
+      },
+      "maximumMarkerSegments": 4096,
+      "includes": "encoded input copies, coefficient blocks, component lines, RGB intermediate, RGBA output, JPEG tables, Huffman trees, and decoded comments"
+    },
+    "processes": [
+      {
+        "pid": 73540,
+        "spawnMs": 94.51,
+        "peakWorkingSetBytes": 384294912,
+        "sampledPeakPrivateBytes": 359776256,
+        "workingSetAtStopBytes": 203440128,
+        "privateBytesAtStop": 231841792,
+        "samplerSamples": 50
+      }
+    ],
+    "observedPeakWorkingSetBytes": 384294912,
+    "observedPeakWorkingSetMiB": 366.49,
+    "sampledPeakPrivateBytes": 359776256,
+    "sampledPeakPrivateMiB": 343.11,
+    "sampleIntervalMs": 100,
+    "totalSamplerSamples": 50,
+    "withinConfiguredPeakWorkingSet": false
+  },
+  "latency": {
+    "sampleCount": 1,
+    "successfulSampleCount": 1,
+    "capacityRejectedSampleCount": 0,
+    "samples": [
+      {
+        "requestId": "t04-jpeg-4000x4000-1",
+        "durationMs": 5278.98,
+        "workerStartupMs": 94.51,
+        "outcome": "success",
+        "workingSetBeforeBytes": 57638912,
+        "privateBytesBefore": 28975104,
+        "workingSetAfterBytes": 203440128,
+        "privateBytesAfter": 231841792,
+        "responsePayloadBytes": 53288592,
+        "stageTimings": {
+          "decodeMs": 2771.72,
+          "deflateMs": 1833.96,
+          "requestToCompressedMessageMs": 4893.07,
+          "parentInflateMs": 385.37
+        },
+        "peakWorkingSetBytes": 384294912,
+        "sampledPeakPrivateBytes": 359776256
+      }
+    ],
+    "p50Ms": 5278.98,
+    "p95Ms": 5278.98,
+    "maxMs": 5278.98,
+    "capacityRejectP50Ms": null,
+    "capacityRejectP95Ms": null,
+    "p50WorkerStartupMs": 94.51,
+    "p95WorkerStartupMs": 94.51,
+    "maxWorkerStartupMs": 94.51,
+    "timingScope": "fresh utility process ready, then request post through decompressed 64000000-byte RGBA response receipt",
+    "stageTimingDefinitions": {
+      "decodeMs": "utility process decoder duration",
+      "deflateMs": "utility process synchronous compression duration",
+      "requestToCompressedMessageMs": "parent postMessage through receipt of the full compressed IPC response; includes worker decode, compression, and transport",
+      "parentInflateMs": "parent receipt of compressed response through exact inflate and completion"
+    },
+    "diagnosticOnly": true,
+    "doesNotSatisfyNormalTextOrWake100SampleAcceptance": true,
+    "responsePayloadBytesMeaning": "compressed IPC transport bytes (transportBytes), not decompressed RGBA bytes"
+  },
+  "limitations": [
+    "Fresh-process synthetic 16000000-pixel samples are diagnostic; they do not satisfy the T05 100-sample controlled desktop timing gates or measure end-user paste latency.",
+    "The JPEG is a generated baseline image with synthetic APP2 padding to exercise the encoded-source ceiling; progressive JPEG, real EXIF/ICC metadata, other image content, UI responsiveness and original clipboard conversion are not covered.",
+    "No fixture was rejected by the decoder's internal capacity guard in this sample set; this does not establish a universal process-memory ceiling.",
+    "PeakWorkingSet64 is the OS-reported peak for each fresh process; private bytes are sampled every 100 ms and around each decode, so shorter private-memory peaks can be missed. These observations do not prove a hard ceiling for every decode.",
+    "No clipboard, target window, physical input, installed package, helper, or rollback behavior was exercised. P15 and full T04 acceptance remain open.",
+    "This harness sets unique userData and sessionData paths under the OS temporary directory and removes the validated per-run root only after Electron exits.",
+    "Decoded RGB values were compared at nine coordinates with the independent Windows System.Drawing/GDI+ JPEG decoder using a maximum per-channel tolerance of 8. This is a sampled oracle, not a full-image pixel hash."
+  ]
+}

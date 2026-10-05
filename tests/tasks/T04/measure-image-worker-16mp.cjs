@@ -39,6 +39,7 @@ if (!process.versions.electron) {
     env.T04_PROFILE_ROOT = profileRoot;
     env.T04_USER_DATA_PATH = userDataPath;
     env.T04_SESSION_DATA_PATH = sessionDataPath;
+    env.T04_WORKER_STAGE_TIMING = "1";
     const electronBinary = process.env.T04_ELECTRON_BIN
       ? path.resolve(process.env.T04_ELECTRON_BIN)
       : require("electron");
@@ -137,6 +138,7 @@ async function runMeasurement() {
         workingSetBeforeBytes: memoryBefore.workingSetBytes, privateBytesBefore: memoryBefore.privateBytes,
         workingSetAfterBytes: memoryAfter.workingSetBytes, privateBytesAfter: memoryAfter.privateBytes,
         responsePayloadBytes: image.transportBytes ?? image.pixels.byteLength,
+        stageTimings: image.stageTimings ?? null,
         peakWorkingSetBytes: memory.peakWorkingSetBytes, sampledPeakPrivateBytes: memory.sampledPeakPrivateBytes });
       child.kill();
       await waitForExit(child);
@@ -191,6 +193,10 @@ async function runMeasurement() {
         "dist-electron/main/clipboard/image-decoder.js",
         "dist-electron/main/clipboard/jpeg-baseline-stream.js",
         "dist-electron/main/clipboard/image-worker.js",
+      ].map((file) => ({ path: file, sha256: fileSha256(path.join(ROOT, file)) })),
+      measurementHarnessFiles: [
+        "tests/tasks/T04/measure-image-worker-16mp.cjs",
+        "tests/tasks/T04/purejsimage-independent-pixel-oracle.ps1",
       ].map((file) => ({ path: file, sha256: fileSha256(path.join(ROOT, file)) })),
     },
     environment: {
@@ -273,6 +279,12 @@ async function runMeasurement() {
       p95WorkerStartupMs: percentile(samples.map((sample) => sample.workerStartupMs), 0.95),
       maxWorkerStartupMs: Math.max(...samples.map((sample) => sample.workerStartupMs)),
       timingScope: `fresh utility process ready, then request post through decompressed ${PIXELS * 4}-byte RGBA response receipt`,
+      stageTimingDefinitions: {
+        decodeMs: "utility process decoder duration",
+        deflateMs: "utility process synchronous compression duration",
+        requestToCompressedMessageMs: "parent postMessage through receipt of the full compressed IPC response; includes worker decode, compression, and transport",
+        parentInflateMs: "parent receipt of compressed response through exact inflate and completion",
+      },
       diagnosticOnly: true,
       doesNotSatisfyNormalTextOrWake100SampleAcceptance: true,
       responsePayloadBytesMeaning: "compressed IPC transport bytes (transportBytes), not decompressed RGBA bytes",
@@ -306,6 +318,7 @@ async function runMeasurement() {
 function decode(child, requestId, bytes, width, height, format) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => finish(new Error(`image_decode_timeout:${requestId}`)), 30_000);
+    let requestPostedAt = 0n;
     const onMessage = (eventOrMessage) => {
       const message = eventOrMessage && eventOrMessage.data !== undefined ? eventOrMessage.data : eventOrMessage;
       if (!message || message.requestId !== requestId) return;
@@ -315,10 +328,23 @@ function decode(child, requestId, bytes, width, height, format) {
         transportBytes: message.image.pixels.byteLength,
       });
       else if (message.type === "decoded_compressed") {
+        const responseReceivedAt = process.hrtime.bigint();
+        const requestToCompressedMessageMs = Number(responseReceivedAt - requestPostedAt) / 1_000_000;
+        const inflateStartedAt = process.hrtime.bigint();
         const compressed = Buffer.from(message.compressedPixels.buffer,
           message.compressedPixels.byteOffset, message.compressedPixels.byteLength);
         inflateExact(compressed, message.uncompressedBytes).then((pixels) => {
-          finish(null, { width: message.width, height: message.height, pixels, transportBytes: compressed.byteLength });
+          finish(null, {
+            width: message.width,
+            height: message.height,
+            pixels,
+            transportBytes: compressed.byteLength,
+            stageTimings: {
+              ...(message.stageTimings ?? {}),
+              requestToCompressedMessageMs: round(requestToCompressedMessageMs),
+              parentInflateMs: round(Number(process.hrtime.bigint() - inflateStartedAt) / 1_000_000),
+            },
+          });
         }, finish);
       }
       else finish(new Error("image_worker_response_invalid"));
@@ -334,6 +360,7 @@ function decode(child, requestId, bytes, width, height, format) {
     child.on("message", onMessage);
     child.once("exit", onExit);
     try {
+      requestPostedAt = process.hrtime.bigint();
       child.postMessage({
         type: "decode",
         requestId,

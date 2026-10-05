@@ -32,7 +32,8 @@ export interface ImageDecodeWorker {
 }
 export interface ImageWorkerEndpoint {
   onMessage(listener: (message: unknown) => void): () => void;
-  postMessage(message: { type: "decoded"; requestId: string; image: DecodedImage } |
+  postMessage(message: { type: "decoded"; requestId: string; image: DecodedImage;
+    stageTimings?: { decodeMs: number; deflateMs?: number } } |
     { type: "failed"; requestId: string; reason: string }): void;
 }
 
@@ -54,12 +55,17 @@ export function installImageWorkerRuntime(endpoint: ImageWorkerEndpoint, decoder
     }
     const job = { id: raw.requestId, controller: new AbortController() };
     active = job;
+    const collectTimings = process.env?.T04_WORKER_STAGE_TIMING === "1";
+    const decodeStartedAt = collectTimings ? performance.now() : 0;
     void Promise.resolve().then(() => decoder(input, job.controller.signal)).then((image) => {
       if (disposed || active !== job || job.controller.signal.aborted) return;
       if (!isDecodedImage(image) || image.width !== input.width || image.height !== input.height ||
           image.pixels.byteLength !== input.width * input.height * 4) {
         endpoint.postMessage({ type: "failed", requestId: job.id, reason: "image_decoded_invalid" });
-      } else endpoint.postMessage({ type: "decoded", requestId: job.id, image });
+      } else endpoint.postMessage({
+        type: "decoded", requestId: job.id, image,
+        ...(collectTimings ? { stageTimings: { decodeMs: roundTiming(performance.now() - decodeStartedAt) } } : {}),
+      });
     }).catch((error: unknown) => {
       if (!disposed && active === job) endpoint.postMessage({
         type: "failed", requestId: job.id, reason: errorReason(error),
@@ -228,6 +234,7 @@ function installProductionWorkerEntry(): void {
         return;
       }
       const maxCompressedBytes = message.image.pixels.byteLength + 64 * 1024;
+      const deflateStartedAt = message.stageTimings ? performance.now() : 0;
       const compressedPixels = deflateSync(message.image.pixels, {
         level: 1,
         maxOutputLength: maxCompressedBytes,
@@ -240,6 +247,12 @@ function installProductionWorkerEntry(): void {
         height: message.image.height,
         uncompressedBytes: message.image.pixels.byteLength,
         compressedPixels,
+        ...(message.stageTimings ? {
+          stageTimings: {
+            ...message.stageTimings,
+            deflateMs: roundTiming(performance.now() - deflateStartedAt),
+          },
+        } : {}),
       });
     },
   }, decodeProductionImage);
@@ -273,5 +286,6 @@ function abortError(signal: AbortSignal): Error {
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
+function roundTiming(value: number): number { return Math.round(value * 100) / 100; }
 
 installProductionWorkerEntry();
