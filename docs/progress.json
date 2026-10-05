@@ -74,7 +74,8 @@
         "docs/evidence/T06/tauri-msvc-toolchain-readiness.json",
         "docs/evidence/T06/candidate-compatibility-2026-10-05.json",
         "docs/evidence/T06/candidate-package-graph-audit.json",
-        "docs/evidence/T06/t06-a8-app-workspace-identities.json"
+        "docs/evidence/T06/t06-a8-app-workspace-identities.json",
+        "docs/evidence/T06/t06-a9-workspace-name-contract.json"
       ],
       "openGates": [
         "本机 Windows toolchain readiness preflight：WebView2 Evergreen 154.0.4258.53 存在，但 cl.exe、vswhere、常见 Visual Studio C++ Build Tools 路径和 MSVC Rust target 标准库未发现；GNU 标准库不能满足 Tauri Windows target。探测中的 rustup toolchain list -v 意外触发 GNU 1.99.0 channel sync/下载；进程已停止，没有安装成功输出，但 rustup home 留有不完整下载/组件目录。该状态已记录于 docs/evidence/T06/tauri-msvc-toolchain-readiness.json，不视为工具链就绪；未修改仓库文件或清理本地缓存。",

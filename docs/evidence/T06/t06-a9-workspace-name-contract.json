@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "T06-a9-workspace-name-contract",
+  "result": "PREPARATION_ONLY_STATIC_CHECKER_PASS",
+  "checkedDate": "2026-10-05",
+  "worktree": {
+    "path": "D:/ClipNest-work/v2",
+    "branch": "codex/v2-clipboard",
+    "baseCommit": "96eebd825cd2c6a63d4abc9824947f52fbd792c9",
+    "taskStatus": "T06 remains in progress and is not accepted."
+  },
+  "scope": {
+    "fixedAppManifestNames": {
+      "apps/desktop/package.json": "@clipnest/desktop",
+      "apps/web/package.json": "@clipnest/web",
+      "apps/mobile/package.json": "@clipnest/mobile",
+      "apps/server/package.json": "@clipnest/server"
+    },
+    "fixtureRootOption": "--repo-root <path>; omitted argument resolves to the current repository root",
+    "testCases": [
+      "synthetic workspace with all four expected app identities succeeds",
+      "default root remains the current repository",
+      "missing registered app manifest is rejected",
+      "wrong registered app name is rejected",
+      "duplicate workspace package name is rejected"
+    ],
+    "dependenciesAdded": false,
+    "applicationCodeAdded": false,
+    "packageManifestsChanged": false,
+    "lockfileChanged": false
+  },
+  "environment": {
+    "platform": "Windows x64",
+    "nodeVersion": "v24.16.0",
+    "pnpmVersionObserved": "11.19.0; not used by this validation"
+  },
+  "validation": [
+    {
+      "command": "node --check scripts/check-pnpm-workspace-manifests.cjs && node --check tests/tasks/T06/check-pnpm-workspace-manifests.test.cjs",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "node --test tests/tasks/T06/check-pnpm-workspace-manifests.test.cjs",
+      "status": "PASS",
+      "exitCode": 0,
+      "observed": "5 tests passed, 0 failed; four synthetic contract/error cases plus default-root regression."
+    },
+    {
+      "command": "node scripts/check-pnpm-workspace-manifests.cjs",
+      "status": "PASS_MANIFEST_DISCOVERY_ONLY",
+      "exitCode": 0,
+      "observed": "Found root, contracts and all four registered app manifests with unique names."
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS",
+      "exitCode": 0
+    }
+  ],
+  "gateEffect": {
+    "t06Status": "in_progress",
+    "fixedAppPackageNamesEnforced": true,
+    "appsBuildable": false,
+    "dependenciesSelectedOrFrozen": false,
+    "acceptanceImplied": false
+  },
+  "limitations": [
+    "This evidence covers a Node built-in static workspace manifest checker and synthetic fixtures only.",
+    "No pnpm resolution, app build, package installation, Cargo build, application behavior, or platform behavior was run.",
+    "T06-b schema/generator and T06-c root validation/CI gates remain open; this slice does not accept T06."
+  ]
+}

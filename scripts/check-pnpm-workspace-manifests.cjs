@@ -1,16 +1,29 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const repoRoot = path.resolve(__dirname, '..');
-const workspaceFile = path.join(repoRoot, 'pnpm-workspace.yaml');
+const defaultRepoRoot = path.resolve(__dirname, '..');
 const requiredGlobs = ['apps/*', 'packages/*'];
+const requiredAppNames = new Map([
+  ['apps/desktop/package.json', '@clipnest/desktop'],
+  ['apps/web/package.json', '@clipnest/web'],
+  ['apps/mobile/package.json', '@clipnest/mobile'],
+  ['apps/server/package.json', '@clipnest/server'],
+]);
 
 function fail(message) {
   console.error(`workspace manifest check failed: ${message}`);
   process.exitCode = 1;
 }
 
-function readWorkspaceGlobs() {
+function resolveRepoRoot(args) {
+  if (args.length === 0) return defaultRepoRoot;
+  if (args.length === 2 && args[0] === '--repo-root' && args[1].trim()) {
+    return path.resolve(args[1]);
+  }
+  throw new Error('usage: node scripts/check-pnpm-workspace-manifests.cjs [--repo-root <path>]');
+}
+
+function readWorkspaceGlobs(workspaceFile) {
   const source = fs.readFileSync(workspaceFile, 'utf8');
   const lines = source.split(/\r?\n/);
   const sectionIndex = lines.findIndex((line) => /^packages:\s*(?:#.*)?$/.test(line));
@@ -43,8 +56,8 @@ function readWorkspaceGlobs() {
   return globs;
 }
 
-function manifestPaths(globs) {
-  const paths = [path.join(repoRoot, 'package.json')];
+function manifestPaths(repoRoot, globs) {
+  const paths = new Set([path.join(repoRoot, 'package.json')]);
 
   for (const glob of globs) {
     const parent = path.join(repoRoot, glob.slice(0, -2));
@@ -52,14 +65,18 @@ function manifestPaths(globs) {
 
     for (const entry of fs.readdirSync(parent, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue;
-      paths.push(path.join(parent, entry.name, 'package.json'));
+      paths.add(path.join(parent, entry.name, 'package.json'));
     }
   }
 
-  return paths;
+  for (const relativePath of requiredAppNames.keys()) {
+    paths.add(path.join(repoRoot, relativePath));
+  }
+
+  return [...paths].sort((left, right) => left.localeCompare(right));
 }
 
-function inspectManifests(paths) {
+function inspectManifests(repoRoot, paths) {
   const seenNames = new Map();
   const packages = [];
 
@@ -79,12 +96,17 @@ function inspectManifests(paths) {
       throw new Error(`${path.relative(repoRoot, manifestPath)} has no non-empty package name`);
     }
 
-    const previousPath = seenNames.get(manifest.name);
-    if (previousPath) {
-      throw new Error(`duplicate package name ${manifest.name}: ${previousPath} and ${path.relative(repoRoot, manifestPath)}`);
+    const relativePath = path.relative(repoRoot, manifestPath).split(path.sep).join('/');
+    const expectedName = requiredAppNames.get(relativePath);
+    if (expectedName && manifest.name !== expectedName) {
+      throw new Error(`${relativePath} must be named ${expectedName} (found ${manifest.name})`);
     }
 
-    const relativePath = path.relative(repoRoot, manifestPath).split(path.sep).join('/');
+    const previousPath = seenNames.get(manifest.name);
+    if (previousPath) {
+      throw new Error(`duplicate package name ${manifest.name}: ${previousPath} and ${relativePath}`);
+    }
+
     seenNames.set(manifest.name, relativePath);
     packages.push({ name: manifest.name, manifest: relativePath, private: manifest.private === true });
   }
@@ -93,8 +115,10 @@ function inspectManifests(paths) {
 }
 
 try {
-  const globs = readWorkspaceGlobs();
-  const packages = inspectManifests(manifestPaths(globs));
+  const repoRoot = resolveRepoRoot(process.argv.slice(2));
+  const workspaceFile = path.join(repoRoot, 'pnpm-workspace.yaml');
+  const globs = readWorkspaceGlobs(workspaceFile);
+  const packages = inspectManifests(repoRoot, manifestPaths(repoRoot, globs));
   process.stdout.write(`${JSON.stringify({ result: 'PASS_MANIFEST_DISCOVERY_ONLY', globs, packages }, null, 2)}\n`);
 } catch (error) {
   fail(error.message);
