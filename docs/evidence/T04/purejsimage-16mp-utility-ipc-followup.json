@@ -1,0 +1,2817 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "recordType": "uninstalled_exact_tarball_jpeg_utility_process_ipc_followup",
+  "result": "MEASURED_WITH_LIMITATIONS",
+  "startedAt": "2026-10-05T02:01:07.422Z",
+  "source": {
+    "commit": "3315d67b7252b4808fc02d09933f807e33f7f194",
+    "branch": "codex/m0-latency",
+    "status": [
+      "?? docs/evidence/T04/purejsimage-16mp-utility-ipc-followup.json",
+      "?? tests/tasks/T04/purejsimage-followup-worker.cjs",
+      "?? tests/tasks/T04/purejsimage-independent-pixel-oracle.ps1",
+      "?? tests/tasks/T04/run-purejsimage-16mp-utility-ipc-followup.cjs"
+    ]
+  },
+  "candidate": {
+    "name": "purejsimage",
+    "version": "0.17.0",
+    "declaredLicense": "MIT",
+    "tarballPath": "C:\\Users\\Admin\\AppData\\Local\\Temp\\clipnest-purejsimage-audit\\purejsimage-0.17.0.tgz",
+    "tarballBytes": 1358289,
+    "expectedRegistryIntegrity": "sha512-u/A6tC4FYCRqL61QMAHiTEwKByh17txytXalgAjKhv84lFQfDNVaRc8H816dLqsTpm5MaEz9pd7UzHc0qaaJ8A==",
+    "measuredTarballIntegrity": "sha512-u/A6tC4FYCRqL61QMAHiTEwKByh17txytXalgAjKhv84lFQfDNVaRc8H816dLqsTpm5MaEz9pd7UzHc0qaaJ8A==",
+    "candidateNotInstalled": true,
+    "dependencyApproved": false,
+    "distributionAndHEVCReview": "OPEN; this measurement is not a license, patent, dependency, or distribution decision.",
+    "finalMeasuredTarballIntegrity": "sha512-u/A6tC4FYCRqL61QMAHiTEwKByh17txytXalgAjKhv84lFQfDNVaRc8H816dLqsTpm5MaEz9pd7UzHc0qaaJ8A=="
+  },
+  "candidateAssessment": {
+    "configuredWorkerPeakTargetBytes": 268435456,
+    "measuredWorkerPeakTargetResult": "FAIL",
+    "maximumObservedWorkerPeakWorkingSetBytes": 394821632,
+    "perFixtureObservedWorkerPeakWorkingSetBytes": {
+      "420": 394821632,
+      "444": 393969664
+    },
+    "interpretation": "The uninstalled candidate exceeds the configured worker peak target in all 10 samples of this production-shaped IPC probe. This is a measured candidate limitation, not T04 acceptance."
+  },
+  "environment": {
+    "hostPlatform": "win32",
+    "hostArchitecture": "x64",
+    "hostNodeVersion": "v24.16.0",
+    "fixturesGeneratorNodeVersion": "v24.16.0",
+    "osVersion": "Windows 11 Enterprise",
+    "electronVersion": "40.10.2",
+    "electronNodeVersion": "24.15.0"
+  },
+  "packageFiles": {
+    "packageJsonSha256": "4e5ce671426ca5f9bd108cede5fc188d3dd539460536bc43d3ed524da74231e3",
+    "importedEntries": [
+      "dist/codec-entries/jpeg.js",
+      "dist/source.js",
+      "dist/limits.js",
+      "dist/sink.js"
+    ],
+    "optionalHeifAndWasmEntriesImported": false
+  },
+  "isolation": {
+    "createdBrowserWindow": false,
+    "systemClipboardReadOrWritten": false,
+    "physicalOrSyntheticInputSent": false,
+    "helperProcessUsed": false,
+    "onlySyntheticFixtureFilesRead": true,
+    "existingTempFilesModified": false,
+    "onlyOwnUniqueTempDirectoryWritten": true,
+    "preMeasurementLauncherProbe": {
+      "occurredBeforeIsolatedMeasurement": true,
+      "executable": "D:\\ClipNest-work\\electron-l0\\release\\windows-flat-20261005\\artifacts\\win-unpacked\\ClipNest.exe",
+      "attempt": "ELECTRON_RUN_AS_NODE=1 ClipNest.exe -p <Electron capability expression>",
+      "stdoutWasEmpty": true,
+      "clipboardOrInputApiCalled": false,
+      "possibleSingleInstanceForwardingToInstalledApp": true,
+      "observedProcessSnapshots": "Snapshots around the probe showed only existing D:\\ClipNest\\ClipNest.exe PIDs 52888, 56760, 35812, and 57896, each created 2026-10-04; no new installed-app PID was observed.",
+      "windowActivation": "A brief activation of the existing window cannot be excluded.",
+      "assessment": "This preflight was not isolated and is outside the measured probe. Do not claim that the entire operation had no UI effect. The completed measurements used only the isolated runtime and separate user-data directory below."
+    },
+    "staticSideEffectAudit": {
+      "checkedFiles": [
+        "tests\\tasks\\T04\\run-purejsimage-16mp-utility-ipc-followup.cjs",
+        "tests\\tasks\\T04\\purejsimage-followup-worker.cjs",
+        "tests\\tasks\\T04\\purejsimage-independent-pixel-oracle.ps1"
+      ],
+      "forbiddenApiMatches": []
+    },
+    "runtime": {
+      "executable": "D:\\ClipNest-work\\electron-l0\\tests\\tasks\\T04\\.t04-electron-runtime-6U9sxy\\ClipNest.exe",
+      "runtimeRoot": "D:\\ClipNest-work\\electron-l0\\tests\\tasks\\T04\\.t04-electron-runtime-6U9sxy",
+      "appPath": "D:\\ClipNest-work\\electron-l0\\tests\\tasks\\T04\\.t04-electron-runtime-6U9sxy\\resources\\app",
+      "appAsarPresent": false,
+      "userDataPath": "C:\\Users\\Admin\\AppData\\Local\\Temp\\clipnest-t04-purejsimage-ipc-oJ1Eow\\isolated-user-data",
+      "mainProcessPid": 52084,
+      "createdBrowserWindow": false,
+    "onlyProbeMainEntryLoaded": true,
+    "runtimeDirectoryRemovedAfterRun": true,
+    "measuredWorkerPidsExited": [68184, 64560, 63636, 64380, 68440, 69456, 69320, 67612, 70120, 70456]
+    }
+  },
+  "independentPixelOracle": {
+    "implementation": "Windows System.Drawing / GDI+ decodes each synthetic JPEG in a separate PowerShell process before Electron worker measurements.",
+    "coordinates": [
+      {
+        "x": 0,
+        "y": 0
+      },
+      {
+        "x": 1,
+        "y": 1
+      },
+      {
+        "x": 16,
+        "y": 16
+      },
+      {
+        "x": 511,
+        "y": 511
+      },
+      {
+        "x": 1024,
+        "y": 1024
+      },
+      {
+        "x": 1999,
+        "y": 1999
+      },
+      {
+        "x": 2000,
+        "y": 2000
+      },
+      {
+        "x": 3001,
+        "y": 2377
+      },
+      {
+        "x": 3999,
+        "y": 3999
+      }
+    ],
+    "maximumAbsoluteRgbChannelDifferenceAccepted": 8,
+    "oracleResults": [
+      {
+        "fixtureKey": "420",
+        "oracle": {
+          "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+          "powershellVersion": "5.1.22621.6931",
+          "dotNetRuntime": ".NET Framework 4.8.9332.0",
+          "width": 4000,
+          "height": 4000,
+          "pixelFormat": "Format32bppArgb",
+          "samples": [
+            {
+              "x": 0,
+              "y": 0,
+              "rgba": [
+                52,
+                2,
+                31,
+                255
+              ]
+            },
+            {
+              "x": 1,
+              "y": 1,
+              "rgba": [
+                150,
+                106,
+                141,
+                255
+              ]
+            },
+            {
+              "x": 16,
+              "y": 16,
+              "rgba": [
+                138,
+                192,
+                94,
+                255
+              ]
+            },
+            {
+              "x": 511,
+              "y": 511,
+              "rgba": [
+                103,
+                69,
+                130,
+                255
+              ]
+            },
+            {
+              "x": 1024,
+              "y": 1024,
+              "rgba": [
+                213,
+                186,
+                221,
+                255
+              ]
+            },
+            {
+              "x": 1999,
+              "y": 1999,
+              "rgba": [
+                127,
+                82,
+                137,
+                255
+              ]
+            },
+            {
+              "x": 2000,
+              "y": 2000,
+              "rgba": [
+                154,
+                135,
+                155,
+                255
+              ]
+            },
+            {
+              "x": 3001,
+              "y": 2377,
+              "rgba": [
+                135,
+                145,
+                154,
+                255
+              ]
+            },
+            {
+              "x": 3999,
+              "y": 3999,
+              "rgba": [
+                87,
+                72,
+                3,
+                255
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "fixtureKey": "444",
+        "oracle": {
+          "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+          "powershellVersion": "5.1.22621.6931",
+          "dotNetRuntime": ".NET Framework 4.8.9332.0",
+          "width": 4000,
+          "height": 4000,
+          "pixelFormat": "Format32bppArgb",
+          "samples": [
+            {
+              "x": 0,
+              "y": 0,
+              "rgba": [
+                0,
+                82,
+                74,
+                255
+              ]
+            },
+            {
+              "x": 1,
+              "y": 1,
+              "rgba": [
+                238,
+                156,
+                196,
+                255
+              ]
+            },
+            {
+              "x": 16,
+              "y": 16,
+              "rgba": [
+                255,
+                201,
+                123,
+                255
+              ]
+            },
+            {
+              "x": 511,
+              "y": 511,
+              "rgba": [
+                72,
+                71,
+                188,
+                255
+              ]
+            },
+            {
+              "x": 1024,
+              "y": 1024,
+              "rgba": [
+                255,
+                154,
+                255,
+                255
+              ]
+            },
+            {
+              "x": 1999,
+              "y": 1999,
+              "rgba": [
+                192,
+                77,
+                144,
+                255
+              ]
+            },
+            {
+              "x": 2000,
+              "y": 2000,
+              "rgba": [
+                184,
+                160,
+                60,
+                255
+              ]
+            },
+            {
+              "x": 3001,
+              "y": 2377,
+              "rgba": [
+                206,
+                106,
+                220,
+                255
+              ]
+            },
+            {
+              "x": 3999,
+              "y": 3999,
+              "rgba": [
+                0,
+                42,
+                139,
+                255
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "interpretation": "Independent cross-decoder spot checks for lossy JPEG; not exact source-RGB equality."
+  },
+  "fixtures": [
+    {
+      "key": "420",
+      "fileName": "synthetic-baseline-16mp-420-near20mib.jpg",
+      "width": 4000,
+      "height": 4000,
+      "pixelCount": 16000000,
+      "sourceBytes": 20971520,
+      "sourceLimitBytes": 20971520,
+      "sourceLimitHeadroomBytes": 0,
+      "sourceBytesBeforeApp2Padding": 6554135,
+      "app2PaddingBytes": 14417385,
+      "maximumApp2SegmentBytes": 65537,
+      "marker": "0xc0",
+      "samplingFactors": [
+        {
+          "h": 2,
+          "v": 2
+        },
+        {
+          "h": 1,
+          "v": 1
+        },
+        {
+          "h": 1,
+          "v": 1
+        }
+      ],
+      "chromaSubsampling": "420",
+      "quality": 50,
+      "progressive": false,
+      "sourcePixelGenerator": "xorshift32 seed 0x6d2b79f5; one update per R/G/B channel; low 8 bits; seed resets per fixture",
+      "sourceRgbSha256": "ef1f63638bbe34c2f9a6105476b7ced45160abb0aa99dce0ac0e7de2824c4f92",
+      "knownSourcePixels": [
+        {
+          "x": 0,
+          "y": 0,
+          "rgb": [
+            31,
+            25,
+            40
+          ]
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "rgb": [
+            170,
+            104,
+            38
+          ]
+        },
+        {
+          "x": 16,
+          "y": 16,
+          "rgb": [
+            239,
+            165,
+            38
+          ]
+        },
+        {
+          "x": 511,
+          "y": 511,
+          "rgb": [
+            30,
+            75,
+            216
+          ]
+        },
+        {
+          "x": 1024,
+          "y": 1024,
+          "rgb": [
+            133,
+            214,
+            208
+          ]
+        },
+        {
+          "x": 1999,
+          "y": 1999,
+          "rgb": [
+            139,
+            79,
+            112
+          ]
+        },
+        {
+          "x": 2000,
+          "y": 2000,
+          "rgb": [
+            255,
+            105,
+            55
+          ]
+        },
+        {
+          "x": 3001,
+          "y": 2377,
+          "rgb": [
+            255,
+            66,
+            235
+          ]
+        },
+        {
+          "x": 3999,
+          "y": 3999,
+          "rgb": [
+            57,
+            63,
+            99
+          ]
+        }
+      ],
+      "inputSha256": "39f6de5f1cc3de2253b000593712b236d66d0f10f2edf4fdf6e73ffed23fd52a",
+      "oracle": {
+        "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+        "powershellVersion": "5.1.22621.6931",
+        "dotNetRuntime": ".NET Framework 4.8.9332.0",
+        "width": 4000,
+        "height": 4000,
+        "pixelFormat": "Format32bppArgb",
+        "samples": [
+          {
+            "x": 0,
+            "y": 0,
+            "rgba": [
+              52,
+              2,
+              31,
+              255
+            ]
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "rgba": [
+              150,
+              106,
+              141,
+              255
+            ]
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "rgba": [
+              138,
+              192,
+              94,
+              255
+            ]
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "rgba": [
+              103,
+              69,
+              130,
+              255
+            ]
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "rgba": [
+              213,
+              186,
+              221,
+              255
+            ]
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "rgba": [
+              127,
+              82,
+              137,
+              255
+            ]
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "rgba": [
+              154,
+              135,
+              155,
+              255
+            ]
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "rgba": [
+              135,
+              145,
+              154,
+              255
+            ]
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "rgba": [
+              87,
+              72,
+              3,
+              255
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "key": "444",
+      "fileName": "synthetic-baseline-16mp-444-near20mib.jpg",
+      "width": 4000,
+      "height": 4000,
+      "pixelCount": 16000000,
+      "sourceBytes": 20971520,
+      "sourceLimitBytes": 20971520,
+      "sourceLimitHeadroomBytes": 0,
+      "sourceBytesBeforeApp2Padding": 7231477,
+      "app2PaddingBytes": 13740043,
+      "maximumApp2SegmentBytes": 65537,
+      "marker": "0xc0",
+      "samplingFactors": [
+        {
+          "h": 1,
+          "v": 1
+        },
+        {
+          "h": 1,
+          "v": 1
+        },
+        {
+          "h": 1,
+          "v": 1
+        }
+      ],
+      "chromaSubsampling": "444",
+      "quality": 25,
+      "progressive": false,
+      "sourcePixelGenerator": "xorshift32 seed 0x6d2b79f5; one update per R/G/B channel; low 8 bits; seed resets per fixture",
+      "sourceRgbSha256": "ef1f63638bbe34c2f9a6105476b7ced45160abb0aa99dce0ac0e7de2824c4f92",
+      "knownSourcePixels": [
+        {
+          "x": 0,
+          "y": 0,
+          "rgb": [
+            31,
+            25,
+            40
+          ]
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "rgb": [
+            170,
+            104,
+            38
+          ]
+        },
+        {
+          "x": 16,
+          "y": 16,
+          "rgb": [
+            239,
+            165,
+            38
+          ]
+        },
+        {
+          "x": 511,
+          "y": 511,
+          "rgb": [
+            30,
+            75,
+            216
+          ]
+        },
+        {
+          "x": 1024,
+          "y": 1024,
+          "rgb": [
+            133,
+            214,
+            208
+          ]
+        },
+        {
+          "x": 1999,
+          "y": 1999,
+          "rgb": [
+            139,
+            79,
+            112
+          ]
+        },
+        {
+          "x": 2000,
+          "y": 2000,
+          "rgb": [
+            255,
+            105,
+            55
+          ]
+        },
+        {
+          "x": 3001,
+          "y": 2377,
+          "rgb": [
+            255,
+            66,
+            235
+          ]
+        },
+        {
+          "x": 3999,
+          "y": 3999,
+          "rgb": [
+            57,
+            63,
+            99
+          ]
+        }
+      ],
+      "inputSha256": "a8bcd9c622a0b66dd503b7fb0e5461fb368fdbef2fa95b8b26a15ecc8523b486",
+      "oracle": {
+        "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+        "powershellVersion": "5.1.22621.6931",
+        "dotNetRuntime": ".NET Framework 4.8.9332.0",
+        "width": 4000,
+        "height": 4000,
+        "pixelFormat": "Format32bppArgb",
+        "samples": [
+          {
+            "x": 0,
+            "y": 0,
+            "rgba": [
+              0,
+              82,
+              74,
+              255
+            ]
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "rgba": [
+              238,
+              156,
+              196,
+              255
+            ]
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "rgba": [
+              255,
+              201,
+              123,
+              255
+            ]
+          },
+          {
+            "x": 511,
+            "y": 511,
+            "rgba": [
+              72,
+              71,
+              188,
+              255
+            ]
+          },
+          {
+            "x": 1024,
+            "y": 1024,
+            "rgba": [
+              255,
+              154,
+              255,
+              255
+            ]
+          },
+          {
+            "x": 1999,
+            "y": 1999,
+            "rgba": [
+              192,
+              77,
+              144,
+              255
+            ]
+          },
+          {
+            "x": 2000,
+            "y": 2000,
+            "rgba": [
+              184,
+              160,
+              60,
+              255
+            ]
+          },
+          {
+            "x": 3001,
+            "y": 2377,
+            "rgba": [
+              206,
+              106,
+              220,
+              255
+            ]
+          },
+          {
+            "x": 3999,
+            "y": 3999,
+            "rgba": [
+              0,
+              42,
+              139,
+              255
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "protocol": {
+    "input": "synthetic JPEG sent as Uint8Array over utilityProcess IPC",
+    "output": "full 64,000,000-byte RGBA in worker, level-1 deflate response, utilityProcess IPC, parent 1 MiB-chunk inflate into exact-size Buffer",
+    "workerDeflateParameters": {
+      "level": 1,
+      "maxOutputBytes": 64065536,
+      "chunkSizeBytes": 8388608
+    },
+    "parentInflateParameters": {
+      "chunkSizeBytes": 1048576,
+      "exactOutputBytes": 64000000
+    },
+    "requestToFullParentRgbaTiming": "starts before input IPC; ends after parent inflates, hashes, and validates the complete RGBA output"
+  },
+  "measurements": {
+    "sampleCountPerFixtureRequired": 5,
+    "workerPeakTargetBytes": 268435456,
+    "privateMemorySamplingIntervalMs": 50,
+    "parentPeakWorkingSetBytes": 350597120,
+    "parentSampledPeakPrivateBytes": 385138688,
+    "fixtures": [
+      {
+        "fixtureKey": "420",
+        "chromaSubsampling": "420",
+        "inputBytes": 20971520,
+        "inputLimitBytes": 20971520,
+        "inputLimitHeadroomBytes": 0,
+        "inputSha256": "39f6de5f1cc3de2253b000593712b236d66d0f10f2edf4fdf6e73ffed23fd52a",
+        "samples": [
+          {
+            "sampleNumber": 1,
+            "outcome": "success",
+            "pid": 68184,
+            "workerStartupMs": 79.73,
+            "workerDecodeMs": 1889.37,
+            "workerDeflateMs": 1847.71,
+            "parentInflateMs": 365.3,
+            "requestToFullParentRgbaMs": 4737.2,
+            "inputBytes": 20971520,
+            "inputSha256": "39f6de5f1cc3de2253b000593712b236d66d0f10f2edf4fdf6e73ffed23fd52a",
+            "compressedBytes": 53067191,
+            "compressedSha256": "e874578e85d1740fb0a42d3ad76efada4548de6038227383bfa795a13e138d7f",
+            "rgbaBytes": 64000000,
+            "rgbaSha256": "47127546382d9f48f9b03b7dbd8d9283c24c2a623f754dd326158af577e2733b",
+            "decodedRows": 4000,
+            "blockCount": 250,
+            "minBlockStride": 12000,
+            "maxBlockDataBytes": 192000,
+            "pixelOracle": {
+              "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+              "acceptedRgbChannelDifference": 8,
+              "maxAbsoluteRgbDifference": 1,
+              "samples": [
+                {
+                  "x": 0,
+                  "y": 0,
+                  "rgba": [
+                    52,
+                    1,
+                    30,
+                    255
+                  ],
+                  "oracleRgba": [
+                    52,
+                    2,
+                    31,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1,
+                  "y": 1,
+                  "rgba": [
+                    149,
+                    105,
+                    140,
+                    255
+                  ],
+                  "oracleRgba": [
+                    150,
+                    106,
+                    141,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 16,
+                  "y": 16,
+                  "rgba": [
+                    138,
+                    192,
+                    94,
+                    255
+                  ],
+                  "oracleRgba": [
+                    138,
+                    192,
+                    94,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 511,
+                  "y": 511,
+                  "rgba": [
+                    102,
+                    68,
+                    130,
+                    255
+                  ],
+                  "oracleRgba": [
+                    103,
+                    69,
+                    130,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1024,
+                  "y": 1024,
+                  "rgba": [
+                    213,
+                    185,
+                    221,
+                    255
+                  ],
+                  "oracleRgba": [
+                    213,
+                    186,
+                    221,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1999,
+                  "y": 1999,
+                  "rgba": [
+                    127,
+                    82,
+                    137,
+                    255
+                  ],
+                  "oracleRgba": [
+                    127,
+                    82,
+                    137,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 2000,
+                  "y": 2000,
+                  "rgba": [
+                    154,
+                    134,
+                    155,
+                    255
+                  ],
+                  "oracleRgba": [
+                    154,
+                    135,
+                    155,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 3001,
+                  "y": 2377,
+                  "rgba": [
+                    134,
+                    145,
+                    153,
+                    255
+                  ],
+                  "oracleRgba": [
+                    135,
+                    145,
+                    154,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 3999,
+                  "y": 3999,
+                  "rgba": [
+                    87,
+                    72,
+                    3,
+                    255
+                  ],
+                  "oracleRgba": [
+                    87,
+                    72,
+                    3,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                }
+              ]
+            },
+            "memory": {
+              "workingSetBeforeBytes": 56705024,
+              "privateBeforeBytes": 30375936,
+              "workingSetAfterBytes": 394821632,
+              "privateAfterBytes": 241631232,
+              "peakWorkingSetBytes": 394821632,
+              "sampledPeakPrivateBytes": 422203392,
+              "sampleIntervalMs": 50,
+              "sampleCount": 44
+            },
+            "peakWorkingSetBytes": 394821632,
+            "sampledPeakPrivateBytes": 422203392
+          },
+          {
+            "sampleNumber": 2,
+            "outcome": "success",
+            "pid": 64560,
+            "workerStartupMs": 33.42,
+            "workerDecodeMs": 1819.13,
+            "workerDeflateMs": 1852.24,
+            "parentInflateMs": 351.21,
+            "requestToFullParentRgbaMs": 4647.26,
+            "inputBytes": 20971520,
+            "inputSha256": "39f6de5f1cc3de2253b000593712b236d66d0f10f2edf4fdf6e73ffed23fd52a",
+            "compressedBytes": 53067191,
+            "compressedSha256": "e874578e85d1740fb0a42d3ad76efada4548de6038227383bfa795a13e138d7f",
+            "rgbaBytes": 64000000,
+            "rgbaSha256": "47127546382d9f48f9b03b7dbd8d9283c24c2a623f754dd326158af577e2733b",
+            "decodedRows": 4000,
+            "blockCount": 250,
+            "minBlockStride": 12000,
+            "maxBlockDataBytes": 192000,
+            "pixelOracle": {
+              "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+              "acceptedRgbChannelDifference": 8,
+              "maxAbsoluteRgbDifference": 1,
+              "samples": [
+                {
+                  "x": 0,
+                  "y": 0,
+                  "rgba": [
+                    52,
+                    1,
+                    30,
+                    255
+                  ],
+                  "oracleRgba": [
+                    52,
+                    2,
+                    31,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1,
+                  "y": 1,
+                  "rgba": [
+                    149,
+                    105,
+                    140,
+                    255
+                  ],
+                  "oracleRgba": [
+                    150,
+                    106,
+                    141,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 16,
+                  "y": 16,
+                  "rgba": [
+                    138,
+                    192,
+                    94,
+                    255
+                  ],
+                  "oracleRgba": [
+                    138,
+                    192,
+                    94,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 511,
+                  "y": 511,
+                  "rgba": [
+                    102,
+                    68,
+                    130,
+                    255
+                  ],
+                  "oracleRgba": [
+                    103,
+                    69,
+                    130,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1024,
+                  "y": 1024,
+                  "rgba": [
+                    213,
+                    185,
+                    221,
+                    255
+                  ],
+                  "oracleRgba": [
+                    213,
+                    186,
+                    221,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1999,
+                  "y": 1999,
+                  "rgba": [
+                    127,
+                    82,
+                    137,
+                    255
+                  ],
+                  "oracleRgba": [
+                    127,
+                    82,
+                    137,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 2000,
+                  "y": 2000,
+                  "rgba": [
+                    154,
+                    134,
+                    155,
+                    255
+                  ],
+                  "oracleRgba": [
+                    154,
+                    135,
+                    155,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 3001,
+                  "y": 2377,
+                  "rgba": [
+                    134,
+                    145,
+                    153,
+                    255
+                  ],
+                  "oracleRgba": [
+                    135,
+                    145,
+                    154,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 3999,
+                  "y": 3999,
+                  "rgba": [
+                    87,
+                    72,
+                    3,
+                    255
+                  ],
+                  "oracleRgba": [
+                    87,
+                    72,
+                    3,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                }
+              ]
+            },
+            "memory": {
+              "workingSetBeforeBytes": 59953152,
+              "privateBeforeBytes": 28684288,
+              "workingSetAfterBytes": 393084928,
+              "privateAfterBytes": 239673344,
+              "peakWorkingSetBytes": 393084928,
+              "sampledPeakPrivateBytes": 367165440,
+              "sampleIntervalMs": 50,
+              "sampleCount": 44
+            },
+            "peakWorkingSetBytes": 393084928,
+            "sampledPeakPrivateBytes": 367165440
+          },
+          {
+            "sampleNumber": 3,
+            "outcome": "success",
+            "pid": 63636,
+            "workerStartupMs": 52.06,
+            "workerDecodeMs": 1685.48,
+            "workerDeflateMs": 1846.99,
+            "parentInflateMs": 323.6,
+            "requestToFullParentRgbaMs": 4475.49,
+            "inputBytes": 20971520,
+            "inputSha256": "39f6de5f1cc3de2253b000593712b236d66d0f10f2edf4fdf6e73ffed23fd52a",
+            "compressedBytes": 53067191,
+            "compressedSha256": "e874578e85d1740fb0a42d3ad76efada4548de6038227383bfa795a13e138d7f",
+            "rgbaBytes": 64000000,
+            "rgbaSha256": "47127546382d9f48f9b03b7dbd8d9283c24c2a623f754dd326158af577e2733b",
+            "decodedRows": 4000,
+            "blockCount": 250,
+            "minBlockStride": 12000,
+            "maxBlockDataBytes": 192000,
+            "pixelOracle": {
+              "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+              "acceptedRgbChannelDifference": 8,
+              "maxAbsoluteRgbDifference": 1,
+              "samples": [
+                {
+                  "x": 0,
+                  "y": 0,
+                  "rgba": [
+                    52,
+                    1,
+                    30,
+                    255
+                  ],
+                  "oracleRgba": [
+                    52,
+                    2,
+                    31,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1,
+                  "y": 1,
+                  "rgba": [
+                    149,
+                    105,
+                    140,
+                    255
+                  ],
+                  "oracleRgba": [
+                    150,
+                    106,
+                    141,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 16,
+                  "y": 16,
+                  "rgba": [
+                    138,
+                    192,
+                    94,
+                    255
+                  ],
+                  "oracleRgba": [
+                    138,
+                    192,
+                    94,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 511,
+                  "y": 511,
+                  "rgba": [
+                    102,
+                    68,
+                    130,
+                    255
+                  ],
+                  "oracleRgba": [
+                    103,
+                    69,
+                    130,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1024,
+                  "y": 1024,
+                  "rgba": [
+                    213,
+                    185,
+                    221,
+                    255
+                  ],
+                  "oracleRgba": [
+                    213,
+                    186,
+                    221,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1999,
+                  "y": 1999,
+                  "rgba": [
+                    127,
+                    82,
+                    137,
+                    255
+                  ],
+                  "oracleRgba": [
+                    127,
+                    82,
+                    137,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 2000,
+                  "y": 2000,
+                  "rgba": [
+                    154,
+                    134,
+                    155,
+                    255
+                  ],
+                  "oracleRgba": [
+                    154,
+                    135,
+                    155,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 3001,
+                  "y": 2377,
+                  "rgba": [
+                    134,
+                    145,
+                    153,
+                    255
+                  ],
+                  "oracleRgba": [
+                    135,
+                    145,
+                    154,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 3999,
+                  "y": 3999,
+                  "rgba": [
+                    87,
+                    72,
+                    3,
+                    255
+                  ],
+                  "oracleRgba": [
+                    87,
+                    72,
+                    3,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                }
+              ]
+            },
+            "memory": {
+              "workingSetBeforeBytes": 60448768,
+              "privateBeforeBytes": 30081024,
+              "workingSetAfterBytes": 391815168,
+              "privateAfterBytes": 239312896,
+              "peakWorkingSetBytes": 391815168,
+              "sampledPeakPrivateBytes": 419885056,
+              "sampleIntervalMs": 50,
+              "sampleCount": 42
+            },
+            "peakWorkingSetBytes": 391815168,
+            "sampledPeakPrivateBytes": 419885056
+          },
+          {
+            "sampleNumber": 4,
+            "outcome": "success",
+            "pid": 64380,
+            "workerStartupMs": 424.5,
+            "workerDecodeMs": 1750.57,
+            "workerDeflateMs": 1837.23,
+            "parentInflateMs": 348.44,
+            "requestToFullParentRgbaMs": 4605.03,
+            "inputBytes": 20971520,
+            "inputSha256": "39f6de5f1cc3de2253b000593712b236d66d0f10f2edf4fdf6e73ffed23fd52a",
+            "compressedBytes": 53067191,
+            "compressedSha256": "e874578e85d1740fb0a42d3ad76efada4548de6038227383bfa795a13e138d7f",
+            "rgbaBytes": 64000000,
+            "rgbaSha256": "47127546382d9f48f9b03b7dbd8d9283c24c2a623f754dd326158af577e2733b",
+            "decodedRows": 4000,
+            "blockCount": 250,
+            "minBlockStride": 12000,
+            "maxBlockDataBytes": 192000,
+            "pixelOracle": {
+              "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+              "acceptedRgbChannelDifference": 8,
+              "maxAbsoluteRgbDifference": 1,
+              "samples": [
+                {
+                  "x": 0,
+                  "y": 0,
+                  "rgba": [
+                    52,
+                    1,
+                    30,
+                    255
+                  ],
+                  "oracleRgba": [
+                    52,
+                    2,
+                    31,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1,
+                  "y": 1,
+                  "rgba": [
+                    149,
+                    105,
+                    140,
+                    255
+                  ],
+                  "oracleRgba": [
+                    150,
+                    106,
+                    141,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 16,
+                  "y": 16,
+                  "rgba": [
+                    138,
+                    192,
+                    94,
+                    255
+                  ],
+                  "oracleRgba": [
+                    138,
+                    192,
+                    94,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 511,
+                  "y": 511,
+                  "rgba": [
+                    102,
+                    68,
+                    130,
+                    255
+                  ],
+                  "oracleRgba": [
+                    103,
+                    69,
+                    130,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1024,
+                  "y": 1024,
+                  "rgba": [
+                    213,
+                    185,
+                    221,
+                    255
+                  ],
+                  "oracleRgba": [
+                    213,
+                    186,
+                    221,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1999,
+                  "y": 1999,
+                  "rgba": [
+                    127,
+                    82,
+                    137,
+                    255
+                  ],
+                  "oracleRgba": [
+                    127,
+                    82,
+                    137,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 2000,
+                  "y": 2000,
+                  "rgba": [
+                    154,
+                    134,
+                    155,
+                    255
+                  ],
+                  "oracleRgba": [
+                    154,
+                    135,
+                    155,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 3001,
+                  "y": 2377,
+                  "rgba": [
+                    134,
+                    145,
+                    153,
+                    255
+                  ],
+                  "oracleRgba": [
+                    135,
+                    145,
+                    154,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 3999,
+                  "y": 3999,
+                  "rgba": [
+                    87,
+                    72,
+                    3,
+                    255
+                  ],
+                  "oracleRgba": [
+                    87,
+                    72,
+                    3,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                }
+              ]
+            },
+            "memory": {
+              "workingSetBeforeBytes": 60305408,
+              "privateBeforeBytes": 29863936,
+              "workingSetAfterBytes": 392138752,
+              "privateAfterBytes": 239071232,
+              "peakWorkingSetBytes": 392138752,
+              "sampledPeakPrivateBytes": 366567424,
+              "sampleIntervalMs": 50,
+              "sampleCount": 44
+            },
+            "peakWorkingSetBytes": 392138752,
+            "sampledPeakPrivateBytes": 366567424
+          },
+          {
+            "sampleNumber": 5,
+            "outcome": "success",
+            "pid": 68440,
+            "workerStartupMs": 26.57,
+            "workerDecodeMs": 1762.32,
+            "workerDeflateMs": 1934.76,
+            "parentInflateMs": 333.67,
+            "requestToFullParentRgbaMs": 4687.49,
+            "inputBytes": 20971520,
+            "inputSha256": "39f6de5f1cc3de2253b000593712b236d66d0f10f2edf4fdf6e73ffed23fd52a",
+            "compressedBytes": 53067191,
+            "compressedSha256": "e874578e85d1740fb0a42d3ad76efada4548de6038227383bfa795a13e138d7f",
+            "rgbaBytes": 64000000,
+            "rgbaSha256": "47127546382d9f48f9b03b7dbd8d9283c24c2a623f754dd326158af577e2733b",
+            "decodedRows": 4000,
+            "blockCount": 250,
+            "minBlockStride": 12000,
+            "maxBlockDataBytes": 192000,
+            "pixelOracle": {
+              "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+              "acceptedRgbChannelDifference": 8,
+              "maxAbsoluteRgbDifference": 1,
+              "samples": [
+                {
+                  "x": 0,
+                  "y": 0,
+                  "rgba": [
+                    52,
+                    1,
+                    30,
+                    255
+                  ],
+                  "oracleRgba": [
+                    52,
+                    2,
+                    31,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1,
+                  "y": 1,
+                  "rgba": [
+                    149,
+                    105,
+                    140,
+                    255
+                  ],
+                  "oracleRgba": [
+                    150,
+                    106,
+                    141,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 16,
+                  "y": 16,
+                  "rgba": [
+                    138,
+                    192,
+                    94,
+                    255
+                  ],
+                  "oracleRgba": [
+                    138,
+                    192,
+                    94,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 511,
+                  "y": 511,
+                  "rgba": [
+                    102,
+                    68,
+                    130,
+                    255
+                  ],
+                  "oracleRgba": [
+                    103,
+                    69,
+                    130,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1024,
+                  "y": 1024,
+                  "rgba": [
+                    213,
+                    185,
+                    221,
+                    255
+                  ],
+                  "oracleRgba": [
+                    213,
+                    186,
+                    221,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1999,
+                  "y": 1999,
+                  "rgba": [
+                    127,
+                    82,
+                    137,
+                    255
+                  ],
+                  "oracleRgba": [
+                    127,
+                    82,
+                    137,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 2000,
+                  "y": 2000,
+                  "rgba": [
+                    154,
+                    134,
+                    155,
+                    255
+                  ],
+                  "oracleRgba": [
+                    154,
+                    135,
+                    155,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 3001,
+                  "y": 2377,
+                  "rgba": [
+                    134,
+                    145,
+                    153,
+                    255
+                  ],
+                  "oracleRgba": [
+                    135,
+                    145,
+                    154,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 3999,
+                  "y": 3999,
+                  "rgba": [
+                    87,
+                    72,
+                    3,
+                    255
+                  ],
+                  "oracleRgba": [
+                    87,
+                    72,
+                    3,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                }
+              ]
+            },
+            "memory": {
+              "workingSetBeforeBytes": 60260352,
+              "privateBeforeBytes": 28672000,
+              "workingSetAfterBytes": 392097792,
+              "privateAfterBytes": 238100480,
+              "peakWorkingSetBytes": 392097792,
+              "sampledPeakPrivateBytes": 365596672,
+              "sampleIntervalMs": 50,
+              "sampleCount": 43
+            },
+            "peakWorkingSetBytes": 392097792,
+            "sampledPeakPrivateBytes": 365596672
+          }
+        ],
+        "boundaryChecks": [
+          {
+            "inputBytes": 20971521,
+            "limitBytes": 20971520,
+            "expectedError": "fixture_source_size_invalid",
+            "actualError": "fixture_source_size_invalid",
+            "decoderStarted": false
+          }
+        ],
+        "peakWorkingSetBytes": 394821632,
+        "peakWorkingSetMiB": 376.53,
+        "sampledPeakPrivateBytes": 422203392,
+        "sampledPeakPrivateMiB": 402.64,
+        "latency": {
+          "p50Ms": 4647.26,
+          "p95Ms": 4737.2,
+          "maximumMs": 4737.2,
+          "samplesCounted": 5,
+          "scope": "fresh utilityProcess ready through input IPC, JPEG decode, RGBA deflate, response IPC, exact 64MB parent inflate, full RGBA hash and pixel-oracle checks"
+        },
+        "successfulSampleCount": 5,
+        "oversizeBoundaryRejected": true,
+        "withinWorkerPeakTarget": false
+      },
+      {
+        "fixtureKey": "444",
+        "chromaSubsampling": "444",
+        "inputBytes": 20971520,
+        "inputLimitBytes": 20971520,
+        "inputLimitHeadroomBytes": 0,
+        "inputSha256": "a8bcd9c622a0b66dd503b7fb0e5461fb368fdbef2fa95b8b26a15ecc8523b486",
+        "samples": [
+          {
+            "sampleNumber": 1,
+            "outcome": "success",
+            "pid": 69456,
+            "workerStartupMs": 66.85,
+            "workerDecodeMs": 2016.61,
+            "workerDeflateMs": 1968.96,
+            "parentInflateMs": 310.71,
+            "requestToFullParentRgbaMs": 4948.47,
+            "inputBytes": 20971520,
+            "inputSha256": "a8bcd9c622a0b66dd503b7fb0e5461fb368fdbef2fa95b8b26a15ecc8523b486",
+            "compressedBytes": 52532489,
+            "compressedSha256": "323a65505fff968b610b9aada9e0c491c2a14ba31a6ea8f1d887a694c5f5feb3",
+            "rgbaBytes": 64000000,
+            "rgbaSha256": "f3f55fd20daef6275bc39fbf1cd8774d2675ed154672e0f115804f47c9ea4af3",
+            "decodedRows": 4000,
+            "blockCount": 500,
+            "minBlockStride": 12000,
+            "maxBlockDataBytes": 96000,
+            "pixelOracle": {
+              "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+              "acceptedRgbChannelDifference": 8,
+              "maxAbsoluteRgbDifference": 1,
+              "samples": [
+                {
+                  "x": 0,
+                  "y": 0,
+                  "rgba": [
+                    0,
+                    81,
+                    73,
+                    255
+                  ],
+                  "oracleRgba": [
+                    0,
+                    82,
+                    74,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1,
+                  "y": 1,
+                  "rgba": [
+                    238,
+                    155,
+                    195,
+                    255
+                  ],
+                  "oracleRgba": [
+                    238,
+                    156,
+                    196,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 16,
+                  "y": 16,
+                  "rgba": [
+                    255,
+                    200,
+                    122,
+                    255
+                  ],
+                  "oracleRgba": [
+                    255,
+                    201,
+                    123,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 511,
+                  "y": 511,
+                  "rgba": [
+                    72,
+                    71,
+                    189,
+                    255
+                  ],
+                  "oracleRgba": [
+                    72,
+                    71,
+                    188,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1024,
+                  "y": 1024,
+                  "rgba": [
+                    255,
+                    154,
+                    255,
+                    255
+                  ],
+                  "oracleRgba": [
+                    255,
+                    154,
+                    255,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 1999,
+                  "y": 1999,
+                  "rgba": [
+                    191,
+                    77,
+                    143,
+                    255
+                  ],
+                  "oracleRgba": [
+                    192,
+                    77,
+                    144,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 2000,
+                  "y": 2000,
+                  "rgba": [
+                    184,
+                    160,
+                    60,
+                    255
+                  ],
+                  "oracleRgba": [
+                    184,
+                    160,
+                    60,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 3001,
+                  "y": 2377,
+                  "rgba": [
+                    206,
+                    105,
+                    219,
+                    255
+                  ],
+                  "oracleRgba": [
+                    206,
+                    106,
+                    220,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 3999,
+                  "y": 3999,
+                  "rgba": [
+                    0,
+                    42,
+                    138,
+                    255
+                  ],
+                  "oracleRgba": [
+                    0,
+                    42,
+                    139,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                }
+              ]
+            },
+            "memory": {
+              "workingSetBeforeBytes": 59662336,
+              "privateBeforeBytes": 29663232,
+              "workingSetAfterBytes": 389750784,
+              "privateAfterBytes": 238862336,
+              "peakWorkingSetBytes": 389750784,
+              "sampledPeakPrivateBytes": 417841152,
+              "sampleIntervalMs": 50,
+              "sampleCount": 46
+            },
+            "peakWorkingSetBytes": 389750784,
+            "sampledPeakPrivateBytes": 417841152
+          },
+          {
+            "sampleNumber": 2,
+            "outcome": "success",
+            "pid": 69320,
+            "workerStartupMs": 89.11,
+            "workerDecodeMs": 2066.49,
+            "workerDeflateMs": 1833.44,
+            "parentInflateMs": 319.5,
+            "requestToFullParentRgbaMs": 4802.87,
+            "inputBytes": 20971520,
+            "inputSha256": "a8bcd9c622a0b66dd503b7fb0e5461fb368fdbef2fa95b8b26a15ecc8523b486",
+            "compressedBytes": 52532489,
+            "compressedSha256": "323a65505fff968b610b9aada9e0c491c2a14ba31a6ea8f1d887a694c5f5feb3",
+            "rgbaBytes": 64000000,
+            "rgbaSha256": "f3f55fd20daef6275bc39fbf1cd8774d2675ed154672e0f115804f47c9ea4af3",
+            "decodedRows": 4000,
+            "blockCount": 500,
+            "minBlockStride": 12000,
+            "maxBlockDataBytes": 96000,
+            "pixelOracle": {
+              "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+              "acceptedRgbChannelDifference": 8,
+              "maxAbsoluteRgbDifference": 1,
+              "samples": [
+                {
+                  "x": 0,
+                  "y": 0,
+                  "rgba": [
+                    0,
+                    81,
+                    73,
+                    255
+                  ],
+                  "oracleRgba": [
+                    0,
+                    82,
+                    74,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1,
+                  "y": 1,
+                  "rgba": [
+                    238,
+                    155,
+                    195,
+                    255
+                  ],
+                  "oracleRgba": [
+                    238,
+                    156,
+                    196,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 16,
+                  "y": 16,
+                  "rgba": [
+                    255,
+                    200,
+                    122,
+                    255
+                  ],
+                  "oracleRgba": [
+                    255,
+                    201,
+                    123,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 511,
+                  "y": 511,
+                  "rgba": [
+                    72,
+                    71,
+                    189,
+                    255
+                  ],
+                  "oracleRgba": [
+                    72,
+                    71,
+                    188,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1024,
+                  "y": 1024,
+                  "rgba": [
+                    255,
+                    154,
+                    255,
+                    255
+                  ],
+                  "oracleRgba": [
+                    255,
+                    154,
+                    255,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 1999,
+                  "y": 1999,
+                  "rgba": [
+                    191,
+                    77,
+                    143,
+                    255
+                  ],
+                  "oracleRgba": [
+                    192,
+                    77,
+                    144,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 2000,
+                  "y": 2000,
+                  "rgba": [
+                    184,
+                    160,
+                    60,
+                    255
+                  ],
+                  "oracleRgba": [
+                    184,
+                    160,
+                    60,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 3001,
+                  "y": 2377,
+                  "rgba": [
+                    206,
+                    105,
+                    219,
+                    255
+                  ],
+                  "oracleRgba": [
+                    206,
+                    106,
+                    220,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 3999,
+                  "y": 3999,
+                  "rgba": [
+                    0,
+                    42,
+                    138,
+                    255
+                  ],
+                  "oracleRgba": [
+                    0,
+                    42,
+                    139,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                }
+              ]
+            },
+            "memory": {
+              "workingSetBeforeBytes": 60469248,
+              "privateBeforeBytes": 28659712,
+              "workingSetAfterBytes": 391319552,
+              "privateAfterBytes": 239841280,
+              "peakWorkingSetBytes": 391319552,
+              "sampledPeakPrivateBytes": 313528320,
+              "sampleIntervalMs": 50,
+              "sampleCount": 44
+            },
+            "peakWorkingSetBytes": 391319552,
+            "sampledPeakPrivateBytes": 313528320
+          },
+          {
+            "sampleNumber": 3,
+            "outcome": "success",
+            "pid": 67612,
+            "workerStartupMs": 53.16,
+            "workerDecodeMs": 2082.53,
+            "workerDeflateMs": 1918.96,
+            "parentInflateMs": 328.25,
+            "requestToFullParentRgbaMs": 5016.26,
+            "inputBytes": 20971520,
+            "inputSha256": "a8bcd9c622a0b66dd503b7fb0e5461fb368fdbef2fa95b8b26a15ecc8523b486",
+            "compressedBytes": 52532489,
+            "compressedSha256": "323a65505fff968b610b9aada9e0c491c2a14ba31a6ea8f1d887a694c5f5feb3",
+            "rgbaBytes": 64000000,
+            "rgbaSha256": "f3f55fd20daef6275bc39fbf1cd8774d2675ed154672e0f115804f47c9ea4af3",
+            "decodedRows": 4000,
+            "blockCount": 500,
+            "minBlockStride": 12000,
+            "maxBlockDataBytes": 96000,
+            "pixelOracle": {
+              "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+              "acceptedRgbChannelDifference": 8,
+              "maxAbsoluteRgbDifference": 1,
+              "samples": [
+                {
+                  "x": 0,
+                  "y": 0,
+                  "rgba": [
+                    0,
+                    81,
+                    73,
+                    255
+                  ],
+                  "oracleRgba": [
+                    0,
+                    82,
+                    74,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1,
+                  "y": 1,
+                  "rgba": [
+                    238,
+                    155,
+                    195,
+                    255
+                  ],
+                  "oracleRgba": [
+                    238,
+                    156,
+                    196,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 16,
+                  "y": 16,
+                  "rgba": [
+                    255,
+                    200,
+                    122,
+                    255
+                  ],
+                  "oracleRgba": [
+                    255,
+                    201,
+                    123,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 511,
+                  "y": 511,
+                  "rgba": [
+                    72,
+                    71,
+                    189,
+                    255
+                  ],
+                  "oracleRgba": [
+                    72,
+                    71,
+                    188,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1024,
+                  "y": 1024,
+                  "rgba": [
+                    255,
+                    154,
+                    255,
+                    255
+                  ],
+                  "oracleRgba": [
+                    255,
+                    154,
+                    255,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 1999,
+                  "y": 1999,
+                  "rgba": [
+                    191,
+                    77,
+                    143,
+                    255
+                  ],
+                  "oracleRgba": [
+                    192,
+                    77,
+                    144,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 2000,
+                  "y": 2000,
+                  "rgba": [
+                    184,
+                    160,
+                    60,
+                    255
+                  ],
+                  "oracleRgba": [
+                    184,
+                    160,
+                    60,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 3001,
+                  "y": 2377,
+                  "rgba": [
+                    206,
+                    105,
+                    219,
+                    255
+                  ],
+                  "oracleRgba": [
+                    206,
+                    106,
+                    220,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 3999,
+                  "y": 3999,
+                  "rgba": [
+                    0,
+                    42,
+                    138,
+                    255
+                  ],
+                  "oracleRgba": [
+                    0,
+                    42,
+                    139,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                }
+              ]
+            },
+            "memory": {
+              "workingSetBeforeBytes": 60661760,
+              "privateBeforeBytes": 28839936,
+              "workingSetAfterBytes": 388980736,
+              "privateAfterBytes": 236675072,
+              "peakWorkingSetBytes": 388980736,
+              "sampledPeakPrivateBytes": 310353920,
+              "sampleIntervalMs": 50,
+              "sampleCount": 45
+            },
+            "peakWorkingSetBytes": 388980736,
+            "sampledPeakPrivateBytes": 310353920
+          },
+          {
+            "sampleNumber": 4,
+            "outcome": "success",
+            "pid": 70120,
+            "workerStartupMs": 491.64,
+            "workerDecodeMs": 2273,
+            "workerDeflateMs": 1988.83,
+            "parentInflateMs": 346,
+            "requestToFullParentRgbaMs": 5276.39,
+            "inputBytes": 20971520,
+            "inputSha256": "a8bcd9c622a0b66dd503b7fb0e5461fb368fdbef2fa95b8b26a15ecc8523b486",
+            "compressedBytes": 52532489,
+            "compressedSha256": "323a65505fff968b610b9aada9e0c491c2a14ba31a6ea8f1d887a694c5f5feb3",
+            "rgbaBytes": 64000000,
+            "rgbaSha256": "f3f55fd20daef6275bc39fbf1cd8774d2675ed154672e0f115804f47c9ea4af3",
+            "decodedRows": 4000,
+            "blockCount": 500,
+            "minBlockStride": 12000,
+            "maxBlockDataBytes": 96000,
+            "pixelOracle": {
+              "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+              "acceptedRgbChannelDifference": 8,
+              "maxAbsoluteRgbDifference": 1,
+              "samples": [
+                {
+                  "x": 0,
+                  "y": 0,
+                  "rgba": [
+                    0,
+                    81,
+                    73,
+                    255
+                  ],
+                  "oracleRgba": [
+                    0,
+                    82,
+                    74,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1,
+                  "y": 1,
+                  "rgba": [
+                    238,
+                    155,
+                    195,
+                    255
+                  ],
+                  "oracleRgba": [
+                    238,
+                    156,
+                    196,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 16,
+                  "y": 16,
+                  "rgba": [
+                    255,
+                    200,
+                    122,
+                    255
+                  ],
+                  "oracleRgba": [
+                    255,
+                    201,
+                    123,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 511,
+                  "y": 511,
+                  "rgba": [
+                    72,
+                    71,
+                    189,
+                    255
+                  ],
+                  "oracleRgba": [
+                    72,
+                    71,
+                    188,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1024,
+                  "y": 1024,
+                  "rgba": [
+                    255,
+                    154,
+                    255,
+                    255
+                  ],
+                  "oracleRgba": [
+                    255,
+                    154,
+                    255,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 1999,
+                  "y": 1999,
+                  "rgba": [
+                    191,
+                    77,
+                    143,
+                    255
+                  ],
+                  "oracleRgba": [
+                    192,
+                    77,
+                    144,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 2000,
+                  "y": 2000,
+                  "rgba": [
+                    184,
+                    160,
+                    60,
+                    255
+                  ],
+                  "oracleRgba": [
+                    184,
+                    160,
+                    60,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 3001,
+                  "y": 2377,
+                  "rgba": [
+                    206,
+                    105,
+                    219,
+                    255
+                  ],
+                  "oracleRgba": [
+                    206,
+                    106,
+                    220,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 3999,
+                  "y": 3999,
+                  "rgba": [
+                    0,
+                    42,
+                    138,
+                    255
+                  ],
+                  "oracleRgba": [
+                    0,
+                    42,
+                    139,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                }
+              ]
+            },
+            "memory": {
+              "workingSetBeforeBytes": 60686336,
+              "privateBeforeBytes": 29921280,
+              "workingSetAfterBytes": 391335936,
+              "privateAfterBytes": 240578560,
+              "peakWorkingSetBytes": 391335936,
+              "sampledPeakPrivateBytes": 419549184,
+              "sampleIntervalMs": 50,
+              "sampleCount": 49
+            },
+            "peakWorkingSetBytes": 391335936,
+            "sampledPeakPrivateBytes": 419549184
+          },
+          {
+            "sampleNumber": 5,
+            "outcome": "success",
+            "pid": 70456,
+            "workerStartupMs": 33.74,
+            "workerDecodeMs": 2244.61,
+            "workerDeflateMs": 1883.75,
+            "parentInflateMs": 338.11,
+            "requestToFullParentRgbaMs": 5161.97,
+            "inputBytes": 20971520,
+            "inputSha256": "a8bcd9c622a0b66dd503b7fb0e5461fb368fdbef2fa95b8b26a15ecc8523b486",
+            "compressedBytes": 52532489,
+            "compressedSha256": "323a65505fff968b610b9aada9e0c491c2a14ba31a6ea8f1d887a694c5f5feb3",
+            "rgbaBytes": 64000000,
+            "rgbaSha256": "f3f55fd20daef6275bc39fbf1cd8774d2675ed154672e0f115804f47c9ea4af3",
+            "decodedRows": 4000,
+            "blockCount": 500,
+            "minBlockStride": 12000,
+            "maxBlockDataBytes": 96000,
+            "pixelOracle": {
+              "decoder": "Windows System.Drawing / GDI+ independent JPEG decode",
+              "acceptedRgbChannelDifference": 8,
+              "maxAbsoluteRgbDifference": 1,
+              "samples": [
+                {
+                  "x": 0,
+                  "y": 0,
+                  "rgba": [
+                    0,
+                    81,
+                    73,
+                    255
+                  ],
+                  "oracleRgba": [
+                    0,
+                    82,
+                    74,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1,
+                  "y": 1,
+                  "rgba": [
+                    238,
+                    155,
+                    195,
+                    255
+                  ],
+                  "oracleRgba": [
+                    238,
+                    156,
+                    196,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 16,
+                  "y": 16,
+                  "rgba": [
+                    255,
+                    200,
+                    122,
+                    255
+                  ],
+                  "oracleRgba": [
+                    255,
+                    201,
+                    123,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 511,
+                  "y": 511,
+                  "rgba": [
+                    72,
+                    71,
+                    189,
+                    255
+                  ],
+                  "oracleRgba": [
+                    72,
+                    71,
+                    188,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 1024,
+                  "y": 1024,
+                  "rgba": [
+                    255,
+                    154,
+                    255,
+                    255
+                  ],
+                  "oracleRgba": [
+                    255,
+                    154,
+                    255,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 1999,
+                  "y": 1999,
+                  "rgba": [
+                    191,
+                    77,
+                    143,
+                    255
+                  ],
+                  "oracleRgba": [
+                    192,
+                    77,
+                    144,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 2000,
+                  "y": 2000,
+                  "rgba": [
+                    184,
+                    160,
+                    60,
+                    255
+                  ],
+                  "oracleRgba": [
+                    184,
+                    160,
+                    60,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 0
+                },
+                {
+                  "x": 3001,
+                  "y": 2377,
+                  "rgba": [
+                    206,
+                    105,
+                    219,
+                    255
+                  ],
+                  "oracleRgba": [
+                    206,
+                    106,
+                    220,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                },
+                {
+                  "x": 3999,
+                  "y": 3999,
+                  "rgba": [
+                    0,
+                    42,
+                    138,
+                    255
+                  ],
+                  "oracleRgba": [
+                    0,
+                    42,
+                    139,
+                    255
+                  ],
+                  "maximumAbsoluteRgbDifference": 1
+                }
+              ]
+            },
+            "memory": {
+              "workingSetBeforeBytes": 63119360,
+              "privateBeforeBytes": 31264768,
+              "workingSetAfterBytes": 393969664,
+              "privateAfterBytes": 242151424,
+              "peakWorkingSetBytes": 393969664,
+              "sampledPeakPrivateBytes": 421126144,
+              "sampleIntervalMs": 50,
+              "sampleCount": 49
+            },
+            "peakWorkingSetBytes": 393969664,
+            "sampledPeakPrivateBytes": 421126144
+          }
+        ],
+        "boundaryChecks": [
+          {
+            "inputBytes": 20971521,
+            "limitBytes": 20971520,
+            "expectedError": "fixture_source_size_invalid",
+            "actualError": "fixture_source_size_invalid",
+            "decoderStarted": false
+          }
+        ],
+        "peakWorkingSetBytes": 393969664,
+        "peakWorkingSetMiB": 375.72,
+        "sampledPeakPrivateBytes": 421126144,
+        "sampledPeakPrivateMiB": 401.62,
+        "latency": {
+          "p50Ms": 5016.26,
+          "p95Ms": 5276.39,
+          "maximumMs": 5276.39,
+          "samplesCounted": 5,
+          "scope": "fresh utilityProcess ready through input IPC, JPEG decode, RGBA deflate, response IPC, exact 64MB parent inflate, full RGBA hash and pixel-oracle checks"
+        },
+        "successfulSampleCount": 5,
+        "oversizeBoundaryRejected": true,
+        "withinWorkerPeakTarget": false
+      }
+    ],
+    "parentMemorySamples": 624,
+    "allSamplesComplete": true,
+    "withinWorkerPeakTarget": false
+  },
+  "dependencyFileIntegrity": {
+    "before": {
+      "package.json": "efc8e82a6a51650d07178256cf5fa8b8771140d350c0be15fce1b511bc6d47fd",
+      "pnpm-lock.yaml": "ad2763eb5573aff1ef7931795faeb28a83ca694f6a2638662435d7137b25ff05"
+    },
+    "afterMeasurement": {
+      "package.json": "efc8e82a6a51650d07178256cf5fa8b8771140d350c0be15fce1b511bc6d47fd",
+      "pnpm-lock.yaml": "ad2763eb5573aff1ef7931795faeb28a83ca694f6a2638662435d7137b25ff05"
+    }
+  },
+  "limitations": [
+    "Candidate feasibility evidence only; no installation, production decoder integration, ASAR packaging, or T06 dependency acceptance.",
+    "Inputs are deterministic baseline SOF0 JPEGs at 16 MP, padded with valid APP2 segments to exactly the 20 MiB compressed-source cap; a separate cap+1 request must fail before decode. Only 4:2:0 and 4:4:4 are represented.",
+    "PeakWorkingSet64 is an OS high-water mark for each fresh worker in this environment, not a universal hard cap for all inputs or app states.",
+    "All 10 candidate worker samples exceeded the configured 256 MiB worker peak target: the per-format observed peaks were 394821632 bytes for 4:2:0 and 393969664 bytes for 4:4:4. This candidate therefore fails this measured worker-memory target in the production-shaped IPC path.",
+    "Decoder abort behavior, progressive JPEG, EXIF/ICC/orientation, packaged loading, UI, clipboard, and target-visible paste are outside this probe.",
+    "A successful result cannot close P15, general JPEG memory acceptance, T04 acceptance, or T05 controlled-live acceptance."
+  ],
+  "measurementCompletedAt": "2026-10-05T02:02:26.342Z"
+}
