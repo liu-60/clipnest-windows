@@ -100,7 +100,7 @@ async function runMeasurement() {
 
   await app.whenReady();
   const jpegFixture = IMAGE_FORMAT === "jpeg"
-    ? buildSyntheticJpeg(WIDTH, HEIGHT, JPEG_ENCODER, JPEG_FIXTURE_PATTERN) : null;
+    ? buildSyntheticJpeg(WIDTH, HEIGHT, JPEG_ENCODER, JPEG_FIXTURE_PATTERN, GDI_PIXEL_ROI) : null;
   const encodedBytes = jpegFixture?.bytes ?? buildSyntheticPng(WIDTH, HEIGHT);
   if (encodedBytes.byteLength > 20 * 1024 * 1024) throw new Error("synthetic_image_exceeds_source_limit");
   const imageSha256 = createHash("sha256").update(encodedBytes).digest("hex");
@@ -117,6 +117,7 @@ async function runMeasurement() {
   const pixelOracleChecks = [];
   const wicPixelOracleChecks = [];
   const jpegJsPixelOracleChecks = [];
+  const sourcePixelOracleChecks = [];
   for (let index = 0; index < SAMPLE_COUNT; index++) {
     const requestId = `t04-${IMAGE_FORMAT}-${WIDTH}x${HEIGHT}-${index + 1}`;
     const workerStartedAt = process.hrtime.bigint();
@@ -155,6 +156,9 @@ async function runMeasurement() {
         }
         if (jpegJsPixelOracle) {
           jpegJsPixelOracleChecks.push(compareFullPixels(image.pixels, jpegJsPixelOracle));
+        }
+        if (jpegFixture?.sourceRoiSamples.length) {
+          sourcePixelOracleChecks.push(comparePixelsWithOracle(image.pixels, { samples: jpegFixture.sourceRoiSamples }));
         }
       }
       const memoryAfter = await sampler.snapshot();
@@ -268,7 +272,15 @@ async function runMeasurement() {
       jpegImageBytesBeforeApp2Padding: jpegFixture?.imageBytesBeforePadding ?? null,
       jpegApp2PaddingBytes: jpegFixture?.app2PaddingBytes ?? null,
       jpegSamplingFactors: jpegFixture?.samplingFactors ?? null,
+      syntheticSourceRgbaSha256: jpegFixture?.sourceRgbaSha256 ?? null,
       sha256: imageSha256,
+      syntheticSourceRoiDiagnostic: summarizeSyntheticSourceRoi(
+        jpegFixture,
+        sourcePixelOracleChecks,
+        pixelOracle,
+        wicPixelOracle,
+        jpegJsPixelOracle,
+      ),
       independentPixelOracle: summarizePixelOracle(pixelOracle, pixelOracleChecks, jpegFixture?.samplingFactors),
       independentWicPixelOracle: summarizeWicPixelOracle(
         wicPixelOracle,
@@ -731,6 +743,83 @@ function summarizeWicPixelOracle(oracle, checks, gdiOracle, jpegJsOracle, expect
   };
 }
 
+function summarizeSyntheticSourceRoi(jpegFixture, workerChecks, gdiOracle, wicOracle, jpegJsOracle) {
+  if (!jpegFixture || jpegFixture.sourceRoiSamples.length === 0) {
+    return { status: "NOT_RUN", reason: "T04_GDI_PIXEL_ROI is not enabled" };
+  }
+  const workerSamples = workerChecks[0]?.samples.map((sample) => ({
+    x: sample.x, y: sample.y, rgba: sample.actualRgba,
+  })) ?? [];
+  const jpegJsSamples = jpegJsOracle
+    ? extractRoiSamples(jpegJsOracle.pixels, jpegFixture.sourceRoiSamples) : [];
+  return {
+    status: "DIAGNOSTIC_ONLY",
+    sourceImage: "deterministic synthetic logical RGBA recovered from the encoder bitmap immediately before lossy JPEG encoding",
+    sourceRgbaSha256: jpegFixture.sourceRgbaSha256,
+    jpegEncoder: jpegFixture.encoder,
+    jpegQuality: jpegFixture.quality,
+    sampledRegion: GDI_PIXEL_ROI,
+    comparedPixelCount: jpegFixture.sourceRoiSamples.length,
+    sourceSamples: jpegFixture.sourceRoiSamples,
+    sourceVsWorker: summarizeSourcePixelDifference(jpegFixture.sourceRoiSamples, workerSamples),
+    sourceVsGdiPlus: summarizeSourcePixelDifference(jpegFixture.sourceRoiSamples, gdiOracle?.samples ?? []),
+    sourceVsWic: summarizeSourcePixelDifference(jpegFixture.sourceRoiSamples, wicOracle?.samples ?? []),
+    sourceVsJpegJs: summarizeSourcePixelDifference(jpegFixture.sourceRoiSamples, jpegJsSamples),
+    interpretation: "This compares selected decoder samples with the known synthetic pixels fed to a lossy encoder. It measures reconstruction error for this encoder/fixture, not normative JPEG ground truth or a general fidelity threshold.",
+  };
+}
+
+function extractRoiSamples(pixels, sourceSamples) {
+  return sourceSamples.map(({ x, y }) => {
+    const offset = (y * WIDTH + x) * 4;
+    return { x, y, rgba: [...pixels.subarray(offset, offset + 4)] };
+  });
+}
+
+function summarizeSourcePixelDifference(sourceSamples, decodedSamples) {
+  if (sourceSamples.length === 0 || sourceSamples.length !== decodedSamples.length) {
+    return { status: "NOT_COMPARABLE", sourcePixelCount: sourceSamples.length, decodedPixelCount: decodedSamples.length };
+  }
+  const channelAbsoluteError = [0, 0, 0];
+  let squaredError = 0;
+  let maxRgbDifference = 0;
+  let pixelsOver8 = 0;
+  let pixelsOver16 = 0;
+  let pixelsOver32 = 0;
+  let alphaMismatchCount = 0;
+  for (let index = 0; index < sourceSamples.length; index++) {
+    const source = sourceSamples[index];
+    const decoded = decodedSamples[index];
+    if (source.x !== decoded.x || source.y !== decoded.y || !Array.isArray(decoded.rgba) || decoded.rgba.length !== 4) {
+      return { status: "NOT_COMPARABLE", reason: `source_roi_coordinate_or_pixel_mismatch:${index}` };
+    }
+    const errors = [0, 1, 2].map((channel) => Math.abs(source.rgba[channel] - decoded.rgba[channel]));
+    const pixelMax = Math.max(...errors);
+    errors.forEach((error, channel) => {
+      channelAbsoluteError[channel] += error;
+      squaredError += error * error;
+    });
+    maxRgbDifference = Math.max(maxRgbDifference, pixelMax);
+    if (pixelMax > 8) pixelsOver8++;
+    if (pixelMax > 16) pixelsOver16++;
+    if (pixelMax > 32) pixelsOver32++;
+    if (source.rgba[3] !== decoded.rgba[3]) alphaMismatchCount++;
+  }
+  const comparedChannels = sourceSamples.length * 3;
+  return {
+    status: "DIAGNOSTIC_ONLY",
+    comparedPixels: sourceSamples.length,
+    meanAbsoluteChannelError: round(channelAbsoluteError.reduce((sum, value) => sum + value, 0) / comparedChannels),
+    meanAbsoluteErrorByChannel: channelAbsoluteError.map((value) => round(value / sourceSamples.length)),
+    rootMeanSquareChannelError: round(Math.sqrt(squaredError / comparedChannels)),
+    maxRgbDifference,
+    pixelsOver8,
+    pixelsOver16,
+    pixelsOver32,
+    alphaMismatchCount,
+  };
+}
+
 function buildSyntheticPng(width, height) {
   const rowBytes = width * 4;
   const raw = Buffer.alloc((rowBytes + 1) * height);
@@ -767,7 +856,7 @@ function buildSyntheticPng(width, height) {
   }
 }
 
-function buildSyntheticJpeg(width, height, encoder, pattern) {
+function buildSyntheticJpeg(width, height, encoder, pattern, sourceRoi) {
   const pixels = Buffer.allocUnsafe(width * height * 4);
   if (pattern === "chroma-edge-phases") {
     for (let y = 0; y < height; y++) {
@@ -817,6 +906,18 @@ function buildSyntheticJpeg(width, height, encoder, pattern) {
   const nativeBitmap = encoder === "native-image"
     ? require("electron").nativeImage.createFromBitmap(pixels, { width, height })
     : null;
+  const sourceImage = nativeBitmap ? require("pngjs").PNG.sync.read(nativeBitmap.toPNG()) : null;
+  if (sourceImage) {
+    assert.equal(sourceImage.width, width, "encoder source width matches synthetic fixture");
+    assert.equal(sourceImage.height, height, "encoder source height matches synthetic fixture");
+  }
+  const sourcePixels = sourceImage?.data ?? pixels;
+  const sourceRgbaSha256 = createHash("sha256").update(sourcePixels).digest("hex");
+  const sourceRoiSamples = sourceRoi ? buildGdiPixelRoiPoints(sourceRoi).map(({ x, y }) => {
+    const offset = (y * width + x) * 4;
+    return { x, y, rgba: [...sourcePixels.subarray(offset, offset + 4)] };
+  }) : [];
+
   let quality = null;
   let imageBytes = null;
   for (const candidate of qualities) {
@@ -849,7 +950,7 @@ function buildSyntheticJpeg(width, height, encoder, pattern) {
 
   const bytes = Buffer.concat([imageBytes.subarray(0, 2), ...segments, imageBytes.subarray(2)]);
   return { bytes, quality, encoder, pattern, imageBytesBeforePadding: imageBytes.byteLength, app2PaddingBytes,
-    samplingFactors: readJpegSamplingFactors(imageBytes) };
+    samplingFactors: readJpegSamplingFactors(imageBytes), sourceRgbaSha256, sourceRoiSamples };
 }
 
 function readJpegSamplingFactors(bytes) {
