@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "check": "existing-current-asar-16mp-sof0-444-streaming-worker-smoke",
+  "result": "PASS_WITH_LIMITATIONS",
+  "verificationDate": "2026-10-05",
+  "branch": "codex/m0-latency",
+  "source": {
+    "commit": "d117540a961c637316132903a0e5303b9d70872d",
+    "workingTreeWasDirty": true,
+    "note": "The working tree contained progress bookkeeping and this probe's uncommitted test/evidence files. Production worker, decoder, streaming decoder, and dependency hashes matched the previously built ASAR before and after this run.",
+    "testScript": {
+      "path": "tests/tasks/T04/run-packaged-asar-16mp-jpeg-smoke.cjs",
+      "bytes": 11312,
+      "sha256": "569b64320646656a0fd249924c8cc09963a724255cdef3a75777af97cbfc4a14"
+    },
+    "productionSources": [
+      { "path": "src/main/clipboard/image-worker.ts", "sha256": "ffd3b0ca7d1ab31f7d84e4ee30e89dbadb2c1c334bebc50d40374041c7d5532d" },
+      { "path": "src/main/clipboard/image-decoder.ts", "sha256": "fa467e97c5840a76338fc7fc7c8fd876666473636051433dc7ff8afb1c9e9886" },
+      { "path": "src/main/clipboard/jpeg-baseline-stream.ts", "sha256": "e490c6e4209aec7358be50577d0fedf1e6cd12bbe2ebef801806d6f983c6c0db" }
+    ]
+  },
+  "environment": {
+    "os": "Windows 11 Enterprise 10.0.22631",
+    "architecture": "x64",
+    "node": "v24.16.0",
+    "electron": "40.10.2",
+    "electronProcessType": "browser"
+  },
+  "package": {
+    "rebuiltForThisProbe": false,
+    "asarPath": "D:/ClipNest-work/.codex-temp-t04-asar-20261005-01/output/win-unpacked/resources/app.asar",
+    "packageVersion": "1.1.4-local.20261005.t04-asar-smoke",
+    "asarBytes": 30660980,
+    "asarSha256BeforeRun": "82e0ca092cafdaeb6881b09fe264f795252332a124338d651f17f5228dfa9a82",
+    "asarSha256AfterRun": "82e0ca092cafdaeb6881b09fe264f795252332a124338d651f17f5228dfa9a82",
+    "revalidationBeforeAndAfter": {
+      "command": "node D:/ClipNest-work/.codex-temp-t04-asar-20261005-01/verify-asar.cjs",
+      "status": "PASS",
+      "productionDependenciesMatchSourceManifest": true,
+      "archiveEntriesMatchCurrentGeneratedFilesByteForByte": [
+        "dist-electron/main/clipboard/image-worker.js",
+        "dist-electron/main/clipboard/image-decoder.js",
+        "dist-electron/main/clipboard/jpeg-baseline-stream.js",
+        "node_modules/jpeg-js/index.js"
+      ]
+    }
+  },
+  "fixture": {
+    "dimensions": "4000x4000",
+    "pixelCount": 16000000,
+    "encodedBytes": 20971520,
+    "jpegEncoder": "ASAR-pinned jpeg-js 0.4.4",
+    "quality": 74,
+    "imageBytesBeforeApp2Padding": 19866368,
+    "app2PaddingBytes": 1105152,
+    "samplingFactors": [
+      { "horizontal": 1, "vertical": 1 },
+      { "horizontal": 1, "vertical": 1 },
+      { "horizontal": 1, "vertical": 1 }
+    ],
+    "format": "8-bit three-component SOF0 baseline 4:4:4",
+    "generatorSource": {
+      "path": "tests/tasks/T04/run-image-preparation-16mp-default-deadline-5-sample.cjs",
+      "sha256": "500ad2d7ee3da43376dcbe8b79572c870eb8fc7050ab111d72fefa88634fdf15"
+    },
+    "sha256": "5f5178ce761193b569130af082740669cd16071de9ea733aa8968f4f8e9dc6a3",
+    "matchesExistingFiveSampleFixture": true,
+    "content": "Deterministic xorshift synthetic image with valid APP2 padding; no user data."
+  },
+  "smoke": {
+    "command": "node D:/ClipNest-work/.codex-temp-t04-asar-20261005-01/run-smoke.cjs",
+    "harness": "Existing hidden Electron harness; app.userData points inside the task-specific temp directory and invokes the new test script against CLIPNEST_ASAR_PATH.",
+    "exitCode": 0,
+    "stderr": "",
+    "tempRootRealPathCheckPassed": true,
+    "fixtureCreateMode": "wx (exclusive create)",
+    "fixtureExistedBeforeRun": false,
+    "fixtureRemovedAfterRun": true,
+    "workerModulePath": "app.asar/dist-electron/main/clipboard/image-worker.js",
+    "jpegJsModulePath": "app.asar/node_modules/jpeg-js/index.js",
+    "productionRoute": "ASAR-loaded createUtilityProcessImageWorker -> real Electron utilityProcess -> production decodeProductionImage -> decodeLargeBaselineJpeg streaming SOF0 route",
+    "streamingRouteEvidence": {
+      "diagnosticSinkEnabled": true,
+      "jpegStreamPlanParseMs": 0.83,
+      "jpegHuffmanIdctWriteMs": 1849.32,
+      "assertionsPassed": true
+    },
+    "output": {
+      "dimensions": "4000x4000",
+      "bytes": 64000000,
+      "sha256": "f6f1c8619e4adc31a55adc532c5219ab7408bca3cafdcf677d0dde2a0fce83dc",
+      "matchesKnownFullFrameValidatedRgbaHash": true,
+      "referenceEvidence": "docs/evidence/T04/image-preparation-16mp-default-deadline-huffman-fast4-repeat2-5-sample.json"
+    },
+    "utilityProcessResponseTypes": { "decoded_chunk": 62, "decoded_end": 1 },
+    "diagnosticTimingsMs": {
+      "workerColdStartMs": 227.93,
+      "mainChunkAssemblyMs": 42.28,
+      "workerDecodeMs": 2177.83,
+      "workerChunkSendAckMs": 334.38,
+      "jpegPreflightParseMs": 52.62,
+      "jpegStreamPlanParseMs": 0.83,
+      "jpegHuffmanIdctWriteMs": 1849.32,
+      "jpegHuffmanDecodeSampledMs": 12.2,
+      "jpegInverseDctSampledMs": 4.25,
+      "jpegBandWriteSampledMs": 1.49,
+      "jpegRenderMs": 272.59
+    },
+    "workerExit": { "code": 0 },
+    "workerShutdownBoundMs": 10000,
+    "workerShutdownCompletedWithinBound": true,
+    "requestToFullResponseMs": 2774.48,
+    "imagePreparationServiceUsed": false,
+    "selectionDeadlineEnforced": false,
+    "browserWindowCreated": false,
+    "systemClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "nativeHelperInvoked": false
+  },
+  "limitations": [
+    "This is one direct utilityProcess worker sample. It does not run ImagePreparationService and does not test its 3000 ms selection preparation deadline. Diagnostic timing was enabled to prove the streaming route and can affect measured duration.",
+    "The current run checks its RGBA output against the previously established full-frame validated SHA-256; it does not compute a fresh independent color oracle during this smoke.",
+    "Only this synthetic SOF0 4:4:4 layout was run. This does not resolve SOF0 4:2:0 fidelity, other image formats, broad memory bounds, or full T04 acceptance."
+  ]
+}
