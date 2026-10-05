@@ -104,6 +104,19 @@ function truncatedJpegSegment(marker, payload, missingBytes = 2) {
 function jpegWithSegments(frame, segments) {
   return Buffer.concat([frame, ...segments, Buffer.from([0xff, 0xd9])]);
 }
+function jpegWithCommentBytes(encoded, payloadBytes) {
+  const scanMarker = Buffer.from([0xff, 0xda]);
+  const scanOffset = encoded.indexOf(scanMarker);
+  assert.notEqual(scanOffset, -1, "fixture should contain an SOS marker");
+  const comments = [];
+  let remaining = payloadBytes;
+  while (remaining > 0) {
+    const length = Math.min(remaining, 65_533);
+    comments.push(jpegSegment(0xfe, Buffer.alloc(length)));
+    remaining -= length;
+  }
+  return Buffer.concat([encoded.subarray(0, scanOffset), ...comments, encoded.subarray(scanOffset)]);
+}
 function simpleBaselineJpeg({
   width,
   height,
@@ -526,6 +539,19 @@ test("JPEG metadata allocations are bounded before decode", async () => {
   await assert.rejects(decode(request("jpeg", jpegWithSegments(frame, excessiveSegments), 32, 32)), /image_worker_capacity_exceeded/);
 
   await assert.rejects(decode(request("jpeg", jpegSof(32, 32, [0x11, 0x11]), 32, 32)), /image_format_unsupported/);
+});
+
+test("JPEG COM comment limit accepts exactly one MiB and rejects the next byte", async () => {
+  const base = simpleBaselineJpeg({ width: 8, height: 8, sampling: [0x11] });
+  const exactLimit = jpegWithCommentBytes(base, 1024 * 1024);
+  const image = await decode(request("jpeg", exactLimit, 8, 8));
+  assert.deepEqual([image.width, image.height], [8, 8]);
+  for (let offset = 0; offset < image.pixels.length; offset += 4) {
+    assert.deepEqual([...image.pixels.subarray(offset, offset + 4)], [128, 128, 128, 255]);
+  }
+
+  const overLimit = jpegWithCommentBytes(base, 1024 * 1024 + 1);
+  await assert.rejects(decode(request("jpeg", overLimit, 8, 8)), /image_worker_capacity_exceeded/);
 });
 
 test("decoder handles already-aborted requests and invalid format/signature without output", async () => {

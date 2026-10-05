@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "PASS_SYNTHETIC_UNIT_REGRESSION",
+  "checkedDate": "2026-10-05",
+  "source": {
+    "commit": "c4a34799bb02fb0658d48a2bdafcd4fa62d2286b",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "changedFiles": {
+      "tests/tasks/T04/clipboard-image-decoder.test.cjs": "58b610cfd9ba96aaaf5fcd2c159dd9d469aac42ec4848ce8253e32651397bc78"
+    }
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "nodeVersion": "v24.16.0",
+    "pnpmVersion": "11.19.0"
+  },
+  "scope": {
+    "productionSourceChanged": false,
+    "fixture": "synthetic valid 8x8 grayscale SOF0 baseline JPEG with COM segments inserted before SOS; no clipboard, window, helper, package, or physical input",
+    "commentPayloads": {
+      "exactLimitBytes": 1048576,
+      "overLimitBytes": 1048577,
+      "segmentPayloadMaximumBytes": 65533,
+      "insertionPoint": "before SOS"
+    },
+    "assertions": [
+      "The decoder accepts a valid image whose cumulative COM payload is exactly 1 MiB and returns the expected 8x8 opaque gray pixels.",
+      "The decoder rejects cumulative COM payload of 1 MiB plus one byte with image_worker_capacity_exceeded."
+    ]
+  },
+  "validation": {
+    "command": "pnpm test:unit -- clipboard-image-decoder.test.cjs",
+    "result": "PASS",
+    "buildMain": "PASS",
+    "tests": 29,
+    "passed": 29,
+    "failed": 0,
+    "skipped": 0
+  },
+  "limitations": [
+    "This synthetic fixture verifies the cumulative COM byte threshold only; it does not establish limits for every JPEG metadata marker or a broad JPEG corpus.",
+    "The result does not establish a hard memory bound, packaged behavior, product deadline, or complete T04 acceptance."
+  ],
+  "sideEffects": {
+    "desktopClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "helperRun": false,
+    "packageBuilt": false,
+    "productionSourceChanged": false
+  }
+}
