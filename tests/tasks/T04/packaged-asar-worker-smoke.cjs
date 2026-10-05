@@ -32,7 +32,8 @@ app.whenReady().then(async () => {
   assert.deepEqual([result.width, result.height, result.pixels.byteLength], [width, height, pixels.byteLength]);
   assert.ok(Buffer.from(result.pixels.buffer, result.pixels.byteOffset, result.pixels.byteLength).equals(pixels), 'every decoded pixel matches the expected RGBA buffer');
   const elapsedMs = Number(process.hrtime.bigint() - startedAt) / 1e6;
-  assert.ok(responseTypes.includes('decoded_compressed'), `expected compressed IPC response, got ${responseTypes.join(',')}`);
+  assert.ok(responseTypes.includes('decoded_chunk'), `expected raw pixel chunks, got ${responseTypes.join(',')}`);
+  assert.ok(responseTypes.includes('decoded_end'), `expected validated chunk terminator, got ${responseTypes.join(',')}`);
   await worker.dispose();
   clearTimeout(watchdog);
   console.log(JSON.stringify({
@@ -47,7 +48,7 @@ app.whenReady().then(async () => {
     decodedCacheThresholdBytes: 32 * 1024 * 1024,
     allPixelsExact: true,
     elapsedMs: Number(elapsedMs.toFixed(2)),
-    compressedIpcObserved: true,
+    chunkedIpcObserved: true,
     clipboardContentRead: false,
     clipboardWritten: false,
     inputSent: false,

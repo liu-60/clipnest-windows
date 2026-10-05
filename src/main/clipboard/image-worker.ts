@@ -1,8 +1,7 @@
 import type { UtilityProcess } from "electron";
 import { join } from "node:path";
-import { createInflate, deflateSync } from "node:zlib";
 
-const IMAGE_INFLATE_CHUNK_BYTES = 1024 * 1024;
+const IMAGE_RESPONSE_CHUNK_BYTES = 1024 * 1024;
 
 export const IMAGE_LIMITS = Object.freeze({
   sourceBytes: 20 * 1024 * 1024,
@@ -33,17 +32,44 @@ export interface ImageDecodeWorker {
 export interface ImageWorkerEndpoint {
   onMessage(listener: (message: unknown) => void): () => void;
   postMessage(message: { type: "decoded"; requestId: string; image: DecodedImage;
-    stageTimings?: { decodeMs: number; deflateMs?: number } } |
+    stageTimings?: { decodeMs: number } } |
+    { type: "decoded_chunk"; requestId: string; seq: number; pixels: Uint8Array } |
+    { type: "decoded_end"; requestId: string; width: number; height: number; chunkCount: number;
+      byteLength: number; stageTimings?: { decodeMs: number; chunkSendMs: number } } |
     { type: "failed"; requestId: string; reason: string }): void;
+}
+
+interface ActiveImageJob {
+  id: string;
+  controller: AbortController;
+  image: DecodedImage | null;
+  nextChunkSeq: number;
+  awaitingAck: number | null;
+  collectTimings: boolean;
+  decodeStartedAt: number;
+  chunkSendStartedAt: number;
 }
 
 /** Shared worker protocol is testable with a decoder injected by the fixture. */
 export function installImageWorkerRuntime(endpoint: ImageWorkerEndpoint, decoder: ImageDecoder): () => void {
-  let active: { id: string; controller: AbortController } | null = null;
+  let active: ActiveImageJob | null = null;
   let disposed = false;
   let removeListener: () => void = () => {};
   removeListener = endpoint.onMessage((raw) => {
-    if (!isRecord(raw) || disposed || raw.type !== "decode" || typeof raw.requestId !== "string") return;
+    if (!isRecord(raw) || disposed) return;
+    if (raw.type === "decoded_chunk_ack") {
+      const job = active;
+      if (!job) return;
+      if (raw.requestId !== job.id || !Number.isSafeInteger(raw.seq) || raw.seq !== job.awaitingAck) {
+        failJob(job, "image_worker_protocol_invalid");
+        return;
+      }
+      job.awaitingAck = null;
+      try { sendNextChunk(job); }
+      catch { failJob(job, "image_worker_send_failed"); }
+      return;
+    }
+    if (raw.type !== "decode" || typeof raw.requestId !== "string") return;
     const input = raw.input;
     if (!isDecodeInput(input)) {
       endpoint.postMessage({ type: "failed", requestId: raw.requestId, reason: "image_request_invalid" });
@@ -53,26 +79,67 @@ export function installImageWorkerRuntime(endpoint: ImageWorkerEndpoint, decoder
       endpoint.postMessage({ type: "failed", requestId: raw.requestId, reason: "image_worker_busy" });
       return;
     }
-    const job = { id: raw.requestId, controller: new AbortController() };
-    active = job;
     const collectTimings = process.env?.T04_WORKER_STAGE_TIMING === "1";
-    const decodeStartedAt = collectTimings ? performance.now() : 0;
+    const job: ActiveImageJob = { id: raw.requestId, controller: new AbortController(),
+      image: null, nextChunkSeq: 0, awaitingAck: null, collectTimings,
+      decodeStartedAt: collectTimings ? performance.now() : 0, chunkSendStartedAt: 0 };
+    active = job;
     void Promise.resolve().then(() => decoder(input, job.controller.signal)).then((image) => {
       if (disposed || active !== job || job.controller.signal.aborted) return;
       if (!isDecodedImage(image) || image.width !== input.width || image.height !== input.height ||
           image.pixels.byteLength !== input.width * input.height * 4) {
-        endpoint.postMessage({ type: "failed", requestId: job.id, reason: "image_decoded_invalid" });
-      } else endpoint.postMessage({
-        type: "decoded", requestId: job.id, image,
-        ...(collectTimings ? { stageTimings: { decodeMs: roundTiming(performance.now() - decodeStartedAt) } } : {}),
-      });
+        failJob(job, "image_decoded_invalid");
+        return;
+      }
+      if (image.pixels.byteLength <= IMAGE_LIMITS.decodedCacheBytes) {
+        endpoint.postMessage({
+          type: "decoded", requestId: job.id, image,
+          ...(job.collectTimings ? { stageTimings: { decodeMs: roundTiming(performance.now() - job.decodeStartedAt) } } : {}),
+        });
+        if (active === job) active = null;
+        return;
+      }
+      job.image = image;
+      job.chunkSendStartedAt = job.collectTimings ? performance.now() : 0;
+      sendNextChunk(job);
     }).catch((error: unknown) => {
-      if (!disposed && active === job) endpoint.postMessage({
-        type: "failed", requestId: job.id, reason: errorReason(error),
-      });
-    }).finally(() => { if (active === job) active = null; });
+      if (!disposed && active === job) failJob(job, errorReason(error));
+    });
   });
   return () => { disposed = true; active?.controller.abort(); removeListener(); };
+
+  function sendNextChunk(job: ActiveImageJob): void {
+    if (active !== job || !job.image) return;
+    const byteLength = job.image.pixels.byteLength;
+    const chunkCount = Math.ceil(byteLength / IMAGE_RESPONSE_CHUNK_BYTES);
+    if (job.nextChunkSeq >= chunkCount) {
+      endpoint.postMessage({
+        type: "decoded_end", requestId: job.id, width: job.image.width, height: job.image.height,
+        chunkCount, byteLength,
+        ...(job.collectTimings ? { stageTimings: {
+          decodeMs: roundTiming(job.chunkSendStartedAt - job.decodeStartedAt),
+          chunkSendMs: roundTiming(performance.now() - job.chunkSendStartedAt),
+        } } : {}),
+      });
+      active = null;
+      return;
+    }
+    const seq = job.nextChunkSeq++;
+    const offset = seq * IMAGE_RESPONSE_CHUNK_BYTES;
+    // Buffer.slice() is a view and can retain/clone the full frame's backing
+    // store. Copy into an exactly sized chunk so IPC remains genuinely bounded.
+    const pixels = Uint8Array.from(job.image.pixels.subarray(offset,
+      Math.min(offset + IMAGE_RESPONSE_CHUNK_BYTES, byteLength)));
+    job.awaitingAck = seq;
+    endpoint.postMessage({ type: "decoded_chunk", requestId: job.id, seq, pixels });
+  }
+
+  function failJob(job: ActiveImageJob, reason: string): void {
+    if (active !== job) return;
+    active = null;
+    job.controller.abort();
+    endpoint.postMessage({ type: "failed", requestId: job.id, reason });
+  }
 }
 
 /** Explicit failing fixture retained for tests of unavailable decoder handling. */
@@ -88,8 +155,8 @@ class UtilityImageWorker implements ImageDecodeWorker {
   private child: UtilityProcess | null = null;
   private retiringChild: UtilityProcess | null = null;
   private pending: { id: string; width: number; height: number; signal: AbortSignal; abort: () => void;
+    expectedBytes: number; nextChunkSeq: number; receivedBytes: number; pixels: Buffer | null;
     resolve: (image: DecodedImage) => void; reject: (error: Error) => void } | null = null;
-  private inflater: ReturnType<typeof createInflate> | null = null;
   private disposed = false;
 
   decode(input: ImageDecodeInput, signal: AbortSignal): Promise<DecodedImage> {
@@ -109,13 +176,15 @@ class UtilityImageWorker implements ImageDecodeWorker {
         try { child?.kill(); } catch { /* Retire the worker and fail closed. */ }
         this.finish(error);
       };
-      this.pending = { id: input.jobId, width: input.width, height: input.height, signal, abort, resolve, reject };
+      this.pending = { id: input.jobId, width: input.width, height: input.height, signal, abort,
+        expectedBytes: input.width * input.height * 4, nextChunkSeq: 0, receivedBytes: 0, pixels: null,
+        resolve, reject };
       signal.addEventListener("abort", abort, { once: true });
       try {
         if (signal.aborted) abort();
         else this.child?.postMessage({ type: "decode", requestId: input.jobId, input });
       }
-      catch { this.finish(new Error("image_worker_send_failed")); }
+      catch { this.retire(new Error("image_worker_send_failed")); }
     });
   }
 
@@ -147,74 +216,80 @@ class UtilityImageWorker implements ImageDecodeWorker {
   }
 
   private onMessage(raw: unknown): void {
-    if (!isRecord(raw) || typeof raw.requestId !== "string" || !this.pending || raw.requestId !== this.pending.id) return;
-    if (raw.type === "failed" && typeof raw.reason === "string") this.finish(new Error(raw.reason));
-    else if (raw.type === "decoded" && isDecodedImage(raw.image) &&
-        raw.image.width === this.pending.width && raw.image.height === this.pending.height &&
-        raw.image.pixels.byteLength === this.pending.width * this.pending.height * 4 &&
-        raw.image.pixels.byteLength <= IMAGE_LIMITS.decodedCacheBytes) this.finish(undefined, raw.image);
-    else if (raw.type === "decoded" || raw.type === "decoded_compressed") {
-      if (raw.type === "decoded_compressed") this.onCompressedMessage(raw);
-      else this.finish(new Error("image_worker_response_invalid"));
-    }
-    else this.finish(new Error("image_worker_response_invalid"));
-  }
-
-  private onCompressedMessage(raw: Record<string, unknown>): void {
-    const pending = this.pending;
-    if (!pending) return;
-    const expectedBytes = pending.width * pending.height * 4;
-    const compressedPixels = raw.compressedPixels;
-    if (raw.width !== pending.width || raw.height !== pending.height || raw.uncompressedBytes !== expectedBytes ||
-        !(compressedPixels instanceof Uint8Array) || compressedPixels.byteLength === 0 ||
-        compressedPixels.byteLength > expectedBytes + 64 * 1024) {
-      this.finish(new Error("image_worker_response_invalid"));
+    if (!this.pending) return;
+    if (!isRecord(raw) || typeof raw.requestId !== "string") {
+      this.retire(new Error("image_worker_response_invalid"));
       return;
     }
-    const source = Buffer.from(compressedPixels.buffer, compressedPixels.byteOffset, compressedPixels.byteLength);
-    const inflater = createInflate({ chunkSize: IMAGE_INFLATE_CHUNK_BYTES });
-    const pixels = Buffer.allocUnsafe(expectedBytes);
-    let outputBytes = 0;
-    this.inflater = inflater;
-    inflater.on("data", (chunk: Buffer) => {
-      if (this.pending !== pending) return;
-      if (outputBytes + chunk.byteLength > expectedBytes) {
-        this.inflater = null;
-        inflater.destroy();
-        this.finish(new Error("image_worker_response_invalid"));
-        return;
-      }
-      chunk.copy(pixels, outputBytes);
-      outputBytes += chunk.byteLength;
-    });
-    inflater.once("error", () => {
-      if (this.pending !== pending) return;
-      this.inflater = null;
-      this.finish(new Error("image_worker_response_invalid"));
-    });
-    inflater.once("end", () => {
-      if (this.pending !== pending) return;
-      this.inflater = null;
-      if (outputBytes !== expectedBytes) {
-        this.finish(new Error("image_worker_response_invalid"));
-        return;
-      }
-      this.finish(undefined, { width: pending.width, height: pending.height, pixels });
-    });
-    inflater.end(source);
+    // A late response from a completed request must not poison the worker's
+    // next active request. Matching request IDs still receive strict checks.
+    if (raw.requestId !== this.pending.id) return;
+    if (raw.type === "failed" && typeof raw.reason === "string" && /^image_[a-z0-9_]+$/.test(raw.reason)) {
+      if (raw.reason === "image_worker_protocol_invalid") this.retire(new Error(raw.reason));
+      else this.finish(new Error(raw.reason));
+    }
+    else if (raw.type === "decoded") this.onDecodedMessage(raw);
+    else if (raw.type === "decoded_chunk") this.onDecodedChunk(raw);
+    else if (raw.type === "decoded_end") this.onDecodedEnd(raw);
+    else this.retire(new Error("image_worker_response_invalid"));
+  }
+
+  private onDecodedMessage(raw: Record<string, unknown>): void {
+    const pending = this.pending;
+    if (!pending || !isDecodedImage(raw.image) || raw.image.width !== pending.width ||
+        raw.image.height !== pending.height || raw.image.pixels.byteLength !== pending.expectedBytes ||
+        raw.image.pixels.byteLength > IMAGE_LIMITS.decodedCacheBytes) {
+      this.retire(new Error("image_worker_response_invalid"));
+      return;
+    }
+    this.finish(undefined, raw.image);
+  }
+
+  private onDecodedChunk(raw: Record<string, unknown>): void {
+    const pending = this.pending;
+    const chunk = raw.pixels;
+    if (!pending || pending.expectedBytes <= IMAGE_LIMITS.decodedCacheBytes ||
+        !Number.isSafeInteger(raw.seq) || raw.seq !== pending.nextChunkSeq ||
+        !(chunk instanceof Uint8Array) || chunk.byteLength === 0 || chunk.byteLength > IMAGE_RESPONSE_CHUNK_BYTES ||
+        chunk.byteLength !== Math.min(IMAGE_RESPONSE_CHUNK_BYTES, pending.expectedBytes - pending.receivedBytes) ||
+        pending.receivedBytes + chunk.byteLength > pending.expectedBytes) {
+      this.retire(new Error("image_worker_response_invalid"));
+      return;
+    }
+    if (!pending.pixels) pending.pixels = Buffer.allocUnsafe(pending.expectedBytes);
+    Buffer.from(chunk.buffer, chunk.byteOffset, chunk.byteLength).copy(pending.pixels, pending.receivedBytes);
+    pending.receivedBytes += chunk.byteLength;
+    pending.nextChunkSeq++;
+    try { this.child?.postMessage({ type: "decoded_chunk_ack", requestId: pending.id, seq: raw.seq as number }); }
+    catch { this.retire(new Error("image_worker_send_failed")); }
+  }
+
+  private onDecodedEnd(raw: Record<string, unknown>): void {
+    const pending = this.pending;
+    if (!pending || pending.expectedBytes <= IMAGE_LIMITS.decodedCacheBytes ||
+        raw.width !== pending.width || raw.height !== pending.height || raw.byteLength !== pending.expectedBytes ||
+        raw.chunkCount !== pending.nextChunkSeq || pending.receivedBytes !== pending.expectedBytes || !pending.pixels) {
+      this.retire(new Error("image_worker_response_invalid"));
+      return;
+    }
+    this.finish(undefined, { width: pending.width, height: pending.height, pixels: pending.pixels });
   }
 
   private finish(error?: Error, image?: DecodedImage): void {
     const pending = this.pending;
     if (!pending) return;
     this.pending = null;
-    const inflater = this.inflater;
-    this.inflater = null;
-    inflater?.destroy();
     pending.signal.removeEventListener("abort", pending.abort);
     if (error) pending.reject(error);
     else if (image) pending.resolve(image);
     else pending.reject(new Error("image_worker_response_invalid"));
+  }
+
+  private retire(error: Error): void {
+    const child = this.child;
+    if (child) this.retiringChild = child;
+    this.finish(error);
+    try { child?.kill(); } catch { /* Retire the process even if termination reports an error. */ }
   }
 }
 
@@ -229,31 +304,7 @@ function installProductionWorkerEntry(): void {
       return () => parentPort.off("message", handler);
     },
     postMessage(message) {
-      if (message.type !== "decoded" || message.image.pixels.byteLength <= IMAGE_LIMITS.decodedCacheBytes) {
-        parentPort.postMessage(message);
-        return;
-      }
-      const maxCompressedBytes = message.image.pixels.byteLength + 64 * 1024;
-      const deflateStartedAt = message.stageTimings ? performance.now() : 0;
-      const compressedPixels = deflateSync(message.image.pixels, {
-        level: 1,
-        maxOutputLength: maxCompressedBytes,
-        chunkSize: Math.min(maxCompressedBytes, 8 * 1024 * 1024),
-      });
-      parentPort.postMessage({
-        type: "decoded_compressed",
-        requestId: message.requestId,
-        width: message.image.width,
-        height: message.image.height,
-        uncompressedBytes: message.image.pixels.byteLength,
-        compressedPixels,
-        ...(message.stageTimings ? {
-          stageTimings: {
-            ...message.stageTimings,
-            deflateMs: roundTiming(performance.now() - deflateStartedAt),
-          },
-        } : {}),
-      });
+      parentPort.postMessage(message);
     },
   }, decodeProductionImage);
 }
