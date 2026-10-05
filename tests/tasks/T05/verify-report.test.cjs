@@ -407,6 +407,15 @@ test("root PASS recomputes rollback version and hash identity", (t) => {
   assert.ok(
     !collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_IDENTITY_REQUIRED"),
   );
+  assert.ok(
+    !collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_ARTIFACT_ALIAS"),
+  );
+  const samePathReport = clone(report);
+  samePathReport.packageAndRollback.rollback.rollbackPath =
+    samePathReport.packageAndRollback.rollback.priorPath;
+  assert.ok(
+    collectReportErrors(samePathReport, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_ARTIFACT_ALIAS"),
+  );
   const escapedRollbackPath = clone(report);
   escapedRollbackPath.packageAndRollback.rollback.rollbackPath = "../outside/clipnest-helper.exe";
   assert.ok(
@@ -426,6 +435,49 @@ test("root PASS recomputes rollback version and hash identity", (t) => {
       collectReportErrors(forged, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_IDENTITY_REQUIRED"),
     );
   }
+});
+
+test("root PASS rejects rollback paths that are internal symlink aliases", (t) => {
+  const artifact = createArtifactFixture(t);
+  const helperBytes = Buffer.from("synthetic prior helper bytes");
+  const priorPath = "rollback/prior-helper.exe";
+  const priorSha256 = artifact.write(priorPath, helperBytes);
+  const aliasPath = path.join(artifact.root, "rollback-alias");
+  try {
+    fs.symlinkSync(path.join(artifact.root, "rollback"), aliasPath, "junction");
+  } catch (error) {
+    if (["EPERM", "EACCES", "ENOTSUP", "EINVAL"].includes(error.code)) {
+      t.skip(`directory symlink creation is unavailable (${error.code})`);
+      return;
+    }
+    throw error;
+  }
+
+  const report = clone(example);
+  report.status = "PASS";
+  report.dependencyGate = { T03: "accepted", T04: "accepted" };
+  Object.assign(report.packageAndRollback.rollback, {
+    result: "PASS",
+    priorPath,
+    priorVersion: "1.0.0",
+    priorSha256,
+    rollbackPath: "rollback-alias/prior-helper.exe",
+    rollbackVersion: "1.0.0",
+    rollbackSha256: priorSha256,
+    identityMatched: true,
+    signatureStatus: "valid",
+    helperBinaryOnly: { name: "helperBinaryOnly", result: "PASS", evidence: ["tests/tasks/T05/fixture-plan.json"] },
+    evidence: ["tests/tasks/T05/fixture-plan.json"],
+  });
+  const acceptedContext = clone(context);
+  acceptedContext.progress.tasks.T03.status = "accepted";
+  acceptedContext.progress.tasks.T04.status = "accepted";
+  acceptedContext.progress.tasks.T05.status = "in_progress";
+  acceptedContext.artifactRoot = artifact.root;
+
+  assert.ok(
+    collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_ARTIFACT_ALIAS"),
+  );
 });
 
 test("a PASS subcheck cannot be reported before dependencies or without local evidence", () => {

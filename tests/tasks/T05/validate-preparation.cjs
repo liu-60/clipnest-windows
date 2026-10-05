@@ -60,6 +60,12 @@ function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema }) {
       `fixturePlan.packageResourceContract must map the unpacked Windows x64 app root runtime lookup to ${EXPECTED_HELPER_RESOURCE_RELATIVE_PATH}`,
     );
   }
+  if (!isRecord(packageResourceContract) || packageResourceContract.rollbackRequiresDistinctCanonicalFiles !== true) {
+    add(
+      "ROLLBACK_DISTINCT_FILE_CONTRACT",
+      "fixturePlan.packageResourceContract must require priorPath and rollbackPath to identify different canonical files",
+    );
+  }
 
   const helperPassClauses = reportSchema.properties?.packageAndRollback?.properties?.helperResource?.allOf;
   const helperPassPath = Array.isArray(helperPassClauses)

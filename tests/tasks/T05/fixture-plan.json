@@ -80,7 +80,8 @@
   "packageResourceContract": {
     "artifactRootKind": "windows_x64_unpacked_app_root",
     "runtimeLookup": "process.resourcesPath/native/clipnest-helper.exe",
-    "helperRelativePath": "resources/native/clipnest-helper.exe"
+    "helperRelativePath": "resources/native/clipnest-helper.exe",
+    "rollbackRequiresDistinctCanonicalFiles": true
   },
   "packageAndRollbackChecks": [
     "Packaged Windows x64 helper resource resolves to the expected path and matches recorded version, protocol, and SHA-256/signature metadata.",

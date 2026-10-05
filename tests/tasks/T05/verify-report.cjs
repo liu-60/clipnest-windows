@@ -271,7 +271,7 @@ function validateEvidenceReference(reference, repoRoot) {
   return null;
 }
 
-function validateArtifactFileSha256(reference, expectedSha256, artifactRoot) {
+function inspectArtifactFileSha256(reference, expectedSha256, artifactRoot) {
   if (typeof artifactRoot !== "string" || artifactRoot.trim() === "") {
     return { code: "ARTIFACT_ROOT_REQUIRED", message: "a package artifact root is required to verify the file bytes" };
   }
@@ -346,7 +346,20 @@ function validateArtifactFileSha256(reference, expectedSha256, artifactRoot) {
   if (actualSha256.toLowerCase() !== expectedSha256.toLowerCase()) {
     return { code: "ARTIFACT_SHA256_MISMATCH", message: "reported SHA-256 does not match the artifact file bytes" };
   }
-  return null;
+  return { realPath, actualSha256 };
+}
+
+function validateArtifactFileSha256(reference, expectedSha256, artifactRoot) {
+  const inspection = inspectArtifactFileSha256(reference, expectedSha256, artifactRoot);
+  return inspection.code ? inspection : null;
+}
+
+function sameCanonicalArtifactPath(left, right) {
+  if (typeof left !== "string" || typeof right !== "string") return false;
+  const normalize = process.platform === "win32"
+    ? (value) => path.win32.normalize(value).toLowerCase()
+    : (value) => path.normalize(value);
+  return normalize(left) === normalize(right);
 }
 
 function collectEvidenceErrors(report, repoRoot) {
@@ -967,11 +980,22 @@ function validateRootPassRequirements(report, context, errors) {
     addError(errors, "PASS_ROLLBACK_IDENTITY_REQUIRED", "$.packageAndRollback.rollback", "top-level PASS requires rollback identity to match the recorded prior helper");
   }
   if (rollback?.result === "PASS") {
-    for (const [pathField, hashField] of [["priorPath", "priorSha256"], ["rollbackPath", "rollbackSha256"]]) {
-      const invalidArtifact = validateArtifactFileSha256(rollback[pathField], rollback[hashField], context.artifactRoot);
-      if (invalidArtifact) {
-        addError(errors, invalidArtifact.code, `$.packageAndRollback.rollback.${pathField}`, invalidArtifact.message);
-      }
+    const priorArtifact = inspectArtifactFileSha256(rollback.priorPath, rollback.priorSha256, context.artifactRoot);
+    const rollbackArtifact = inspectArtifactFileSha256(rollback.rollbackPath, rollback.rollbackSha256, context.artifactRoot);
+    if (priorArtifact.code) {
+      addError(errors, priorArtifact.code, "$.packageAndRollback.rollback.priorPath", priorArtifact.message);
+    }
+    if (rollbackArtifact.code) {
+      addError(errors, rollbackArtifact.code, "$.packageAndRollback.rollback.rollbackPath", rollbackArtifact.message);
+    }
+    if (!priorArtifact.code && !rollbackArtifact.code &&
+        sameCanonicalArtifactPath(priorArtifact.realPath, rollbackArtifact.realPath)) {
+      addError(
+        errors,
+        "PASS_ROLLBACK_ARTIFACT_ALIAS",
+        "$.packageAndRollback.rollback",
+        "priorPath and rollbackPath must resolve to different canonical artifact files",
+      );
     }
   }
   if (!isRecord(rollback) || !["valid", "unsigned"].includes(rollback.signatureStatus)) {

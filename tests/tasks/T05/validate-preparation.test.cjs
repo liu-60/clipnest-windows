@@ -40,6 +40,13 @@ test("requires the report schema PASS path to match the runtime helper resource"
   assert.ok(codes.includes("SCHEMA_HELPER_PATH_CONTRACT"));
 });
 
+test("requires rollback artifact paths to identify distinct canonical files", () => {
+  const codes = codesFor(({ fixturePlan }) => {
+    fixturePlan.packageResourceContract.rollbackRequiresDistinctCanonicalFiles = false;
+  });
+  assert.ok(codes.includes("ROLLBACK_DISTINCT_FILE_CONTRACT"));
+});
+
 test("rejects changed source assertion text", () => {
   const codes = codesFor(({ assertionMap }) => {
     assertionMap.assertions[0].assertionText = "invented assertion";

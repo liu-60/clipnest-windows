@@ -273,13 +273,13 @@
             "result": { "enum": ["PASS", "FAIL", "NOT_RUN", "BLOCKED"] },
             "priorPath": {
               "type": ["string", "null"],
-              "description": "PASS 时相对 --artifact-root 的正斜线路径；校验器读取原 helper 并重算 SHA-256。"
+              "description": "PASS 时相对 --artifact-root 的正斜线路径；校验器读取原 helper 并重算 SHA-256，且要求它与 rollbackPath 解析为不同规范文件。"
             },
             "priorVersion": { "type": ["string", "null"] },
             "priorSha256": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" },
             "rollbackPath": {
               "type": ["string", "null"],
-              "description": "PASS 时相对 --artifact-root 的正斜线路径；校验器读取回滚后 helper 并重算 SHA-256。"
+              "description": "PASS 时相对 --artifact-root 的正斜线路径；校验器读取回滚后 helper 并重算 SHA-256，且要求它与 priorPath 解析为不同规范文件。"
             },
             "rollbackVersion": { "type": ["string", "null"] },
             "rollbackSha256": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" },
