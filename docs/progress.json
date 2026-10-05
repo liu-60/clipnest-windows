@@ -77,7 +77,8 @@
         "docs/evidence/T06/t06-a8-app-workspace-identities.json",
         "docs/evidence/T06/t06-a9-workspace-name-contract.json",
         "docs/evidence/T06/t06-a10-server-module-registry.json",
-        "docs/evidence/T06/t06-a11-server-app-entry.json"
+        "docs/evidence/T06/t06-a11-server-app-entry.json",
+        "docs/evidence/T06/t06-a12-app-entry-readiness.json"
       ],
       "openGates": [
         "本机 Windows toolchain readiness preflight：WebView2 Evergreen 154.0.4258.53 存在，但 cl.exe、vswhere、常见 Visual Studio C++ Build Tools 路径和 MSVC Rust target 标准库未发现；GNU 标准库不能满足 Tauri Windows target。探测中的 rustup toolchain list -v 意外触发 GNU 1.99.0 channel sync/下载；进程已停止，没有安装成功输出，但 rustup home 留有不完整下载/组件目录。该状态已记录于 docs/evidence/T06/tauri-msvc-toolchain-readiness.json，不视为工具链就绪；未修改仓库文件或清理本地缓存。",
@@ -88,7 +89,8 @@
         "T06-c root validation scripts, deterministic generated-drift checks, environment template, and CI checks remain unimplemented and NOT_RUN.",
         "Full T06 acceptance and required independent adversarial review remain pending; independent read-only slice reviews cover the combined a3/a4 entry and a5, with limitations, and do not accept the full T06 card.",
         "隔离临时npm候选项目的package-lock/package元数据审计：114个安装条目与149条依赖边逐项匹配并经独立复核；license字段计数为MIT 90、ISC 7、Apache-2.0 6、BSD-3-Clause 6、BlueOak-1.0.0 5。3个Apache-2.0包根缺LICENSE/COPYING，5个BlueOak许可包需单独审阅；锁文件SRI未重算。此图不是产品pnpm解析，不构成法律批准或依赖选定。证据：docs/evidence/T06/candidate-package-graph-audit.json。",
-        "T06-a10/a11 server skeleton registers auth/devices/workspaces/keys/sync/attachments/usage/billing as disabled and composes an ESM package entry through a frozen app facade. Registered and unknown module calls return FEATURE_NOT_ENABLED; the entry performs no listener, network, or persistent-data operation. Node 24 synthetic regression passes 5/5. TypeScript semantic typecheck is NOT_RUN because no compiler is available. workspaces is grounded in the 03 workspace model/API and T14 module path; 02 §2's directory summary omits it. T06 remains in_progress; evidence: docs/evidence/T06/t06-a10-server-module-registry.json and docs/evidence/T06/t06-a11-server-app-entry.json."
+        "T06-a10/a11 server skeleton registers auth/devices/workspaces/keys/sync/attachments/usage/billing as disabled and composes an ESM package entry through a frozen app facade. Registered and unknown module calls return FEATURE_NOT_ENABLED; the entry performs no listener, network, or persistent-data operation. Node 24 synthetic regression passes 5/5. TypeScript semantic typecheck is NOT_RUN because no compiler is available. workspaces is grounded in the 03 workspace model/API and T14 module path; 02 §2's directory summary omits it. T06 remains in_progress; evidence: docs/evidence/T06/t06-a10-server-module-registry.json and docs/evidence/T06/t06-a11-server-app-entry.json.",
+        "T06-a12 仅完成静态 app-entry readiness 盘点，证据 docs/evidence/T06/t06-a12-app-entry-readiness.json。desktop/web 根锁文件依赖仍是既有解析和复用建议，未作为各 app 依赖集选定；mobile Expo tuple 仍未选定/安装，原生 build 未检查；Windows Tauri 的 MSVC 缺失状态来自已有 readiness 记录，本次未重新探测；server 只有 T06-a11 的 Node 禁用态入口回归记录，Fastify 未选、TypeScript typecheck 不可用。此盘点未运行产品测试/build/typecheck，不关闭应用实现验收门。T06 保持 in_progress，T07 保持 not_started。"
       ]
     },
     "T07": {

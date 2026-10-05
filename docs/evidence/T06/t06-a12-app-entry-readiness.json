@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "T06-a12-app-entry-readiness",
+  "result": "STATIC_READINESS_INVENTORY_ONLY",
+  "recordedAt": "2026-10-05T22:32:35+08:00",
+  "worktree": {
+    "path": "D:/ClipNest-work/v2",
+    "branch": "codex/v2-clipboard",
+    "headBeforeChanges": "2b4fca34c6a545309c114a5038d7c2ca0485e8f1",
+    "progressSnapshot": {
+      "T00": "accepted",
+      "T06": "in_progress",
+      "T07": "not_started"
+    },
+    "preservedExistingUntracked": [
+      "docs/progress.json.tmp"
+    ],
+    "productionFilesChanged": false,
+    "manifestsOrLockfilesChanged": false,
+    "dependenciesInstalled": false,
+    "productTestsRun": false
+  },
+  "environment": {
+    "platform": "Windows x64",
+    "nodeVersion": "v24.16.0",
+    "pnpmVersion": "11.19.0",
+    "typescriptCompiler": "unavailable both locally and on PATH",
+    "webView2": "present per existing Tauri toolchain evidence",
+    "rustToolchain": "GNU target recorded in prior readiness evidence; MSVC target and Visual Studio C++ tools were not found by that earlier readiness probe"
+  },
+  "readiness": {
+    "desktop": {
+      "workspacePackage": "@clipnest/desktop",
+      "manifestState": "name/private only; no app dependencies or scripts",
+      "entryPathsPresent": [],
+      "entryPathsMissing": [
+        "apps/desktop/index.html",
+        "apps/desktop/vite.config.ts",
+        "apps/desktop/src/main.tsx",
+        "apps/desktop/src/App.tsx",
+        "apps/desktop/src-tauri/Cargo.toml"
+      ],
+      "dependencyState": {
+        "reactViteTypescriptAndTanStack": "Exact versions exist in the root lock importer, but apps/desktop has an empty lockfile importer and the T06 research recommendation to reuse those pins has not been selected as the app dependency set.",
+        "tauriApiAndCli": "2.12.1 is a researched candidate and is absent from pnpm-lock.yaml; no Rust Tauri dependency is frozen."
+      },
+      "toolchainState": {
+        "node": "v24.16.0 available",
+        "pnpm": "11.19.0 available; not used to resolve/install packages",
+        "typescript": "not available; typecheck not possible",
+        "webView2": "154.0.4258.53 present per existing evidence",
+        "msvc": "blocked per prior readiness evidence: cl.exe, vswhere, Visual Studio C++ Build Tools locations, and x86_64-pc-windows-msvc Rust standard library were not found; GNU does not satisfy Tauri Windows target requirements; this inventory did not re-probe them"
+      },
+      "blockers": [
+        "No React/Vite/Tauri dependency set has been selected and frozen for this app.",
+        "No app entry exists to build or typecheck.",
+        "The prior readiness evidence reports the Windows Tauri build gate blocked on the missing MSVC toolchain; this inventory did not re-probe it, and the Tauri PoC remains NOT_RUN."
+      ],
+      "requiredChecksBeforeBuildableClaim": [
+        "Select and review compatible app dependency pins, then validate the resolved lock graph and licenses.",
+        "Run the app typecheck and frontend build once a compiler/build toolchain is available.",
+        "Run the Windows Tauri build/PoC with MSVC; WebView2 presence alone is not a Tauri build result."
+      ],
+      "evidence": [
+        "apps/desktop/package.json",
+        "pnpm-lock.yaml",
+        "docs/evidence/T06/desktop-web-dependency-research.json",
+        "docs/evidence/T06/t06-a8-app-workspace-identities.json",
+        "docs/evidence/T06/tauri-msvc-toolchain-readiness.json"
+      ]
+    },
+    "web": {
+      "workspacePackage": "@clipnest/web",
+      "manifestState": "name/private only; no app dependencies or scripts",
+      "entryPathsPresent": [],
+      "entryPathsMissing": [
+        "apps/web/index.html",
+        "apps/web/vite.config.ts",
+        "apps/web/src/main.tsx",
+        "apps/web/src/App.tsx"
+      ],
+      "dependencyState": {
+        "reactViteTypescriptAndTanStack": "Exact versions exist in the root lock importer, but apps/web has an empty lockfile importer and the T06 research recommendation to reuse those pins has not been selected as the app dependency set.",
+        "newerCandidates": "React 19/Vite 8 are researched candidates only; no upgrade or candidate set is approved."
+      },
+      "toolchainState": {
+        "node": "v24.16.0 available",
+        "pnpm": "11.19.0 available; not used to resolve/install packages",
+        "typescript": "not available; typecheck not possible",
+        "viteBuild": "not run; no web Vite configuration or app source exists"
+      },
+      "blockers": [
+        "The existing root lock resolution is not a selected @clipnest/web dependency declaration.",
+        "No web entry/configuration exists to build or typecheck."
+      ],
+      "requiredChecksBeforeBuildableClaim": [
+        "Freeze the app dependency set and review the resolved graph/licenses.",
+        "Run workspace typecheck, Vite build, and the app-scoped tests after the compiler and dependencies are available."
+      ],
+      "evidence": [
+        "apps/web/package.json",
+        "pnpm-lock.yaml",
+        "docs/evidence/T06/desktop-web-dependency-research.json",
+        "docs/evidence/T06/t06-a8-app-workspace-identities.json"
+      ]
+    },
+    "mobile": {
+      "workspacePackage": "@clipnest/mobile",
+      "manifestState": "name/private only; no app dependencies or scripts",
+      "entryPathsPresent": [],
+      "entryPathsMissing": [
+        "apps/mobile/App.tsx",
+        "apps/mobile/app.config.ts",
+        "apps/mobile/babel.config.js",
+        "apps/mobile/metro.config.js"
+      ],
+      "dependencyState": {
+        "researchStatus": "Candidate compatibility research only; no Expo/RN/React tuple has been selected, installed, or locked for apps/mobile.",
+        "snapshotCandidates": {
+          "expo": "57.0.26",
+          "react-native": "0.87.1",
+          "react": "19.3.0"
+        },
+        "sdk57CuratedCandidate": {
+          "expo": "57.0.26",
+          "react-native": "0.86.3",
+          "react": "19.2.3",
+          "status": "researched but not selected"
+        }
+      },
+      "toolchainState": {
+        "node": "v24.16.0 available; static SDK57/RN 0.86.3 metadata is compatible with this Node line",
+        "pnpm": "11.19.0 available; not used to resolve/install packages",
+        "typescript": "not available; typecheck not possible",
+        "expoInstallDoctorDevelopmentBuild": "NOT_RUN",
+        "iosAndroidNativeToolchains": "not checked by this inventory"
+      },
+      "blockers": [
+        "Expo must own the React/React Native version pairing; the researched SDK57 tuple is not an approved selection.",
+        "No Expo app entry/configuration exists, and no install/doctor/development build evidence exists.",
+        "Native iOS/Android toolchain readiness has not been established."
+      ],
+      "requiredChecksBeforeBuildableClaim": [
+        "Select the Expo SDK tuple from its SDK compatibility map and freeze its resolved graph/licenses.",
+        "Run Expo install checks/doctor, app typecheck, and a development build; retain separate iOS and Android gates where applicable."
+      ],
+      "evidence": [
+        "apps/mobile/package.json",
+        "pnpm-lock.yaml",
+        "docs/evidence/T06/mobile-server-dependency-research.json",
+        "docs/evidence/T06/t06-a8-app-workspace-identities.json"
+      ]
+    },
+    "server": {
+      "workspacePackage": "@clipnest/server",
+      "manifestState": "ESM main points to src/main.ts; no dependencies or scripts are declared",
+      "entryPathsPresent": [
+        "apps/server/src/main.ts",
+        "apps/server/src/app.ts",
+        "apps/server/src/modules/index.ts"
+      ],
+      "dependencyState": {
+        "node": "v24.16.0 is available and the existing entry was imported by the T06-a11 Node regression.",
+        "fastify": "5.12.5 is a researched candidate only; it is not declared or installed.",
+        "otherRuntimeDependencies": "none declared in apps/server/package.json"
+      },
+      "toolchainState": {
+        "node": "available",
+        "typescript": "not available; TypeScript semantic typecheck not run",
+        "priorEntryRegression": "T06-a11 evidence records 5/5 Node tests; this inventory did not rerun product tests."
+      },
+      "implementedBoundary": "The current entry composes the disabled registry only. Registered and unknown module calls return FEATURE_NOT_ENABLED; there is no HTTP listener, network access, or persistent-data path.",
+      "blockers": [
+        "TypeScript semantic typechecking remains NOT_RUN.",
+        "Fastify and its transitive dependency/license graph remain unselected and unfrozen; consequently no HTTP server behavior is implemented or claimed."
+      ],
+      "requiredChecksBeforeServerRuntimeClaim": [
+        "Select and audit Fastify and the resolved dependency/license graph before adding runtime behavior.",
+        "Run TypeScript typecheck and isolated server tests when the compiler/dependencies are available; any later listener/service gate requires its own authorization and isolated environment."
+      ],
+      "evidence": [
+        "apps/server/package.json",
+        "apps/server/src/main.ts",
+        "apps/server/src/app.ts",
+        "apps/server/src/modules/index.ts",
+        "docs/evidence/T06/t06-a11-server-app-entry.json",
+        "docs/evidence/T06/mobile-server-dependency-research.json"
+      ]
+    }
+  },
+  "otherOpenPrerequisites": [
+    {
+      "area": "packages/domain",
+      "status": "deferred",
+      "reason": "The package name/interface boundary is not frozen and no TypeScript compiler is available; an empty entry was previously judged not useful.",
+      "evidence": "docs/evidence/T06/t06-a6-readiness.json"
+    }
+  ],
+  "sourceFingerprints": [
+    { "path": "apps/desktop/package.json", "sha256": "345c61e3e83dd3c452f6b2b63227b7e68f122e0db71b048fc11ab65330fa7582" },
+    { "path": "apps/web/package.json", "sha256": "4840dcd30c1176612d54e2a123564ea111db4eacb24fee2adb8225f3b399c036" },
+    { "path": "apps/mobile/package.json", "sha256": "708dbd502559e91b9d8b6d3bb93dc3ca75b2220922d2674878f4f9e44c71a03d" },
+    { "path": "apps/server/package.json", "sha256": "eab882b45245c51ae0aac441b4eadd1956dad12eba358890cfb875a6b3ce165a" },
+    { "path": "apps/server/src/app.ts", "sha256": "13755b508671b501035b56fd1ccbac69ab78ddf35a37fb2caef1e265d15b2ad6" },
+    { "path": "apps/server/src/main.ts", "sha256": "080a705f8251316f862f47decb2d07f2c64e871cf3715d124ca1fb758b51d0e1" },
+    { "path": "apps/server/src/modules/index.ts", "sha256": "531a4a9252c8106b01e7f04d55c3c5cc342cef0f5a8c0bec45d7ea04772b5354" },
+    { "path": "pnpm-lock.yaml", "sha256": "f075a7f0ad3b3f79c1e43f475310f1118e1a6c2bf1b60c4b8575eb39e6a6d5b1" },
+    { "path": "pnpm-workspace.yaml", "sha256": "d3699bb1502b61060a22e6f8cf669faa6bfe5c2afea597feb39e739013f3eee8" },
+    { "path": "Cargo.toml", "sha256": "cc871452a666aec1a9d9d078c3f9b51d412da834daf4cb9af7047af989087fc0" },
+    { "path": "rust-toolchain.toml", "sha256": "64db101a73be4177bc3d1a62536650d6a39b205c7912c5a58a92aa646c2b4d6d" },
+    { "path": "docs/evidence/T06/desktop-web-dependency-research.json", "sha256": "429e846e28cd57efa68e179ba02156b6c86b5087097723e10d6b6a263d03c6d3" },
+    { "path": "docs/evidence/T06/mobile-server-dependency-research.json", "sha256": "a5b1c4bf3c19a458fc15c02bde2164bcce50edc1f5b89b77126ec1f15f7df5fb" },
+    { "path": "docs/evidence/T06/tauri-msvc-toolchain-readiness.json", "sha256": "6eae002b673403973d2b9bb28357c99ab78f777688e05443b617203cdc33da84" },
+    { "path": "docs/evidence/T06/t06-a6-readiness.json", "sha256": "1f93d64c6a93b304aa4494d502a53e476eec0d0f01402230c889bd2f75b21ed4" },
+    { "path": "docs/evidence/T06/t06-a8-app-workspace-identities.json", "sha256": "ea63f098b57f5a0df0242d87ebbfd37a0e99aa1172ec9a372633b927dd9f8161" },
+    { "path": "docs/evidence/T06/t06-a11-server-app-entry.json", "sha256": "4c291bdbe09a12cedf8dd5deaff2892e0c438eef0e8f2d50277abb9228307f62" }
+  ],
+  "limitations": [
+    "This is a dated static inventory, not a dependency selection, build, typecheck, application behavior test, or T06 acceptance result.",
+    "No packages were installed or resolved; no manifests or lockfiles were changed; no app, native toolchain, network service, or user data was exercised.",
+    "The existing Tauri/MSVC readiness record documents a prior interrupted rustup sync; this inventory reused that evidence, did not re-probe compiler/Rust toolchain readiness, did not invoke rustup, and did not clean local state.",
+    "The pre-existing untracked docs/progress.json.tmp was preserved and not read or modified."
+  ]
+}
