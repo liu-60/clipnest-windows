@@ -5,8 +5,8 @@
   "reviewType": "dependency and offline-preflight refresh",
   "reviewedDate": "2026-10-05",
   "branch": "codex/m0-latency",
-  "sourceCommit": "ece7e042d32f0aa89d727993e73c462a1080eb2c",
-  "workingTreeWasDirty": true,
+  "sourceCommit": "06e45b2b897bf6f33f6585ee9a886ca26fe5e2ab",
+  "workingTreeWasDirty": false,
   "dependencyGate": {
     "T03": "accepted",
     "T04": "in_progress",
@@ -34,10 +34,45 @@
       "browserWindowCreated": false
     },
     "remainingT04Gates": [
-      "P15 remains open under the user-confirmed scope; content-provider.ts was not changed or invoked.",
-      "Physical keyboard, system clipboard, BrowserWindow/panel, helper lifecycle, target-visible paste and full T04 acceptance remain NOT_RUN.",
-      "The synthetic image diagnostics are not universal latency or peak-memory guarantees."
-    ]
+      "P15 remains open under the user-confirmed scope; src/main/native/content-provider.ts was not changed or invoked.",
+      "The WPF/WIC candidate memory result is not a production Electron utilityProcess/IPC or direct IWIC implementation measurement; production JPEG memory acceptance remains open.",
+      "Exact P1/I10/I11 deadline acceptance remains open: the prior bounded Electron timer probe ran up to 12 attempts and all failed closed; released zero-budget continuation was NOT_OBSERVED. Physical keyboard, system clipboard, BrowserWindow/panel, helper lifecycle, target-visible paste, packaged application acceptance and full T04 acceptance remain NOT_RUN.",
+      "Synthetic image diagnostics cover only listed fixtures and do not establish universal latency, format behavior, or a process-memory ceiling."
+    ],
+    "wicJpegCandidate": {
+      "result": "WPF_WIC_CANDIDATE_WITHIN_BUDGET_NOT_ACCEPTANCE",
+      "artifact": "docs/evidence/T04/wic-jpeg-memory-probe.json",
+      "fixtures": [
+        {
+          "format": "baseline JPEG 4:2:0",
+          "width": 4000,
+          "height": 4000,
+          "encodedBytes": 20971520,
+          "samples": 5
+        },
+        {
+          "format": "baseline JPEG 4:4:4",
+          "width": 4000,
+          "height": 4000,
+          "encodedBytes": 20971520,
+          "samples": 5
+        }
+      ],
+      "totalFreshChildSamples": 10,
+      "maximumPeakWorkingSetBytes": 169676800,
+      "targetBytes": 268435456,
+      "allFullPixelAndGdiPointChecksPassed": true,
+      "allChildProcessesExitedAndWereReaped": true,
+      "process": "Windows PowerShell STA with WPF managed imaging; not Electron utilityProcess or direct IWIC COM production integration",
+      "systemClipboardReadOrWritten": false,
+      "inputSent": false,
+      "interpretation": "Candidate-only measurement; does not close the production JPEG memory gate or T04 acceptance.",
+      "measurementSource": {
+        "commit": "0459a557d104792909430147515394cccd79233a",
+        "branch": "codex/m0-latency",
+        "workingTreeWasDirty": true
+      }
+    }
   },
   "draft202012InstanceValidation": {
     "status": "PASS_WITH_LIMITATIONS",
@@ -50,12 +85,14 @@
   },
   "allowedPreparationCompleted": [
     "Latest compressed image-worker ASAR package smoke status refreshed.",
-    "The current NOT_RUN report instance and eight invalid-instance cases passed the explicit Draft 2020-12 self-check, including six metric-contract negatives; the default Node verifier and unit suite do not require Python."
+    "The current NOT_RUN report instance and eight invalid-instance cases passed the explicit Draft 2020-12 self-check, including six metric-contract negatives; the default Node verifier and unit suite do not require Python.",
+    "Refreshed the T04 dependency snapshot against the current commit, including the 10-sample WPF/WIC JPEG candidate result; the candidate is explicitly not production acceptance."
   ],
   "notRun": [
     "P01-P28 T05 behavior/release acceptance and 100+100 controlled-live measurements.",
     "Standard release package helper resource/signature/protocol, lifecycle, rollback, installation data and target-visible paste.",
-    "A repository-pinned Draft 2020-12 validator; current full instance validation used the host Python package and remains an optional check."
+    "A repository-pinned Draft 2020-12 validator; current full instance validation used the host Python package and remains an optional check.",
+    "Production WIC/utilityProcess IPC integration, the full JPEG corpus, packaged application behavior, physical-input or target-visible paste acceptance remain NOT_RUN."
   ],
   "historicalSnapshot": "docs/evidence/T05/preflight.json and docs/evidence/T05/report-schema-review.json retain their original dated observations; current state is recorded here and in current-static-audit.json."
 }
