@@ -2,6 +2,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
+const crypto = require("node:crypto");
 const { spawnSync } = require("node:child_process");
 
 const {
@@ -100,10 +101,11 @@ function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
 
-function loadVerifierContext(repoRoot = REPO_ROOT) {
+function loadVerifierContext(repoRoot = REPO_ROOT, options = {}) {
   const prep = loadPreparationInputs();
   return {
     repoRoot: path.resolve(repoRoot),
+    artifactRoot: options.artifactRoot ? path.resolve(options.artifactRoot) : null,
     ...prep,
     progress: readJson(path.join(repoRoot, "docs", "progress.json")),
   };
@@ -264,6 +266,84 @@ function validateEvidenceReference(reference, repoRoot) {
     }
   } catch {
     return { code: "EVIDENCE_NOT_FOUND", message: "evidence file does not exist in the repository" };
+  }
+  return null;
+}
+
+function validateArtifactFileSha256(reference, expectedSha256, artifactRoot) {
+  if (typeof artifactRoot !== "string" || artifactRoot.trim() === "") {
+    return { code: "ARTIFACT_ROOT_REQUIRED", message: "a package artifact root is required to verify the file bytes" };
+  }
+  if (typeof reference !== "string" || reference.trim() === "" || reference.includes("\0")) {
+    return { code: "ARTIFACT_PATH_INVALID", message: "artifact file path must be a nonempty relative path" };
+  }
+  if (reference.includes("\\") || reference.includes(":") || path.posix.isAbsolute(reference) || path.win32.isAbsolute(reference) ||
+      path.win32.parse(reference).root !== "" || /^[a-z][a-z0-9+.-]*:\/\//i.test(reference)) {
+    return { code: "ARTIFACT_PATH_UNSAFE", message: "artifact file path must be relative and use forward slashes" };
+  }
+  const segments = reference.split("/");
+  const hasUnsafeSegment = segments.some((segment) =>
+    segment === "" || segment === "." || segment === ".." || /[. ]$/.test(segment) ||
+    /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/i.test(segment));
+  if (hasUnsafeSegment) {
+    return { code: "ARTIFACT_PATH_UNSAFE", message: "artifact file path contains an unsafe or non-portable segment" };
+  }
+  if (typeof expectedSha256 !== "string" || !/^[a-fA-F0-9]{64}$/.test(expectedSha256)) {
+    return { code: "ARTIFACT_SHA256_INVALID", message: "reported artifact SHA-256 must contain exactly 64 hexadecimal characters" };
+  }
+
+  let rootRealPath;
+  try {
+    rootRealPath = fs.realpathSync.native(path.resolve(artifactRoot));
+    if (!fs.statSync(rootRealPath).isDirectory()) {
+      return { code: "ARTIFACT_ROOT_INVALID", message: "artifact root must resolve to a directory" };
+    }
+  } catch {
+    return { code: "ARTIFACT_ROOT_INVALID", message: "artifact root must exist and resolve to a directory" };
+  }
+
+  const candidate = path.resolve(rootRealPath, ...segments);
+  if (!isWithinDirectory(rootRealPath, candidate)) {
+    return { code: "ARTIFACT_PATH_UNSAFE", message: "artifact file path resolves outside the artifact root" };
+  }
+
+  let realPath;
+  try {
+    realPath = fs.realpathSync.native(candidate);
+  } catch {
+    return { code: "ARTIFACT_FILE_NOT_FOUND", message: "artifact file does not exist under the artifact root" };
+  }
+  if (!isWithinDirectory(rootRealPath, realPath)) {
+    return { code: "ARTIFACT_PATH_UNSAFE", message: "artifact file or symlink resolves outside the artifact root" };
+  }
+  try {
+    if (!fs.statSync(realPath).isFile()) {
+      return { code: "ARTIFACT_FILE_NOT_FILE", message: "artifact path must resolve to a file" };
+    }
+  } catch {
+    return { code: "ARTIFACT_FILE_NOT_FOUND", message: "artifact file does not exist under the artifact root" };
+  }
+
+  let actualSha256;
+  try {
+    const descriptor = fs.openSync(realPath, "r");
+    try {
+      const hash = crypto.createHash("sha256");
+      const chunk = Buffer.allocUnsafe(64 * 1024);
+      let bytesRead;
+      do {
+        bytesRead = fs.readSync(descriptor, chunk, 0, chunk.length, null);
+        if (bytesRead > 0) hash.update(chunk.subarray(0, bytesRead));
+      } while (bytesRead > 0);
+      actualSha256 = hash.digest("hex");
+    } finally {
+      fs.closeSync(descriptor);
+    }
+  } catch {
+    return { code: "ARTIFACT_FILE_UNREADABLE", message: "artifact file bytes could not be read" };
+  }
+  if (actualSha256.toLowerCase() !== expectedSha256.toLowerCase()) {
+    return { code: "ARTIFACT_SHA256_MISMATCH", message: "reported SHA-256 does not match the artifact file bytes" };
   }
   return null;
 }
@@ -857,6 +937,12 @@ function validateRootPassRequirements(report, context, errors) {
       helper.expectedSha256.toLowerCase() !== helper.actualSha256.toLowerCase()) {
     addError(errors, "PASS_HELPER_IDENTITY_REQUIRED", "$.packageAndRollback.helperResource", "top-level PASS requires matching packaged helper path, version, protocol, and SHA-256");
   }
+  if (helper?.result === "PASS") {
+    const invalidArtifact = validateArtifactFileSha256(helper.actualPath, helper.actualSha256, context.artifactRoot);
+    if (invalidArtifact) {
+      addError(errors, invalidArtifact.code, "$.packageAndRollback.helperResource.actualPath", invalidArtifact.message);
+    }
+  }
   if (helper && !["valid", "unsigned"].includes(helper.signatureStatus)) {
     addError(errors, "PASS_HELPER_SIGNATURE_STATUS", "$.packageAndRollback.helperResource.signatureStatus", "helper signature must be explicitly recorded as valid or unsigned");
   }
@@ -870,6 +956,14 @@ function validateRootPassRequirements(report, context, errors) {
       typeof rollback.rollbackSha256 !== "string" || !/^[a-fA-F0-9]{64}$/.test(rollback.rollbackSha256) ||
       rollback.priorSha256.toLowerCase() !== rollback.rollbackSha256.toLowerCase()) {
     addError(errors, "PASS_ROLLBACK_IDENTITY_REQUIRED", "$.packageAndRollback.rollback", "top-level PASS requires rollback identity to match the recorded prior helper");
+  }
+  if (rollback?.result === "PASS") {
+    for (const [pathField, hashField] of [["priorPath", "priorSha256"], ["rollbackPath", "rollbackSha256"]]) {
+      const invalidArtifact = validateArtifactFileSha256(rollback[pathField], rollback[hashField], context.artifactRoot);
+      if (invalidArtifact) {
+        addError(errors, invalidArtifact.code, `$.packageAndRollback.rollback.${pathField}`, invalidArtifact.message);
+      }
+    }
   }
   if (!isRecord(rollback) || !["valid", "unsigned"].includes(rollback.signatureStatus)) {
     addError(errors, "PASS_ROLLBACK_SIGNATURE_STATUS", "$.packageAndRollback.rollback.signatureStatus", "rollback helper signature must be explicitly recorded as valid or unsigned");
@@ -903,10 +997,44 @@ function deduplicateErrors(errors) {
 }
 
 function main() {
-  const context = loadVerifierContext();
   const args = process.argv.slice(2);
-  const schemaValidationRequested = args.includes("--validate-schema");
-  const reportArgument = args.find((argument) => argument !== "--validate-schema");
+  let schemaValidationRequested = false;
+  let artifactRootArgument = null;
+  let reportArgument = null;
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index];
+    if (argument === "--validate-schema") {
+      schemaValidationRequested = true;
+    } else if (argument === "--artifact-root") {
+      artifactRootArgument = args[index + 1] ?? null;
+      if (artifactRootArgument === null || artifactRootArgument.startsWith("--")) {
+        console.error("PREPARATION_ONLY: --artifact-root requires a directory path.");
+        process.exitCode = 1;
+        return;
+      }
+      index += 1;
+    } else if (argument.startsWith("--artifact-root=")) {
+      artifactRootArgument = argument.slice("--artifact-root=".length);
+      if (artifactRootArgument === "") {
+        console.error("PREPARATION_ONLY: --artifact-root requires a directory path.");
+        process.exitCode = 1;
+        return;
+      }
+    } else if (argument.startsWith("--")) {
+      console.error(`PREPARATION_ONLY: unsupported option ${argument}.`);
+      process.exitCode = 1;
+      return;
+    } else if (reportArgument === null) {
+      reportArgument = argument;
+    } else {
+      console.error("PREPARATION_ONLY: provide at most one report path.");
+      process.exitCode = 1;
+      return;
+    }
+  }
+  const context = loadVerifierContext(REPO_ROOT, {
+    artifactRoot: artifactRootArgument === null ? null : path.resolve(REPO_ROOT, artifactRootArgument),
+  });
   const reportPath = reportArgument
     ? path.resolve(REPO_ROOT, reportArgument)
     : SAMPLE_REPORT;
@@ -949,6 +1077,7 @@ module.exports = {
   loadVerifierContext,
   nearestRankPercentile,
   validateEvidenceReference,
+  validateArtifactFileSha256,
   validateDraft202012Instance,
   validateMeasurement,
 };

@@ -216,7 +216,10 @@
           "properties": {
             "result": { "enum": ["PASS", "FAIL", "NOT_RUN", "BLOCKED"] },
             "expectedPath": { "type": ["string", "null"] },
-            "actualPath": { "type": ["string", "null"] },
+            "actualPath": {
+              "type": ["string", "null"],
+              "description": "PASS 时相对 --artifact-root 的正斜线路径；校验器读取该文件并重算 SHA-256。"
+            },
             "expectedVersion": { "type": ["string", "null"] },
             "actualVersion": { "type": ["string", "null"] },
             "expectedProtocol": { "type": ["string", "null"] },
@@ -243,14 +246,16 @@
         "rollback": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["result", "priorVersion", "priorSha256", "rollbackVersion", "rollbackSha256", "identityMatched", "signatureStatus", "helperBinaryOnly", "evidence"],
+          "required": ["result", "priorPath", "priorVersion", "priorSha256", "rollbackPath", "rollbackVersion", "rollbackSha256", "identityMatched", "signatureStatus", "helperBinaryOnly", "evidence"],
           "allOf": [
             {
               "if": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
               "then": {
                 "properties": {
+                  "priorPath": { "type": "string", "minLength": 1 },
                   "priorVersion": { "type": "string", "minLength": 1 },
                   "priorSha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+                  "rollbackPath": { "type": "string", "minLength": 1 },
                   "rollbackVersion": { "type": "string", "minLength": 1 },
                   "rollbackSha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
                   "identityMatched": { "const": true },
@@ -263,8 +268,16 @@
           ],
           "properties": {
             "result": { "enum": ["PASS", "FAIL", "NOT_RUN", "BLOCKED"] },
+            "priorPath": {
+              "type": ["string", "null"],
+              "description": "PASS 时相对 --artifact-root 的正斜线路径；校验器读取原 helper 并重算 SHA-256。"
+            },
             "priorVersion": { "type": ["string", "null"] },
             "priorSha256": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" },
+            "rollbackPath": {
+              "type": ["string", "null"],
+              "description": "PASS 时相对 --artifact-root 的正斜线路径；校验器读取回滚后 helper 并重算 SHA-256。"
+            },
             "rollbackVersion": { "type": ["string", "null"] },
             "rollbackSha256": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" },
             "identityMatched": { "type": "boolean" },

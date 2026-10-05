@@ -112,8 +112,10 @@ function buildNotRunReport({ fixturePlan, assertionMap, progress }) {
       lifecycle,
       rollback: {
         result: "NOT_RUN",
+        priorPath: null,
         priorVersion: null,
         priorSha256: null,
+        rollbackPath: null,
         rollbackVersion: null,
         rollbackSha256: null,
         identityMatched: false,

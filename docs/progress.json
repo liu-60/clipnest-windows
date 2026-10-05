@@ -198,7 +198,8 @@
         "docs/evidence/T05/static-preparation-verification.json",
         "docs/evidence/T05/report-verifier-static-validation.json",
         "docs/evidence/T05/report-identity-consistency-regression.json",
-        "docs/evidence/T05/g0-report-contract-static-verification.json"
+        "docs/evidence/T05/g0-report-contract-static-verification.json",
+        "docs/evidence/T05/artifact-byte-verification-static.json"
       ],
       "openGates": [
         "T05任务保持not_started；T04压缩IPC worker的隔离ASAR smoke及合成main-process deadline诊断已记录。当前utilityProcess图片解码器对合成16MP/20MiB SOF0 baseline 4:2:0和4:4:4各5/5成功，PeakWorkingSet64峰值207.87/208.57MiB；该窄布局证据不证明所有JPEG格式、通用硬RSS上限、完整生产选择/打包路径或T04 accepted。WPF/WIC的10样本是候选探针，不是生产路径；PureJsImage候选超过256MiB。完整包/helper核验、最终卡片点击及受控live验收仍未完成。",
@@ -207,7 +208,7 @@
         "report.schema.json要求PASS提供非空commit、Windows x64与完整性能控制变量，并要求两个指标为controlled_live、至少100个成功样本和证据引用。verify-report.cjs会重算requestId唯一性、样本结果/阶段键、outcome计数与nearest-rank分位数；G0 PASS还必须提供逐request观察，Node校验会拒绝缺失或不匹配的requestId追踪映射。Windows UTF-8 Python桥接、Unicode code point边界及合成G0结构自检通过：38/38定向单测、14个schema无效实例与6个G0负例均通过；Draft本身不能表达requestIds数组与任意对象键集合相等，该关系由Node校验器强制。完整Draft 2020-12检查仍通过显式--validate-schema使用主机Python jsonschema 4.26.0，未添加锁定依赖。测量和真实G0观察仍全部NOT_RUN，证据为PREPARATION_ONLY；可移植validator依赖留待T06审查。",
         "T05静态准备校验已通过：15/15回归与28个case、71条断言、2个G0 gate的traceability/schema检查通过，结果为PREPARATION_ONLY；未运行行为，也不改变T05 not_started状态。证据：docs/evidence/T05/static-preparation-verification.json。",
         "已为P01-P28计划中的71条断言建立逐项原文映射（tests/tasks/T05/assertion-map.json），当前全部NOT_RUN且证据为空；独立静态审查确认71/71原文和顺序一致、ID唯一。报告一致性检查器核对断言映射、requestId、样本计数/统计和仓库内证据路径；完整Draft 2020-12实例自检通过，但主机Python/jsonschema未锁定且不能证明证据内容支持声明。PASS前仍须逐条独立审查映射与实际证据。",
-        "verify-report.cjs的root PASS路径会独立比较helper expected/actual路径、版本、协议、SHA-256及rollback版本/hash；新增回归覆盖identityMatched伪报、匹配身份正向通过、字段不匹配与非字符串SHA-256，并将畸形hash作为身份错误处理（34/34 T05定向单测通过，见docs/evidence/T05/report-identity-consistency-regression.json）。该校验仍不直接读取/哈希最终安装包资源或密码学验证签名；PASS前须人工核对实际打包资源、回滚前后身份、签名结果及逐项命令证据，且内部包是否接受unsigned仍待明确。",
+        "verify-report.cjs 的 root PASS 已交叉核对 helper/rollback 报告字段，并新增基于显式 --artifact-root 的离线文件复核：读取 helper actualPath、rollback priorPath/rollbackPath 的实际字节，以 64KiB 流式重算 SHA-256；拒绝绝对路径、路径遍历、Windows 非可移植路径段及越界 symlink/junction。25/25 T05 定向回归及静态 schema/NOT_RUN 检查通过，证据 docs/evidence/T05/artifact-byte-verification-static.json。该门只确认给定目录下文件内容哈希；版本、协议仍是报告字段，Authenticode 签名未作密码学验证，PASS 前仍需核对最终包、签名及逐项外部证据。T05 仍 not_started/NOT_RUN。",
         "dependencyGate字段由报告提供，但verify-report.cjs会与docs/progress.json交叉核对；schema或静态一致性检查仍不能替代T03/T04验收证据。当前 main.ts 期望 resourcesPath/native/clipnest-helper.exe，但 package.json files/asarUnpack 未声明 helper 或 extraResources；本地v3检查点不能替代最终包内路径、版本、协议、SHA-256及签名核对，内部包是否接受 unsigned 也需在PASS前明确。",
         "最新T04依赖快照收录了单样本真实ImagePreparationService + utilityProcess集成诊断：16MP准备3174.24ms（30s诊断期限，超过产品3s门），worker退役/小图缓存路径通过；异常清理路径与采样原始行未核验/持久化。I04其余边界、期限门及T04接受仍开放，T05保持not_started/NOT_RUN。"
       ]

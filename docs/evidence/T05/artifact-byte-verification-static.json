@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "result": "PREPARATION_ONLY",
+  "reviewType": "offline helper artifact byte/hash verification",
+  "recordedDate": "2026-10-05",
+  "branch": "codex/m0-latency",
+  "sourceCommit": "123e2f6f3055fa9c177e6c309ce012c43f803a1c",
+  "workingTreeWasDirty": true,
+  "scope": "tests/tasks/T05/** only; no runtime, packaging, install, clipboard, or input behavior",
+  "implementation": {
+    "cli": "--artifact-root <directory> or --artifact-root=<directory>",
+    "helperPath": "PASS recomputes SHA-256 from actualPath file bytes",
+    "rollbackPaths": [
+      "priorPath",
+      "rollbackPath"
+    ],
+    "hashing": "streaming SHA-256 with a 64 KiB buffer",
+    "pathSafety": [
+      "relative forward-slash paths only",
+      "reject absolute, drive/ADS, backslash, dot/parent, empty, Windows reserved, trailing dot/space segments",
+      "realpath containment rejects symlink/junction escapes"
+    ],
+    "schemaAndNotRunReport": "rollback paths required; NOT_RUN builder and example use null paths; status remains NOT_RUN"
+  },
+  "changedFiles": {
+    "tests/tasks/T05/verify-report.cjs": {
+      "sha256": "a6de4a69001e0480ce3eac83f4ebe639c03f3c0b6acc851b652766bb22116cd8"
+    },
+    "tests/tasks/T05/verify-report.test.cjs": {
+      "sha256": "ada5410529426023438eb9fa5cf97fe8715e9438911164c6da249d07ee2437eb"
+    },
+    "tests/tasks/T05/report.schema.json": {
+      "sha256": "c33e592b12fea5ccc04a5a7765e3593b5b439a4b31186f3ff3929d5e9055be6f"
+    },
+    "tests/tasks/T05/create-not-run-report.cjs": {
+      "sha256": "4ff95c4c0a9b56cd5c8a16f0dceb7953a1ada1de87c86467cd441274d51d4c6a"
+    },
+    "tests/tasks/T05/report.not-run.example.json": {
+      "sha256": "a53cd3cb13a1e15ee98c74a28bb33b98832ad151d4dc3bf802489c96d7e4b598"
+    }
+  },
+  "validation": {
+    "node --test tests/tasks/T05/verify-report.test.cjs": {
+      "result": "PASS",
+      "tests": 25,
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0
+    },
+    "node tests/tasks/T05/schema-validation-self-check.cjs": {
+      "result": "PASS",
+      "validator": "jsonschema.Draft202012Validator 4.26.0",
+      "schemaInvalidInstanceCases": 14,
+      "syntheticG0NegativeCases": 6,
+      "repositoryDependencyAdded": false
+    },
+    "node tests/tasks/T05/verify-report.cjs": {
+      "result": "PASS_PREPARATION_ONLY",
+      "reportStatus": "NOT_RUN",
+      "cases": 28,
+      "assertionNames": 71,
+      "T03": "accepted",
+      "T04": "in_progress"
+    },
+    "git diff --check": "PASS",
+    "node --test tests/tasks/T05/validate-preparation.test.cjs": {
+      "result": "PASS",
+      "tests": 15,
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0
+    },
+    "node tests/tasks/T05/validate-preparation.cjs": {
+      "result": "PREPARATION_ONLY",
+      "caseCount": 28,
+      "assertionCount": 71,
+      "g0GateCount": 2,
+      "behaviorExecuted": false
+    }
+  },
+  "sideEffects": {
+    "behaviorExecuted": false,
+    "benchmarkExecuted": false,
+    "packageBuilt": false,
+    "helperLaunched": false,
+    "installed": false,
+    "clipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "t05AcceptanceImplied": false
+  },
+  "remainingLimitations": [
+    "Byte hashes are recomputed from files under the supplied artifact root; report version/protocol fields remain claims and are not read from the helper binary.",
+    "Authenticode signature is not verified cryptographically; PASS still requires independent version, protocol, signature, package, and evidence review.",
+    "Future PASS reports must use helper and rollback paths relative to the unpacked artifact root and invoke the verifier with --artifact-root.",
+    "No P01-P28 behavior/release acceptance or controlled-live measurements were run; T05 remains not_started and report status NOT_RUN."
+  ]
+}

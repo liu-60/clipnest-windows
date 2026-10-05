@@ -1,7 +1,9 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const crypto = require("node:crypto");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
@@ -13,6 +15,7 @@ const {
   loadVerifierContext,
   nearestRankPercentile,
   validateEvidenceReference,
+  validateArtifactFileSha256,
   validateMeasurement,
 } = require("./verify-report.cjs");
 const { loadPreparationInputs } = require("./validate-preparation.cjs");
@@ -27,6 +30,20 @@ const sample = (requestId, outcome, valueMs) => ({
   valueMs,
   stageMs: { total: valueMs },
 });
+
+function createArtifactFixture(t) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "clipnest-t05-artifact-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  return {
+    root,
+    write(relativePath, contents) {
+      const filePath = path.join(root, ...relativePath.split("/"));
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      fs.writeFileSync(filePath, contents);
+      return crypto.createHash("sha256").update(contents).digest("hex");
+    },
+  };
+}
 
 function measuredFixture(samples) {
   const counts = { success: 0, failure: 0, cancelled: 0, timeout: 0 };
@@ -288,7 +305,7 @@ test("root PASS requires a valid or unsigned rollback helper signature", () => {
   assert.ok(collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_SIGNATURE_STATUS"));
 });
 
-test("root PASS recomputes helper identity from expected and actual fields", () => {
+test("root PASS recomputes helper identity from expected and actual fields", (t) => {
   const report = clone(example);
   report.status = "PASS";
   report.dependencyGate = { T03: "accepted", T04: "accepted" };
@@ -296,6 +313,12 @@ test("root PASS recomputes helper identity from expected and actual fields", () 
   acceptedContext.progress.tasks.T03.status = "accepted";
   acceptedContext.progress.tasks.T04.status = "accepted";
   acceptedContext.progress.tasks.T05.status = "in_progress";
+  const artifact = createArtifactFixture(t);
+  const helperSha256 = artifact.write(
+    "resources/native/clipnest-helper.exe",
+    Buffer.from("synthetic helper artifact bytes"),
+  );
+  acceptedContext.artifactRoot = artifact.root;
 
   Object.assign(report.packageAndRollback.helperResource, {
     result: "PASS",
@@ -305,14 +328,23 @@ test("root PASS recomputes helper identity from expected and actual fields", () 
     actualVersion: "1.0.0",
     expectedProtocol: "1",
     actualProtocol: "1",
-    expectedSha256: "a".repeat(64),
-    actualSha256: "a".repeat(64),
+    expectedSha256: helperSha256,
+    actualSha256: helperSha256,
     identityMatched: true,
     signatureStatus: "valid",
     evidence: ["tests/tasks/T05/fixture-plan.json"],
   });
   assert.ok(
     !collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_HELPER_IDENTITY_REQUIRED"),
+  );
+  const escapedHelperPath = clone(report);
+  escapedHelperPath.packageAndRollback.helperResource.actualPath = "../outside/clipnest-helper.exe";
+  assert.ok(
+    collectReportErrors(escapedHelperPath, acceptedContext).some((error) => error.code === "ARTIFACT_PATH_UNSAFE"),
+  );
+  const noArtifactRootContext = { ...acceptedContext, artifactRoot: null };
+  assert.ok(
+    collectReportErrors(report, noArtifactRootContext).some((error) => error.code === "ARTIFACT_ROOT_REQUIRED"),
   );
 
   const mismatchMutations = [
@@ -332,7 +364,7 @@ test("root PASS recomputes helper identity from expected and actual fields", () 
   }
 });
 
-test("root PASS recomputes rollback version and hash identity", () => {
+test("root PASS recomputes rollback version and hash identity", (t) => {
   const report = clone(example);
   report.status = "PASS";
   report.dependencyGate = { T03: "accepted", T04: "accepted" };
@@ -341,12 +373,20 @@ test("root PASS recomputes rollback version and hash identity", () => {
   acceptedContext.progress.tasks.T04.status = "accepted";
   acceptedContext.progress.tasks.T05.status = "in_progress";
 
+  const artifact = createArtifactFixture(t);
+  const priorBytes = Buffer.from("synthetic rollback helper artifact bytes");
+  const priorSha256 = artifact.write("rollback/prior-helper.exe", priorBytes);
+  const rollbackSha256 = artifact.write("rollback/restored-helper.exe", priorBytes);
+  acceptedContext.artifactRoot = artifact.root;
+
   Object.assign(report.packageAndRollback.rollback, {
     result: "PASS",
+    priorPath: "rollback/prior-helper.exe",
     priorVersion: "1.0.0",
+    rollbackPath: "rollback/restored-helper.exe",
     rollbackVersion: "1.0.0",
-    priorSha256: "a".repeat(64),
-    rollbackSha256: "a".repeat(64),
+    priorSha256,
+    rollbackSha256,
     identityMatched: true,
     signatureStatus: "valid",
     helperBinaryOnly: { name: "helperBinaryOnly", result: "PASS", evidence: ["tests/tasks/T05/fixture-plan.json"] },
@@ -354,6 +394,11 @@ test("root PASS recomputes rollback version and hash identity", () => {
   });
   assert.ok(
     !collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_IDENTITY_REQUIRED"),
+  );
+  const escapedRollbackPath = clone(report);
+  escapedRollbackPath.packageAndRollback.rollback.rollbackPath = "../outside/clipnest-helper.exe";
+  assert.ok(
+    collectReportErrors(escapedRollbackPath, acceptedContext).some((error) => error.code === "ARTIFACT_PATH_UNSAFE"),
   );
 
   const mismatchMutations = [
@@ -438,6 +483,60 @@ test("PASS evidence references must resolve to existing files inside the reposit
     checks: [{ result: "PASS", evidence: ["tests/tasks/T05/fixture-plan.json"] }],
   }, context.repoRoot);
   assert.deepEqual(errors, []);
+});
+
+test("artifact verifier recomputes helper and rollback SHA-256 from files under the configured root", (t) => {
+  const artifact = createArtifactFixture(t);
+  const helperBytes = Buffer.from("synthetic helper bytes");
+  const helperSha256 = artifact.write("resources/native/clipnest-helper.exe", helperBytes);
+  const rollbackBytes = Buffer.from("synthetic rollback helper bytes");
+  const rollbackSha256 = artifact.write("rollback/clipnest-helper.exe", rollbackBytes);
+
+  assert.equal(
+    validateArtifactFileSha256("resources/native/clipnest-helper.exe", helperSha256, artifact.root),
+    null,
+  );
+  assert.equal(
+    validateArtifactFileSha256("rollback/clipnest-helper.exe", rollbackSha256, artifact.root),
+    null,
+  );
+  assert.equal(
+    validateArtifactFileSha256("resources/native/clipnest-helper.exe", "0".repeat(64), artifact.root).code,
+    "ARTIFACT_SHA256_MISMATCH",
+  );
+  assert.equal(
+    validateArtifactFileSha256("resources/native/missing.exe", helperSha256, artifact.root).code,
+    "ARTIFACT_FILE_NOT_FOUND",
+  );
+  assert.equal(
+    validateArtifactFileSha256("../outside/clipnest-helper.exe", helperSha256, artifact.root).code,
+    "ARTIFACT_PATH_UNSAFE",
+  );
+});
+
+test("artifact verifier rejects a symlink that escapes the configured root", (t) => {
+  const artifact = createArtifactFixture(t);
+  const outsideRoot = fs.mkdtempSync(path.join(os.tmpdir(), "clipnest-t05-outside-"));
+  t.after(() => fs.rmSync(outsideRoot, { recursive: true, force: true }));
+  const externalFile = path.join(outsideRoot, "clipnest-helper.exe");
+  const externalBytes = Buffer.from("synthetic external helper bytes");
+  fs.writeFileSync(externalFile, externalBytes);
+
+  try {
+    fs.symlinkSync(outsideRoot, path.join(artifact.root, "external"), "junction");
+  } catch (error) {
+    if (["EPERM", "EACCES", "ENOTSUP", "EINVAL"].includes(error.code)) {
+      t.skip(`directory symlink creation is unavailable (${error.code})`);
+      return;
+    }
+    throw error;
+  }
+
+  const expectedSha256 = crypto.createHash("sha256").update(externalBytes).digest("hex");
+  assert.equal(
+    validateArtifactFileSha256("external/clipnest-helper.exe", expectedSha256, artifact.root).code,
+    "ARTIFACT_PATH_UNSAFE",
+  );
 });
 
 test("schema makes assertion IDs and raw sample valueMs explicit", () => {
