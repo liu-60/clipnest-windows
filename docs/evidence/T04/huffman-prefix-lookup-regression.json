@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "PASS_SYNTHETIC_UNIT_REGRESSION",
+  "checkedDate": "2026-10-05",
+  "source": {
+    "commit": "f58a8b46ed6ea7f3a82fdf4b09b752accfcd472c",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "changedFiles": {
+      "tests/tasks/T04/clipboard-image-decoder.test.cjs": "dab53f28272cff626d72d201807881844a78019976f8a0fa9f7d78ff70f267d9",
+      "src/main/clipboard/jpeg-baseline-stream.ts": "e490c6e4209aec7358be50577d0fedf1e6cd12bbe2ebef801806d6f983c6c0db"
+    }
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "nodeVersion": "v24.16.0",
+    "pnpmVersion": "11.19.0"
+  },
+  "scope": {
+    "productionSourceChanged": false,
+    "fixture": "synthetic grayscale 8x8 SOF0 baseline JPEG; no clipboard, window, package, helper, or physical input",
+    "huffmanPrefixCoverage": [
+      "canonical 1-, 2-, 3-, and 4-bit code lengths; selected code values 0, 2, 6, and 14 exercise representative suffix-expanded nibble entries",
+      "5-bit DC and 6-bit AC long codes use bitwise fallback and cross a byte boundary",
+      "6-bit DC leaves only two buffered bits before valid 2-bit and 3-bit AC codes; the 3-bit code itself crosses the byte boundary"
+    ]
+  },
+  "validation": {
+    "command": "pnpm test:unit -- clipboard-image-decoder.test.cjs",
+    "result": "PASS",
+    "buildMain": "PASS",
+    "tests": 27,
+    "passed": 27,
+    "failed": 0,
+    "skipped": 0
+  },
+  "limitations": [
+    "Synthetic grayscale fixtures verify representative lookup and fallback branches, not all 16 nibble prefixes or a broad JPEG corpus.",
+    "This unit result does not establish 4:2:0 color fidelity, the 3000ms end-to-end product deadline, memory limits, packaged behavior, or complete T04 acceptance."
+  ],
+  "sideEffects": {
+    "desktopClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "helperRun": false,
+    "packageBuilt": false,
+    "productionSourceChanged": false
+  }
+}

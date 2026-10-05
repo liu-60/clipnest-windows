@@ -104,7 +104,15 @@ function truncatedJpegSegment(marker, payload, missingBytes = 2) {
 function jpegWithSegments(frame, segments) {
   return Buffer.concat([frame, ...segments, Buffer.from([0xff, 0xd9])]);
 }
-function simpleBaselineJpeg({ width, height, sampling, restartInterval = 0, allOnesDcHuffman = false }) {
+function simpleBaselineJpeg({
+  width,
+  height,
+  sampling,
+  restartInterval = 0,
+  allOnesDcHuffman = false,
+  dcCodeLength = 1,
+  acCodeLength = 1,
+}) {
   const componentCount = sampling.length;
   const frame = Buffer.alloc(6 + componentCount * 3);
   frame[0] = 8;
@@ -117,16 +125,27 @@ function simpleBaselineJpeg({ width, height, sampling, restartInterval = 0, allO
     frame[8 + index * 3] = 0;
   }
   const quantization = Buffer.from([0, ...new Array(64).fill(1)]);
-  const dcSymbolCount = allOnesDcHuffman ? 2 : 1;
+  const dcSymbolCount = allOnesDcHuffman ? 2 : dcCodeLength;
+  const acSymbolCount = acCodeLength;
   const acTableOffset = 17 + dcSymbolCount;
-  const huffman = Buffer.alloc(acTableOffset + 18);
+  const huffman = Buffer.alloc(acTableOffset + 17 + acSymbolCount);
+  const dcCounts = Buffer.alloc(16);
+  const dcValues = Buffer.alloc(dcSymbolCount);
+  const acCounts = Buffer.alloc(16);
+  const acValues = Buffer.alloc(acSymbolCount);
   huffman[0] = 0x00;
-  huffman[1] = dcSymbolCount;
-  huffman[17] = 0;
-  if (allOnesDcHuffman) huffman[18] = 1;
+  if (allOnesDcHuffman) {
+    dcCounts[0] = 2;
+    dcValues[1] = 1;
+  } else {
+    for (let length = 0; length < dcCodeLength; length++) dcCounts[length] = 1;
+  }
+  huffman.set(dcCounts, 1);
+  huffman.set(dcValues, 17);
   huffman[acTableOffset] = 0x10;
-  huffman[acTableOffset + 1] = 1;
-  huffman[acTableOffset + 17] = 0;
+  for (let length = 0; length < acCodeLength; length++) acCounts[length] = 1;
+  huffman.set(acCounts, acTableOffset + 1);
+  huffman.set(acValues, acTableOffset + 17);
   const segments = [
     jpegSegment(0xdb, quantization),
     jpegSegment(0xc0, frame),
@@ -166,6 +185,9 @@ function simpleBaselineJpeg({ width, height, sampling, restartInterval = 0, allO
       pendingBits = 0;
     }
   };
+  const writeCode = (code, length) => {
+    for (let bit = length - 1; bit >= 0; bit--) writeBit((code >>> bit) & 1);
+  };
   const alignEntropy = () => {
     while (pendingBits !== 0) writeBit(1);
   };
@@ -173,8 +195,8 @@ function simpleBaselineJpeg({ width, height, sampling, restartInterval = 0, allO
     for (const factor of sampling) {
       const blocks = (factor >>> 4) * (factor & 0x0f);
       for (let block = 0; block < blocks; block++) {
-        writeBit(0); // DC category zero
-        writeBit(0); // AC end-of-block
+        writeCode(allOnesDcHuffman ? 0 : (2 ** dcCodeLength) - 2, dcCodeLength); // DC category zero
+        writeCode((2 ** acCodeLength) - 2, acCodeLength); // AC end-of-block
       }
     }
     if (restartInterval > 0 && (mcu + 1) % restartInterval === 0 && mcu + 1 < mcuCount) {
@@ -318,6 +340,40 @@ test("streamed baseline JPEG handles grayscale, 4:2:0 MCU edges, and the complet
   const invalidRestartPadding = Buffer.from(grayscale);
   invalidRestartPadding[marker - 1] &= 0xfe;
   assert.throws(() => decodeLargeBaselineJpeg(invalidRestartPadding, 72, 8), /image_source_invalid/);
+});
+
+test("streamed JPEG Huffman prefix lookup covers canonical 1–4-bit codes and suffix expansion", () => {
+  for (let codeLength = 1; codeLength <= 4; codeLength++) {
+    const encoded = simpleBaselineJpeg({
+      width: 8,
+      height: 8,
+      sampling: [0x11],
+      dcCodeLength: codeLength,
+      acCodeLength: codeLength,
+    });
+    const image = decodeLargeBaselineJpeg(encoded, 8, 8);
+    assert.ok(image, `canonical ${codeLength}-bit Huffman fixture should select the stream decoder`);
+    for (let offset = 0; offset < image.pixels.length; offset += 4) {
+      assert.deepEqual([...image.pixels.subarray(offset, offset + 4)], [128, 128, 128, 255]);
+    }
+  }
+});
+
+test("streamed JPEG Huffman decoder falls back for long codes and fewer than four buffered bits", () => {
+  for (const [dcCodeLength, acCodeLength] of [[5, 6], [6, 2], [6, 3]]) {
+    const encoded = simpleBaselineJpeg({
+      width: 8,
+      height: 8,
+      sampling: [0x11],
+      dcCodeLength,
+      acCodeLength,
+    });
+    const image = decodeLargeBaselineJpeg(encoded, 8, 8);
+    assert.ok(image, `fallback fixture (${dcCodeLength}, ${acCodeLength}) should select the stream decoder`);
+    for (let offset = 0; offset < image.pixels.length; offset += 4) {
+      assert.deepEqual([...image.pixels.subarray(offset, offset + 4)], [128, 128, 128, 255]);
+    }
+  }
 });
 
 test("streamed JPEG selection is conservative and selected malformed streams fail closed", () => {
