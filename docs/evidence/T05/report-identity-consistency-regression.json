@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "subtask": "report identity consistency guard",
+  "result": "PASS_WITH_LIMITATIONS",
+  "checkedDate": "2026-10-05",
+  "source": {
+    "commit": "de78921bc7ed44c052d66a0adb8ef49c77f9fc46",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "modifiedFiles": [
+      "tests/tasks/T05/verify-report.test.cjs",
+      "docs/progress.json"
+    ]
+  },
+  "scope": "Static regression coverage for the report verifier's helper and rollback identity comparisons on root PASS reports.",
+  "validation": [
+    {
+      "command": "pnpm test:unit -- T05",
+      "result": "PASS",
+      "passed": 34,
+      "failed": 0,
+      "exitCode": 0
+    }
+  ],
+  "coveredMismatches": {
+    "helper": [
+      "actual path",
+      "actual version",
+      "actual protocol",
+      "actual SHA-256",
+      "identityMatched boolean"
+    ],
+    "rollback": [
+      "rollback version",
+      "rollback SHA-256",
+      "identityMatched boolean"
+    ]
+  },
+  "gateEffect": {
+    "T05Status": "not_started",
+    "behaviorAcceptance": false,
+    "packageBuilt": false,
+    "clipboardReadOrWritten": false,
+    "physicalInputSent": false
+  },
+  "limitations": [
+    "The verifier compares values reported by the report; this regression does not independently inspect or hash the final packaged helper or rollback binary.",
+    "Signature status remains an evidence claim; the checker does not cryptographically verify Authenticode signatures.",
+    "The task remains gated on T04 acceptance, controlled release behavior, package lifecycle and rollback evidence, and an independent critical review."
+  ]
+}

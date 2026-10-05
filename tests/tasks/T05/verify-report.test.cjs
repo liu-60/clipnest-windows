@@ -150,6 +150,81 @@ test("root PASS requires a valid or unsigned rollback helper signature", () => {
   assert.ok(collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_SIGNATURE_STATUS"));
 });
 
+test("root PASS recomputes helper identity from expected and actual fields", () => {
+  const report = clone(example);
+  report.status = "PASS";
+  report.dependencyGate = { T03: "accepted", T04: "accepted" };
+  const acceptedContext = clone(context);
+  acceptedContext.progress.tasks.T03.status = "accepted";
+  acceptedContext.progress.tasks.T04.status = "accepted";
+  acceptedContext.progress.tasks.T05.status = "in_progress";
+
+  Object.assign(report.packageAndRollback.helperResource, {
+    result: "PASS",
+    expectedPath: "resources/native/clipnest-helper.exe",
+    actualPath: "resources/native/clipnest-helper.exe",
+    expectedVersion: "1.0.0",
+    actualVersion: "1.0.0",
+    expectedProtocol: "1",
+    actualProtocol: "1",
+    expectedSha256: "a".repeat(64),
+    actualSha256: "a".repeat(64),
+    identityMatched: true,
+    signatureStatus: "valid",
+    evidence: ["tests/tasks/T05/fixture-plan.json"],
+  });
+
+  const mismatchMutations = [
+    (helper) => { helper.actualPath = "resources/other/clipnest-helper.exe"; },
+    (helper) => { helper.actualVersion = "1.0.1"; },
+    (helper) => { helper.actualProtocol = "2"; },
+    (helper) => { helper.actualSha256 = "b".repeat(64); },
+    (helper) => { helper.identityMatched = false; },
+  ];
+  for (const mutate of mismatchMutations) {
+    const forged = clone(report);
+    mutate(forged.packageAndRollback.helperResource);
+    assert.ok(
+      collectReportErrors(forged, acceptedContext).some((error) => error.code === "PASS_HELPER_IDENTITY_REQUIRED"),
+    );
+  }
+});
+
+test("root PASS recomputes rollback version and hash identity", () => {
+  const report = clone(example);
+  report.status = "PASS";
+  report.dependencyGate = { T03: "accepted", T04: "accepted" };
+  const acceptedContext = clone(context);
+  acceptedContext.progress.tasks.T03.status = "accepted";
+  acceptedContext.progress.tasks.T04.status = "accepted";
+  acceptedContext.progress.tasks.T05.status = "in_progress";
+
+  Object.assign(report.packageAndRollback.rollback, {
+    result: "PASS",
+    priorVersion: "1.0.0",
+    rollbackVersion: "1.0.0",
+    priorSha256: "a".repeat(64),
+    rollbackSha256: "a".repeat(64),
+    identityMatched: true,
+    signatureStatus: "valid",
+    helperBinaryOnly: { name: "helperBinaryOnly", result: "PASS", evidence: ["tests/tasks/T05/fixture-plan.json"] },
+    evidence: ["tests/tasks/T05/fixture-plan.json"],
+  });
+
+  const mismatchMutations = [
+    (rollback) => { rollback.rollbackVersion = "1.0.1"; },
+    (rollback) => { rollback.rollbackSha256 = "b".repeat(64); },
+    (rollback) => { rollback.identityMatched = false; },
+  ];
+  for (const mutate of mismatchMutations) {
+    const forged = clone(report);
+    mutate(forged.packageAndRollback.rollback);
+    assert.ok(
+      collectReportErrors(forged, acceptedContext).some((error) => error.code === "PASS_ROLLBACK_IDENTITY_REQUIRED"),
+    );
+  }
+});
+
 test("a PASS subcheck cannot be reported before dependencies or without local evidence", () => {
   const report = clone(example);
   report.cases[0].result = "PASS";
