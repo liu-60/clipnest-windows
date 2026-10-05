@@ -5,8 +5,8 @@
   "reviewType": "dependency and offline-preflight refresh",
   "reviewedDate": "2026-10-05",
   "branch": "codex/m0-latency",
-  "sourceCommit": "274fe3806524610e7b789ac9f47b7975ee00d412",
-  "workingTreeWasDirty": false,
+  "sourceCommit": "da03a7dcc00d0689370573254a45c93fabe1f18b",
+  "workingTreeWasDirty": true,
   "dependencyGate": {
     "T03": "accepted",
     "T04": "in_progress",
@@ -41,7 +41,7 @@
     "remainingT04Gates": [
       "P15 remains open under the user-confirmed scope; src/main/native/content-provider.ts was not changed or invoked.",
       "The 4:2:0 JPEG fidelity gate remains open. Same-input WPF/WIC and GDI+ agree at all 4096 selected ROI points while worker/jpeg-js differ, but that agreement is not ground truth. The new source-ROI diagnostic shows lower worker MAE to the pre-JPEG source in four selected synthetic ROIs (4096 points total); each is one sample, and the lossy source metric is not a normative JPEG oracle or calibrated acceptance threshold.",
-      "Production JPEG memory acceptance remains open. The WPF/WIC candidate is a PowerShell STA probe, not production Electron utilityProcess/direct IWIC integration; the production-shaped PureJsImage candidate exceeded the 256 MiB target.",
+      "Production JPEG memory acceptance remains open despite the current utilityProcess decoder route succeeding on five synthetic 16 MP/20 MiB SOF0 4:2:0 samples (207.87 MiB peak) and five 4:4:4 samples (208.57 MiB peak). The stream covers only 8-bit SOF0, one interleaved scan and one/three components; it does not prove a universal RSS ceiling, the full production selection/packaged path, or all JPEG inputs. The WPF/WIC probe remains candidate-only, and the PureJsImage candidate exceeded 256 MiB.",
       "Exact P1/I10/I11 deadline acceptance remains open. The bounded real-timer probe failed closed and released zero-budget continuation was NOT_OBSERVED; physical keyboard, system clipboard, BrowserWindow/panel, helper lifecycle, target-visible paste and packaged application acceptance remain NOT_RUN.",
       "Synthetic image diagnostics do not establish universal latency, format behavior, or a process-memory ceiling; full T04 acceptance remains NOT_RUN."
     ],
@@ -467,6 +467,45 @@
       "inputSent": false,
       "displayOrForegroundAppUsed": false,
       "interpretation": "Worker output is closer to the pre-JPEG synthetic logical source by sampled ROI MAE in these four selected cases. This source is a fixture-specific diagnostic, not normative JPEG ground truth; the 4:2:0 fidelity gate remains open."
+    },
+    "streamedBaselineJpegProductionDiagnostic": {
+      "result": "MEASURED_WITH_LIMITATIONS",
+      "artifact": "docs/evidence/T04/jpeg-stream-current-memory-status.json",
+      "sourceCommit": "16cd2b8975f4a1a967a91d6f0566a16d27ed9523",
+      "routeCoverage": "8-bit SOF0 baseline JPEG, one full interleaved scan, one or three components; unsupported progressive or other layouts fail closed when the capacity estimate selects this route.",
+      "workerTargetBytes": 268435456,
+      "fixtures": [
+        {
+          "format": "synthetic SOF0 baseline JPEG 4:2:0",
+          "dimensions": "4000x4000",
+          "encodedBytes": 20971520,
+          "sampleCount": 5,
+          "successfulSamples": 5,
+          "peakWorkerWorkingSetBytes": 217968640,
+          "peakWorkerWorkingSetMiB": 207.87,
+          "p50Ms": 2186.23,
+          "p95Ms": 2262.56,
+          "gdiPlusOracle": "FAIL: max channel difference 38 exceeds 8; threshold calibrated only for 4:4:4",
+          "pinnedJpegJsDifferential": "exact byte match; not an independent oracle"
+        },
+        {
+          "format": "synthetic SOF0 baseline JPEG 4:4:4",
+          "dimensions": "4000x4000",
+          "encodedBytes": 20971520,
+          "sampleCount": 5,
+          "successfulSamples": 5,
+          "peakWorkerWorkingSetBytes": 218705920,
+          "peakWorkerWorkingSetMiB": 208.57,
+          "p50Ms": 2877.15,
+          "p95Ms": 2986.02,
+          "gdiPlusOracle": "PASS: max channel difference 1 at the sampled points",
+          "pinnedJpegJsDifferential": "exact byte match; not an independent oracle"
+        }
+      ],
+      "productionSelectionAndPackagedAppAcceptance": false,
+      "systemClipboardReadOrWritten": false,
+      "physicalInputSent": false,
+      "interpretation": "These fresh utilityProcess measurements establish successful decode only for the two synthetic SOF0 layouts. They do not establish general JPEG coverage, a universal RSS ceiling, 4:2:0 fidelity, or complete T04 acceptance."
     }
   },
   "draft202012InstanceValidation": {
@@ -481,7 +520,7 @@
   "allowedPreparationCompleted": [
     "Latest identity-hardened raw-chunk utilityProcess worker ASAR smoke is indexed with its exact chunk/end counts and no-install/no-clipboard/no-input limitations.",
     "The current NOT_RUN report instance and eight invalid-instance cases passed the explicit Draft 2020-12 self-check, including six metric-contract negatives; the default Node verifier and unit suite do not require Python.",
-    "Refreshed the T04 dependency snapshot at source commit df028bb. It includes the 10-sample WPF/WIC candidate result, the 4:2:0 GDI+ dense-ROI diagnostic, and the same-input WPF/WIC/GDI+ comparison; none is production acceptance."
+    "Refreshed this T04 dependency snapshot at source commit da03a7dcc00d0689370573254a45c93fabe1f18b. It includes the current limited SOF0 utilityProcess memory diagnostic and JPEG fidelity/source-ROI diagnostics; T05 remains NOT_RUN and none of these artifacts is full T04 acceptance."
   ],
   "notRun": [
     "P01-P28 T05 behavior/release acceptance and 100+100 controlled-live measurements.",
