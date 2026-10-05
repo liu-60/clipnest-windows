@@ -273,7 +273,7 @@
   ],
   "notVerified": [
     "Complete large-image, progressive JPEG, EXIF/orientation/ICC/color and exact-source fidelity acceptance remains incomplete; the installed production PNG/JPEG path has real utility-process and v2 ASAR smoke evidence.",
-    "A five-sample Windows x64 16 MP synthetic RGBA PNG utilityProcess/IPC diagnostic recorded maximum PeakWorkingSet64 161.23 MiB and p95 547.68 ms, but does not prove a hard 256 MiB ceiling for other PNG/JPEG inputs, sources near 20 MiB, or packaged full-app behavior. The tested PureJsImage full JPEG utilityProcess/IPC candidate failed the target: all 10 16 MP samples exceeded 256 MiB. A production JPEG route meeting the worker budget, broader image coverage, and end-user paste remain unverified.",
+    "The current streamed decoder succeeds on the measured synthetic 16 MP SOF0 baseline 4:2:0 and 4:4:4 fixtures (five fresh utilityProcess samples each) below the configured 256 MiB worker target. General JPEG coverage, progressive/other SOF layouts, unusual metadata, a universal hard worker RSS ceiling, and end-user paste remain unverified; the separate PureJsImage full IPC candidate exceeded 256 MiB in all 10 measured samples.",
     "P15 image selection still repeats Base64 decoding and hashing in src/main/native/content-provider.ts. The file is outside the T04 allowlist; the user chose not to expand the current scope, so this P15 gate remains open.",
     "One isolated Electron main-process run measured NativeImage toPNG/toJPEG fallback and Base64/SHA-256 on a synthetic 9 MP bitmap; the 500 ms key monitor failed closed when synchronous work delayed its poll. Actual clipboard.readImage behavior, large-image RGBA-to-BGRA/DIB performance, the 3000 ms preparation deadline under clipboard load, physical key timing, and complete Electron window/panel integration remain NOT_RUN. A separate real-worker 2x1 selection probe verifies production DIB bytes and SHA-256 only for that tiny fixture.",
     "The earlier compressed-response transport was validated with real Electron utilityProcess, 16 MP PNG diagnostics, and an isolated package. Those are historical protocol-specific checks and do not validate current raw-chunk transfer; current raw-chunk ASAR and JPEG diagnostic evidence is recorded separately. Universal JPEG memory/fidelity and complete T04 acceptance remain open.",
@@ -381,7 +381,8 @@
     "4:2:0 GDI+ fidelity remains open. Final-harness dense ROIs show broad differences for both same-hash high-entropy and synthetic phase-shifted chroma-edge fixtures; all worker outputs match pinned jpeg-js full-frame, but that reference is not independent and the GDI+ threshold is calibrated only for 4:4:4. Edge interiors retain substantial mismatch after trimming two pixels from ROI boundaries. This suggests chroma reconstruction/phase differences without proving correctness or a whole-image error rate. Each ROI is 32x32 with one worker sample. See docs/evidence/T04/jpeg-420-gdiplus-roi-investigation.json.",
     "Same-input WPF/WIC ROI diagnostics agree with GDI+ at all 4096 selected points, while worker/jpeg-js differs as recorded in jpeg-420-three-way-oracle.json. Agreement is not ground truth or proof of independent codec implementations; selected single-sample ROIs and the uncalibrated 4:2:0 tolerance leave fidelity unresolved.",
     "编码前逻辑RGBA源ROI诊断：四个合成16MP/20MiB 4:2:0 ROI各运行一个fresh utilityProcess样本；worker相对编码前逻辑源的RGB MAE分别为高熵44.75、垂直边缘32.67、水平边缘32.67、棋盘0.50，均低于所选点的GDI+/WIC（47.26、52.73、52.70、36.67）。GDI+/WIC所选点一致，worker与pinned jpeg-js全帧一致；这些都不是真值证明。NativeImage源像素通过PNG回读恢复逻辑RGBA以排除平台字节顺序；每项仅单样本、选择性ROI和有损合成图，因此不能作为通用JPEG正确性或验收阈值，4:2:0 fidelity门保持开放。无系统剪贴板、输入、前台窗口或安装包操作。详情见docs/evidence/T04/jpeg-420-source-roi-reconstruction.json及四份source-roi测量记录。",
-    "源ROI诊断另在Electron parent中进行NativeImage PNG回读并暂存逻辑像素；这部分内存不计入utilityProcess RSS，可能增加测量期间的总进程内存/机器负载，不能将worker峰值解释为整机或应用总内存峰值。"
+    "源ROI诊断另在Electron parent中进行NativeImage PNG回读并暂存逻辑像素；这部分内存不计入utilityProcess RSS，可能增加测量期间的总进程内存/机器负载，不能将worker峰值解释为整机或应用总内存峰值。",
+    "The earlier jpeg-js preflight 16 MP capacity rejects predate the current streamed baseline route. The current route has five successful 16 MP synthetic 4:2:0 and five 4:4:4 samples within the configured worker target, but general JPEG coverage and a hard universal RSS bound remain unverified; see jpeg-stream-current-memory-status.json."
   ],
   "artifacts": [
     "tests/tasks/T04/fixture-plan.json",
@@ -454,7 +455,8 @@
     "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-source-roi-vertical-1-sample-measurement.json",
     "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-source-roi-horizontal-1-sample-measurement.json",
     "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-source-roi-checker-1-sample-measurement.json",
-    "docs/evidence/T04/jpeg-420-source-roi-reconstruction.json"
+    "docs/evidence/T04/jpeg-420-source-roi-reconstruction.json",
+    "docs/evidence/T04/jpeg-stream-current-memory-status.json"
   ],
   "latestIndependentSourcePixelReview": {
     "result": "PASS_WITH_LIMITATIONS",

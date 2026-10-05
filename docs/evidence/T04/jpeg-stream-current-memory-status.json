@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "recordType": "current_baseline_jpeg_stream_memory_route_status",
+  "result": "MEASURED_WITH_LIMITATIONS",
+  "verificationDate": "2026-10-05",
+  "currentSource": {
+    "commit": "16cd2b8975f4a1a967a91d6f0566a16d27ed9523",
+    "branch": "codex/m0-latency",
+    "productionSourceAndBuildHashesMatchMeasurements": true,
+    "files": [
+      {
+        "path": "src/main/clipboard/image-decoder.ts",
+        "sha256": "ffea0a0d5428681031094c3cc2d7c0ba19e7cce11028ae84cbd9e0b08a07d183"
+      },
+      {
+        "path": "src/main/clipboard/jpeg-baseline-stream.ts",
+        "sha256": "294c7d1f9f98151fe0ca453ecdbe75cdd3b8547d5f1883f26a40d60c7ed51ef9"
+      },
+      {
+        "path": "src/main/clipboard/image-worker.ts",
+        "sha256": "5c2cf363e68759462a517fb505aa106abe005edce4e5ae4cdd2ca1832862c383"
+      },
+      {
+        "path": "dist-electron/main/clipboard/image-decoder.js",
+        "sha256": "a6fe7ceedcbdfa8d8b532eea900ab8e39726590e985bf912d137f4e661b5403d"
+      },
+      {
+        "path": "dist-electron/main/clipboard/jpeg-baseline-stream.js",
+        "sha256": "9d5702dfd3154b8d2ff3fbdf6b17435b008496dbb21b76d1360eb91965988819"
+      },
+      {
+        "path": "dist-electron/main/clipboard/image-worker.js",
+        "sha256": "a195e57ee0d5c74cc8585e4c1a29fd9b1ffb844e682df3f59f87571be51b928d"
+      }
+    ]
+  },
+  "route": {
+    "selection": "When estimateJpegPeakBytes exceeds the 256 MiB worker target, decodeJpegImage tries decodeLargeBaselineJpeg; it returns a streamed image when the supported plan parses, otherwise the request fails closed with image_worker_capacity_exceeded.",
+    "streamedDecoderCoverage": "8-bit SOF0 baseline JPEG, one or three components, one full interleaved scan; unsupported progressive or other SOF/layouts do not use this stream route.",
+    "maximumWorkerWorkingSetTargetBytes": 268435456
+  },
+  "evidence": {
+    "historicalJpegJsPreflightRejection": {
+      "sourceCommit": "f97618f3eb7b21e6caea62fbf3c0cedce743f72f",
+      "evidence": [
+        "docs/evidence/T04/image-worker-16000000-pixel-jpeg-20mib-fresh-worker-5-sample-measurement.json",
+        "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-5-sample-measurement.json"
+      ],
+      "note": "These five-sample results predate the current streamed baseline route and describe the earlier direct jpeg-js/preflight path; they remain valid historical observations, not current behavior for the two covered SOF0 fixtures."
+    },
+    "currentStreamedBaselineMeasurements": [
+      {
+        "measurement": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-native-image-20mib-fresh-worker-release-jsoracle-420-5-sample-measurement.json",
+        "measurementSourceCommit": "13fc13fdca55ee611f675346c5f102e8e4da4ecf",
+        "sourceWorkingTreeWasDirty": true,
+        "fixture": {
+          "dimensions": "4000x4000",
+          "encodedBytes": 20971520,
+          "sha256": "c9362e8411a710e82c8ead5e41295c0f6902bf8f5eac9cf40ac25915abb68ab1",
+          "samplingFactors": [
+            {
+              "horizontal": 2,
+              "vertical": 2
+            },
+            {
+              "horizontal": 1,
+              "vertical": 1
+            },
+            {
+              "horizontal": 1,
+              "vertical": 1
+            }
+          ]
+        },
+        "sampleCount": 5,
+        "successfulSampleCount": 5,
+        "capacityRejectedSampleCount": 0,
+        "p50Ms": 2186.23,
+        "p95Ms": 2262.56,
+        "workerPeakWorkingSetBytes": 217968640,
+        "workerPeakWorkingSetMiB": 207.87,
+        "workerLimitBytes": 268435456,
+        "responsePayloadBytesPerSample": 64000000,
+        "gdiPlusOracle": {
+          "status": "FAIL",
+          "maxRgbDifference": 38,
+          "toleranceRgbDifference": 8
+        },
+        "pinnedJpegJsDifferential": {
+          "status": "PASS",
+          "exactByteComparison": true,
+          "mismatchedChannelCount": 0,
+          "independentOracle": false
+        }
+      },
+      {
+        "measurement": "docs/evidence/T04/image-worker-16000000-pixel-jpeg-20mib-fresh-worker-release-444-5-sample-measurement.json",
+        "measurementSourceCommit": "13fc13fdca55ee611f675346c5f102e8e4da4ecf",
+        "sourceWorkingTreeWasDirty": true,
+        "fixture": {
+          "dimensions": "4000x4000",
+          "encodedBytes": 20971520,
+          "sha256": "5f5178ce761193b569130af082740669cd16071de9ea733aa8968f4f8e9dc6a3",
+          "samplingFactors": [
+            {
+              "horizontal": 1,
+              "vertical": 1
+            },
+            {
+              "horizontal": 1,
+              "vertical": 1
+            },
+            {
+              "horizontal": 1,
+              "vertical": 1
+            }
+          ]
+        },
+        "sampleCount": 5,
+        "successfulSampleCount": 5,
+        "capacityRejectedSampleCount": 0,
+        "p50Ms": 2877.15,
+        "p95Ms": 2986.02,
+        "workerPeakWorkingSetBytes": 218705920,
+        "workerPeakWorkingSetMiB": 208.57,
+        "workerLimitBytes": 268435456,
+        "responsePayloadBytesPerSample": 64000000,
+        "gdiPlusOracle": {
+          "status": "PASS",
+          "maxRgbDifference": 1,
+          "toleranceRgbDifference": 8
+        },
+        "pinnedJpegJsDifferential": {
+          "status": "PASS",
+          "exactByteComparison": true,
+          "mismatchedChannelCount": 0,
+          "independentOracle": false
+        }
+      }
+    ]
+  },
+  "limitsAndOpenGates": [
+    "Both current measured fixtures are synthetic 4000x4000, 20 MiB SOF0 baseline JPEGs. These do not prove a universal 256 MiB worker-process ceiling, all sampling factors, progressive JPEG, unusual metadata, cancellation during CPU-bound decode, or packaged full-app behavior.",
+    "The 4:2:0 worker matches pinned jpeg-js full-frame but differs from the sampled GDI+ oracle (maximum channel difference 38); the 8-channel oracle threshold was calibrated only for 4:4:4. The 4:2:0 fidelity gate remains open.",
+    "PeakWorkingSet64 describes each worker process. Parent-side input/oracle buffers and total application/system memory are outside that worker metric.",
+    "No OS clipboard, target window, physical input, installed package, or release operation was used; full T04 and T05 acceptance remain incomplete."
+  ]
+}
