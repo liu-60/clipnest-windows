@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "T06-b quicktype official registry candidate audit",
+  "checkedDate": "2026-10-05",
+  "result": "PARTIAL_WITH_VERIFIED_TARBALL_INTEGRITY_AND_METADATA_SUMMARY",
+  "scope": {
+    "readOnly": true,
+    "packagesInstalled": false,
+    "generatorExecuted": false,
+    "manifestChanged": false,
+    "lockfileChanged": false,
+    "progressJsonTmpTouched": false,
+    "method": "A read-only Node.js 24.16.0 fetch session queried registry.npmjs.org metadata and streamed the four published quicktype 26.0.0 tarballs into memory for digest and package-manifest checks. The primary agent independently re-fetched all four tarballs and confirmed SHA-512, SHA-1, and byte counts against registry metadata and this record. Recursive package metadata was summarized from official registry endpoints; no dependency resolution or installation was performed."
+  },
+  "tarballs": [
+    {
+      "name": "quicktype",
+      "version": "26.0.0",
+      "metadataUrl": "https://registry.npmjs.org/quicktype/26.0.0",
+      "tarballUrl": "https://registry.npmjs.org/quicktype/-/quicktype-26.0.0.tgz",
+      "registryIntegritySha512": "sha512-6sGRYEe3402KFTVKhqnsE6Z6Jdi5jryc/6cg+A8kx3dvIy01Ex35OcuuuZUZDbvzFw+1fkseCpLpbGhDS3uLJA==",
+      "registryShasumSha1": "04c872769665f473e805528b37e1bad6d8a21c3c",
+      "computedSha512MatchesRegistry": true,
+      "computedSha1MatchesRegistry": true,
+      "byteSize": 20227,
+      "tarballFileCount": 13,
+      "tarballFileCountMatchesRegistry": true,
+      "tarballPackageJsonVersion": "26.0.0",
+      "declaredLicense": "Apache-2.0",
+      "enginesNode": ">=20.19.0",
+      "licenseFilePresentInTarball": true,
+      "directDependencyCount": 16,
+      "directDependencies": {
+        "@glideapps/ts-necessities": "^2.2.3",
+        "@types/readable-stream": "4.0.10",
+        "chalk": "^4.1.2",
+        "collection-utils": "^1.0.1",
+        "command-line-args": "^5.2.1",
+        "command-line-usage": "^7.0.1",
+        "graphql": "^16.11.0",
+        "lodash": "^4.18.1",
+        "moment": "^2.30.1",
+        "quicktype-core": "26.0.0",
+        "quicktype-graphql-input": "26.0.0",
+        "quicktype-typescript-input": "26.0.0",
+        "readable-stream": "^4.5.2",
+        "stream-json": "3.5.0",
+        "string-to-stream": "^3.0.1",
+        "wordwrap": "^1.0.0"
+      }
+    },
+    {
+      "name": "quicktype-core",
+      "version": "26.0.0",
+      "metadataUrl": "https://registry.npmjs.org/quicktype-core/26.0.0",
+      "tarballUrl": "https://registry.npmjs.org/quicktype-core/-/quicktype-core-26.0.0.tgz",
+      "registryIntegritySha512": "sha512-tLSe2RkSj7c7ocTc+QMuQDGgEetGhZvKXLv1vNwpAQX2x8oOGYU9KSgJdIP9Qvy5hm47S2k3ZAX1LQAdS75JaA==",
+      "registryShasumSha1": "48dc480a67527f3eed8e58e17b2781218dcd0d6d",
+      "computedSha512MatchesRegistry": true,
+      "computedSha1MatchesRegistry": true,
+      "byteSize": 711682,
+      "tarballFileCount": 830,
+      "tarballFileCountMatchesRegistry": true,
+      "tarballPackageJsonVersion": "26.0.0",
+      "declaredLicense": "Apache-2.0",
+      "enginesNode": ">=20.0.0",
+      "licenseFilePresentInTarball": false,
+      "directDependencyCount": 13,
+      "directDependencyNames": [
+        "@glideapps/ts-necessities",
+        "@types/readable-stream",
+        "@types/urijs",
+        "browser-or-node",
+        "collection-utils",
+        "is-url",
+        "lodash",
+        "pluralize",
+        "readable-stream",
+        "unicode-properties",
+        "urijs",
+        "wordwrap",
+        "yaml"
+      ]
+    },
+    {
+      "name": "quicktype-graphql-input",
+      "version": "26.0.0",
+      "metadataUrl": "https://registry.npmjs.org/quicktype-graphql-input/26.0.0",
+      "tarballUrl": "https://registry.npmjs.org/quicktype-graphql-input/-/quicktype-graphql-input-26.0.0.tgz",
+      "registryIntegritySha512": "sha512-bI129FVf6LLrG+6rh0gB9905oqNN0oGuZYIS0gV3V3C4JEdaR2qavdM/r925pUISwM3frrYE4McSDsuAzrHRTw==",
+      "registryShasumSha1": "90549d6321be474ee2193498257b5542d4255e45",
+      "computedSha512MatchesRegistry": true,
+      "computedSha1MatchesRegistry": true,
+      "byteSize": 7083,
+      "tarballFileCount": 5,
+      "tarballFileCountMatchesRegistry": true,
+      "tarballPackageJsonVersion": "26.0.0",
+      "declaredLicense": "Apache-2.0",
+      "enginesNode": ">=20.0.0",
+      "licenseFilePresentInTarball": false,
+      "directDependencyCount": 3,
+      "directDependencies": {
+        "quicktype-core": "26.0.0",
+        "collection-utils": "^1.0.1",
+        "graphql": "^16.11.0"
+      }
+    },
+    {
+      "name": "quicktype-typescript-input",
+      "version": "26.0.0",
+      "metadataUrl": "https://registry.npmjs.org/quicktype-typescript-input/26.0.0",
+      "tarballUrl": "https://registry.npmjs.org/quicktype-typescript-input/-/quicktype-typescript-input-26.0.0.tgz",
+      "registryIntegritySha512": "sha512-8Fo23bQ2yON2VdjIgPvzLx0nqaqjgUb/xIBcYjd0D4U5cWJ7oABLeNRH0krcSrFp9ez5qDPHB2xbkSLXNFaW9w==",
+      "registryShasumSha1": "2bab2af996e317f7a5008ddb6393986ae67eb86d",
+      "computedSha512MatchesRegistry": true,
+      "computedSha1MatchesRegistry": true,
+      "byteSize": 2962,
+      "tarballFileCount": 3,
+      "tarballFileCountMatchesRegistry": true,
+      "tarballPackageJsonVersion": "26.0.0",
+      "declaredLicense": "Apache-2.0",
+      "enginesNode": ">=20.0.0",
+      "licenseFilePresentInTarball": false,
+      "directDependencyCount": 3,
+      "directDependencies": {
+        "quicktype-core": "26.0.0",
+        "typescript": "5.9.3",
+        "typescript-json-schema": "0.67.4"
+      }
+    }
+  ],
+  "recursiveCandidateGraph": {
+    "selectionMethod": "For dependencies, optionalDependencies, and peerDependencies, choose the highest stable official-registry version satisfying each declared range; this is a candidate graph, not pnpm resolution.",
+    "nameVersionRecordCount": 144,
+    "uniquePackageNameCount": 133,
+    "dependencyEdgeCount": 193,
+    "registryMetadataFetchFailures": 0,
+    "licenseFieldMissingCount": 0,
+    "licenseFieldAmbiguousCount": 0,
+    "licenseExpressionDistribution": {
+      "MIT": 82,
+      "Apache-2.0": 33,
+      "Apache-2.0 AND MIT": 11,
+      "BlueOak-1.0.0": 5,
+      "BSD-3-Clause": 5,
+      "ISC": 7,
+      "0BSD": 1
+    },
+    "nodeEngineIncompatibleCountForNode24_16_0": 0,
+    "recordsWithoutEnginesField": 50,
+    "completeNodeInventoryPersisted": false,
+    "actualPnpmResolution": false,
+    "sbom": false,
+    "limitations": [
+      "The 144 candidate records and 193 edges were not persisted as a per-node manifest, so the aggregate cannot be independently replayed from this file alone.",
+      "Choosing the highest stable version per declared range is not pnpm's complete resolver; peer constraints, overrides, deduplication, and lockfile integrity were not evaluated.",
+      "Visible registry license metadata is not a legal notice/SBOM review. Verify the final frozen package graph, notices, optional/platform packages, and license obligations before selecting or freezing dependencies.",
+      "Node engine declarations were checked only for metadata compatibility; packages without an engines field were not runtime-tested."
+    ]
+  },
+  "licenseAndCompatibilityNotes": {
+    "quicktypeRootLicenseAtPublishedGitHead": "https://raw.githubusercontent.com/glideapps/quicktype/408d4ff753d8af809a07edc40cf2a15266e01810/LICENSE",
+    "publishedEnginesNode": {
+      "quicktype": ">=20.19.0",
+      "quicktype-core": ">=20.0.0",
+      "quicktype-graphql-input": ">=20.0.0",
+      "quicktype-typescript-input": ">=20.0.0"
+    },
+    "quicktypeCoreRuntimeFloorDiscrepancy": "The published quicktype-core package manifest says >=20.0.0, while official v26.0.0 release notes require >=20.19.0 for CLI/core embedders. Node 24.16.0 satisfies both, but retain the published-manifest/release-note difference for runtime policy review.",
+    "quicktypeCoreAndInputTarballsWithoutLicenseFiles": [
+      "quicktype-core",
+      "quicktype-graphql-input",
+      "quicktype-typescript-input"
+    ],
+    "manifestLicenseForThosePackages": "Apache-2.0",
+    "draft202012GenerationTested": false,
+    "booleanOrNumericConstGenerationTested": false,
+    "generatorRuntimeExecuted": false,
+    "licenseNoticeClosure": false,
+    "dependencySelectionOrFreezeAuthorizedByThisAudit": false,
+    "versionDiscrepancy": "The earlier v26.0.0 source-tag manifests record version 24.0.0; this follow-up directly inspected the published registry tarballs and found all four package.json versions and their internal quicktype edges at 26.0.0."
+  },
+  "historicalEvidence": {
+    "priorAudit": "docs/evidence/T06/quicktype-tarball-audit.json",
+    "note": "The prior 2026-10-04 artifact accurately records that its PowerShell registry requests failed TLS and the proposed unpkg route was rejected. This 2026-10-05 follow-up used Node fetch to the official registry successfully; it does not invalidate the earlier attempt record."
+  },
+  "sources": [
+    "https://github.com/glideapps/quicktype/releases/tag/v26.0.0",
+    "https://registry.npmjs.org/quicktype/26.0.0",
+    "https://registry.npmjs.org/quicktype-core/26.0.0",
+    "https://registry.npmjs.org/quicktype-graphql-input/26.0.0",
+    "https://registry.npmjs.org/quicktype-typescript-input/26.0.0",
+    "https://registry.npmjs.org/quicktype/-/quicktype-26.0.0.tgz",
+    "https://registry.npmjs.org/quicktype-core/-/quicktype-core-26.0.0.tgz",
+    "https://registry.npmjs.org/quicktype-graphql-input/-/quicktype-graphql-input-26.0.0.tgz",
+    "https://registry.npmjs.org/quicktype-typescript-input/-/quicktype-typescript-input-26.0.0.tgz",
+    "https://raw.githubusercontent.com/glideapps/quicktype/408d4ff753d8af809a07edc40cf2a15266e01810/LICENSE"
+  ]
+}
