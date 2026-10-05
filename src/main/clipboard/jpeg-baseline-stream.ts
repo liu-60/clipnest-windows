@@ -335,9 +335,24 @@ class EntropyReader {
 
   requireEndOfImage(): void {
     this.alignWithOnes();
+    let marker = this.readMarker();
+    while (marker !== 0xd9) {
+      // APPn and COM metadata may follow the completed scan before EOI.
+      if ((marker < 0xe0 || marker > 0xef) && marker !== 0xfe) throw new Error("image_source_invalid");
+      if (this.offset + 2 > this.bytes.length) throw new Error("image_source_invalid");
+      const segmentLength = this.bytes.readUInt16BE(this.offset);
+      const segmentEnd = this.offset + segmentLength;
+      if (segmentLength < 2 || segmentEnd > this.bytes.length) throw new Error("image_source_invalid");
+      this.offset = segmentEnd;
+      marker = this.readMarker();
+    }
+  }
+
+  private readMarker(): number {
     if (this.bytes[this.offset++] !== 0xff) throw new Error("image_source_invalid");
     while (this.bytes[this.offset] === 0xff) this.offset++;
-    if (this.bytes[this.offset++] !== 0xd9) throw new Error("image_source_invalid");
+    if (this.offset >= this.bytes.length) throw new Error("image_source_invalid");
+    return this.bytes[this.offset++];
   }
 
   private alignWithOnes(): void {

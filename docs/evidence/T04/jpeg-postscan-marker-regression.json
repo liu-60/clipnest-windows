@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "PASS_SYNTHETIC_UNIT_REGRESSION",
+  "checkedDate": "2026-10-06",
+  "source": {
+    "commit": "b1fa2a6e987ca43843d06a39e688b67d819fc3af",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "changedFiles": {
+      "src/main/clipboard/jpeg-baseline-stream.ts": "232D0F636A47C5AC8FCE631C54D3560A07CB86DE9078EC2F48FE889C9E64B8AA",
+      "tests/tasks/T04/clipboard-image-decoder.test.cjs": "6BF2F66EC6F848BB6BC44F8782F10CE6E4D3A615FEA6A309A622FA7824429D9D"
+    }
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "nodeVersion": "v24.16.0",
+    "pnpmVersion": "11.19.0"
+  },
+  "scope": {
+    "productionSourceChanged": true,
+    "behavior": "After a completed baseline JPEG scan, the streaming decoder accepts bounded APP0-APP15 and COM segments before EOI, including repeated FF marker-fill bytes. It continues to reject unsupported markers, another SOS, malformed or truncated segments, and a truncated marker.",
+    "fixture": "synthetic 19x17 SOF0 4:2:0 grayscale-style JPEG with post-scan APP1 and COM payloads, embedded FF D9 bytes, repeated FF marker-fill bytes, and EOI; no clipboard, window, helper, package, or physical input",
+    "assertions": [
+      "Direct streamed decoding accepts post-scan APP/COM segments and matches the corresponding fixture pixels and pinned jpeg-js 0.4.4 output.",
+      "The small production decoder route accepts the same fixture and matches pinned jpeg-js output; this low-memory fixture uses the jpeg-js fallback, not the production high-memory streaming branch.",
+      "The streaming decoder rejects an extra SOS, truncated APP segment, COM length below 2, stray byte, and trailing lone FF.",
+      "Production preflight accepts cumulative COM payload of exactly 1 MiB and exactly 4096 counted marker segments; it rejects 1 MiB+1 and 4097 segments with image_worker_capacity_exceeded."
+    ],
+    "boundaryCounts": {
+      "baseCountedSegments": 4,
+      "additionalAtMarkerLimit": 4092,
+      "totalAtMarkerLimit": 4096,
+      "additionalOverMarkerLimit": 4093,
+      "totalOverMarkerLimit": 4097,
+      "terminalEoiCounted": false,
+      "comBytesAtLimit": 1048576,
+      "comBytesOverLimit": 1048577
+    }
+  },
+  "validation": {
+    "command": "pnpm test:unit -- clipboard-image-decoder.test.cjs",
+    "result": "PASS",
+    "buildMain": "PASS",
+    "tests": 34,
+    "passed": 34,
+    "failed": 0,
+    "skipped": 0,
+    "preFixReproduction": {
+      "result": "EXPECTED_FAILURE",
+      "testsPassed": 32,
+      "testsFailed": 1,
+      "failure": "The new post-scan APP/COM fixture was rejected by EntropyReader.requireEndOfImage with image_source_invalid."
+    },
+    "independentReview": {
+      "result": "PASS_WITH_SCOPE_NOTE",
+      "reviewed": "Boundary fixture counters and expected accept/reject values; post-scan marker and fill/truncation cases.",
+      "scopeNote": "The 19x17 production integration fixture uses the jpeg-js fallback because it is below the streaming threshold. Direct streaming parser behavior is covered, but production selection of the high-memory streaming branch with post-scan metadata is not verified."
+    }
+  },
+  "limitations": [
+    "Fixtures are synthetic and small; the suite does not cover a broad JPEG corpus, every legal marker sequence, or production high-memory streaming-branch integration for post-scan metadata.",
+    "No full T04 acceptance, product deadline, general hard memory bound, packaged behavior, or desktop workflow is established by this regression."
+  ],
+  "sideEffects": {
+    "desktopClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "helperRun": false,
+    "packageBuilt": false,
+    "productionSourceChanged": true
+  },
+  "standardsReferences": [
+    {
+      "section": "ITU-T T.81, E.1.3",
+      "transcript": "https://www.digicamsoft.com/itu/itu-t81-82.html",
+      "officialCatalog": "https://www.itu.int/rec/T-REC-T.81-199209-I",
+      "note": "The accessible transcript is nonofficial; the ITU catalog lists the recommendation as in force, while full text requires TIES access."
+    }
+  ]
+}

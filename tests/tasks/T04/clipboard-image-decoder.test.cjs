@@ -123,6 +123,12 @@ function jpegWithSegmentsBeforeScan(encoded, segments) {
   assert.notEqual(scanOffset, -1, "fixture should contain an SOS marker");
   return Buffer.concat([encoded.subarray(0, scanOffset), ...segments, encoded.subarray(scanOffset)]);
 }
+function jpegWithSegmentsAfterScan(encoded, segments) {
+  const eoiMarker = Buffer.from([0xff, 0xd9]);
+  const eoiOffset = encoded.lastIndexOf(eoiMarker);
+  assert.notEqual(eoiOffset, -1, "fixture should contain an EOI marker");
+  return Buffer.concat([encoded.subarray(0, eoiOffset), ...segments, encoded.subarray(eoiOffset)]);
+}
 function simpleBaselineJpeg({
   width,
   height,
@@ -380,6 +386,66 @@ test("streamed baseline JPEG handles grayscale, 4:2:0 MCU edges, and the complet
   const invalidRestartPadding = Buffer.from(grayscale);
   invalidRestartPadding[marker - 1] &= 0xfe;
   assert.throws(() => decodeLargeBaselineJpeg(invalidRestartPadding, 72, 8), /image_source_invalid/);
+});
+
+test("production and streamed baseline JPEG accept APP and COM marker segments after the scan", async () => {
+  const encoded = simpleBaselineJpeg({ width: 19, height: 17, sampling: [0x22, 0x11, 0x11] });
+  const expected = decodeLargeBaselineJpeg(encoded, 19, 17);
+  assert.ok(expected);
+  const marked = jpegWithSegmentsAfterScan(encoded, [
+    Buffer.from([0xff, 0xff, 0xff]),
+    jpegSegment(0xe1, Buffer.from([0x45, 0x78, 0xff, 0xd9, 0x69, 0x66, 0x00])),
+    Buffer.from([0xff, 0xff]),
+    jpegSegment(0xfe, Buffer.from("comment after the completed scan", "ascii")),
+    Buffer.from([0xff, 0xff, 0xff]),
+  ]);
+
+  const decoded = decodeLargeBaselineJpeg(marked, 19, 17);
+  const reference = jpeg.decode(marked, { useTArray: true, formatAsRGBA: true });
+  assert.ok(decoded);
+  assert.deepEqual(decoded.pixels, expected.pixels);
+  assert.deepEqual(decoded.pixels, Buffer.from(reference.data));
+  const production = await decode(request("jpeg", marked, 19, 17));
+  assert.deepEqual(Buffer.from(production.pixels), Buffer.from(reference.data));
+});
+
+test("streamed baseline JPEG rejects an extra scan and malformed post-scan segments", () => {
+  const encoded = simpleBaselineJpeg({ width: 8, height: 8, sampling: [0x11] });
+  const extraScan = jpegSegment(0xda, Buffer.from([1, 1, 0, 0, 63, 0]));
+  const truncatedApp = Buffer.from([0xff, 0xe1, 0x00, 0x08, 0x01]);
+  const shortComment = Buffer.from([0xff, 0xfe, 0x00, 0x01]);
+  const truncatedMarker = Buffer.concat([encoded.subarray(0, encoded.length - 2), Buffer.from([0xff])]);
+  for (const malformed of [extraScan, truncatedApp, shortComment, Buffer.from([0x00])]) {
+    const bytes = jpegWithSegmentsAfterScan(encoded, [malformed]);
+    assert.throws(() => decodeLargeBaselineJpeg(bytes, 8, 8), /image_source_invalid/);
+  }
+  assert.throws(() => decodeLargeBaselineJpeg(truncatedMarker, 8, 8), /image_source_invalid/);
+});
+
+test("production JPEG preflight enforces COM and marker limits after the scan", async () => {
+  const encoded = simpleBaselineJpeg({ width: 8, height: 8, sampling: [0x11] });
+  const commentSegments = (payloadBytes) => {
+    const segments = [];
+    while (payloadBytes > 0) {
+      const length = Math.min(payloadBytes, 65_533);
+      segments.push(jpegSegment(0xfe, Buffer.alloc(length)));
+      payloadBytes -= length;
+    }
+    return segments;
+  };
+  const oneMiB = 1024 * 1024;
+  const commentAtLimit = jpegWithSegmentsAfterScan(encoded, commentSegments(oneMiB));
+  const commentImage = await decode(request("jpeg", commentAtLimit, 8, 8));
+  assert.deepEqual([...commentImage.pixels.subarray(0, 4)], [128, 128, 128, 255]);
+  const commentOverLimit = jpegWithSegmentsAfterScan(encoded, commentSegments(oneMiB + 1));
+  await assert.rejects(decode(request("jpeg", commentOverLimit, 8, 8)), /image_worker_capacity_exceeded/);
+
+  const emptyApp2 = jpegSegment(0xe2, Buffer.alloc(0));
+  const atMarkerLimit = jpegWithSegmentsAfterScan(encoded, Array(4092).fill(emptyApp2));
+  const markerImage = await decode(request("jpeg", atMarkerLimit, 8, 8));
+  assert.deepEqual([...markerImage.pixels.subarray(0, 4)], [128, 128, 128, 255]);
+  const overMarkerLimit = jpegWithSegmentsAfterScan(encoded, Array(4093).fill(emptyApp2));
+  await assert.rejects(decode(request("jpeg", overMarkerLimit, 8, 8)), /image_worker_capacity_exceeded/);
 });
 
 test("streamed JPEG Huffman prefix lookup covers canonical 1–4-bit codes and suffix expansion", () => {
