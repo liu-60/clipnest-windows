@@ -25,6 +25,21 @@ test("current T05 materials pass static preparation checks", () => {
   assert.deepEqual(collectPreparationErrors(baseline), []);
 });
 
+test("requires the runtime helper resource path in the fixture plan", () => {
+  const codes = codesFor(({ fixturePlan }) => {
+    fixturePlan.packageResourceContract.helperRelativePath = "resources/alternate/clipnest-helper.exe";
+  });
+  assert.ok(codes.includes("PACKAGE_HELPER_PATH_CONTRACT"));
+});
+
+test("requires the report schema PASS path to match the runtime helper resource", () => {
+  const codes = codesFor(({ reportSchema }) => {
+    reportSchema.properties.packageAndRollback.properties.helperResource.allOf[0]
+      .then.properties.expectedPath.const = "resources/alternate/clipnest-helper.exe";
+  });
+  assert.ok(codes.includes("SCHEMA_HELPER_PATH_CONTRACT"));
+});
+
 test("rejects changed source assertion text", () => {
   const codes = codesFor(({ assertionMap }) => {
     assertionMap.assertions[0].assertionText = "invented assertion";

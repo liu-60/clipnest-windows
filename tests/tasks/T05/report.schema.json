@@ -198,7 +198,7 @@
               "if": { "properties": { "result": { "const": "PASS" } }, "required": ["result"] },
               "then": {
                 "properties": {
-                  "expectedPath": { "type": "string", "minLength": 1 },
+                  "expectedPath": { "const": "resources/native/clipnest-helper.exe" },
                   "actualPath": { "type": "string", "minLength": 1 },
                   "expectedVersion": { "type": "string", "minLength": 1 },
                   "actualVersion": { "type": "string", "minLength": 1 },
@@ -215,7 +215,10 @@
           ],
           "properties": {
             "result": { "enum": ["PASS", "FAIL", "NOT_RUN", "BLOCKED"] },
-            "expectedPath": { "type": ["string", "null"] },
+            "expectedPath": {
+              "type": ["string", "null"],
+              "description": "PASS 时固定为 unpacked Windows x64 app root 下 resources/native/clipnest-helper.exe，与运行时 process.resourcesPath/native/clipnest-helper.exe 对应。"
+            },
             "actualPath": {
               "type": ["string", "null"],
               "description": "PASS 时相对 --artifact-root 的正斜线路径；校验器读取该文件并重算 SHA-256。"

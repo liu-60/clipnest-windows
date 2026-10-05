@@ -8,6 +8,7 @@ const EXPECTED_G0_IDS = [
   "g0-no-interactive-blocking-spawnSync",
   "g0-no-helper-process-per-interaction",
 ];
+const EXPECTED_HELPER_RESOURCE_RELATIVE_PATH = "resources/native/clipnest-helper.exe";
 
 function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -47,6 +48,29 @@ function collectPreparationErrors({ fixturePlan, assertionMap, reportSchema }) {
   }
   if (assertionMap.executionStatus !== "NOT_RUN") {
     add("PREPARATION_STATUS", "assertionMap must remain NOT_RUN");
+  }
+
+  const packageResourceContract = fixturePlan.packageResourceContract;
+  if (!isRecord(packageResourceContract) ||
+      packageResourceContract.artifactRootKind !== "windows_x64_unpacked_app_root" ||
+      packageResourceContract.runtimeLookup !== "process.resourcesPath/native/clipnest-helper.exe" ||
+      packageResourceContract.helperRelativePath !== EXPECTED_HELPER_RESOURCE_RELATIVE_PATH) {
+    add(
+      "PACKAGE_HELPER_PATH_CONTRACT",
+      `fixturePlan.packageResourceContract must map the unpacked Windows x64 app root runtime lookup to ${EXPECTED_HELPER_RESOURCE_RELATIVE_PATH}`,
+    );
+  }
+
+  const helperPassClauses = reportSchema.properties?.packageAndRollback?.properties?.helperResource?.allOf;
+  const helperPassPath = Array.isArray(helperPassClauses)
+    ? helperPassClauses.find((clause) => clause?.if?.properties?.result?.const === "PASS")
+      ?.then?.properties?.expectedPath
+    : undefined;
+  if (helperPassPath?.const !== EXPECTED_HELPER_RESOURCE_RELATIVE_PATH) {
+    add(
+      "SCHEMA_HELPER_PATH_CONTRACT",
+      `report schema must require helper expectedPath=${EXPECTED_HELPER_RESOURCE_RELATIVE_PATH} for PASS`,
+    );
   }
 
   const cases = Array.isArray(fixturePlan.cases) ? fixturePlan.cases : [];
@@ -227,6 +251,7 @@ if (require.main === module) main();
 
 module.exports = {
   EXPECTED_CASE_IDS,
+  EXPECTED_HELPER_RESOURCE_RELATIVE_PATH,
   collectPreparationErrors,
   loadPreparationInputs,
 };

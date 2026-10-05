@@ -77,6 +77,11 @@
     "controlVariables": ["test machine and OS", "displays", "power mode", "build mode", "dataset seed", "cache state", "network condition"],
     "clockRule": "Use each process's monotonic durations; do not subtract uncalibrated clocks across processes."
   },
+  "packageResourceContract": {
+    "artifactRootKind": "windows_x64_unpacked_app_root",
+    "runtimeLookup": "process.resourcesPath/native/clipnest-helper.exe",
+    "helperRelativePath": "resources/native/clipnest-helper.exe"
+  },
   "packageAndRollbackChecks": [
     "Packaged Windows x64 helper resource resolves to the expected path and matches recorded version, protocol, and SHA-256/signature metadata.",
     "Run cold startup, tray availability, app restart, normal exit, and helper shutdown from the packaged artifact.",

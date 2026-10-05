@@ -6,6 +6,7 @@ const crypto = require("node:crypto");
 const { spawnSync } = require("node:child_process");
 
 const {
+  EXPECTED_HELPER_RESOURCE_RELATIVE_PATH,
   collectPreparationErrors,
   loadPreparationInputs,
 } = require("./validate-preparation.cjs");
@@ -927,6 +928,14 @@ function validateRootPassRequirements(report, context, errors) {
   requirePass(packageChecks?.autoPaste?.copyAvailable, "$.packageAndRollback.autoPaste.copyAvailable", errors);
 
   const helper = packageChecks?.helperResource;
+  if (helper?.result === "PASS" && helper.expectedPath !== EXPECTED_HELPER_RESOURCE_RELATIVE_PATH) {
+    addError(
+      errors,
+      "PASS_HELPER_PATH_CONTRACT",
+      "$.packageAndRollback.helperResource.expectedPath",
+      `top-level PASS requires expectedPath=${EXPECTED_HELPER_RESOURCE_RELATIVE_PATH}`,
+    );
+  }
   if (!isRecord(helper) || helper.result !== "PASS" || helper.identityMatched !== true ||
       !["expectedPath", "actualPath", "expectedVersion", "actualVersion", "expectedProtocol", "actualProtocol"]
         .every((field) => typeof helper[field] === "string" && helper[field].trim() !== "") ||

@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "task": "T05",
+  "result": "PREPARATION_ONLY",
+  "reviewType": "static helper package-path contract",
+  "recordedDate": "2026-10-05",
+  "branch": "codex/m0-latency",
+  "sourceCommit": "ab626247ba4d3f055ad767a1712109bd074ac5b4",
+  "workingTreeWasDirty": true,
+  "runtimeContract": {
+    "sourceFile": "src/main/main.ts",
+    "sourceLine": 1363,
+    "lookup": "join(process.resourcesPath, \"native\", \"clipnest-helper.exe\")",
+    "artifactRoot": "unpacked Windows x64 app root",
+    "requiredRelativeHelperPath": "resources/native/clipnest-helper.exe"
+  },
+  "implementation": {
+    "fixturePlanContract": "fixturePlan.packageResourceContract records the unpacked root, runtime lookup, and required relative path",
+    "staticPreparationValidator": "compares the fixture path and PASS schema const against the runtime contract",
+    "rootPassVerifier": "rejects any helper expectedPath other than the fixed relative path, even if self-reported expected/actual paths and actual file hash match",
+    "artifactHashVerification": "actualPath remains confined to --artifact-root and SHA-256 is recomputed from file bytes",
+    "notRunReport": "NOT_RUN builder and example unchanged"
+  },
+  "changedFiles": {
+    "tests/tasks/T05/fixture-plan.json": {
+      "sha256": "33fc39e80ad7eddd6f6f24425752abfa7b497be039d08d0ab1e513c2c2c2abec"
+    },
+    "tests/tasks/T05/report.schema.json": {
+      "sha256": "6535261e8b22b5ee4f0057fefbb66db764dd2676bc35a8f7dbb431613c25c9c8"
+    },
+    "tests/tasks/T05/validate-preparation.cjs": {
+      "sha256": "96debaa9c570b73170f589ca1a091770767fe1a20b5ed925f12962d4412101e3"
+    },
+    "tests/tasks/T05/validate-preparation.test.cjs": {
+      "sha256": "688da4c3b76419d942916beb53ce025adfd7aa9e335345f1598534aadb08b7e0"
+    },
+    "tests/tasks/T05/verify-report.cjs": {
+      "sha256": "c7977b71924f3b00a5a7e7d7f446ec22c39684b7bed2084fdfe2da7c31c026c0"
+    },
+    "tests/tasks/T05/verify-report.test.cjs": {
+      "sha256": "14b8f43e360d5915dbecfcb9a6544185950324df84a3c32eb268799fae87355c"
+    }
+  },
+  "packageBuildConfiguration": {
+    "packageJsonChanged": false,
+    "helperExtraResourcesDeclared": false,
+    "helperAsarUnpackDeclared": false,
+    "interpretation": "Runtime/package resource presence remains an open packaging gate; no package configuration was changed."
+  },
+  "validation": {
+    "node --test --test-name-pattern=\"root PASS recomputes helper identity\" tests/tasks/T05/verify-report.test.cjs": {
+      "result": "PASS",
+      "tests": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "node --test tests/tasks/T05/validate-preparation.test.cjs": {
+      "result": "PASS",
+      "tests": 17,
+      "passed": 17,
+      "failed": 0
+    },
+    "node tests/tasks/T05/validate-preparation.cjs": {
+      "result": "PREPARATION_ONLY",
+      "cases": 28,
+      "assertions": 71,
+      "g0Gates": 2,
+      "behaviorExecuted": false
+    },
+    "node tests/tasks/T05/schema-validation-self-check.cjs": {
+      "result": "PASS",
+      "validator": "jsonschema.Draft202012Validator 4.26.0",
+      "notRunReport": "PASS",
+      "schemaInvalidInstanceCases": 14,
+      "syntheticG0NegativeCases": 6
+    },
+    "node tests/tasks/T05/verify-report.cjs": {
+      "result": "PASS_PREPARATION_ONLY",
+      "reportStatus": "NOT_RUN",
+      "T04": "in_progress"
+    },
+    "git diff --check": "PASS"
+  },
+  "sideEffects": {
+    "behaviorExecuted": false,
+    "benchmarkExecuted": false,
+    "packageBuilt": false,
+    "installed": false,
+    "clipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "t05AcceptanceImplied": false
+  },
+  "remainingGates": [
+    "The current package.json does not declare helper extraResources or helper asarUnpack; final package presence at the runtime path is not established.",
+    "Version and protocol remain report claims; Authenticode is not cryptographically verified.",
+    "P01-P28, rollback, lifecycle, controlled-live measurements and release acceptance remain NOT_RUN; T05 remains not_started."
+  ]
+}

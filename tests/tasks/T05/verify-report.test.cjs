@@ -337,6 +337,18 @@ test("root PASS recomputes helper identity from expected and actual fields", (t)
   assert.ok(
     !collectReportErrors(report, acceptedContext).some((error) => error.code === "PASS_HELPER_IDENTITY_REQUIRED"),
   );
+  const alternateHelperPath = "resources/alternate/clipnest-helper.exe";
+  const alternateHelperSha256 = artifact.write(alternateHelperPath, Buffer.from("different synthetic helper bytes"));
+  const alternatePathClaim = clone(report);
+  Object.assign(alternatePathClaim.packageAndRollback.helperResource, {
+    expectedPath: alternateHelperPath,
+    actualPath: alternateHelperPath,
+    expectedSha256: alternateHelperSha256,
+    actualSha256: alternateHelperSha256,
+  });
+  assert.ok(
+    collectReportErrors(alternatePathClaim, acceptedContext).some((error) => error.code === "PASS_HELPER_PATH_CONTRACT"),
+  );
   const escapedHelperPath = clone(report);
   escapedHelperPath.packageAndRollback.helperResource.actualPath = "../outside/clipnest-helper.exe";
   assert.ok(
