@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "task": "T06",
+  "subtask": "T06-a11-server-app-entry",
+  "result": "PASS_WITH_LIMITATIONS",
+  "recordedAt": "2026-10-05T22:52:29+08:00",
+  "worktree": {
+    "path": "D:/ClipNest-work/v2",
+    "branch": "codex/v2-clipboard",
+    "headBeforeChanges": "ca7d0cb8768bf3a9b36e6ea3d22b90012e4afed2",
+    "progressSnapshot": {
+      "T00": "accepted",
+      "T06": "in_progress"
+    },
+    "preservedExistingUntracked": [
+      "docs/progress.json.tmp"
+    ],
+    "committed": false,
+    "pushed": false
+  },
+  "environment": {
+    "platform": "Windows x64",
+    "nodeVersion": "v24.16.0",
+    "pnpmUsed": false,
+    "typescriptCompilerAvailable": false
+  },
+  "implementation": {
+    "productionFiles": [
+      {
+        "path": "apps/server/package.json",
+        "sha256": "eab882b45245c51ae0aac441b4eadd1956dad12eba358890cfb875a6b3ce165a"
+      },
+      {
+        "path": "apps/server/src/app.ts",
+        "sha256": "13755b508671b501035b56fd1ccbac69ab78ddf35a37fb2caef1e265d15b2ad6"
+      },
+      {
+        "path": "apps/server/src/main.ts",
+        "sha256": "080a705f8251316f862f47decb2d07f2c64e871cf3715d124ca1fb758b51d0e1"
+      }
+    ],
+    "usesExistingRegistry": true,
+    "entryEffect": "Composes a frozen facade over invokeServerModule; no listener, network access, or persistent data operation is present.",
+    "registeredAndUnknownModulesReturn": "FEATURE_NOT_ENABLED",
+    "dependenciesAdded": []
+  },
+  "test": {
+    "file": "tests/tasks/T06/server-app-entry.test.cjs",
+    "sha256": "dd3d102033c5480935b4a2344ec4b2814c948c38b2c5da130901a8eaa1bed257",
+    "command": "node --test tests/tasks/T06/server-module-registry.test.cjs tests/tasks/T06/server-app-entry.test.cjs",
+    "status": "PASS",
+    "passed": 5,
+    "failed": 0,
+    "observations": [
+      "The package exposes an ESM main entry and declares no dependencies or scripts.",
+      "Importing the entry composes the existing disabled registry without opening a listener.",
+      "All registered module IDs and an unknown ID return FEATURE_NOT_ENABLED with no success data."
+    ]
+  },
+  "additionalChecks": {
+    "gitDiffCheck": "PASS",
+    "typescriptTypecheck": "NOT_RUN: no local or global tsc command is available; node_modules/.bin/tsc does not exist.",
+    "fullT06Commands": "NOT_RUN: this slice tests only server entry composition and disabled dispatch."
+  },
+  "limitations": [
+    "T06 remains in_progress; this slice does not accept T06 or implement a listening HTTP server or business/API success behavior.",
+    "No TypeScript compiler was available, so TypeScript semantic type checking was not performed.",
+    "The test imports the current Node 24-compatible TypeScript source entry; it does not validate a future bundler or production deployment configuration.",
+    "The existing untracked docs/progress.json.tmp was preserved and not read or modified."
+  ]
+}

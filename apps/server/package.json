@@ -1,4 +1,6 @@
 {
   "name": "@clipnest/server",
-  "private": true
+  "private": true,
+  "type": "module",
+  "main": "./src/main.ts"
 }
