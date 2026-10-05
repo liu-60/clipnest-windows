@@ -111,7 +111,11 @@ function simpleBaselineJpeg({
   restartInterval = 0,
   allOnesDcHuffman = false,
   dcCodeLength = 1,
+  dcCodeCounts = null,
+  dcSymbols = null,
+  dcCodewords = null,
   acCodeLength = 1,
+  acCodewords = null,
 }) {
   const componentCount = sampling.length;
   const frame = Buffer.alloc(6 + componentCount * 3);
@@ -125,20 +129,28 @@ function simpleBaselineJpeg({
     frame[8 + index * 3] = 0;
   }
   const quantization = Buffer.from([0, ...new Array(64).fill(1)]);
-  const dcSymbolCount = allOnesDcHuffman ? 2 : dcCodeLength;
+  const dcCounts = Buffer.alloc(16);
+  if (dcCodeCounts) {
+    assert.equal(dcCodeCounts.length, 16);
+    Buffer.from(dcCodeCounts).copy(dcCounts);
+  } else if (allOnesDcHuffman) {
+    dcCounts[0] = 2;
+  } else {
+    for (let length = 0; length < dcCodeLength; length++) dcCounts[length] = 1;
+  }
+  const dcSymbolCount = dcCounts.reduce((sum, count) => sum + count, 0);
   const acSymbolCount = acCodeLength;
   const acTableOffset = 17 + dcSymbolCount;
   const huffman = Buffer.alloc(acTableOffset + 17 + acSymbolCount);
-  const dcCounts = Buffer.alloc(16);
   const dcValues = Buffer.alloc(dcSymbolCount);
   const acCounts = Buffer.alloc(16);
   const acValues = Buffer.alloc(acSymbolCount);
   huffman[0] = 0x00;
-  if (allOnesDcHuffman) {
-    dcCounts[0] = 2;
+  if (dcSymbols) {
+    assert.equal(dcSymbols.length, dcSymbolCount);
+    Buffer.from(dcSymbols).copy(dcValues);
+  } else if (allOnesDcHuffman && !dcCodeCounts) {
     dcValues[1] = 1;
-  } else {
-    for (let length = 0; length < dcCodeLength; length++) dcCounts[length] = 1;
   }
   huffman.set(dcCounts, 1);
   huffman.set(dcValues, 17);
@@ -172,6 +184,10 @@ function simpleBaselineJpeg({
   const mcuColumns = Math.ceil(width / (maxH * 8));
   const mcuRows = Math.ceil(height / (maxV * 8));
   const mcuCount = mcuColumns * mcuRows;
+  const blocksPerMcu = sampling.reduce((total, factor) => total + (factor >>> 4) * (factor & 0x0f), 0);
+  const totalBlocks = mcuCount * blocksPerMcu;
+  if (dcCodewords) assert.equal(dcCodewords.length, totalBlocks);
+  if (acCodewords) assert.equal(acCodewords.length, totalBlocks);
   const entropy = [];
   let pendingByte = 0;
   let pendingBits = 0;
@@ -191,12 +207,17 @@ function simpleBaselineJpeg({
   const alignEntropy = () => {
     while (pendingBits !== 0) writeBit(1);
   };
+  let codewordIndex = 0;
   for (let mcu = 0; mcu < mcuCount; mcu++) {
     for (const factor of sampling) {
       const blocks = (factor >>> 4) * (factor & 0x0f);
       for (let block = 0; block < blocks; block++) {
-        writeCode(allOnesDcHuffman ? 0 : (2 ** dcCodeLength) - 2, dcCodeLength); // DC category zero
-        writeCode((2 ** acCodeLength) - 2, acCodeLength); // AC end-of-block
+        const dcWord = dcCodewords?.[codewordIndex];
+        const acWord = acCodewords?.[codewordIndex];
+        writeCode(dcWord?.code ?? (allOnesDcHuffman ? 0 : (2 ** dcCodeLength) - 2), dcWord?.length ?? dcCodeLength);
+        writeCode(dcWord?.amplitudeBits ?? 0, dcWord?.amplitudeLength ?? 0);
+        writeCode(acWord?.code ?? (2 ** acCodeLength) - 2, acWord?.length ?? acCodeLength);
+        codewordIndex++;
       }
     }
     if (restartInterval > 0 && (mcu + 1) % restartInterval === 0 && mcu + 1 < mcuCount) {
@@ -357,6 +378,43 @@ test("streamed JPEG Huffman prefix lookup covers canonical 1–4-bit codes and s
       assert.deepEqual([...image.pixels.subarray(offset, offset + 4)], [128, 128, 128, 255]);
     }
   }
+});
+
+test("streamed JPEG Huffman prefix lookup covers all 16 four-bit prefixes", () => {
+  const dcSymbols = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 2, 3];
+  const dcCodewords = [
+    { code: 0, length: 4 }, // Prime the entropy reader before checking each prefix.
+    ...Array.from({ length: 15 }, (_value, code) => {
+      const category = dcSymbols[code];
+      const repeatedSymbol = code >= 12;
+      const amplitudeBits = category === 0 ? 0 : repeatedSymbol
+        ? (1 << (category - 1)) - 1
+        : 1 << (category - 1);
+      return { code, length: 4, amplitudeBits, amplitudeLength: category };
+    }),
+    { code: 0b11110, length: 5, amplitudeBits: 0b011, amplitudeLength: 3 },
+  ];
+  const acCodewords = [
+    { code: 0b11110, length: 5 },
+    ...Array.from({ length: 16 }, () => ({ code: 0b1110, length: 4 })),
+  ];
+  const dcCodeCounts = Array.from({ length: 16 }, (_value, index) => index === 3 ? 15 : index === 4 ? 1 : 0);
+  const encoded = simpleBaselineJpeg({
+    width: 136,
+    height: 8,
+    sampling: [0x11],
+    dcCodeCounts,
+    dcSymbols,
+    dcCodewords,
+    acCodeLength: 5,
+    acCodewords,
+  });
+  const image = decodeLargeBaselineJpeg(encoded, 136, 8);
+  assert.ok(image, "the all-prefix fixture should select the streaming baseline decoder");
+  const reference = jpeg.decode(encoded, { useTArray: true, formatAsRGBA: true });
+  assert.deepEqual(Buffer.from(image.pixels), Buffer.from(reference.data));
+  assert.ok(new Set(Array.from(reference.data).filter((_value, index) => index % 4 === 0)).size > 8,
+    "distinct DC categories must produce distinct grayscale blocks");
 });
 
 test("streamed JPEG Huffman decoder falls back for long codes and fewer than four buffered bits", () => {

@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "task": "T04",
+  "result": "PASS_SYNTHETIC_UNIT_REGRESSION",
+  "checkedDate": "2026-10-05",
+  "source": {
+    "commit": "22a0bc1bbed3843362610d766b116755df4ff25e",
+    "branch": "codex/m0-latency",
+    "workingTreeWasDirty": true,
+    "changedFiles": {
+      "tests/tasks/T04/clipboard-image-decoder.test.cjs": "bcb8eb49cf587525b379e0589caeefa3055d9c1cc6044152f1e8a565bc601104"
+    }
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "nodeVersion": "v24.16.0",
+    "pnpmVersion": "11.19.0"
+  },
+  "scope": {
+    "productionSourceChanged": false,
+    "fixture": "synthetic 136x8 grayscale SOF0 baseline JPEG with 17 blocks; no clipboard, window, helper, package, or physical input",
+    "huffmanPrefixCoverage": [
+      "DC code prefixes 0x0 through 0xE are decoded from four-bit canonical codes; 0xF is represented by the five-bit code 11110 and exercises bitwise fallback",
+      "Twelve legal DC categories are distinct; prefixes 0xC through 0xE repeat categories because baseline JPEG DC categories are limited to 0 through 11, so those repeated symbols do not prove the corresponding fast lookup entries are populated or selected",
+      "Distinct DC amplitudes produce multiple grayscale values; output is compared byte-for-byte with the repository-pinned jpeg-js decoder"
+    ]
+  },
+  "validation": {
+    "command": "pnpm test:unit -- clipboard-image-decoder.test.cjs",
+    "result": "PASS",
+    "buildMain": "PASS",
+    "tests": 28,
+    "passed": 28,
+    "failed": 0,
+    "skipped": 0
+  },
+  "limitations": [
+    "This narrow synthetic grayscale regression does not establish 4:2:0 color fidelity or correctness over a broad JPEG corpus.",
+    "The jpeg-js comparison is a local regression reference, not an independent pixel oracle.",
+    "Repeated legal DC categories at prefixes 0xC through 0xE mean this fixture cannot detect those lookup slots falling back to the slower bitwise decoder when the resulting symbol is the same.",
+    "The unit result does not establish the product 3000ms end-to-end deadline, memory limits, packaged behavior, or complete T04 acceptance."
+  ],
+  "sideEffects": {
+    "desktopClipboardReadOrWritten": false,
+    "physicalInputSent": false,
+    "helperRun": false,
+    "packageBuilt": false,
+    "productionSourceChanged": false
+  }
+}
